@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Stellerator</title>
+
+        <%
+            stylesheets.forEach(stylesheet => print(`
+        <link href="${stylesheet}" rel="stylesheet"/>
+        `));
+        %>
+
+        <script>
+            _386 = {fastLoad: true};
+            _stelleratorSettings = {
+                workerUrl: '<%= workerUrl %>'
+            };
+        </script>
+    </head>
+
+    <body>
+        <div id="react-root"></div>
+
+        <%
+            scripts.forEach(script => print(`
+        <script src="${script}"></script>
+        `))
+        %>
+
+    </body>
+</html>
