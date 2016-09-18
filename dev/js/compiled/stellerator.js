@@ -76069,11 +76069,12 @@ function opAlr(state, bus, operand) {
         (old & 1 /* c */);
 }
 function opAxs(state, bus, operand) {
-    state.x = ((state.a & state.x) + (~operand + 1)) & 0xFF;
+    var value = (state.a & state.x) + (~operand & 0xFF) + 1;
+    state.x = value & 0xFF;
     state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
         (state.x & 0x80) |
         ((state.x & 0xFF) ? 0 : 2 /* z */) |
-        (state.x >>> 8);
+        (value >>> 8);
 }
 function opDcp(state, bus, operand) {
     var value = (bus.read(operand) + 0xFF) & 0xFF;
@@ -76157,6 +76158,9 @@ var Cpu = (function () {
         return this;
     };
     Cpu.prototype.cycle = function () {
+        if (this._halted) {
+            return;
+        }
         switch (this.executionState) {
             case 0 /* boot */:
             case 2 /* execute */:
@@ -76166,8 +76170,6 @@ var Cpu = (function () {
                 }
                 break;
             case 1 /* fetch */:
-                if (this._halted)
-                    break;
                 // TODO: interrupt handling
                 this._fetch();
         }
@@ -77423,13 +77425,15 @@ exports.default = Bus;
 },{"../../tools/event/Event":802}],764:[function(require,module,exports){
 "use strict";
 var Config = (function () {
-    function Config(tvMode, enableAudio, randomSeed) {
+    function Config(tvMode, enableAudio, randomSeed, emulatePaddles) {
         if (tvMode === void 0) { tvMode = 0 /* ntsc */; }
         if (enableAudio === void 0) { enableAudio = true; }
         if (randomSeed === void 0) { randomSeed = -1; }
+        if (emulatePaddles === void 0) { emulatePaddles = true; }
         this.tvMode = tvMode;
         this.enableAudio = enableAudio;
         this.randomSeed = randomSeed;
+        this.emulatePaddles = emulatePaddles;
     }
     Config.getClockMhz = function (config) {
         switch (config.tvMode) {
@@ -78707,6 +78711,7 @@ var CartridgeInfo;
             CartridgeType.bankswitch_12k_FA,
             CartridgeType.bankswitch_16k_F6,
             CartridgeType.bankswitch_16k_E7,
+            CartridgeType.bankswitch_FA2,
             CartridgeType.bankswitch_32k_F4,
             CartridgeType.bankswitch_64k_F0,
             CartridgeType.unknown
@@ -79172,7 +79177,6 @@ var FrameManager = (function () {
         this._state = 0 /* waitForVsyncStart */;
         this._vsync = false;
         this._lineInState = 0;
-        this._surfaceFactory = null;
         this._surface = null;
     };
     FrameManager.prototype.nextLine = function () {
@@ -80051,16 +80055,16 @@ var Tia = (function () {
         // Only keep the lowest four bits
         switch (address & 0x0F) {
             case 8 /* inpt0 */:
-                result = this._paddles[0].inpt();
+                result = this._config.emulatePaddles ? this._paddles[0].inpt() : 0;
                 break;
             case 9 /* inpt1 */:
-                result = this._paddles[1].inpt();
+                result = this._config.emulatePaddles ? this._paddles[1].inpt() : 0;
                 break;
             case 10 /* inpt2 */:
-                result = this._paddles[2].inpt();
+                result = this._config.emulatePaddles ? this._paddles[2].inpt() : 0;
                 break;
             case 11 /* inpt3 */:
-                result = this._paddles[3].inpt();
+                result = this._config.emulatePaddles ? this._paddles[3].inpt() : 0;
                 break;
             case 12 /* inpt4 */:
                 result = this._input0.inpt();
@@ -83190,7 +83194,11 @@ Object.freeze(exports.SIGNAL_TYPE);
 exports.Type = {
     changeCartridgeType: 'current-cartridge/change-cartridge-type',
     changeName: 'current-cartridge/change-name',
-    changeTvMode: 'current-cartridge/change-tv-mode'
+    changeTvMode: 'current-cartridge/change-tv-mode',
+    changePaddleEmulation: 'current-cartridge/change-paddle-emulation',
+    changeRngSeedStrategy: 'current-cartridge/change-rng-seed-strateg',
+    changeRngSeed: 'current-cartridge/change-rng-seed',
+    toggleAudioEnabled: 'current-cartridge/toggle-audio-enabled'
 };
 Object.freeze(exports.Type);
 function changeName(name) {
@@ -83214,6 +83222,34 @@ function changeCartridgeType(cartridgeType) {
     };
 }
 exports.changeCartridgeType = changeCartridgeType;
+function changePaddleEmulation(emulatePaddles) {
+    return {
+        type: exports.Type.changePaddleEmulation,
+        emulatePaddles: emulatePaddles
+    };
+}
+exports.changePaddleEmulation = changePaddleEmulation;
+function changeRngSeedStrategy(auto) {
+    return {
+        type: exports.Type.changeRngSeedStrategy,
+        auto: auto
+    };
+}
+exports.changeRngSeedStrategy = changeRngSeedStrategy;
+function changeRngSeed(seed) {
+    return {
+        type: exports.Type.changeRngSeed,
+        seed: seed
+    };
+}
+exports.changeRngSeed = changeRngSeed;
+function toggleAudioEnabled(audioEnabled) {
+    return {
+        type: exports.Type.toggleAudioEnabled,
+        audioEnabled: audioEnabled
+    };
+}
+exports.toggleAudioEnabled = toggleAudioEnabled;
 
 },{}],834:[function(require,module,exports){
 "use strict";
@@ -83539,6 +83575,8 @@ var react_bootstrap_1 = require('react-bootstrap');
 var CartridgeNameInput_1 = require('./CartridgeNameInput');
 var TvModeSelect_1 = require('./TvModeSelect');
 var CartridgeTypeSelect_1 = require('./CartridgeTypeSelect');
+var Switch_1 = require('./Switch');
+var RandomSeedEdit_1 = require('./RandomSeedEdit');
 function CartridgeSettings(props) {
     return React.createElement("div", {className: props.visible ? '' : 'hidden'}, 
         React.createElement(react_bootstrap_1.ControlLabel, null, "Name:"), 
@@ -83546,18 +83584,28 @@ function CartridgeSettings(props) {
         React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "TV mode:"), 
         React.createElement(TvModeSelect_1.default, __assign({}, props)), 
         React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "Cartridge Type:"), 
-        React.createElement(CartridgeTypeSelect_1.default, __assign({}, props)));
+        React.createElement(CartridgeTypeSelect_1.default, __assign({}, props)), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "Emulate Paddles:"), 
+        React.createElement(Switch_1.default, {state: props.emulatePaddles, labelTrue: "yes", labelFalse: "no", onSwitch: props.onTogglePaddleEmulation}), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "RNG seed:"), 
+        React.createElement(RandomSeedEdit_1.default, __assign({}, props)), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "Audio:"), 
+        React.createElement(Switch_1.default, {state: props.audioEnabled, labelTrue: "enabled", labelFalse: "disabled", onSwitch: props.onToggleAudioEnabled}));
 }
 var CartridgeSettings;
 (function (CartridgeSettings) {
     CartridgeSettings.defaultProps = Object.assign({
-        visible: false
-    }, CartridgeNameInput_1.default.defaultProps, TvModeSelect_1.default.defaultProps, CartridgeTypeSelect_1.default.defaultProps);
+        visible: false,
+        emulatePaddles: true,
+        audioEnabled: true,
+        onTogglePaddleEmulation: function () { return undefined; },
+        onToggleAudioEnabled: function () { return undefined; }
+    }, CartridgeNameInput_1.default.defaultProps, TvModeSelect_1.default.defaultProps, CartridgeTypeSelect_1.default.defaultProps, RandomSeedEdit_1.default.defaultProps);
 })(CartridgeSettings || (CartridgeSettings = {}));
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeSettings;
 
-},{"./CartridgeNameInput":840,"./CartridgeTypeSelect":842,"./TvModeSelect":850,"react":734,"react-bootstrap":318}],842:[function(require,module,exports){
+},{"./CartridgeNameInput":840,"./CartridgeTypeSelect":842,"./RandomSeedEdit":848,"./Switch":850,"./TvModeSelect":851,"react":734,"react-bootstrap":318}],842:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -83625,7 +83673,7 @@ var ControlPanel;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ControlPanel;
 
-},{"./Switch":849,"react":734,"react-bootstrap":318}],844:[function(require,module,exports){
+},{"./Switch":850,"react":734,"react-bootstrap":318}],844:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -83868,6 +83916,34 @@ exports.default = PendingChangesModal;
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
+var ValidatingInput_1 = require('./ValidatingInput');
+var Switch_1 = require('./Switch');
+function RandomSeedEdit(props) {
+    return React.createElement("div", null, 
+        React.createElement(Switch_1.default, {state: props.rngSeedAuto, labelTrue: "auto", labelFalse: "fixed", onSwitch: props.onChangeSeedStrategy}), 
+        React.createElement(ValidatingInput_1.default, {value: '' + props.rngSeedValue, readOnly: props.rngSeedAuto, validator: function (value) { return !!value.match(/^(0|([1-9]\d*))$/); }, onChange: function (value) { return props.onChangeSeedValue(parseInt(value, 10)); }, onKeyEnter: props.onKeyEnter, style: {
+            display: props.rngSeedAuto ? 'none' : 'inline-block',
+            marginLeft: '1rem',
+            width: '6rem'
+        }}));
+}
+var RandomSeedEdit;
+(function (RandomSeedEdit) {
+    RandomSeedEdit.defaultProps = {
+        rngSeedAuto: true,
+        rngSeedValue: 0,
+        onChangeSeedStrategy: function () { return undefined; },
+        onChangeSeedValue: function () { return undefined; },
+        onKeyEnter: function () { return undefined; }
+    };
+})(RandomSeedEdit || (RandomSeedEdit = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = RandomSeedEdit;
+
+},{"./Switch":850,"./ValidatingInput":852,"react":734}],849:[function(require,module,exports){
+"use strict";
+// tslint:disable-next-line
+var React = require('react');
 var react_bootstrap_1 = require('react-bootstrap');
 var Switch_1 = require('./Switch');
 function Settings(props) {
@@ -83928,7 +84004,7 @@ var Settings;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Settings;
 
-},{"./Switch":849,"react":734,"react-bootstrap":318}],849:[function(require,module,exports){
+},{"./Switch":850,"react":734,"react-bootstrap":318}],850:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -83950,7 +84026,7 @@ var Switch;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Switch;
 
-},{"react":734,"react-bootstrap":318}],850:[function(require,module,exports){
+},{"react":734,"react-bootstrap":318}],851:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -83972,7 +84048,53 @@ var TvModeSelect;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = TvModeSelect;
 
-},{"../../../../machine/stella/Config":764,"react":734,"react-bootstrap":318}],851:[function(require,module,exports){
+},{"../../../../machine/stella/Config":764,"react":734,"react-bootstrap":318}],852:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+// tslint:disable-next-line
+var React = require('react');
+var react_bootstrap_1 = require('react-bootstrap');
+var ValidatingInput = (function (_super) {
+    __extends(ValidatingInput, _super);
+    function ValidatingInput(props) {
+        _super.call(this, props);
+        this.state = {
+            rawValue: props.value
+        };
+    }
+    ValidatingInput.prototype.render = function () {
+        var _this = this;
+        return React.createElement(react_bootstrap_1.FormControl, {type: "text", className: this.props.validator(this.state.rawValue) ? 'valid' : 'invalid', value: this.state.rawValue, onChange: function (e) { return _this._onChange(e.target.value); }, onKeyDown: function (e) { return e.keyCode === 13 ? _this.props.onKeyEnter() : undefined; }, readOnly: this.props.readOnly, style: this.props.style});
+    };
+    ValidatingInput.prototype.componentWillReceiveProps = function (props) {
+        this.state.rawValue = props.value;
+    };
+    ValidatingInput.prototype._onChange = function (newValue) {
+        this.setState({ rawValue: newValue });
+        if (this.props.validator(newValue)) {
+            this.props.onChange(newValue);
+        }
+    };
+    return ValidatingInput;
+}(React.Component));
+var ValidatingInput;
+(function (ValidatingInput) {
+    ValidatingInput.defaultProps = {
+        value: '',
+        readOnly: false,
+        onChange: function () { return undefined; },
+        onKeyEnter: function () { return undefined; },
+        validator: function () { return true; },
+    };
+})(ValidatingInput || (ValidatingInput = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ValidatingInput;
+
+},{"react":734,"react-bootstrap":318}],853:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84008,7 +84130,7 @@ function App(emulationService) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = App;
 
-},{"./Navbar":857,"react":734}],852:[function(require,module,exports){
+},{"./Navbar":859,"react":734}],854:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var react_router_redux_1 = require('react-router-redux');
@@ -84043,7 +84165,7 @@ var CartridgeControlsContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeControlsContainer;
 
-},{"../actions/emulation":834,"../actions/guiState":835,"../actions/root":836,"../components/CartridgeControls":838,"../state/GuiState":878,"react-redux":488,"react-router-redux":499}],853:[function(require,module,exports){
+},{"../actions/emulation":834,"../actions/guiState":835,"../actions/root":836,"../components/CartridgeControls":838,"../state/GuiState":880,"react-redux":488,"react-router-redux":499}],855:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var CartridgeList_1 = require('../components/CartridgeList');
@@ -84065,7 +84187,7 @@ var CartridgeListContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeListContainer;
 
-},{"../actions/guiState":835,"../actions/root":836,"../components/CartridgeList":839,"react-redux":488}],854:[function(require,module,exports){
+},{"../actions/guiState":835,"../actions/root":836,"../components/CartridgeList":839,"react-redux":488}],856:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84098,7 +84220,7 @@ function CartridgeManager() {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeManager;
 
-},{"./CartridgeControls":852,"./CartridgeList":853,"./CartridgeSettings":855,"./pendingChangesModal":859,"react":734,"react-bootstrap":318}],855:[function(require,module,exports){
+},{"./CartridgeControls":854,"./CartridgeList":855,"./CartridgeSettings":857,"./pendingChangesModal":861,"react":734,"react-bootstrap":318}],857:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var currentCartridge_1 = require('../actions/currentCartridge');
@@ -84111,19 +84233,27 @@ function mapStateToProps(state) {
         name: state.currentCartridge ? state.currentCartridge.name : '',
         tvMode: state.currentCartridge ? state.currentCartridge.tvMode : 0 /* ntsc */,
         cartridgeType: state.currentCartridge ? state.currentCartridge.cartridgeType : CartridgeInfo_1.default.CartridgeType.unknown,
-        visible: !!state.currentCartridge
+        emulatePaddles: state.currentCartridge ? state.currentCartridge.emulatePaddles : true,
+        visible: !!state.currentCartridge,
+        rngSeedAuto: state.currentCartridge ? state.currentCartridge.rngSeedAuto : true,
+        rngSeedValue: state.currentCartridge ? state.currentCartridge.rngSeed : 0,
+        audioEnabled: state.currentCartridge ? state.currentCartridge.audioEnabled : true
     };
 }
 var CartridgeSettingsContainer = react_redux_1.connect(mapStateToProps, {
     onNameChange: currentCartridge_1.changeName,
     onKeyEnter: root_1.saveCurrentCartride,
     onTvModeChange: currentCartridge_1.changeTvMode,
-    onCartridgeTypeChange: currentCartridge_1.changeCartridgeType
+    onCartridgeTypeChange: currentCartridge_1.changeCartridgeType,
+    onTogglePaddleEmulation: currentCartridge_1.changePaddleEmulation,
+    onChangeSeedStrategy: currentCartridge_1.changeRngSeedStrategy,
+    onChangeSeedValue: currentCartridge_1.changeRngSeed,
+    onToggleAudioEnabled: currentCartridge_1.toggleAudioEnabled
 })(CartridgeSettings_1.default);
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeSettingsContainer;
 
-},{"../../../../machine/stella/Config":764,"../../../../machine/stella/cartridge/CartridgeInfo":782,"../actions/currentCartridge":833,"../actions/root":836,"../components/CartridgeSettings":841,"react-redux":488}],856:[function(require,module,exports){
+},{"../../../../machine/stella/Config":764,"../../../../machine/stella/cartridge/CartridgeInfo":782,"../actions/currentCartridge":833,"../actions/root":836,"../components/CartridgeSettings":841,"react-redux":488}],858:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var react_router_redux_1 = require('react-router-redux');
@@ -84155,7 +84285,7 @@ var EmulationContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationContainer;
 
-},{"../actions/emulation":834,"../components/Emulation":844,"../state/GuiState":878,"react-redux":488,"react-router-redux":499}],857:[function(require,module,exports){
+},{"../actions/emulation":834,"../components/Emulation":844,"../state/GuiState":880,"react-redux":488,"react-router-redux":499}],859:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var Navbar_1 = require('../components/Navbar');
@@ -84172,7 +84302,7 @@ var NavbarContainer = react_redux_1.connect(mapStateToProps, {}, null, { pure: f
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = NavbarContainer;
 
-},{"../components/Navbar":846,"../state/GuiState":878,"react-redux":488}],858:[function(require,module,exports){
+},{"../components/Navbar":846,"../state/GuiState":880,"react-redux":488}],860:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var Settings_1 = require('../components/Settings');
@@ -84194,7 +84324,7 @@ var SettingsContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SettingsContainer;
 
-},{"../actions/settings":837,"../components/Settings":848,"react-redux":488}],859:[function(require,module,exports){
+},{"../actions/settings":837,"../components/Settings":849,"react-redux":488}],861:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var guiState_1 = require('../actions/guiState');
@@ -84215,7 +84345,7 @@ function factory(showModal, closeActionEmitter, applyActionEmitter) {
     })(PendingChangesModal_1.default);
 }
 
-},{"../actions/guiState":835,"../actions/root":836,"../components/PendingChangesModal":847,"react-redux":488}],860:[function(require,module,exports){
+},{"../actions/guiState":835,"../actions/root":836,"../components/PendingChangesModal":847,"react-redux":488}],862:[function(require,module,exports){
 "use strict";
 var emulation_1 = require('./actions/emulation');
 function startGamepadDriverDispatcher(driver, store) {
@@ -84224,7 +84354,7 @@ function startGamepadDriverDispatcher(driver, store) {
 }
 exports.startGamepadDriverDispatcher = startGamepadDriverDispatcher;
 
-},{"./actions/emulation":834}],861:[function(require,module,exports){
+},{"./actions/emulation":834}],863:[function(require,module,exports){
 "use strict";
 var EmulationService_1 = require('../service/worker/EmulationService');
 var EmulationService_2 = require('../service/vanilla/EmulationService');
@@ -84275,7 +84405,7 @@ function initGamepad(emulationService, driverManager, store) {
     }
 }
 
-},{"../../driver/Gamepad":815,"../driver/WebAudio":822,"../service/DriverManager":823,"../service/vanilla/EmulationService":826,"../service/worker/EmulationService":830,"./dispatchers":860}],862:[function(require,module,exports){
+},{"../../driver/Gamepad":815,"../driver/WebAudio":822,"../service/DriverManager":823,"../service/vanilla/EmulationService":826,"../service/worker/EmulationService":830,"./dispatchers":862}],864:[function(require,module,exports){
 "use strict";
 var emulation_1 = require('../actions/emulation');
 var Dispatcher = (function () {
@@ -84304,7 +84434,7 @@ var Dispatcher = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Dispatcher;
 
-},{"../actions/emulation":834}],863:[function(require,module,exports){
+},{"../actions/emulation":834}],865:[function(require,module,exports){
 "use strict";
 var react_router_redux_1 = require('react-router-redux');
 var Config_1 = require('../../../../machine/stella/Config');
@@ -84367,14 +84497,15 @@ var EmulationMiddleware = (function () {
         controlPanel.getColorSwitch().toggle(state.tvMode);
     };
     EmulationMiddleware.prototype._createStellaConfig = function (cartridge) {
-        return new Config_1.default(cartridge.tvMode);
+        return new Config_1.default(cartridge.tvMode, cartridge.audioEnabled, cartridge.rngSeedAuto ? -1 : cartridge.rngSeed, cartridge.emulatePaddles);
     };
     return EmulationMiddleware;
 }());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationMiddleware;
 
-},{"../../../../machine/stella/Config":764,"../actions/emulation":834,"react-router-redux":499}],864:[function(require,module,exports){
+},{"../../../../machine/stella/Config":764,"../actions/emulation":834,"react-router-redux":499}],866:[function(require,module,exports){
+(function (process){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84399,7 +84530,9 @@ var Dispatcher_1 = require('./emulation/Dispatcher');
 var middleware_2 = require('./middleware');
 var emulation_1 = require('./emulation');
 var persistenceManager = new Manager_1.default(), emulationMiddleware = new Middleware_1.default();
-var store = redux_1.createStore(root_2.default, new State_1.default(), redux_1.compose(redux_1.applyMiddleware(redux_thunk_1.default, middleware_2.batchMiddleware, middleware_1.create(persistenceManager), emulationMiddleware.getMiddleware(), react_router_redux_1.routerMiddleware(react_router_1.hashHistory)), (window.devToolsExtension ? window.devToolsExtension() : function (x) { return x; })));
+var store = redux_1.createStore(root_2.default, new State_1.default(), redux_1.compose(redux_1.applyMiddleware(redux_thunk_1.default, middleware_2.batchMiddleware, middleware_1.create(persistenceManager), emulationMiddleware.getMiddleware(), react_router_redux_1.routerMiddleware(react_router_1.hashHistory)), ((process.env.NODE_ENV !== 'production' && window.devToolsExtension) ?
+    window.devToolsExtension() :
+    function (x) { return x; })));
 var history = react_router_redux_1.syncHistoryWithStore(react_router_1.hashHistory, store);
 Promise
     .all([
@@ -84426,7 +84559,9 @@ Promise
             React.createElement(react_router_1.Route, {path: "settings", component: Settings_1.default})))
 ), document.getElementById('react-root')); });
 
-},{"./actions/root":836,"./actions/settings":837,"./containers/App":851,"./containers/CartridgeManager":854,"./containers/Emulation":856,"./containers/Settings":858,"./emulation":861,"./emulation/Dispatcher":862,"./emulation/Middleware":863,"./middleware":865,"./persistence/Manager":868,"./persistence/middleware":870,"./reducers/root":874,"./state/State":880,"react":734,"react-dom":485,"react-redux":488,"react-router":532,"react-router-redux":499,"redux":741,"redux-thunk":735}],865:[function(require,module,exports){
+}).call(this,require('_process'))
+
+},{"./actions/root":836,"./actions/settings":837,"./containers/App":853,"./containers/CartridgeManager":856,"./containers/Emulation":858,"./containers/Settings":860,"./emulation":863,"./emulation/Dispatcher":864,"./emulation/Middleware":865,"./middleware":867,"./persistence/Manager":870,"./persistence/middleware":872,"./reducers/root":876,"./state/State":882,"_process":202,"react":734,"react-dom":485,"react-redux":488,"react-router":532,"react-router-redux":499,"redux":741,"redux-thunk":735}],867:[function(require,module,exports){
 "use strict";
 var root_1 = require('./actions/root');
 exports.batchMiddleware = (function (api) { return function (next) { return function (a) {
@@ -84443,7 +84578,7 @@ function dispatchBatchedActions(action, dispatch) {
     return dispatcher(undefined);
 }
 
-},{"./actions/root":836}],866:[function(require,module,exports){
+},{"./actions/root":836}],868:[function(require,module,exports){
 "use strict";
 var Config_1 = require('../../../../machine/stella/Config');
 var CartridgeInfo_1 = require('../../../../machine/stella/cartridge/CartridgeInfo');
@@ -84467,8 +84602,12 @@ function fromState(state, id) {
         name: state.name,
         buffer: state.buffer,
         hash: state.hash,
+        emulatePaddles: state.emulatePaddles,
         tvMode: tvMode,
-        cartridgeType: CartridgeInfo_1.default.CartridgeType[state.cartridgeType]
+        cartridgeType: CartridgeInfo_1.default.CartridgeType[state.cartridgeType],
+        rngSeedAuto: state.rngSeedAuto,
+        rngSeed: state.rngSeed,
+        audioEnabled: state.audioEnabled
     };
     if (typeof (id) !== 'undefined') {
         cartridge.id = id;
@@ -84495,13 +84634,17 @@ function toState(cartridge) {
         name: cartridge.name,
         buffer: cartridge.buffer,
         hash: cartridge.hash,
+        emulatePaddles: cartridge.emulatePaddles,
         tvMode: tvMode,
-        cartridgeType: CartridgeInfo_1.default.CartridgeType[cartridge.cartridgeType]
+        cartridgeType: CartridgeInfo_1.default.CartridgeType[cartridge.cartridgeType],
+        rngSeedAuto: cartridge.rngSeedAuto,
+        rngSeed: cartridge.rngSeed,
+        audioEnabled: cartridge.audioEnabled
     });
 }
 exports.toState = toState;
 
-},{"../../../../machine/stella/Config":764,"../../../../machine/stella/cartridge/CartridgeInfo":782,"../state/Cartridge":876}],867:[function(require,module,exports){
+},{"../../../../machine/stella/Config":764,"../../../../machine/stella/cartridge/CartridgeInfo":782,"../state/Cartridge":878}],869:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84520,13 +84663,40 @@ var Database = (function (_super) {
             cartridge: '++id, name, &hash, buffer, tvMode, cartridgeType',
             settings: 'id'
         });
+        this.version(3).stores({
+            cartridge: '++id, name, &hash, buffer, tvMode, cartridgeType, emulatePaddles',
+            settings: 'id'
+        });
+        this.version(4)
+            .stores({
+            cartridge: '++id, &hash',
+            settings: 'id'
+        })
+            .upgrade(function (transaction) { return transaction
+            .table('cartridge')
+            .each(function (cartridge, c) {
+            var cursor = c;
+            if (typeof (cartridge.emulatePaddles) === 'undefined') {
+                cartridge.emulatePaddles = true;
+            }
+            if (typeof (cartridge.rngSeed) === 'undefined') {
+                cartridge.rngSeed = 0;
+            }
+            if (typeof (cartridge.rngSeedAuto) === 'undefined') {
+                cartridge.rngSeedAuto = true;
+            }
+            if (typeof (cartridge.audioEnabled) === 'undefined') {
+                cartridge.audioEnabled = true;
+            }
+            cursor.update(cartridge);
+        }); });
     }
     return Database;
 }(dexie_1.default));
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Database;
 
-},{"dexie":1}],868:[function(require,module,exports){
+},{"dexie":1}],870:[function(require,module,exports){
 "use strict";
 var Database_1 = require('./Database');
 var Cartridge_1 = require('./Cartridge');
@@ -84580,7 +84750,7 @@ var Manager = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Manager;
 
-},{"./Cartridge":866,"./Database":867,"./Settings":869}],869:[function(require,module,exports){
+},{"./Cartridge":868,"./Database":869,"./Settings":871}],871:[function(require,module,exports){
 "use strict";
 var Settings_1 = require('../state/Settings');
 exports.UNIQUE_ID = 0;
@@ -84599,7 +84769,7 @@ function toState(record) {
 }
 exports.toState = toState;
 
-},{"../state/Settings":879}],870:[function(require,module,exports){
+},{"../state/Settings":881}],872:[function(require,module,exports){
 "use strict";
 var root_1 = require('../actions/root');
 var settings_1 = require('../actions/settings');
@@ -84629,7 +84799,7 @@ function create(manager) {
 }
 exports.create = create;
 
-},{"../actions/root":836,"../actions/settings":837}],871:[function(require,module,exports){
+},{"../actions/root":836,"../actions/settings":837}],873:[function(require,module,exports){
 "use strict";
 var currentCartridge_1 = require('../actions/currentCartridge');
 var Cartridge_1 = require('../state/Cartridge');
@@ -84641,6 +84811,14 @@ function reduce(state, action) {
             return changeName(state, action);
         case currentCartridge_1.Type.changeTvMode:
             return changeTvMode(state, action);
+        case currentCartridge_1.Type.changePaddleEmulation:
+            return changePaddleEmulation(state, action);
+        case currentCartridge_1.Type.changeRngSeedStrategy:
+            return changeRngSeedStrategy(state, action);
+        case currentCartridge_1.Type.changeRngSeed:
+            return changeRngSeed(state, action);
+        case currentCartridge_1.Type.toggleAudioEnabled:
+            return toggleAudioEnabled(state, action);
         default:
             return state;
     }
@@ -84659,8 +84837,24 @@ function changeCartridgeType(state, action) {
     if (state === void 0) { state = new Cartridge_1.default(); }
     return new Cartridge_1.default({ cartridgeType: action.cartridgeType }, state);
 }
+function changePaddleEmulation(state, action) {
+    if (state === void 0) { state = new Cartridge_1.default(); }
+    return new Cartridge_1.default({ emulatePaddles: action.emulatePaddles }, state);
+}
+function changeRngSeedStrategy(state, action) {
+    if (state === void 0) { state = new Cartridge_1.default(); }
+    return new Cartridge_1.default({ rngSeedAuto: action.auto }, state);
+}
+function changeRngSeed(state, action) {
+    if (state === void 0) { state = new Cartridge_1.default(); }
+    return new Cartridge_1.default({ rngSeed: action.seed }, state);
+}
+function toggleAudioEnabled(state, action) {
+    if (state === void 0) { state = new Cartridge_1.default(); }
+    return new Cartridge_1.default({ audioEnabled: action.audioEnabled }, state);
+}
 
-},{"../actions/currentCartridge":833,"../state/Cartridge":876}],872:[function(require,module,exports){
+},{"../actions/currentCartridge":833,"../state/Cartridge":878}],874:[function(require,module,exports){
 "use strict";
 var Emulation_1 = require('../state/Emulation');
 var emulation_1 = require('../actions/emulation');
@@ -84715,7 +84909,7 @@ function setEnforceRateLimit(state, action) {
     return new Emulation_1.default({ enforceRateLimit: action.enforce }, state);
 }
 
-},{"../actions/emulation":834,"../state/Emulation":877}],873:[function(require,module,exports){
+},{"../actions/emulation":834,"../state/Emulation":879}],875:[function(require,module,exports){
 "use strict";
 var guiState_1 = require('../actions/guiState');
 var GuiState_1 = require('../state/GuiState');
@@ -84768,7 +84962,7 @@ function loadClosePendingChangesModal(state) {
     }, state);
 }
 
-},{"../actions/guiState":835,"../state/GuiState":878}],874:[function(require,module,exports){
+},{"../actions/guiState":835,"../state/GuiState":880}],876:[function(require,module,exports){
 "use strict";
 var react_router_redux_1 = require('react-router-redux');
 var root_1 = require('../actions/root');
@@ -84860,7 +85054,7 @@ function saveCurrentCartride(state) {
     return new State_1.default({ cartridges: cartridges }, state);
 }
 
-},{"../../../../machine/stella/Config":764,"../../../../machine/stella/cartridge/CartridgeDetector":771,"../../../../tools/hash/md5":803,"../actions/root":836,"../state/Cartridge":876,"../state/State":880,"./currentCartridge":871,"./emulation":872,"./guiState":873,"./settings":875,"react-router-redux":499}],875:[function(require,module,exports){
+},{"../../../../machine/stella/Config":764,"../../../../machine/stella/cartridge/CartridgeDetector":771,"../../../../tools/hash/md5":803,"../actions/root":836,"../state/Cartridge":878,"../state/State":882,"./currentCartridge":873,"./emulation":874,"./guiState":875,"./settings":877,"react-router-redux":499}],877:[function(require,module,exports){
 "use strict";
 var Settings_1 = require('../state/Settings');
 var settings_1 = require('../actions/settings');
@@ -84898,7 +85092,7 @@ function setUseWorker(state, action) {
     return new Settings_1.default({ useWorker: action.value }, state);
 }
 
-},{"../actions/settings":837,"../state/Settings":879}],876:[function(require,module,exports){
+},{"../actions/settings":837,"../state/Settings":881}],878:[function(require,module,exports){
 "use strict";
 var Config_1 = require('../../../../machine/stella/Config');
 var CartridgeInfo_1 = require('../../../../machine/stella/cartridge/CartridgeInfo');
@@ -84909,6 +85103,10 @@ var Cartridge = (function () {
         this.hash = '';
         this.tvMode = 0 /* ntsc */;
         this.cartridgeType = CartridgeInfo_1.default.CartridgeType.unknown;
+        this.emulatePaddles = true;
+        this.rngSeedAuto = true;
+        this.rngSeed = 0;
+        this.audioEnabled = true;
         return Object.assign(this, old, changes);
     }
     Cartridge.prototype.equals = function (other) {
@@ -84916,15 +85114,18 @@ var Cartridge = (function () {
             this.name === other.name &&
             this.hash === other.hash &&
             this.tvMode === other.tvMode &&
-            this.cartridgeType === other.cartridgeType);
+            this.cartridgeType === other.cartridgeType &&
+            this.emulatePaddles === other.emulatePaddles &&
+            this.rngSeed === other.rngSeed &&
+            this.rngSeedAuto === other.rngSeedAuto &&
+            this.audioEnabled === other.audioEnabled);
     };
-    ;
     return Cartridge;
 }());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cartridge;
 
-},{"../../../../machine/stella/Config":764,"../../../../machine/stella/cartridge/CartridgeInfo":782}],877:[function(require,module,exports){
+},{"../../../../machine/stella/Config":764,"../../../../machine/stella/cartridge/CartridgeInfo":782}],879:[function(require,module,exports){
 "use strict";
 var EmulationServiceInterface_1 = require('../../service/EmulationServiceInterface');
 var EmulationState = (function () {
@@ -84944,7 +85145,7 @@ var EmulationState = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationState;
 
-},{"../../service/EmulationServiceInterface":824}],878:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":824}],880:[function(require,module,exports){
 "use strict";
 var GuiState = (function () {
     function GuiState(changes, old) {
@@ -84967,7 +85168,7 @@ var GuiState;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = GuiState;
 
-},{}],879:[function(require,module,exports){
+},{}],881:[function(require,module,exports){
 "use strict";
 var Settings = (function () {
     function Settings(changes, old) {
@@ -84988,7 +85189,7 @@ var Settings = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Settings;
 
-},{}],880:[function(require,module,exports){
+},{}],882:[function(require,module,exports){
 "use strict";
 var State = (function () {
     function State(changes, old) {
@@ -85001,5 +85202,5 @@ var State = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = State;
 
-},{}]},{},[864])
+},{}]},{},[866])
 //# sourceMappingURL=stellerator.js.map

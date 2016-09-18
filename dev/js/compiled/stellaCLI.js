@@ -26568,7 +26568,9 @@ var SystemConfigSetupProvider = (function () {
         this._config = _config;
         this._commands = {
             'tv-mode': this._setupVideo.bind(this),
-            'audio': this._setupAudio.bind(this)
+            'audio': this._setupAudio.bind(this),
+            'paddles': this._setupPaddles.bind(this),
+            'seed': this._setRandomSeed.bind(this)
         };
     }
     SystemConfigSetupProvider.prototype.getCommands = function () {
@@ -26595,10 +26597,21 @@ var SystemConfigSetupProvider = (function () {
     };
     SystemConfigSetupProvider.prototype._setupAudio = function (args) {
         if (args && args.length !== 0) {
-            var arg = args[0].toLowerCase();
-            this._config.enableAudio = (arg === 'yes' || arg === 'true' || arg === '1');
+            this._config.enableAudio = this._isArgTruthy(args[0]);
         }
         return "audio " + (this._config.enableAudio ? 'enabled' : 'disabled');
+    };
+    SystemConfigSetupProvider.prototype._setupPaddles = function (args) {
+        if (args && args.length !== 0) {
+            this._config.emulatePaddles = (this._isArgTruthy(args[0]));
+        }
+        return "paddle emulation: " + (this._config.emulatePaddles ? 'enabled' : 'disabled');
+    };
+    SystemConfigSetupProvider.prototype._setRandomSeed = function (args) {
+        if (args && args.length !== 0) {
+            this._config.randomSeed = parseInt(args[0], 10);
+        }
+        return "random seed: " + this._config.randomSeed;
     };
     SystemConfigSetupProvider.prototype._humanReadableTvMode = function (mode) {
         switch (mode) {
@@ -26611,6 +26624,10 @@ var SystemConfigSetupProvider = (function () {
             default:
                 throw new Error("invalid TV mode " + mode);
         }
+    };
+    SystemConfigSetupProvider.prototype._isArgTruthy = function (arg) {
+        var normalizedArg = arg.toLocaleLowerCase();
+        return normalizedArg === 'yes' || normalizedArg === 'true' || normalizedArg === '1';
     };
     return SystemConfigSetupProvider;
 }());
@@ -27289,11 +27306,12 @@ function opAlr(state, bus, operand) {
         (old & 1 /* c */);
 }
 function opAxs(state, bus, operand) {
-    state.x = ((state.a & state.x) + (~operand + 1)) & 0xFF;
+    var value = (state.a & state.x) + (~operand & 0xFF) + 1;
+    state.x = value & 0xFF;
     state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
         (state.x & 0x80) |
         ((state.x & 0xFF) ? 0 : 2 /* z */) |
-        (state.x >>> 8);
+        (value >>> 8);
 }
 function opDcp(state, bus, operand) {
     var value = (bus.read(operand) + 0xFF) & 0xFF;
@@ -27377,6 +27395,9 @@ var Cpu = (function () {
         return this;
     };
     Cpu.prototype.cycle = function () {
+        if (this._halted) {
+            return;
+        }
         switch (this.executionState) {
             case 0 /* boot */:
             case 2 /* execute */:
@@ -27386,8 +27407,6 @@ var Cpu = (function () {
                 }
                 break;
             case 1 /* fetch */:
-                if (this._halted)
-                    break;
                 // TODO: interrupt handling
                 this._fetch();
         }
@@ -28710,13 +28729,15 @@ exports.default = Bus;
 },{"../../tools/event/Event":297}],257:[function(require,module,exports){
 "use strict";
 var Config = (function () {
-    function Config(tvMode, enableAudio, randomSeed) {
+    function Config(tvMode, enableAudio, randomSeed, emulatePaddles) {
         if (tvMode === void 0) { tvMode = 0 /* ntsc */; }
         if (enableAudio === void 0) { enableAudio = true; }
         if (randomSeed === void 0) { randomSeed = -1; }
+        if (emulatePaddles === void 0) { emulatePaddles = true; }
         this.tvMode = tvMode;
         this.enableAudio = enableAudio;
         this.randomSeed = randomSeed;
+        this.emulatePaddles = emulatePaddles;
     }
     Config.getClockMhz = function (config) {
         switch (config.tvMode) {
@@ -29994,6 +30015,7 @@ var CartridgeInfo;
             CartridgeType.bankswitch_12k_FA,
             CartridgeType.bankswitch_16k_F6,
             CartridgeType.bankswitch_16k_E7,
+            CartridgeType.bankswitch_FA2,
             CartridgeType.bankswitch_32k_F4,
             CartridgeType.bankswitch_64k_F0,
             CartridgeType.unknown
@@ -30459,7 +30481,6 @@ var FrameManager = (function () {
         this._state = 0 /* waitForVsyncStart */;
         this._vsync = false;
         this._lineInState = 0;
-        this._surfaceFactory = null;
         this._surface = null;
     };
     FrameManager.prototype.nextLine = function () {
@@ -31338,16 +31359,16 @@ var Tia = (function () {
         // Only keep the lowest four bits
         switch (address & 0x0F) {
             case 8 /* inpt0 */:
-                result = this._paddles[0].inpt();
+                result = this._config.emulatePaddles ? this._paddles[0].inpt() : 0;
                 break;
             case 9 /* inpt1 */:
-                result = this._paddles[1].inpt();
+                result = this._config.emulatePaddles ? this._paddles[1].inpt() : 0;
                 break;
             case 10 /* inpt2 */:
-                result = this._paddles[2].inpt();
+                result = this._config.emulatePaddles ? this._paddles[2].inpt() : 0;
                 break;
             case 11 /* inpt3 */:
-                result = this._paddles[3].inpt();
+                result = this._config.emulatePaddles ? this._paddles[3].inpt() : 0;
                 break;
             case 12 /* inpt4 */:
                 result = this._input0.inpt();
@@ -33364,6 +33385,12 @@ function run(_a) {
         }
         if (pageConfig.cartridge) {
             cli.pushInput("load-cartridge " + pageConfig.cartridge + "\n");
+        }
+        if (pageConfig.paddles) {
+            cli.pushInput("paddles " + pageConfig.paddles + "\n");
+        }
+        if (pageConfig.seed) {
+            cli.pushInput("seed " + pageConfig.seed + "\n");
         }
     }
 }

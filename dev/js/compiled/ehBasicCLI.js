@@ -4686,11 +4686,12 @@ function opAlr(state, bus, operand) {
         (old & 1 /* c */);
 }
 function opAxs(state, bus, operand) {
-    state.x = ((state.a & state.x) + (~operand + 1)) & 0xFF;
+    var value = (state.a & state.x) + (~operand & 0xFF) + 1;
+    state.x = value & 0xFF;
     state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
         (state.x & 0x80) |
         ((state.x & 0xFF) ? 0 : 2 /* z */) |
-        (state.x >>> 8);
+        (value >>> 8);
 }
 function opDcp(state, bus, operand) {
     var value = (bus.read(operand) + 0xFF) & 0xFF;
@@ -4774,6 +4775,9 @@ var Cpu = (function () {
         return this;
     };
     Cpu.prototype.cycle = function () {
+        if (this._halted) {
+            return;
+        }
         switch (this.executionState) {
             case 0 /* boot */:
             case 2 /* execute */:
@@ -4783,8 +4787,6 @@ var Cpu = (function () {
                 }
                 break;
             case 1 /* fetch */:
-                if (this._halted)
-                    break;
                 // TODO: interrupt handling
                 this._fetch();
         }
