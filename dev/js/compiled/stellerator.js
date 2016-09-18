@@ -83256,7 +83256,9 @@ exports.toggleAudioEnabled = toggleAudioEnabled;
 exports.Type = {
     start: 'emulation/start',
     pause: 'emulation/pause',
+    userPause: 'emulation/user-pause',
     resume: 'emulation/resume',
+    reset: 'emulation/reset',
     stateChange: 'emulation/stateChange',
     changeDifficulty: 'emulation/changeDifficulty',
     changeTvMode: 'emulation/changeTvMode',
@@ -83271,6 +83273,12 @@ function pause() {
     };
 }
 exports.pause = pause;
+function userPause() {
+    return {
+        type: exports.Type.userPause
+    };
+}
+exports.userPause = userPause;
 function start(hash) {
     if (hash === void 0) { hash = ''; }
     return {
@@ -83285,6 +83293,12 @@ function resume() {
     };
 }
 exports.resume = resume;
+function reset() {
+    return {
+        type: exports.Type.reset
+    };
+}
+exports.reset = reset;
 function stateChange(newState) {
     return {
         type: exports.Type.stateChange,
@@ -83488,193 +83502,6 @@ exports.isSettingsChange = isSettingsChange;
 
 },{}],838:[function(require,module,exports){
 "use strict";
-// tslint:disable-next-line
-var React = require('react');
-var react_bootstrap_1 = require('react-bootstrap');
-var FileUploadButton_1 = require('./FileUploadButton');
-function CartridgeControls(props) {
-    return React.createElement("div", {className: "cartridge-controls"}, 
-        React.createElement(FileUploadButton_1.default, {onFilesSelected: function (files) { return files.length === 1 ? props.onCartridgeUploaded(files[0], props.changes) : undefined; }}, "Load"), 
-        React.createElement(react_bootstrap_1.Button, {disabled: !props.active, onClick: props.onDelete}, "Delete"), 
-        React.createElement(react_bootstrap_1.Button, {disabled: !props.active || !props.changes, onClick: props.onSave}, "Save"), 
-        React.createElement(react_bootstrap_1.Button, {disabled: !props.active, onClick: props.onRun}, props.changes ? 'Save & Run' : 'Run'));
-}
-var CartridgeControls;
-(function (CartridgeControls) {
-    CartridgeControls.defaultProps = {
-        active: false,
-        changes: false,
-        onDelete: function () { return undefined; },
-        onSave: function () { return undefined; },
-        onRun: function () { return undefined; },
-        onCartridgeUploaded: function () { return undefined; }
-    };
-})(CartridgeControls || (CartridgeControls = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = CartridgeControls;
-
-},{"./FileUploadButton":845,"react":734,"react-bootstrap":318}],839:[function(require,module,exports){
-"use strict";
-// tslint:disable-next-line
-var React = require('react');
-function CartridgeList(props) {
-    return React.createElement("div", {className: "cartridge-list border-box"}, 
-        React.createElement("ul", null, Object
-            .keys(props.cartridges)
-            .map(function (key) { return props.cartridges[key]; })
-            .sort(function (c1, c2) { return c1.name === c2.name ? 0 : ((c1.name < c2.name) ? -1 : 1); })
-            .map(function (cartridge) {
-            return React.createElement("li", {onClick: function () { return props.onClick(cartridge.hash, props.pendingChanges); }, className: props.selectedKey === cartridge.hash ? 'selected' : '', key: cartridge.hash}, cartridge.name);
-        }))
-    );
-}
-var CartridgeList;
-(function (CartridgeList) {
-    CartridgeList.defaultProps = {
-        cartridges: {},
-        selectedKey: '',
-        pendingChanges: false,
-        onClick: function () { return undefined; }
-    };
-})(CartridgeList || (CartridgeList = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = CartridgeList;
-
-},{"react":734}],840:[function(require,module,exports){
-"use strict";
-// tslint:disable-next-line
-var React = require('react');
-var react_bootstrap_1 = require('react-bootstrap');
-function CartridgeNameInput(props) {
-    return React.createElement(react_bootstrap_1.FormControl, {type: "text", value: props.name, onChange: function (e) { return props.onNameChange(e.target.value); }, onKeyDown: function (e) { return e.keyCode === 13 ? props.onKeyEnter() : undefined; }});
-}
-var CartridgeNameInput;
-(function (CartridgeNameInput) {
-    CartridgeNameInput.defaultProps = {
-        name: '',
-        onNameChange: function () { return undefined; },
-        onKeyEnter: function () { return undefined; },
-    };
-})(CartridgeNameInput || (CartridgeNameInput = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = CartridgeNameInput;
-
-},{"react":734,"react-bootstrap":318}],841:[function(require,module,exports){
-"use strict";
-var __assign = (this && this.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
-};
-// tslint:disable-next-line
-var React = require('react');
-var react_bootstrap_1 = require('react-bootstrap');
-var CartridgeNameInput_1 = require('./CartridgeNameInput');
-var TvModeSelect_1 = require('./TvModeSelect');
-var CartridgeTypeSelect_1 = require('./CartridgeTypeSelect');
-var Switch_1 = require('./Switch');
-var RandomSeedEdit_1 = require('./RandomSeedEdit');
-function CartridgeSettings(props) {
-    return React.createElement("div", {className: props.visible ? '' : 'hidden'}, 
-        React.createElement(react_bootstrap_1.ControlLabel, null, "Name:"), 
-        React.createElement(CartridgeNameInput_1.default, __assign({}, props)), 
-        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "TV mode:"), 
-        React.createElement(TvModeSelect_1.default, __assign({}, props)), 
-        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "Cartridge Type:"), 
-        React.createElement(CartridgeTypeSelect_1.default, __assign({}, props)), 
-        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "Emulate Paddles:"), 
-        React.createElement(Switch_1.default, {state: props.emulatePaddles, labelTrue: "yes", labelFalse: "no", onSwitch: props.onTogglePaddleEmulation}), 
-        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "RNG seed:"), 
-        React.createElement(RandomSeedEdit_1.default, __assign({}, props)), 
-        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "Audio:"), 
-        React.createElement(Switch_1.default, {state: props.audioEnabled, labelTrue: "enabled", labelFalse: "disabled", onSwitch: props.onToggleAudioEnabled}));
-}
-var CartridgeSettings;
-(function (CartridgeSettings) {
-    CartridgeSettings.defaultProps = Object.assign({
-        visible: false,
-        emulatePaddles: true,
-        audioEnabled: true,
-        onTogglePaddleEmulation: function () { return undefined; },
-        onToggleAudioEnabled: function () { return undefined; }
-    }, CartridgeNameInput_1.default.defaultProps, TvModeSelect_1.default.defaultProps, CartridgeTypeSelect_1.default.defaultProps, RandomSeedEdit_1.default.defaultProps);
-})(CartridgeSettings || (CartridgeSettings = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = CartridgeSettings;
-
-},{"./CartridgeNameInput":840,"./CartridgeTypeSelect":842,"./RandomSeedEdit":848,"./Switch":850,"./TvModeSelect":851,"react":734,"react-bootstrap":318}],842:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-// tslint:disable-next-line
-var React = require('react');
-var CartridgeInfo_1 = require('../../../../machine/stella/cartridge/CartridgeInfo');
-var react_bootstrap_1 = require('react-bootstrap');
-var CartridgeTypeSelect = (function (_super) {
-    __extends(CartridgeTypeSelect, _super);
-    function CartridgeTypeSelect() {
-        _super.apply(this, arguments);
-        this.state = {
-            id: "cartridge_type_select_" + Math.floor(Math.random() * 10000000)
-        };
-    }
-    CartridgeTypeSelect.prototype.render = function () {
-        var _this = this;
-        return React.createElement(react_bootstrap_1.DropdownButton, {id: this.state.id, title: CartridgeInfo_1.default.describeCartridgeType(this.props.cartridgeType), onSelect: this.props.onCartridgeTypeChange}, CartridgeInfo_1.default.getAllTypes().map(function (cartridgeType) {
-            return React.createElement(react_bootstrap_1.MenuItem, {eventKey: cartridgeType, active: cartridgeType === _this.props.cartridgeType, key: cartridgeType}, CartridgeInfo_1.default.describeCartridgeType(cartridgeType));
-        }));
-    };
-    CartridgeTypeSelect.defaultProps = {
-        cartridgeType: CartridgeInfo_1.default.CartridgeType.unknown,
-        onCartridgeTypeChange: function () { return undefined; }
-    };
-    return CartridgeTypeSelect;
-}(React.Component));
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = CartridgeTypeSelect;
-
-},{"../../../../machine/stella/cartridge/CartridgeInfo":782,"react":734,"react-bootstrap":318}],843:[function(require,module,exports){
-"use strict";
-// tslint:disable-next-line
-var React = require('react');
-var react_bootstrap_1 = require('react-bootstrap');
-var Switch_1 = require('./Switch');
-function ControlPanel(props) {
-    return React.createElement("div", {style: props.style, className: "emulation-control-panel"}, 
-        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block' }}, "Difficulty Left"), 
-        React.createElement(Switch_1.default, {labelTrue: "Amateur / B", labelFalse: "Pro / A", state: props.difficultyPlayer0, onSwitch: props.onSwitchDifficultyPlayer0}), 
-        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', paddingTop: '1rem' }}, "Difficulty Right"), 
-        React.createElement(Switch_1.default, {labelTrue: "Amateur / B", labelFalse: "Pro / A", state: props.difficultyPlayer1, onSwitch: props.onSwitchDifficultyPlayer1}), 
-        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', paddingTop: '1rem' }}, "TV Mode"), 
-        React.createElement(Switch_1.default, {labelTrue: "B/W", labelFalse: "Color", state: props.tvModeSwitch, onSwitch: props.onSwitchTvMode}), 
-        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', paddingTop: '1rem' }}, "Limit frame rate"), 
-        React.createElement(Switch_1.default, {labelTrue: "yes", labelFalse: "no", state: props.enforceRateLimit, onSwitch: props.onEnforceRateLimitChange}));
-}
-var ControlPanel;
-(function (ControlPanel) {
-    ControlPanel.defaultProps = {
-        difficultyPlayer0: true,
-        difficultyPlayer1: true,
-        tvModeSwitch: false,
-        enforceRateLimit: true,
-        style: {},
-        onSwitchDifficultyPlayer0: function () { return undefined; },
-        onSwitchDifficultyPlayer1: function () { return undefined; },
-        onSwitchTvMode: function () { return undefined; },
-        onEnforceRateLimitChange: function () { return undefined; }
-    };
-})(ControlPanel || (ControlPanel = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = ControlPanel;
-
-},{"./Switch":850,"react":734,"react-bootstrap":318}],844:[function(require,module,exports){
-"use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -83691,7 +83518,7 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
 // tslint:disable-next-line
 var React = require('react');
 var react_bootstrap_1 = require('react-bootstrap');
-var ControlPanel_1 = require('./ControlPanel');
+var ControlPanel_1 = require('./emulation/ControlPanel');
 var EmulationServiceInterface_1 = require('../../service/EmulationServiceInterface');
 var DriverManager_1 = require('../../service/DriverManager');
 var SimpleCanvasVideo_1 = require('../../../driver/SimpleCanvasVideo');
@@ -83711,7 +83538,8 @@ var Emulation = (function (_super) {
         if (!this.props.enabled) {
             return this.props.navigateAway();
         }
-        if (this.context.emulationService.getState() === EmulationServiceInterface_1.default.State.paused) {
+        if (this.context.emulationService.getState() === EmulationServiceInterface_1.default.State.paused &&
+            !this.props.pausedByUser) {
             this.props.resumeEmulation();
         }
     };
@@ -83767,7 +83595,7 @@ var Emulation = (function (_super) {
                     React.createElement("div", {className: "emulation-viewport error-display " + (this._emulationError() ? '' : 'hidden')}, this._errorMessage()), 
                     React.createElement("canvas", {className: "emulation-viewport " + (this._emulationError() ? 'hidden' : ''), width: this.props.initialViewportWidth, height: this.props.initialViewportHeight, style: { imageRendering: this.props.smoothScaling ? 'auto' : 'pixelated' }, ref: function (elt) { return _this._canvasElt = elt; }})), 
                 React.createElement(react_bootstrap_1.Col, {md: 5}, 
-                    React.createElement(ControlPanel_1.default, __assign({}, this.props))
+                    React.createElement(ControlPanel_1.default, __assign({}, this.props, {onReset: this.props.resetEmulation, onPause: this.props.userPauseEmulation, onResume: this.props.resumeEmulation}))
                 )));
     };
     Emulation.prototype._emulationError = function () {
@@ -83785,9 +83613,12 @@ var Emulation = (function (_super) {
         webGlRendering: true,
         gamma: 1,
         emulationState: EmulationServiceInterface_1.default.State.stopped,
+        pausedByUser: false,
         navigateAway: function () { return undefined; },
         pauseEmulation: function () { return undefined; },
-        resumeEmulation: function () { return undefined; }
+        userPauseEmulation: function () { return undefined; },
+        resumeEmulation: function () { return undefined; },
+        resetEmulation: function () { return undefined; }
     }, ControlPanel_1.default.defaultProps);
     Emulation.contextTypes = {
         emulationService: React.PropTypes.object
@@ -83797,7 +83628,7 @@ var Emulation = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Emulation;
 
-},{"../../../driver/FullscreenVideo":814,"../../../driver/MouseAsPaddle":816,"../../../driver/SimpleCanvasVideo":817,"../../../driver/webgl/WebglVideo":820,"../../driver/KeyboardIO":821,"../../service/DriverManager":823,"../../service/EmulationServiceInterface":824,"./ControlPanel":843,"react":734,"react-bootstrap":318}],845:[function(require,module,exports){
+},{"../../../driver/FullscreenVideo":814,"../../../driver/MouseAsPaddle":816,"../../../driver/SimpleCanvasVideo":817,"../../../driver/webgl/WebglVideo":820,"../../driver/KeyboardIO":821,"../../service/DriverManager":823,"../../service/EmulationServiceInterface":824,"./emulation/ControlPanel":852,"react":734,"react-bootstrap":318}],839:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -83832,7 +83663,7 @@ var FileUploadButton;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FileUploadButton;
 
-},{"react":734}],846:[function(require,module,exports){
+},{"react":734}],840:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -83884,7 +83715,7 @@ var Navbar;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Navbar;
 
-},{"../../service/EmulationServiceInterface":824,"react":734,"react-bootstrap":318,"react-router-bootstrap":497}],847:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":824,"react":734,"react-bootstrap":318,"react-router-bootstrap":497}],841:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -83912,35 +83743,7 @@ var PendingChangesModal;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PendingChangesModal;
 
-},{"react":734,"react-bootstrap":318}],848:[function(require,module,exports){
-"use strict";
-// tslint:disable-next-line
-var React = require('react');
-var ValidatingInput_1 = require('./ValidatingInput');
-var Switch_1 = require('./Switch');
-function RandomSeedEdit(props) {
-    return React.createElement("div", null, 
-        React.createElement(Switch_1.default, {state: props.rngSeedAuto, labelTrue: "auto", labelFalse: "fixed", onSwitch: props.onChangeSeedStrategy}), 
-        React.createElement(ValidatingInput_1.default, {value: '' + props.rngSeedValue, readOnly: props.rngSeedAuto, validator: function (value) { return !!value.match(/^(0|([1-9]\d*))$/); }, onChange: function (value) { return props.onChangeSeedValue(parseInt(value, 10)); }, onKeyEnter: props.onKeyEnter, style: {
-            display: props.rngSeedAuto ? 'none' : 'inline-block',
-            marginLeft: '1rem',
-            width: '6rem'
-        }}));
-}
-var RandomSeedEdit;
-(function (RandomSeedEdit) {
-    RandomSeedEdit.defaultProps = {
-        rngSeedAuto: true,
-        rngSeedValue: 0,
-        onChangeSeedStrategy: function () { return undefined; },
-        onChangeSeedValue: function () { return undefined; },
-        onKeyEnter: function () { return undefined; }
-    };
-})(RandomSeedEdit || (RandomSeedEdit = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = RandomSeedEdit;
-
-},{"./Switch":850,"./ValidatingInput":852,"react":734}],849:[function(require,module,exports){
+},{"react":734,"react-bootstrap":318}],842:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84004,7 +83807,7 @@ var Settings;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Settings;
 
-},{"./Switch":850,"react":734,"react-bootstrap":318}],850:[function(require,module,exports){
+},{"./Switch":843,"react":734,"react-bootstrap":318}],843:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84026,29 +83829,7 @@ var Switch;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Switch;
 
-},{"react":734,"react-bootstrap":318}],851:[function(require,module,exports){
-"use strict";
-// tslint:disable-next-line
-var React = require('react');
-var react_bootstrap_1 = require('react-bootstrap');
-var Config_1 = require('../../../../machine/stella/Config');
-function TvModeSelect(props) {
-    return React.createElement(react_bootstrap_1.ButtonGroup, null, 
-        React.createElement(react_bootstrap_1.Button, {active: props.tvMode === 0 /* ntsc */, onClick: function () { return props.onTvModeChange(0 /* ntsc */); }}, "NTSC"), 
-        React.createElement(react_bootstrap_1.Button, {active: props.tvMode === 1 /* pal */, onClick: function () { return props.onTvModeChange(1 /* pal */); }}, "PAL"), 
-        React.createElement(react_bootstrap_1.Button, {active: props.tvMode === 2 /* secam */, onClick: function () { return props.onTvModeChange(2 /* secam */); }}, "SECAM"));
-}
-var TvModeSelect;
-(function (TvModeSelect) {
-    TvModeSelect.defaultProps = {
-        tvMode: 0 /* ntsc */,
-        onTvModeChange: function () { return undefined; }
-    };
-})(TvModeSelect || (TvModeSelect = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = TvModeSelect;
-
-},{"../../../../machine/stella/Config":764,"react":734,"react-bootstrap":318}],852:[function(require,module,exports){
+},{"react":734,"react-bootstrap":318}],844:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84094,7 +83875,255 @@ var ValidatingInput;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ValidatingInput;
 
-},{"react":734,"react-bootstrap":318}],853:[function(require,module,exports){
+},{"react":734,"react-bootstrap":318}],845:[function(require,module,exports){
+"use strict";
+// tslint:disable-next-line
+var React = require('react');
+var react_bootstrap_1 = require('react-bootstrap');
+var FileUploadButton_1 = require('../FileUploadButton');
+function CartridgeControls(props) {
+    return React.createElement("div", {className: "cartridge-controls"}, 
+        React.createElement(FileUploadButton_1.default, {onFilesSelected: function (files) { return files.length === 1 ? props.onCartridgeUploaded(files[0], props.changes) : undefined; }}, "Load"), 
+        React.createElement(react_bootstrap_1.Button, {disabled: !props.active, onClick: props.onDelete}, "Delete"), 
+        React.createElement(react_bootstrap_1.Button, {disabled: !props.active || !props.changes, onClick: props.onSave}, "Save"), 
+        React.createElement(react_bootstrap_1.Button, {disabled: !props.active, onClick: props.onRun}, props.changes ? 'Save & Run' : 'Run'));
+}
+var CartridgeControls;
+(function (CartridgeControls) {
+    CartridgeControls.defaultProps = {
+        active: false,
+        changes: false,
+        onDelete: function () { return undefined; },
+        onSave: function () { return undefined; },
+        onRun: function () { return undefined; },
+        onCartridgeUploaded: function () { return undefined; }
+    };
+})(CartridgeControls || (CartridgeControls = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = CartridgeControls;
+
+},{"../FileUploadButton":839,"react":734,"react-bootstrap":318}],846:[function(require,module,exports){
+"use strict";
+// tslint:disable-next-line
+var React = require('react');
+function CartridgeList(props) {
+    return React.createElement("div", {className: "cartridge-list border-box"}, 
+        React.createElement("ul", null, Object
+            .keys(props.cartridges)
+            .map(function (key) { return props.cartridges[key]; })
+            .sort(function (c1, c2) { return c1.name === c2.name ? 0 : ((c1.name < c2.name) ? -1 : 1); })
+            .map(function (cartridge) {
+            return React.createElement("li", {onClick: function () { return props.onClick(cartridge.hash, props.pendingChanges); }, className: props.selectedKey === cartridge.hash ? 'selected' : '', key: cartridge.hash}, cartridge.name);
+        }))
+    );
+}
+var CartridgeList;
+(function (CartridgeList) {
+    CartridgeList.defaultProps = {
+        cartridges: {},
+        selectedKey: '',
+        pendingChanges: false,
+        onClick: function () { return undefined; }
+    };
+})(CartridgeList || (CartridgeList = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = CartridgeList;
+
+},{"react":734}],847:[function(require,module,exports){
+"use strict";
+// tslint:disable-next-line
+var React = require('react');
+var react_bootstrap_1 = require('react-bootstrap');
+function CartridgeNameInput(props) {
+    return React.createElement(react_bootstrap_1.FormControl, {type: "text", value: props.name, onChange: function (e) { return props.onNameChange(e.target.value); }, onKeyDown: function (e) { return e.keyCode === 13 ? props.onKeyEnter() : undefined; }});
+}
+var CartridgeNameInput;
+(function (CartridgeNameInput) {
+    CartridgeNameInput.defaultProps = {
+        name: '',
+        onNameChange: function () { return undefined; },
+        onKeyEnter: function () { return undefined; },
+    };
+})(CartridgeNameInput || (CartridgeNameInput = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = CartridgeNameInput;
+
+},{"react":734,"react-bootstrap":318}],848:[function(require,module,exports){
+"use strict";
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+// tslint:disable-next-line
+var React = require('react');
+var react_bootstrap_1 = require('react-bootstrap');
+var CartridgeNameInput_1 = require('./CartridgeNameInput');
+var TvModeSelect_1 = require('./TvModeSelect');
+var CartridgeTypeSelect_1 = require('./CartridgeTypeSelect');
+var Switch_1 = require('../Switch');
+var RandomSeedEdit_1 = require('./RandomSeedEdit');
+function CartridgeSettings(props) {
+    return React.createElement("div", {className: props.visible ? '' : 'hidden'}, 
+        React.createElement(react_bootstrap_1.ControlLabel, null, "Name:"), 
+        React.createElement(CartridgeNameInput_1.default, __assign({}, props)), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "TV mode:"), 
+        React.createElement(TvModeSelect_1.default, __assign({}, props)), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "Cartridge Type:"), 
+        React.createElement(CartridgeTypeSelect_1.default, __assign({}, props)), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "Emulate Paddles:"), 
+        React.createElement(Switch_1.default, {state: props.emulatePaddles, labelTrue: "yes", labelFalse: "no", onSwitch: props.onTogglePaddleEmulation}), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "RNG seed:"), 
+        React.createElement(RandomSeedEdit_1.default, __assign({}, props)), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', marginTop: '1rem' }}, "Audio:"), 
+        React.createElement(Switch_1.default, {state: props.audioEnabled, labelTrue: "enabled", labelFalse: "disabled", onSwitch: props.onToggleAudioEnabled}));
+}
+var CartridgeSettings;
+(function (CartridgeSettings) {
+    CartridgeSettings.defaultProps = Object.assign({
+        visible: false,
+        emulatePaddles: true,
+        audioEnabled: true,
+        onTogglePaddleEmulation: function () { return undefined; },
+        onToggleAudioEnabled: function () { return undefined; }
+    }, CartridgeNameInput_1.default.defaultProps, TvModeSelect_1.default.defaultProps, CartridgeTypeSelect_1.default.defaultProps, RandomSeedEdit_1.default.defaultProps);
+})(CartridgeSettings || (CartridgeSettings = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = CartridgeSettings;
+
+},{"../Switch":843,"./CartridgeNameInput":847,"./CartridgeTypeSelect":849,"./RandomSeedEdit":850,"./TvModeSelect":851,"react":734,"react-bootstrap":318}],849:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+// tslint:disable-next-line
+var React = require('react');
+var CartridgeInfo_1 = require('../../../../../machine/stella/cartridge/CartridgeInfo');
+var react_bootstrap_1 = require('react-bootstrap');
+var CartridgeTypeSelect = (function (_super) {
+    __extends(CartridgeTypeSelect, _super);
+    function CartridgeTypeSelect() {
+        _super.apply(this, arguments);
+        this.state = {
+            id: "cartridge_type_select_" + Math.floor(Math.random() * 10000000)
+        };
+    }
+    CartridgeTypeSelect.prototype.render = function () {
+        var _this = this;
+        return React.createElement(react_bootstrap_1.DropdownButton, {id: this.state.id, title: CartridgeInfo_1.default.describeCartridgeType(this.props.cartridgeType), onSelect: this.props.onCartridgeTypeChange}, CartridgeInfo_1.default.getAllTypes().map(function (cartridgeType) {
+            return React.createElement(react_bootstrap_1.MenuItem, {eventKey: cartridgeType, active: cartridgeType === _this.props.cartridgeType, key: cartridgeType}, CartridgeInfo_1.default.describeCartridgeType(cartridgeType));
+        }));
+    };
+    CartridgeTypeSelect.defaultProps = {
+        cartridgeType: CartridgeInfo_1.default.CartridgeType.unknown,
+        onCartridgeTypeChange: function () { return undefined; }
+    };
+    return CartridgeTypeSelect;
+}(React.Component));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = CartridgeTypeSelect;
+
+},{"../../../../../machine/stella/cartridge/CartridgeInfo":782,"react":734,"react-bootstrap":318}],850:[function(require,module,exports){
+"use strict";
+// tslint:disable-next-line
+var React = require('react');
+var ValidatingInput_1 = require('../ValidatingInput');
+var Switch_1 = require('../Switch');
+function RandomSeedEdit(props) {
+    return React.createElement("div", null, 
+        React.createElement(Switch_1.default, {state: props.rngSeedAuto, labelTrue: "auto", labelFalse: "fixed", onSwitch: props.onChangeSeedStrategy}), 
+        React.createElement(ValidatingInput_1.default, {value: '' + props.rngSeedValue, readOnly: props.rngSeedAuto, validator: function (value) { return !!value.match(/^(0|([1-9]\d*))$/); }, onChange: function (value) { return props.onChangeSeedValue(parseInt(value, 10)); }, onKeyEnter: props.onKeyEnter, style: {
+            display: props.rngSeedAuto ? 'none' : 'inline-block',
+            marginLeft: '1rem',
+            width: '6rem'
+        }}));
+}
+var RandomSeedEdit;
+(function (RandomSeedEdit) {
+    RandomSeedEdit.defaultProps = {
+        rngSeedAuto: true,
+        rngSeedValue: 0,
+        onChangeSeedStrategy: function () { return undefined; },
+        onChangeSeedValue: function () { return undefined; },
+        onKeyEnter: function () { return undefined; }
+    };
+})(RandomSeedEdit || (RandomSeedEdit = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = RandomSeedEdit;
+
+},{"../Switch":843,"../ValidatingInput":844,"react":734}],851:[function(require,module,exports){
+"use strict";
+// tslint:disable-next-line
+var React = require('react');
+var react_bootstrap_1 = require('react-bootstrap');
+var Config_1 = require('../../../../../machine/stella/Config');
+function TvModeSelect(props) {
+    return React.createElement(react_bootstrap_1.ButtonGroup, null, 
+        React.createElement(react_bootstrap_1.Button, {active: props.tvMode === 0 /* ntsc */, onClick: function () { return props.onTvModeChange(0 /* ntsc */); }}, "NTSC"), 
+        React.createElement(react_bootstrap_1.Button, {active: props.tvMode === 1 /* pal */, onClick: function () { return props.onTvModeChange(1 /* pal */); }}, "PAL"), 
+        React.createElement(react_bootstrap_1.Button, {active: props.tvMode === 2 /* secam */, onClick: function () { return props.onTvModeChange(2 /* secam */); }}, "SECAM"));
+}
+var TvModeSelect;
+(function (TvModeSelect) {
+    TvModeSelect.defaultProps = {
+        tvMode: 0 /* ntsc */,
+        onTvModeChange: function () { return undefined; }
+    };
+})(TvModeSelect || (TvModeSelect = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = TvModeSelect;
+
+},{"../../../../../machine/stella/Config":764,"react":734,"react-bootstrap":318}],852:[function(require,module,exports){
+"use strict";
+// tslint:disable-next-line
+var React = require('react');
+var react_bootstrap_1 = require('react-bootstrap');
+var Switch_1 = require('../Switch');
+var EmulationServiceInterface_1 = require('../../../service/EmulationServiceInterface');
+function ControlPanel(props) {
+    return React.createElement("div", {style: props.style, className: "emulation-control-panel"}, 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block' }}, "Difficulty Left"), 
+        React.createElement(Switch_1.default, {labelTrue: "Amateur / B", labelFalse: "Pro / A", state: props.difficultyPlayer0, onSwitch: props.onSwitchDifficultyPlayer0}), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', paddingTop: '1rem' }}, "Difficulty Right"), 
+        React.createElement(Switch_1.default, {labelTrue: "Amateur / B", labelFalse: "Pro / A", state: props.difficultyPlayer1, onSwitch: props.onSwitchDifficultyPlayer1}), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', paddingTop: '1rem' }}, "TV Mode"), 
+        React.createElement(Switch_1.default, {labelTrue: "B/W", labelFalse: "Color", state: props.tvModeSwitch, onSwitch: props.onSwitchTvMode}), 
+        React.createElement(react_bootstrap_1.ControlLabel, {style: { display: 'block', paddingTop: '1rem' }}, "Limit frame rate"), 
+        React.createElement(Switch_1.default, {labelTrue: "yes", labelFalse: "no", state: props.enforceRateLimit, onSwitch: props.onEnforceRateLimitChange}), 
+        React.createElement("div", {style: { paddingTop: '2rem' }}, 
+            React.createElement(react_bootstrap_1.Button, {style: { marginRight: '1rem' }, onClick: props.onReset}, "Reset"), 
+            React.createElement(react_bootstrap_1.Button, {style: {
+                display: (props.emulationState === EmulationServiceInterface_1.default.State.running ||
+                    props.emulationState === EmulationServiceInterface_1.default.State.paused) ? 'inline-block' : 'none'
+            }, onClick: props.emulationState === EmulationServiceInterface_1.default.State.running ? props.onPause : props.onResume}, props.emulationState === EmulationServiceInterface_1.default.State.running ? 'pause' : 'resume')));
+}
+var ControlPanel;
+(function (ControlPanel) {
+    ControlPanel.defaultProps = {
+        difficultyPlayer0: true,
+        difficultyPlayer1: true,
+        tvModeSwitch: false,
+        enforceRateLimit: true,
+        emulationState: EmulationServiceInterface_1.default.State.stopped,
+        style: {},
+        onSwitchDifficultyPlayer0: function () { return undefined; },
+        onSwitchDifficultyPlayer1: function () { return undefined; },
+        onSwitchTvMode: function () { return undefined; },
+        onEnforceRateLimitChange: function () { return undefined; },
+        onReset: function () { return undefined; },
+        onPause: function () { return undefined; },
+        onResume: function () { return undefined; }
+    };
+})(ControlPanel || (ControlPanel = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ControlPanel;
+
+},{"../../../service/EmulationServiceInterface":824,"../Switch":843,"react":734,"react-bootstrap":318}],853:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84130,15 +84159,122 @@ function App(emulationService) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = App;
 
-},{"./Navbar":859,"react":734}],854:[function(require,module,exports){
+},{"./Navbar":856,"react":734}],854:[function(require,module,exports){
+"use strict";
+// tslint:disable-next-line
+var React = require('react');
+var react_bootstrap_1 = require('react-bootstrap');
+var pendingChangesModal_1 = require('./pendingChangesModal');
+var CartridgeList_1 = require('./cartridge_manager/CartridgeList');
+var CartridgeControls_1 = require('./cartridge_manager/CartridgeControls');
+var CartridgeSettings_1 = require('./cartridge_manager/CartridgeSettings');
+function CartridgeManager() {
+    return React.createElement(react_bootstrap_1.Grid, {fluid: true}, 
+        React.createElement(react_bootstrap_1.Row, null, 
+            React.createElement(react_bootstrap_1.Col, {md: 5}, 
+                React.createElement(CartridgeList_1.default, null)
+            ), 
+            React.createElement(react_bootstrap_1.Col, {md: 5, mdOffset: 1}, 
+                React.createElement(CartridgeSettings_1.default, null)
+            )), 
+        React.createElement(react_bootstrap_1.Row, null, 
+            React.createElement(react_bootstrap_1.Col, {sm: 5}, 
+                React.createElement(CartridgeControls_1.default, null)
+            )
+        ), 
+        React.createElement(pendingChangesModal_1.SelectPendingChangesModal, null, 
+            React.createElement("p", null, "There are unsaved changes in the currently selected cartridge." + ' ' + "Selecting another cartridge will discard these changes."), 
+            React.createElement("p", null, "Do you want to continue?")), 
+        React.createElement(pendingChangesModal_1.LoadPendingChangesModal, null, 
+            React.createElement("p", null, "There are unsaved changes in the currently selected cartridge." + ' ' + "Loading a cartridge will discard these changes."), 
+            React.createElement("p", null, "Do you want to continue?")));
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = CartridgeManager;
+
+},{"./cartridge_manager/CartridgeControls":858,"./cartridge_manager/CartridgeList":859,"./cartridge_manager/CartridgeSettings":860,"./pendingChangesModal":861,"react":734,"react-bootstrap":318}],855:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var react_router_redux_1 = require('react-router-redux');
-var root_1 = require('../actions/root');
-var emulation_1 = require('../actions/emulation');
-var guiState_1 = require('../actions/guiState');
-var CartridgeControls_1 = require('../components/CartridgeControls');
 var GuiState_1 = require('../state/GuiState');
+var emulation_1 = require('../actions/emulation');
+var Emulation_1 = require('../components/Emulation');
+function mapStateToProps(state) {
+    return {
+        enabled: state.guiState.mode === GuiState_1.default.GuiMode.run,
+        emulationState: state.emulationState.emulationState,
+        difficultyPlayer0: state.emulationState.difficultyPlayer0,
+        difficultyPlayer1: state.emulationState.difficultyPlayer1,
+        tvModeSwitch: state.emulationState.tvMode,
+        enforceRateLimit: state.emulationState.enforceRateLimit,
+        smoothScaling: state.settings.smoothScaling,
+        webGlRendering: state.settings.webGlRendering,
+        gamma: state.settings.gamma,
+        pausedByUser: state.emulationState.pausedByUser
+    };
+}
+var EmulationContainer = react_redux_1.connect(mapStateToProps, {
+    navigateAway: function () { return react_router_redux_1.push('/cartridge-manager'); },
+    pauseEmulation: emulation_1.pause,
+    resumeEmulation: emulation_1.resume,
+    resetEmulation: emulation_1.reset,
+    userPauseEmulation: emulation_1.userPause,
+    onSwitchDifficultyPlayer0: function (state) { return emulation_1.changeDifficulty(0, state); },
+    onSwitchDifficultyPlayer1: function (state) { return emulation_1.changeDifficulty(1, state); },
+    onSwitchTvMode: function (state) { return emulation_1.changeTvMode(state); },
+    onEnforceRateLimitChange: function (enforce) { return emulation_1.enforceRateLimit(enforce); }
+})(Emulation_1.default);
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = EmulationContainer;
+
+},{"../actions/emulation":834,"../components/Emulation":838,"../state/GuiState":880,"react-redux":488,"react-router-redux":499}],856:[function(require,module,exports){
+"use strict";
+var react_redux_1 = require('react-redux');
+var Navbar_1 = require('../components/Navbar');
+var GuiState_1 = require('../state/GuiState');
+function mapStateToProps(state) {
+    return {
+        linkEmulation: state.guiState.mode === GuiState_1.default.GuiMode.run,
+        frequency: state.emulationState.frequency,
+        emulationState: state.emulationState.emulationState,
+        gamepadCount: state.emulationState.gamepadCount
+    };
+}
+var NavbarContainer = react_redux_1.connect(mapStateToProps, {}, null, { pure: false })(Navbar_1.default);
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = NavbarContainer;
+
+},{"../components/Navbar":840,"../state/GuiState":880,"react-redux":488}],857:[function(require,module,exports){
+"use strict";
+var react_redux_1 = require('react-redux');
+var Settings_1 = require('../components/Settings');
+var settings_1 = require('../actions/settings');
+function mapStateToProps(state) {
+    return {
+        smoothScaling: state.settings.smoothScaling,
+        webGlRendering: state.settings.webGlRendering,
+        gamma: state.settings.gamma,
+        useWorker: state.settings.useWorker
+    };
+}
+var SettingsContainer = react_redux_1.connect(mapStateToProps, {
+    onToggleSmoothScaling: function (value) { return settings_1.setSmoothScaling(value); },
+    onToggleWebGlRendering: function (value) { return settings_1.setWebGlRendering(value); },
+    onChangeGamma: function (value) { return settings_1.setGamma(value); },
+    onToggleUseWorker: function (value) { return settings_1.setUseWorker(value); }
+})(Settings_1.default);
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = SettingsContainer;
+
+},{"../actions/settings":837,"../components/Settings":842,"react-redux":488}],858:[function(require,module,exports){
+"use strict";
+var react_redux_1 = require('react-redux');
+var react_router_redux_1 = require('react-router-redux');
+var root_1 = require('../../actions/root');
+var emulation_1 = require('../../actions/emulation');
+var guiState_1 = require('../../actions/guiState');
+var CartridgeControls_1 = require('../../components/cartridge_manager/CartridgeControls');
+var GuiState_1 = require('../../state/GuiState');
 function mapStateToProps(state) {
     return {
         active: !!state.currentCartridge,
@@ -84165,12 +84301,12 @@ var CartridgeControlsContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeControlsContainer;
 
-},{"../actions/emulation":834,"../actions/guiState":835,"../actions/root":836,"../components/CartridgeControls":838,"../state/GuiState":880,"react-redux":488,"react-router-redux":499}],855:[function(require,module,exports){
+},{"../../actions/emulation":834,"../../actions/guiState":835,"../../actions/root":836,"../../components/cartridge_manager/CartridgeControls":845,"../../state/GuiState":880,"react-redux":488,"react-router-redux":499}],859:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
-var CartridgeList_1 = require('../components/CartridgeList');
-var root_1 = require('../actions/root');
-var guiState_1 = require('../actions/guiState');
+var CartridgeList_1 = require('../../components/cartridge_manager/CartridgeList');
+var root_1 = require('../../actions/root');
+var guiState_1 = require('../../actions/guiState');
 function mapStateToProps(state) {
     return {
         cartridges: state.cartridges,
@@ -84187,47 +84323,14 @@ var CartridgeListContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeListContainer;
 
-},{"../actions/guiState":835,"../actions/root":836,"../components/CartridgeList":839,"react-redux":488}],856:[function(require,module,exports){
-"use strict";
-// tslint:disable-next-line
-var React = require('react');
-var react_bootstrap_1 = require('react-bootstrap');
-var pendingChangesModal_1 = require('./pendingChangesModal');
-var CartridgeList_1 = require('./CartridgeList');
-var CartridgeControls_1 = require('./CartridgeControls');
-var CartridgeSettings_1 = require('./CartridgeSettings');
-function CartridgeManager() {
-    return React.createElement(react_bootstrap_1.Grid, {fluid: true}, 
-        React.createElement(react_bootstrap_1.Row, null, 
-            React.createElement(react_bootstrap_1.Col, {md: 5}, 
-                React.createElement(CartridgeList_1.default, null)
-            ), 
-            React.createElement(react_bootstrap_1.Col, {md: 5, mdOffset: 1}, 
-                React.createElement(CartridgeSettings_1.default, null)
-            )), 
-        React.createElement(react_bootstrap_1.Row, null, 
-            React.createElement(react_bootstrap_1.Col, {sm: 5}, 
-                React.createElement(CartridgeControls_1.default, null)
-            )
-        ), 
-        React.createElement(pendingChangesModal_1.SelectPendingChangesModal, null, 
-            React.createElement("p", null, "There are unsaved changes in the currently selected cartridge." + ' ' + "Selecting another cartridge will discard these changes."), 
-            React.createElement("p", null, "Do you want to continue?")), 
-        React.createElement(pendingChangesModal_1.LoadPendingChangesModal, null, 
-            React.createElement("p", null, "There are unsaved changes in the currently selected cartridge." + ' ' + "Loading a cartridge will discard these changes."), 
-            React.createElement("p", null, "Do you want to continue?")));
-}
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = CartridgeManager;
-
-},{"./CartridgeControls":854,"./CartridgeList":855,"./CartridgeSettings":857,"./pendingChangesModal":861,"react":734,"react-bootstrap":318}],857:[function(require,module,exports){
+},{"../../actions/guiState":835,"../../actions/root":836,"../../components/cartridge_manager/CartridgeList":846,"react-redux":488}],860:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
-var currentCartridge_1 = require('../actions/currentCartridge');
-var root_1 = require('../actions/root');
-var CartridgeSettings_1 = require('../components/CartridgeSettings');
-var Config_1 = require('../../../../machine/stella/Config');
-var CartridgeInfo_1 = require('../../../../machine/stella/cartridge/CartridgeInfo');
+var currentCartridge_1 = require('../../actions/currentCartridge');
+var root_1 = require('../../actions/root');
+var CartridgeSettings_1 = require('../../components/cartridge_manager/CartridgeSettings');
+var Config_1 = require('../../../../../machine/stella/Config');
+var CartridgeInfo_1 = require('../../../../../machine/stella/cartridge/CartridgeInfo');
 function mapStateToProps(state) {
     return {
         name: state.currentCartridge ? state.currentCartridge.name : '',
@@ -84253,78 +84356,7 @@ var CartridgeSettingsContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeSettingsContainer;
 
-},{"../../../../machine/stella/Config":764,"../../../../machine/stella/cartridge/CartridgeInfo":782,"../actions/currentCartridge":833,"../actions/root":836,"../components/CartridgeSettings":841,"react-redux":488}],858:[function(require,module,exports){
-"use strict";
-var react_redux_1 = require('react-redux');
-var react_router_redux_1 = require('react-router-redux');
-var GuiState_1 = require('../state/GuiState');
-var emulation_1 = require('../actions/emulation');
-var Emulation_1 = require('../components/Emulation');
-function mapStateToProps(state) {
-    return {
-        enabled: state.guiState.mode === GuiState_1.default.GuiMode.run,
-        emulationState: state.emulationState.emulationState,
-        difficultyPlayer0: state.emulationState.difficultyPlayer0,
-        difficultyPlayer1: state.emulationState.difficultyPlayer1,
-        tvModeSwitch: state.emulationState.tvMode,
-        enforceRateLimit: state.emulationState.enforceRateLimit,
-        smoothScaling: state.settings.smoothScaling,
-        webGlRendering: state.settings.webGlRendering,
-        gamma: state.settings.gamma
-    };
-}
-var EmulationContainer = react_redux_1.connect(mapStateToProps, {
-    navigateAway: function () { return react_router_redux_1.push('/cartridge-manager'); },
-    pauseEmulation: emulation_1.pause,
-    resumeEmulation: emulation_1.resume,
-    onSwitchDifficultyPlayer0: function (state) { return emulation_1.changeDifficulty(0, state); },
-    onSwitchDifficultyPlayer1: function (state) { return emulation_1.changeDifficulty(1, state); },
-    onSwitchTvMode: function (state) { return emulation_1.changeTvMode(state); },
-    onEnforceRateLimitChange: function (enforce) { return emulation_1.enforceRateLimit(enforce); }
-})(Emulation_1.default);
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = EmulationContainer;
-
-},{"../actions/emulation":834,"../components/Emulation":844,"../state/GuiState":880,"react-redux":488,"react-router-redux":499}],859:[function(require,module,exports){
-"use strict";
-var react_redux_1 = require('react-redux');
-var Navbar_1 = require('../components/Navbar');
-var GuiState_1 = require('../state/GuiState');
-function mapStateToProps(state) {
-    return {
-        linkEmulation: state.guiState.mode === GuiState_1.default.GuiMode.run,
-        frequency: state.emulationState.frequency,
-        emulationState: state.emulationState.emulationState,
-        gamepadCount: state.emulationState.gamepadCount
-    };
-}
-var NavbarContainer = react_redux_1.connect(mapStateToProps, {}, null, { pure: false })(Navbar_1.default);
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = NavbarContainer;
-
-},{"../components/Navbar":846,"../state/GuiState":880,"react-redux":488}],860:[function(require,module,exports){
-"use strict";
-var react_redux_1 = require('react-redux');
-var Settings_1 = require('../components/Settings');
-var settings_1 = require('../actions/settings');
-function mapStateToProps(state) {
-    return {
-        smoothScaling: state.settings.smoothScaling,
-        webGlRendering: state.settings.webGlRendering,
-        gamma: state.settings.gamma,
-        useWorker: state.settings.useWorker
-    };
-}
-var SettingsContainer = react_redux_1.connect(mapStateToProps, {
-    onToggleSmoothScaling: function (value) { return settings_1.setSmoothScaling(value); },
-    onToggleWebGlRendering: function (value) { return settings_1.setWebGlRendering(value); },
-    onChangeGamma: function (value) { return settings_1.setGamma(value); },
-    onToggleUseWorker: function (value) { return settings_1.setUseWorker(value); }
-})(Settings_1.default);
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = SettingsContainer;
-
-},{"../actions/settings":837,"../components/Settings":849,"react-redux":488}],861:[function(require,module,exports){
+},{"../../../../../machine/stella/Config":764,"../../../../../machine/stella/cartridge/CartridgeInfo":782,"../../actions/currentCartridge":833,"../../actions/root":836,"../../components/cartridge_manager/CartridgeSettings":848,"react-redux":488}],861:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var guiState_1 = require('../actions/guiState');
@@ -84345,7 +84377,7 @@ function factory(showModal, closeActionEmitter, applyActionEmitter) {
     })(PendingChangesModal_1.default);
 }
 
-},{"../actions/guiState":835,"../actions/root":836,"../components/PendingChangesModal":847,"react-redux":488}],862:[function(require,module,exports){
+},{"../actions/guiState":835,"../actions/root":836,"../components/PendingChangesModal":841,"react-redux":488}],862:[function(require,module,exports){
 "use strict";
 var emulation_1 = require('./actions/emulation');
 function startGamepadDriverDispatcher(driver, store) {
@@ -84436,7 +84468,6 @@ exports.default = Dispatcher;
 
 },{"../actions/emulation":834}],865:[function(require,module,exports){
 "use strict";
-var react_router_redux_1 = require('react-router-redux');
 var Config_1 = require('../../../../machine/stella/Config');
 var emulation_1 = require('../actions/emulation');
 var EmulationMiddleware = (function () {
@@ -84455,15 +84486,17 @@ var EmulationMiddleware = (function () {
                             .start(initialState.currentCartridge.buffer, _this._createStellaConfig(initialState.currentCartridge), initialState.currentCartridge.cartridgeType)
                             .then(function () {
                             _this._updateControlPanelState(initialState.emulationState);
-                            api.dispatch(react_router_redux_1.push('/emulation'));
                             next(a);
                         });
                     }
                     break;
                 case emulation_1.Type.pause:
+                case emulation_1.Type.userPause:
                     return _this._emulationService.pause().then(function () { return next(a); });
                 case emulation_1.Type.resume:
                     return _this._emulationService.resume().then(function () { return next(a); });
+                case emulation_1.Type.reset:
+                    return _this._emulationService.reset().then(function () { return next(a); });
                 case emulation_1.Type.changeDifficulty:
                 case emulation_1.Type.changeTvMode:
                     return Promise.resolve(next(a))
@@ -84504,7 +84537,7 @@ var EmulationMiddleware = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationMiddleware;
 
-},{"../../../../machine/stella/Config":764,"../actions/emulation":834,"react-router-redux":499}],866:[function(require,module,exports){
+},{"../../../../machine/stella/Config":764,"../actions/emulation":834}],866:[function(require,module,exports){
 (function (process){
 "use strict";
 // tslint:disable-next-line
@@ -84561,7 +84594,7 @@ Promise
 
 }).call(this,require('_process'))
 
-},{"./actions/root":836,"./actions/settings":837,"./containers/App":853,"./containers/CartridgeManager":856,"./containers/Emulation":858,"./containers/Settings":860,"./emulation":863,"./emulation/Dispatcher":864,"./emulation/Middleware":865,"./middleware":867,"./persistence/Manager":870,"./persistence/middleware":872,"./reducers/root":876,"./state/State":882,"_process":202,"react":734,"react-dom":485,"react-redux":488,"react-router":532,"react-router-redux":499,"redux":741,"redux-thunk":735}],867:[function(require,module,exports){
+},{"./actions/root":836,"./actions/settings":837,"./containers/App":853,"./containers/CartridgeManager":854,"./containers/Emulation":855,"./containers/Settings":857,"./emulation":863,"./emulation/Dispatcher":864,"./emulation/Middleware":865,"./middleware":867,"./persistence/Manager":870,"./persistence/middleware":872,"./reducers/root":876,"./state/State":882,"_process":202,"react":734,"react-dom":485,"react-redux":488,"react-router":532,"react-router-redux":499,"redux":741,"redux-thunk":735}],867:[function(require,module,exports){
 "use strict";
 var root_1 = require('./actions/root');
 exports.batchMiddleware = (function (api) { return function (next) { return function (a) {
@@ -84858,6 +84891,7 @@ function toggleAudioEnabled(state, action) {
 "use strict";
 var Emulation_1 = require('../state/Emulation');
 var emulation_1 = require('../actions/emulation');
+var EmulationServiceInterface_1 = require('../../service/EmulationServiceInterface');
 function reducer(state, action) {
     if (state === void 0) { state = new Emulation_1.default(); }
     switch (action.type) {
@@ -84875,6 +84909,8 @@ function reducer(state, action) {
             return updateGamepadCount(state, action);
         case emulation_1.Type.setEnforceRateLimit:
             return setEnforceRateLimit(state, action);
+        case emulation_1.Type.userPause:
+            return userPause(state);
     }
     return state;
 }
@@ -84894,10 +84930,20 @@ function changeTvMode(state, action) {
     return new Emulation_1.default({ tvMode: action.state }, state);
 }
 function start(state, action) {
-    return new Emulation_1.default({ cartridgeHash: action.hash || state.cartridgeHash }, state);
+    return new Emulation_1.default({
+        cartridgeHash: action.hash || state.cartridgeHash,
+        pausedByUser: false,
+    }, state);
 }
 function stateChange(state, action) {
-    return new Emulation_1.default({ emulationState: action.newState }, state);
+    var pausedByUser = state.pausedByUser;
+    if (action.newState === EmulationServiceInterface_1.default.State.running) {
+        pausedByUser = false;
+    }
+    return new Emulation_1.default({
+        emulationState: action.newState,
+        pausedByUser: pausedByUser
+    }, state);
 }
 function updateFrequency(state, action) {
     return new Emulation_1.default({ frequency: action.value }, state);
@@ -84908,8 +84954,11 @@ function updateGamepadCount(state, action) {
 function setEnforceRateLimit(state, action) {
     return new Emulation_1.default({ enforceRateLimit: action.enforce }, state);
 }
+function userPause(state) {
+    return new Emulation_1.default({ pausedByUser: true }, state);
+}
 
-},{"../actions/emulation":834,"../state/Emulation":879}],875:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":824,"../actions/emulation":834,"../state/Emulation":879}],875:[function(require,module,exports){
 "use strict";
 var guiState_1 = require('../actions/guiState');
 var GuiState_1 = require('../state/GuiState');
@@ -85138,6 +85187,7 @@ var EmulationState = (function () {
         this.enforceRateLimit = true;
         this.frequency = 0;
         this.gamepadCount = 0;
+        this.pausedByUser = false;
         Object.assign(this, old, changes);
     }
     return EmulationState;
