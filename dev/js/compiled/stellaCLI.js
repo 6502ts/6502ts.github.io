@@ -33236,16 +33236,32 @@ var Channel = (function () {
 
 },{}],313:[function(require,module,exports){
 "use strict";
+var Switch_1 = require('../../../machine/io/Switch');
 var Event_1 = require('../../../tools/event/Event');
 var KeyboardIO = (function () {
-    function KeyboardIO(_target) {
+    function KeyboardIO(_target, 
+        // tslint:disable-next-line
+        mappings) {
+        var _this = this;
+        if (mappings === void 0) { mappings = KeyboardIO.defaultMappings; }
         this._target = _target;
         this.toggleFullscreen = new Event_1.default();
+        this.hardReset = new Event_1.default();
+        this.togglePause = new Event_1.default();
         this._keydownListener = null;
         this._keyupListener = null;
         this._joystick0 = null;
         this._joystick1 = null;
         this._controlPanel = null;
+        this._fullscreenSwitch = new Switch_1.default();
+        this._resetSwitch = new Switch_1.default();
+        this._togglePauseSwitch = new Switch_1.default();
+        this._actionTable = {};
+        this._compiledMappings = {};
+        this._compileMappings(mappings);
+        this._fullscreenSwitch.stateChanged.addHandler(function (state) { return state ? _this.toggleFullscreen.dispatch(undefined) : true; });
+        this._resetSwitch.stateChanged.addHandler(function (state) { return state ? _this.hardReset.dispatch(undefined) : true; });
+        this._togglePauseSwitch.stateChanged.addHandler(function (state) { return state ? _this.togglePause.dispatch(undefined) : true; });
     }
     KeyboardIO.prototype.bind = function (joystick0, joystick1, controlPanel) {
         var _this = this;
@@ -33255,24 +33271,28 @@ var KeyboardIO = (function () {
         this._joystick0 = joystick0;
         this._joystick1 = joystick1;
         this._controlPanel = controlPanel;
-        var mappings = this._buildMappings();
-        this._keydownListener = function (e) {
-            if (mappings[e.keyCode]) {
-                mappings[e.keyCode].toggle(true);
-                e.preventDefault();
-                return;
+        this._updateActionTable();
+        var decodeAction = function (e) {
+            if (_this._compiledMappings[e.keyCode]) {
+                var modifiers = ((e.shiftKey ? 4 /* shift */ : 0) |
+                    (e.ctrlKey ? 1 /* ctrl */ : 0) |
+                    (e.altKey ? 2 /* alt */ : 0));
+                return _this._compiledMappings[e.keyCode][modifiers];
             }
-            switch (e.keyCode) {
-                case 13:
-                    _this.toggleFullscreen.dispatch(undefined);
-                    return;
+            return undefined;
+        };
+        this._keydownListener = function (e) {
+            var action = decodeAction(e);
+            if (typeof (action) !== 'undefined') {
+                e.preventDefault();
+                _this._actionTable[action].toggle(true);
             }
         };
         this._keyupListener = function (e) {
-            if (mappings[e.keyCode]) {
-                mappings[e.keyCode].toggle(false);
+            var action = decodeAction(e);
+            if (typeof (action) !== 'undefined') {
                 e.preventDefault();
-                return;
+                _this._actionTable[action].toggle(false);
             }
         };
         this._target.addEventListener('keydown', this._keydownListener);
@@ -33287,33 +33307,122 @@ var KeyboardIO = (function () {
         this._joystick0 = this._joystick1 = this._controlPanel = null;
         this._keydownListener = this._keyupListener = null;
     };
-    KeyboardIO.prototype._buildMappings = function () {
-        return {
-            17: this._controlPanel.getSelectSwitch(),
-            18: this._controlPanel.getResetButton(),
-            65: this._joystick0.getLeft(),
-            37: this._joystick0.getLeft(),
-            68: this._joystick0.getRight(),
-            39: this._joystick0.getRight(),
-            83: this._joystick0.getDown(),
-            40: this._joystick0.getDown(),
-            87: this._joystick0.getUp(),
-            38: this._joystick0.getUp(),
-            86: this._joystick0.getFire(),
-            32: this._joystick0.getFire(),
-            74: this._joystick1.getLeft(),
-            76: this._joystick1.getRight(),
-            73: this._joystick1.getUp(),
-            75: this._joystick1.getDown(),
-            66: this._joystick1.getFire(),
+    KeyboardIO.prototype._updateActionTable = function () {
+        this._actionTable[12 /* fullscreen */] = this._fullscreenSwitch;
+        this._actionTable[13 /* hardReset */] = this._resetSwitch;
+        this._actionTable[14 /* togglePause */] = this._togglePauseSwitch;
+        this._actionTable[0 /* select */] = this._controlPanel.getSelectSwitch();
+        this._actionTable[1 /* reset */] = this._controlPanel.getResetButton();
+        this._actionTable[2 /* left0 */] = this._joystick0.getLeft();
+        this._actionTable[3 /* right0 */] = this._joystick0.getRight();
+        this._actionTable[4 /* up0 */] = this._joystick0.getUp();
+        this._actionTable[5 /* down0 */] = this._joystick0.getDown();
+        this._actionTable[10 /* fire0 */] = this._joystick0.getFire();
+        this._actionTable[6 /* left1 */] = this._joystick1.getLeft();
+        this._actionTable[7 /* right1 */] = this._joystick1.getRight();
+        this._actionTable[8 /* up1 */] = this._joystick1.getUp();
+        this._actionTable[9 /* down1 */] = this._joystick1.getDown();
+        this._actionTable[11 /* fire1 */] = this._joystick1.getFire();
+    };
+    KeyboardIO.prototype._compileMappings = function (mappings) {
+        var _this = this;
+        var compileMapping = function (action, keycode, modifiers) {
+            if ((modifiers & ~(4 /* shift */ |
+                1 /* ctrl */ |
+                2 /* alt */)) !== 0) {
+                throw new Error("invalid modifier set " + modifiers);
+            }
+            if (!_this._compiledMappings[keycode]) {
+                _this._compiledMappings[keycode] = {};
+            }
+            _this._compiledMappings[keycode][modifiers] = action;
         };
+        mappings.forEach(function (mapping) {
+            var action = mapping.action, specs = Array.isArray(mapping.spec) ? mapping.spec : [mapping.spec];
+            specs.forEach(function (spec) { return compileMapping(action, typeof (spec) === 'object' ? spec.keycode : spec, typeof (spec) === 'object' ? spec.modifiers : 0); });
+        });
     };
     return KeyboardIO;
 }());
+var KeyboardIO;
+(function (KeyboardIO) {
+    KeyboardIO.defaultMappings = [
+        {
+            action: 0 /* select */,
+            spec: {
+                keycode: 32,
+                modifiers: 4 /* shift */
+            }
+        }, {
+            action: 1 /* reset */,
+            spec: {
+                keycode: 13,
+                modifiers: 4 /* shift */
+            }
+        }, {
+            action: 2 /* left0 */,
+            spec: [
+                65,
+                37 // left
+            ]
+        }, {
+            action: 3 /* right0 */,
+            spec: [
+                68,
+                39 // right
+            ]
+        }, {
+            action: 4 /* up0 */,
+            spec: [
+                87,
+                38 // up
+            ]
+        }, {
+            action: 5 /* down0 */,
+            spec: [
+                83,
+                40 // down
+            ]
+        }, {
+            action: 10 /* fire0 */,
+            spec: [
+                32,
+                86 // v
+            ]
+        }, {
+            action: 6 /* left1 */,
+            spec: 74 // j
+        }, {
+            action: 7 /* right1 */,
+            spec: 76 // l
+        }, {
+            action: 8 /* up1 */,
+            spec: 73 // i
+        }, {
+            action: 9 /* down1 */,
+            spec: 75 // k
+        }, {
+            action: 11 /* fire1 */,
+            spec: 66 // b
+        }, {
+            action: 12 /* fullscreen */,
+            spec: 13 // enter
+        }, {
+            action: 13 /* hardReset */,
+            spec: {
+                keycode: 82,
+                modifiers: 4 /* shift */
+            }
+        }, {
+            action: 14 /* togglePause */,
+            spec: 80 // p
+        }
+    ];
+})(KeyboardIO || (KeyboardIO = {}));
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = KeyboardIO;
 
-},{"../../../tools/event/Event":297}],314:[function(require,module,exports){
+},{"../../../machine/io/Switch":254,"../../../tools/event/Event":297}],314:[function(require,module,exports){
 "use strict";
 var WebAudio_1 = require('../../driver/WebAudio');
 var WebAudioDriver = (function () {

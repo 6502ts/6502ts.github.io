@@ -82320,16 +82320,32 @@ exports.default = WebglVideoDriver;
 
 },{}],821:[function(require,module,exports){
 "use strict";
+var Switch_1 = require('../../../machine/io/Switch');
 var Event_1 = require('../../../tools/event/Event');
 var KeyboardIO = (function () {
-    function KeyboardIO(_target) {
+    function KeyboardIO(_target, 
+        // tslint:disable-next-line
+        mappings) {
+        var _this = this;
+        if (mappings === void 0) { mappings = KeyboardIO.defaultMappings; }
         this._target = _target;
         this.toggleFullscreen = new Event_1.default();
+        this.hardReset = new Event_1.default();
+        this.togglePause = new Event_1.default();
         this._keydownListener = null;
         this._keyupListener = null;
         this._joystick0 = null;
         this._joystick1 = null;
         this._controlPanel = null;
+        this._fullscreenSwitch = new Switch_1.default();
+        this._resetSwitch = new Switch_1.default();
+        this._togglePauseSwitch = new Switch_1.default();
+        this._actionTable = {};
+        this._compiledMappings = {};
+        this._compileMappings(mappings);
+        this._fullscreenSwitch.stateChanged.addHandler(function (state) { return state ? _this.toggleFullscreen.dispatch(undefined) : true; });
+        this._resetSwitch.stateChanged.addHandler(function (state) { return state ? _this.hardReset.dispatch(undefined) : true; });
+        this._togglePauseSwitch.stateChanged.addHandler(function (state) { return state ? _this.togglePause.dispatch(undefined) : true; });
     }
     KeyboardIO.prototype.bind = function (joystick0, joystick1, controlPanel) {
         var _this = this;
@@ -82339,24 +82355,28 @@ var KeyboardIO = (function () {
         this._joystick0 = joystick0;
         this._joystick1 = joystick1;
         this._controlPanel = controlPanel;
-        var mappings = this._buildMappings();
-        this._keydownListener = function (e) {
-            if (mappings[e.keyCode]) {
-                mappings[e.keyCode].toggle(true);
-                e.preventDefault();
-                return;
+        this._updateActionTable();
+        var decodeAction = function (e) {
+            if (_this._compiledMappings[e.keyCode]) {
+                var modifiers = ((e.shiftKey ? 4 /* shift */ : 0) |
+                    (e.ctrlKey ? 1 /* ctrl */ : 0) |
+                    (e.altKey ? 2 /* alt */ : 0));
+                return _this._compiledMappings[e.keyCode][modifiers];
             }
-            switch (e.keyCode) {
-                case 13:
-                    _this.toggleFullscreen.dispatch(undefined);
-                    return;
+            return undefined;
+        };
+        this._keydownListener = function (e) {
+            var action = decodeAction(e);
+            if (typeof (action) !== 'undefined') {
+                e.preventDefault();
+                _this._actionTable[action].toggle(true);
             }
         };
         this._keyupListener = function (e) {
-            if (mappings[e.keyCode]) {
-                mappings[e.keyCode].toggle(false);
+            var action = decodeAction(e);
+            if (typeof (action) !== 'undefined') {
                 e.preventDefault();
-                return;
+                _this._actionTable[action].toggle(false);
             }
         };
         this._target.addEventListener('keydown', this._keydownListener);
@@ -82371,33 +82391,122 @@ var KeyboardIO = (function () {
         this._joystick0 = this._joystick1 = this._controlPanel = null;
         this._keydownListener = this._keyupListener = null;
     };
-    KeyboardIO.prototype._buildMappings = function () {
-        return {
-            17: this._controlPanel.getSelectSwitch(),
-            18: this._controlPanel.getResetButton(),
-            65: this._joystick0.getLeft(),
-            37: this._joystick0.getLeft(),
-            68: this._joystick0.getRight(),
-            39: this._joystick0.getRight(),
-            83: this._joystick0.getDown(),
-            40: this._joystick0.getDown(),
-            87: this._joystick0.getUp(),
-            38: this._joystick0.getUp(),
-            86: this._joystick0.getFire(),
-            32: this._joystick0.getFire(),
-            74: this._joystick1.getLeft(),
-            76: this._joystick1.getRight(),
-            73: this._joystick1.getUp(),
-            75: this._joystick1.getDown(),
-            66: this._joystick1.getFire(),
+    KeyboardIO.prototype._updateActionTable = function () {
+        this._actionTable[12 /* fullscreen */] = this._fullscreenSwitch;
+        this._actionTable[13 /* hardReset */] = this._resetSwitch;
+        this._actionTable[14 /* togglePause */] = this._togglePauseSwitch;
+        this._actionTable[0 /* select */] = this._controlPanel.getSelectSwitch();
+        this._actionTable[1 /* reset */] = this._controlPanel.getResetButton();
+        this._actionTable[2 /* left0 */] = this._joystick0.getLeft();
+        this._actionTable[3 /* right0 */] = this._joystick0.getRight();
+        this._actionTable[4 /* up0 */] = this._joystick0.getUp();
+        this._actionTable[5 /* down0 */] = this._joystick0.getDown();
+        this._actionTable[10 /* fire0 */] = this._joystick0.getFire();
+        this._actionTable[6 /* left1 */] = this._joystick1.getLeft();
+        this._actionTable[7 /* right1 */] = this._joystick1.getRight();
+        this._actionTable[8 /* up1 */] = this._joystick1.getUp();
+        this._actionTable[9 /* down1 */] = this._joystick1.getDown();
+        this._actionTable[11 /* fire1 */] = this._joystick1.getFire();
+    };
+    KeyboardIO.prototype._compileMappings = function (mappings) {
+        var _this = this;
+        var compileMapping = function (action, keycode, modifiers) {
+            if ((modifiers & ~(4 /* shift */ |
+                1 /* ctrl */ |
+                2 /* alt */)) !== 0) {
+                throw new Error("invalid modifier set " + modifiers);
+            }
+            if (!_this._compiledMappings[keycode]) {
+                _this._compiledMappings[keycode] = {};
+            }
+            _this._compiledMappings[keycode][modifiers] = action;
         };
+        mappings.forEach(function (mapping) {
+            var action = mapping.action, specs = Array.isArray(mapping.spec) ? mapping.spec : [mapping.spec];
+            specs.forEach(function (spec) { return compileMapping(action, typeof (spec) === 'object' ? spec.keycode : spec, typeof (spec) === 'object' ? spec.modifiers : 0); });
+        });
     };
     return KeyboardIO;
 }());
+var KeyboardIO;
+(function (KeyboardIO) {
+    KeyboardIO.defaultMappings = [
+        {
+            action: 0 /* select */,
+            spec: {
+                keycode: 32,
+                modifiers: 4 /* shift */
+            }
+        }, {
+            action: 1 /* reset */,
+            spec: {
+                keycode: 13,
+                modifiers: 4 /* shift */
+            }
+        }, {
+            action: 2 /* left0 */,
+            spec: [
+                65,
+                37 // left
+            ]
+        }, {
+            action: 3 /* right0 */,
+            spec: [
+                68,
+                39 // right
+            ]
+        }, {
+            action: 4 /* up0 */,
+            spec: [
+                87,
+                38 // up
+            ]
+        }, {
+            action: 5 /* down0 */,
+            spec: [
+                83,
+                40 // down
+            ]
+        }, {
+            action: 10 /* fire0 */,
+            spec: [
+                32,
+                86 // v
+            ]
+        }, {
+            action: 6 /* left1 */,
+            spec: 74 // j
+        }, {
+            action: 7 /* right1 */,
+            spec: 76 // l
+        }, {
+            action: 8 /* up1 */,
+            spec: 73 // i
+        }, {
+            action: 9 /* down1 */,
+            spec: 75 // k
+        }, {
+            action: 11 /* fire1 */,
+            spec: 66 // b
+        }, {
+            action: 12 /* fullscreen */,
+            spec: 13 // enter
+        }, {
+            action: 13 /* hardReset */,
+            spec: {
+                keycode: 82,
+                modifiers: 4 /* shift */
+            }
+        }, {
+            action: 14 /* togglePause */,
+            spec: 80 // p
+        }
+    ];
+})(KeyboardIO || (KeyboardIO = {}));
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = KeyboardIO;
 
-},{"../../../tools/event/Event":802}],822:[function(require,module,exports){
+},{"../../../machine/io/Switch":761,"../../../tools/event/Event":802}],822:[function(require,module,exports){
 "use strict";
 var WebAudio_1 = require('../../driver/WebAudio');
 var WebAudioDriver = (function () {
@@ -82433,15 +82542,15 @@ var EmulationServiceInterface_1 = require('./EmulationServiceInterface');
 var DriverManager = (function () {
     function DriverManager() {
         this._drivers = new Map();
+        this._driversBound = false;
     }
     DriverManager.prototype.bind = function (emulationService) {
-        var _this = this;
-        if (this._emulationService) {
+        if (this._driversBound) {
             return this;
         }
         this._emulationService = emulationService;
-        if (this._emulationService.getState() === EmulationServiceInterface_1.default.State.running) {
-            this._drivers.forEach(function (driverContext) { return driverContext.binder(_this._emulationService.getEmulationContext(), driverContext.driver); });
+        if (this._shouldBindDrivers()) {
+            this._bindDrivers();
         }
         this._emulationService.stateChanged.addHandler(DriverManager._onEmuStateChange, this);
         return this;
@@ -82450,13 +82559,14 @@ var DriverManager = (function () {
         if (!this._emulationService) {
             return this;
         }
-        this._drivers.forEach(function (driverContext) { return driverContext.driver.unbind(); });
+        this._unbindDrivers();
         this._emulationService.stateChanged.removeHandler(DriverManager._onEmuStateChange, this);
+        this._emulationService = null;
         return this;
     };
     DriverManager.prototype.addDriver = function (driver, binder) {
         this._drivers.set(driver, new DriverManager.DriverContext(driver, binder));
-        if (this._emulationService && this._emulationService.getState() === EmulationServiceInterface_1.default.State.running) {
+        if (this._driversBound) {
             binder(this._emulationService.getEmulationContext(), driver);
         }
         return this;
@@ -82470,16 +82580,32 @@ var DriverManager = (function () {
         return this;
     };
     DriverManager._onEmuStateChange = function (newState, self) {
-        switch (newState) {
-            case EmulationServiceInterface_1.default.State.running:
-                self._drivers.forEach(function (driverContext) { return driverContext.binder(self._emulationService.getEmulationContext(), driverContext.driver); });
-                break;
-            case EmulationServiceInterface_1.default.State.paused:
-                break;
-            default:
-                self._drivers.forEach(function (driverContext) { return driverContext.driver.unbind(); });
-                break;
+        if (self._shouldBindDrivers(newState)) {
+            self._bindDrivers();
         }
+        else {
+            self._unbindDrivers();
+        }
+    };
+    DriverManager.prototype._shouldBindDrivers = function (state) {
+        if (state === void 0) { state = this._emulationService ? this._emulationService.getState() : undefined; }
+        return this._emulationService && (state === EmulationServiceInterface_1.default.State.running ||
+            state === EmulationServiceInterface_1.default.State.paused);
+    };
+    DriverManager.prototype._bindDrivers = function () {
+        var _this = this;
+        if (this._driversBound) {
+            return;
+        }
+        this._drivers.forEach(function (driverContext) { return driverContext.binder(_this._emulationService.getEmulationContext(), driverContext.driver); });
+        this._driversBound = true;
+    };
+    DriverManager.prototype._unbindDrivers = function () {
+        if (!this._driversBound) {
+            return;
+        }
+        this._drivers.forEach(function (driverContext) { return driverContext.driver.unbind(); });
+        this._driversBound = false;
     };
     return DriverManager;
 }());
@@ -83259,12 +83385,12 @@ exports.Type = {
     userPause: 'emulation/user-pause',
     resume: 'emulation/resume',
     reset: 'emulation/reset',
-    stateChange: 'emulation/stateChange',
-    changeDifficulty: 'emulation/changeDifficulty',
-    changeTvMode: 'emulation/changeTvMode',
-    updateFrequency: 'emulation/updateFrequency',
-    updateGamepadCount: 'emuation/updateGamepadCount',
-    setEnforceRateLimit: 'emulation/setEnforceRateLimit'
+    stateChange: 'emulation/state-change',
+    changeDifficulty: 'emulation/change-difficulty',
+    changeTvMode: 'emulation/change-tv-mode',
+    updateFrequency: 'emulation/update-frequency',
+    updateGamepadCount: 'emuation/update-gamepad-count',
+    setEnforceRateLimit: 'emulation/set-enforce-rate_lLimit'
 };
 Object.freeze(exports.Type);
 function pause() {
@@ -83529,22 +83655,35 @@ var MouseAsPaddle_1 = require('../../../driver/MouseAsPaddle');
 var Emulation = (function (_super) {
     __extends(Emulation, _super);
     function Emulation() {
-        _super.apply(this, arguments);
+        _super.call(this);
         this._driverManager = new DriverManager_1.default();
         this._fullscreenDriver = null;
         this._canvasElt = null;
+        this.state = {
+            initialPause: true
+        };
     }
+    Emulation.prototype.componentWillReceiveProps = function (nextProps) {
+        var initialPause = this.state.initialPause &&
+            nextProps.pausedByUser &&
+            nextProps.emulationState === EmulationServiceInterface_1.default.State.paused;
+        if (initialPause !== this.state.initialPause) {
+            this.setState({
+                initialPause: initialPause
+            });
+        }
+    };
     Emulation.prototype.componentWillMount = function () {
         if (!this.props.enabled) {
             return this.props.navigateAway();
         }
-        if (this.context.emulationService.getState() === EmulationServiceInterface_1.default.State.paused &&
+        if (this.props.emulationState === EmulationServiceInterface_1.default.State.paused &&
             !this.props.pausedByUser) {
             this.props.resumeEmulation();
         }
     };
     Emulation.prototype.componentWillUnmount = function () {
-        if (this.context.emulationService.getState() === EmulationServiceInterface_1.default.State.running) {
+        if (this.props.emulationState === EmulationServiceInterface_1.default.State.running) {
             this.props.pauseEmulation();
         }
         this._driverManager.unbind();
@@ -83580,6 +83719,15 @@ var Emulation = (function (_super) {
             return driver.bind(context.getJoystick(0), context.getJoystick(1), context.getControlPanel());
         });
         keyboardDriver.toggleFullscreen.addHandler(function () { return _this._fullscreenDriver.toggle(); });
+        keyboardDriver.hardReset.addHandler(function () { return _this.props.resetEmulation(); });
+        keyboardDriver.togglePause.addHandler(function () {
+            if (_this.props.emulationState === EmulationServiceInterface_1.default.State.running) {
+                _this.props.userPauseEmulation();
+            }
+            else if (_this.props.emulationState === EmulationServiceInterface_1.default.State.paused) {
+                _this.props.resumeEmulation();
+            }
+        });
     };
     Emulation.prototype.render = function () {
         var _this = this;
@@ -83588,18 +83736,27 @@ var Emulation = (function (_super) {
                 React.createElement(react_bootstrap_1.Col, {md: 11}, 
                     "wasd / arrows + v/space = left joystick , ijkl + b = right joystick", 
                     React.createElement("br", null), 
-                    "left ctrl = select, alt = reset, enter = toggle fullscreen")
+                    "shift-enter = reset, shift-space = select, enter = toggle fullscreen", 
+                    React.createElement("br", null), 
+                    "shift-r = hard reset, p = pause")
             ), 
             React.createElement(react_bootstrap_1.Row, {style: { marginTop: '1rem' }}, 
                 React.createElement(react_bootstrap_1.Col, {md: 6}, 
-                    React.createElement("div", {className: "emulation-viewport error-display " + (this._emulationError() ? '' : 'hidden')}, this._errorMessage()), 
-                    React.createElement("canvas", {className: "emulation-viewport " + (this._emulationError() ? 'hidden' : ''), width: this.props.initialViewportWidth, height: this.props.initialViewportHeight, style: { imageRendering: this.props.smoothScaling ? 'auto' : 'pixelated' }, ref: function (elt) { return _this._canvasElt = elt; }})), 
+                    React.createElement("div", {className: "emulation-viewport error-display " + (this._showErrorMessage() ? '' : 'hidden')}, this._errorMessage()), 
+                    React.createElement("div", {className: "emulation-viewport placeholder " + (this._showPlaceholder() ? '' : 'hidden')}, "paused"), 
+                    React.createElement("canvas", {className: "emulation-viewport " + (this._showCanvas() ? '' : 'hidden'), width: this.props.initialViewportWidth, height: this.props.initialViewportHeight, style: { imageRendering: this.props.smoothScaling ? 'auto' : 'pixelated' }, ref: function (elt) { return _this._canvasElt = elt; }})), 
                 React.createElement(react_bootstrap_1.Col, {md: 5}, 
                     React.createElement(ControlPanel_1.default, __assign({}, this.props, {onReset: this.props.resetEmulation, onPause: this.props.userPauseEmulation, onResume: this.props.resumeEmulation}))
                 )));
     };
-    Emulation.prototype._emulationError = function () {
-        return this.context.emulationService.getState() === EmulationServiceInterface_1.default.State.error;
+    Emulation.prototype._showErrorMessage = function () {
+        return this.props.emulationState === EmulationServiceInterface_1.default.State.error;
+    };
+    Emulation.prototype._showPlaceholder = function () {
+        return this.props.emulationState === EmulationServiceInterface_1.default.State.paused && this.state.initialPause;
+    };
+    Emulation.prototype._showCanvas = function () {
+        return !(this._showErrorMessage() || this._showPlaceholder());
     };
     Emulation.prototype._errorMessage = function () {
         var error = this.context.emulationService.getLastError();
