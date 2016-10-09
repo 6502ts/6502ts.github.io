@@ -23514,6 +23514,89 @@ module.exports = function(arr, obj){
   return -1;
 };
 },{}],222:[function(require,module,exports){
+"use strict";
+var factories = [];
+factories[0] = function () {
+    return function dispatcher0() { };
+};
+factories[1] = function (callback, context) {
+    if (typeof (context) === 'undefined')
+        return callback;
+    return function dispatcher1(payload) {
+        callback(payload, context);
+    };
+};
+function getFactory(handlerCount) {
+    if (!factories[handlerCount])
+        factories[handlerCount] = compileFactory(handlerCount);
+    return factories[handlerCount];
+}
+function compileFactory(handlerCount) {
+    var src = 'return function dispatcher' + handlerCount + '(payload) {\n';
+    var argsHandlers = [], argsContexts = [];
+    for (var i = 0; i < handlerCount; i++) {
+        argsHandlers.push('cb' + i);
+        argsContexts.push('ctx' + i);
+        src += '    cb' + i + '(payload, ctx' + i + ');\n';
+    }
+    src += '};';
+    return new (Function.bind.apply(Function, [void 0].concat(argsHandlers.concat(argsContexts), [src])))();
+}
+var Event = (function () {
+    function Event() {
+        this.hasHandlers = false;
+        this._handlers = [];
+        this._contexts = [];
+        this._createDispatcher();
+    }
+    Event.prototype.addHandler = function (handler, context) {
+        if (!this.isHandlerAttached(handler, context)) {
+            this._handlers.push(handler);
+            this._contexts.push(context);
+            this._createDispatcher();
+            this._updateHasHandlers();
+        }
+        return this;
+    };
+    Event.prototype.removeHandler = function (handler, context) {
+        var idx = this._getHandlerIndex(handler, context);
+        if (typeof (idx) !== 'undefined') {
+            this._handlers.splice(idx, 1);
+            this._contexts.splice(idx, 1);
+            this._createDispatcher();
+            this._updateHasHandlers();
+        }
+        return this;
+    };
+    Event.prototype.isHandlerAttached = function (handler, context) {
+        return typeof (this._getHandlerIndex(handler, context)) !== 'undefined';
+    };
+    Event.prototype._updateHasHandlers = function () {
+        this.hasHandlers = !!this._handlers.length;
+    };
+    Event.prototype._getHandlerIndex = function (handler, context) {
+        var handlerCount = this._handlers.length;
+        var idx;
+        for (idx = 0; idx < handlerCount; idx++) {
+            if (this._handlers[idx] === handler && this._contexts[idx] === context)
+                break;
+        }
+        return idx < handlerCount ? idx : undefined;
+    };
+    Event.prototype._createDispatcher = function () {
+        this.dispatch = getFactory(this._handlers.length).apply(this, this._handlers.concat(this._contexts));
+    };
+    return Event;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = Event;
+
+},{}],223:[function(require,module,exports){
+"use strict";
+var Event_1 = require('./Event');
+exports.Event = Event_1.default;
+
+},{"./Event":222}],224:[function(require,module,exports){
 // A library of seedable RNGs implemented in Javascript.
 //
 // Usage:
@@ -23575,7 +23658,7 @@ sr.tychei = tychei;
 
 module.exports = sr;
 
-},{"./lib/alea":223,"./lib/tychei":224,"./lib/xor128":225,"./lib/xor4096":226,"./lib/xorshift7":227,"./lib/xorwow":228,"./seedrandom":229}],223:[function(require,module,exports){
+},{"./lib/alea":225,"./lib/tychei":226,"./lib/xor128":227,"./lib/xor4096":228,"./lib/xorshift7":229,"./lib/xorwow":230,"./seedrandom":231}],225:[function(require,module,exports){
 // A port of an algorithm by Johannes Baagøe <baagoe@baagoe.com>, 2010
 // http://baagoe.com/en/RandomMusings/javascript/
 // https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
@@ -23691,7 +23774,7 @@ if (module && module.exports) {
 
 
 
-},{}],224:[function(require,module,exports){
+},{}],226:[function(require,module,exports){
 // A Javascript implementaion of the "Tyche-i" prng algorithm by
 // Samuel Neves and Filipe Araujo.
 // See https://eden.dei.uc.pt/~sneves/pubs/2011-snfa2.pdf
@@ -23796,7 +23879,7 @@ if (module && module.exports) {
 
 
 
-},{}],225:[function(require,module,exports){
+},{}],227:[function(require,module,exports){
 // A Javascript implementaion of the "xor128" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -23879,7 +23962,7 @@ if (module && module.exports) {
 
 
 
-},{}],226:[function(require,module,exports){
+},{}],228:[function(require,module,exports){
 // A Javascript implementaion of Richard Brent's Xorgens xor4096 algorithm.
 //
 // This fast non-cryptographic random number generator is designed for
@@ -24027,7 +24110,7 @@ if (module && module.exports) {
   (typeof define) == 'function' && define   // present with an AMD loader
 );
 
-},{}],227:[function(require,module,exports){
+},{}],229:[function(require,module,exports){
 // A Javascript implementaion of the "xorshift7" algorithm by
 // François Panneton and Pierre L'ecuyer:
 // "On the Xorgshift Random Number Generators"
@@ -24126,7 +24209,7 @@ if (module && module.exports) {
 );
 
 
-},{}],228:[function(require,module,exports){
+},{}],230:[function(require,module,exports){
 // A Javascript implementaion of the "xorwow" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -24214,7 +24297,7 @@ if (module && module.exports) {
 
 
 
-},{}],229:[function(require,module,exports){
+},{}],231:[function(require,module,exports){
 /*
 Copyright 2014 David Bau.
 
@@ -24458,7 +24541,7 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":6}],230:[function(require,module,exports){
+},{"crypto":6}],232:[function(require,module,exports){
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -24846,7 +24929,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-},{}],231:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 "use strict";
 var BoardInterface;
 (function (BoardInterface) {
@@ -24877,7 +24960,7 @@ var BoardInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = BoardInterface;
 
-},{}],232:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 "use strict";
 var Instruction_1 = require('./Instruction');
 var CpuInterface_1 = require('./CpuInterface');
@@ -25768,7 +25851,7 @@ var Cpu = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cpu;
 
-},{"./CpuInterface":233,"./Instruction":234}],233:[function(require,module,exports){
+},{"./CpuInterface":235,"./Instruction":236}],235:[function(require,module,exports){
 "use strict";
 var CpuInterface;
 (function (CpuInterface) {
@@ -25805,7 +25888,7 @@ var CpuInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CpuInterface;
 
-},{}],234:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 "use strict";
 var Instruction = (function () {
     function Instruction(operation, addressingMode) {
@@ -26209,7 +26292,7 @@ var Instruction;
 })(Instruction || (Instruction = {}));
 ;
 
-},{}],235:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 "use strict";
 var Switch_1 = require('./Switch');
 var DigitalJoystick = (function () {
@@ -26240,13 +26323,13 @@ var DigitalJoystick = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DigitalJoystick;
 
-},{"./Switch":237}],236:[function(require,module,exports){
+},{"./Switch":239}],238:[function(require,module,exports){
 "use strict";
+var microevent_ts_1 = require('microevent.ts');
 var Switch_1 = require('./Switch');
-var Event_1 = require('../../tools/event/Event');
 var Paddle = (function () {
     function Paddle() {
-        this.valueChanged = new Event_1.default();
+        this.valueChanged = new microevent_ts_1.Event();
         this._fireSwitch = new Switch_1.default();
         this._value = 0.5;
     }
@@ -26265,15 +26348,15 @@ var Paddle = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Paddle;
 
-},{"../../tools/event/Event":278,"./Switch":237}],237:[function(require,module,exports){
+},{"./Switch":239,"microevent.ts":223}],239:[function(require,module,exports){
 "use strict";
-var Event_1 = require('../../tools/event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var Switch = (function () {
     function Switch(_state) {
         if (_state === void 0) { _state = false; }
         this._state = _state;
-        this.stateChanged = new Event_1.default();
-        this.beforeRead = new Event_1.default();
+        this.stateChanged = new microevent_ts_1.Event();
+        this.beforeRead = new microevent_ts_1.Event();
     }
     Switch.prototype.read = function () {
         this.beforeRead.dispatch(this);
@@ -26294,8 +26377,9 @@ var Switch = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Switch;
 
-},{"../../tools/event/Event":278}],238:[function(require,module,exports){
+},{"microevent.ts":223}],240:[function(require,module,exports){
 "use strict";
+var microevent_ts_1 = require('microevent.ts');
 var BoardInterface_1 = require('../board/BoardInterface');
 var CpuInterface_1 = require('../cpu/CpuInterface');
 var Cpu_1 = require('../cpu/Cpu');
@@ -26306,14 +26390,13 @@ var Config_1 = require('./Config');
 var ControlPanel_1 = require('./ControlPanel');
 var DigitalJoystick_1 = require('../io/DigitalJoystick');
 var Paddle_1 = require('../io/Paddle');
-var Event_1 = require('../../tools/event/Event');
 var factory_1 = require('../../tools/rng/factory');
 var Board = (function () {
     function Board(config, cartridge, cpuFactory) {
         var _this = this;
-        this.clock = new Event_1.default();
-        this.cpuClock = new Event_1.default();
-        this.trap = new Event_1.default();
+        this.clock = new microevent_ts_1.Event();
+        this.cpuClock = new microevent_ts_1.Event();
+        this.trap = new microevent_ts_1.Event();
         this._clockMode = 1 /* lazy */;
         this._trap = false;
         this._audioEnabled = true;
@@ -26387,6 +26470,7 @@ var Board = (function () {
         this._cpu.reset();
         this._tia.reset();
         this._pia.reset();
+        this._cartridge.reset();
         this._controlPanel.getResetButton().toggle(false);
         this._controlPanel.getSelectSwitch().toggle(false);
         this._controlPanel.getColorSwitch().toggle(false);
@@ -26526,15 +26610,15 @@ var Board = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Board;
 
-},{"../../tools/event/Event":278,"../../tools/rng/factory":282,"../board/BoardInterface":231,"../cpu/Cpu":232,"../cpu/CpuInterface":233,"../io/DigitalJoystick":235,"../io/Paddle":236,"./Bus":239,"./Config":240,"./ControlPanel":241,"./Pia":242,"./tia/Tia":271}],239:[function(require,module,exports){
+},{"../../tools/rng/factory":283,"../board/BoardInterface":233,"../cpu/Cpu":234,"../cpu/CpuInterface":235,"../io/DigitalJoystick":237,"../io/Paddle":238,"./Bus":241,"./Config":242,"./ControlPanel":243,"./Pia":244,"./tia/Tia":273,"microevent.ts":223}],241:[function(require,module,exports){
 "use strict";
-var Event_1 = require('../../tools/event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var Bus = (function () {
     function Bus() {
         this.event = {
-            trap: new Event_1.default(),
-            read: new Event_1.default(),
-            write: new Event_1.default()
+            trap: new microevent_ts_1.Event(),
+            read: new microevent_ts_1.Event(),
+            write: new microevent_ts_1.Event()
         };
         this._tia = null;
         this._pia = null;
@@ -26608,7 +26692,17 @@ var Bus = (function () {
         }
     };
     Bus.prototype.peek = function (address) {
-        return this.read(address);
+        address &= 0x1FFF;
+        // Chip select A12 -> cartridge
+        if (address & 0x1000) {
+            return this._cartridge.peek(address);
+        }
+        else if (address & 0x80) {
+            return this._pia.peek(address);
+        }
+        else {
+            return this._tia.peek(address);
+        }
     };
     // Stub
     Bus.prototype.poke = function (address, value) { };
@@ -26655,7 +26749,7 @@ var Bus;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Bus;
 
-},{"../../tools/event/Event":278}],240:[function(require,module,exports){
+},{"microevent.ts":223}],242:[function(require,module,exports){
 "use strict";
 var Config = (function () {
     function Config(tvMode, enableAudio, randomSeed, emulatePaddles) {
@@ -26692,7 +26786,7 @@ var Config;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Config;
 
-},{}],241:[function(require,module,exports){
+},{}],243:[function(require,module,exports){
 "use strict";
 var Switch_1 = require('../io/Switch');
 var ControlPanel = (function () {
@@ -26723,16 +26817,16 @@ var ControlPanel = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ControlPanel;
 
-},{"../io/Switch":237}],242:[function(require,module,exports){
+},{"../io/Switch":239}],244:[function(require,module,exports){
 "use strict";
-var Event_1 = require('../../tools/event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var Pia = (function () {
     function Pia(_controlPanel, _joystick0, _joystick1, _rng) {
         this._controlPanel = _controlPanel;
         this._joystick0 = _joystick0;
         this._joystick1 = _joystick1;
         this._rng = _rng;
-        this.trap = new Event_1.default();
+        this.trap = new microevent_ts_1.Event();
         this.ram = new Uint8Array(128);
         this._bus = null;
         this._timerValue = 255;
@@ -26760,6 +26854,21 @@ var Pia = (function () {
         if (address & 0x0200) {
             if (address & 0x0004) {
                 return this._readTimer(address);
+            }
+            else {
+                return this._readIo(address);
+            }
+        }
+        else {
+            // Mask out A7 - A15
+            return this.ram[address & 0x7F];
+        }
+    };
+    Pia.prototype.peek = function (address) {
+        // RAM select = A9 low?
+        if (address & 0x0200) {
+            if (address & 0x0004) {
+                return this._peekTimer(address);
             }
             else {
                 return this._readIo(address);
@@ -26851,6 +26960,9 @@ var Pia = (function () {
             return this._timerValue;
         }
     };
+    Pia.prototype._peekTimer = function (address) {
+        return (address & 0x01) ? (this._interruptFlag & 0x80) : this._timerValue;
+    };
     Pia.prototype._cycleTimer = function () {
         this._timerSub++;
         this._flagSetDuringThisCycle = false;
@@ -26902,17 +27014,21 @@ var Pia;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Pia;
 
-},{"../../tools/event/Event":278}],243:[function(require,module,exports){
+},{"microevent.ts":223}],245:[function(require,module,exports){
 "use strict";
-var Event_1 = require('../../../tools/event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var CartridgeInterface_1 = require('./CartridgeInterface');
 var CartridgeInfo_1 = require('./CartridgeInfo');
 var AbstractCartridge = (function () {
     function AbstractCartridge() {
-        this.trap = new Event_1.default();
+        this.trap = new microevent_ts_1.Event();
     }
+    AbstractCartridge.prototype.reset = function () { };
     AbstractCartridge.prototype.read = function (address) {
         return 0;
+    };
+    AbstractCartridge.prototype.peek = function (address) {
+        return this.read(address);
     };
     AbstractCartridge.prototype.write = function (address, value) {
     };
@@ -26942,7 +27058,7 @@ var AbstractCartridge = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractCartridge;
 
-},{"../../../tools/event/Event":278,"./CartridgeInfo":258,"./CartridgeInterface":259}],244:[function(require,module,exports){
+},{"./CartridgeInfo":260,"./CartridgeInterface":261,"microevent.ts":223}],246:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -26975,7 +27091,7 @@ var Cartridge2k = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cartridge2k;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258}],245:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260}],247:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -26997,16 +27113,23 @@ var Cartridge3F = (function (_super) {
         for (var i = 0; i < 4; i++) {
             this._banks[i] = new Uint8Array(0x0800);
         }
-        this._bank0 = this._bank1 = this._banks[3];
+        this._bank1 = this._banks[3];
+        this._bank0 = this._banks[0];
         for (var i = 0; i < 0x0800; i++) {
             for (var j = 0; j < 4; j++) {
                 this._banks[j][i] = buffer[0x0800 * j + i];
             }
         }
     }
+    Cartridge3F.prototype.reset = function () {
+        this._bank0 = this._banks[0];
+    };
     Cartridge3F.prototype.setBus = function (bus) {
         this._bus = bus;
-        this._bus.event.read.addHandler(Cartridge3F._onBusAccess, this);
+        // Bankswitch on read breaks actual cartridges badly -> maybe the hardware actively
+        // watches out for STA on the bus? Disable for now, more research would be in order.
+        //
+        //this._bus.event.read.addHandler(Cartridge3F._onBusAccess, this);
         this._bus.event.write.addHandler(Cartridge3F._onBusAccess, this);
         return this;
     };
@@ -27033,7 +27156,7 @@ var Cartridge3F = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cartridge3F;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258,"./util":261}],246:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260,"./util":263}],248:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27066,7 +27189,7 @@ var Cartridge4k = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cartridge4k;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258}],247:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260}],249:[function(require,module,exports){
 "use strict";
 var CartridgeInfo_1 = require('./CartridgeInfo');
 var CartridgeF8_1 = require('./CartridgeF8');
@@ -27128,7 +27251,7 @@ var CartridgeDetector = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeDetector;
 
-},{"./Cartridge3F":245,"./CartridgeE0":248,"./CartridgeE7":249,"./CartridgeF8":253,"./CartridgeFE":256,"./CartridgeInfo":258,"./CartridgeUA":260}],248:[function(require,module,exports){
+},{"./Cartridge3F":247,"./CartridgeE0":250,"./CartridgeE7":251,"./CartridgeF8":255,"./CartridgeFE":258,"./CartridgeInfo":260,"./CartridgeUA":262}],250:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27150,20 +27273,27 @@ var CartridgeE0 = (function (_super) {
         for (var i = 0; i < 8; i++) {
             this._banks[i] = new Uint8Array(0x0400);
         }
-        for (var i = 0; i < 4; i++) {
-            this._activeBanks[i] = this._banks[7];
-        }
         for (var i = 0; i < 0x0400; i++) {
             for (var j = 0; j < 8; j++) {
                 this._banks[j][i] = buffer[j * 0x0400 + i];
             }
         }
+        this.reset();
     }
+    CartridgeE0.prototype.reset = function () {
+        for (var i = 0; i < 4; i++) {
+            this._activeBanks[i] = this._banks[7];
+        }
+    };
     CartridgeE0.prototype.read = function (address) {
         address &= 0x0FFF;
         if (address >= 0x0FE0 && address < 0x0FF8) {
             this._handleBankswitch(address);
         }
+        return this._activeBanks[(address >> 10)][address & 0x03FF];
+    };
+    CartridgeE0.prototype.peek = function (address) {
+        address &= 0x0FFF;
         return this._activeBanks[(address >> 10)][address & 0x03FF];
     };
     CartridgeE0.prototype.write = function (address, value) {
@@ -27211,7 +27341,7 @@ var CartridgeE0 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeE0;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258,"./util":261}],249:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260,"./util":263}],251:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27235,20 +27365,27 @@ var CartrdigeE7 = (function (_super) {
         for (var i = 0; i < 8; i++) {
             this._banks[i] = new Uint8Array(0x0800);
         }
-        this._bank0 = this._banks[0];
         for (var i = 0; i < 4; i++) {
             this._ram1Banks[i] = new Uint8Array(0x100);
         }
-        this._ram1 = this._ram1Banks[0];
         for (var i = 0; i < 0x0800; i++) {
             for (var j = 0; j < 8; j++) {
                 this._banks[j][i] = buffer[j * 0x0800 + i];
             }
         }
+        this.reset();
     }
+    CartrdigeE7.prototype.reset = function () {
+        this._bank0 = this._banks[0];
+        this._ram1 = this._ram1Banks[0];
+        this._ram0Enabled = false;
+    };
     CartrdigeE7.prototype.read = function (address) {
+        this._handleBankswitch(address & 0x0FFF);
+        return this.peek(address);
+    };
+    CartrdigeE7.prototype.peek = function (address) {
         address &= 0x0FFF;
-        this._handleBankswitch(address);
         // 0 -> 0x07FF: bank 0 - 6 or RAM
         if (address < 0x0800) {
             // RAM enabled?
@@ -27341,7 +27478,7 @@ var CartrdigeE7 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartrdigeE7;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258,"./util":261}],250:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260,"./util":263}],252:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27362,17 +27499,24 @@ var CartridgeF0 = (function (_super) {
         for (var i = 0; i < 16; i++) {
             this._banks[i] = new Uint8Array(0x1000);
         }
-        this._currentBank = this._banks[this._bankIdx];
         for (var i = 0; i < 0x1000; i++) {
             for (var j = 0; j < 16; j++) {
                 this._banks[j][i] = buffer[j * 0x1000 + i];
             }
         }
+        this.reset();
     }
+    CartridgeF0.prototype.reset = function () {
+        this._bankIdx = 0;
+        this._currentBank = this._banks[this._bankIdx];
+    };
     CartridgeF0.prototype.read = function (address) {
         address &= 0x0FFF;
         this._handleBankswitch(address);
         return this._currentBank[address];
+    };
+    CartridgeF0.prototype.peek = function (address) {
+        return this._currentBank[address & 0x0FFF];
     };
     CartridgeF0.prototype.write = function (address, value) {
         address &= 0xFFF;
@@ -27393,7 +27537,7 @@ var CartridgeF0 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeF0;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258}],251:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260}],253:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27423,8 +27567,11 @@ var CartridgeF4 = (function (_super) {
                 this._banks[j][i] = buffer[j * 0x1000 + i];
             }
         }
-        this._bank = this._banks[0];
+        this.reset();
     }
+    CartridgeF4.prototype.reset = function () {
+        this._bank = this._banks[0];
+    };
     CartridgeF4.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_32k_F4;
     };
@@ -27438,8 +27585,11 @@ var CartridgeF4 = (function (_super) {
         return this;
     };
     CartridgeF4.prototype.read = function (address) {
+        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        return this.peek(address);
+    };
+    CartridgeF4.prototype.peek = function (address) {
         address &= 0x0FFF;
-        this._access(address, this._bus.getLastDataBusValue());
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._ram[address - 0x80];
         }
@@ -27468,7 +27618,7 @@ var CartridgeF4 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeF4;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258}],252:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260}],254:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27490,6 +27640,7 @@ var CartridgeF6 = (function (_super) {
         this._bank3 = new Uint8Array(0x1000);
         this._hasSC = false;
         this._saraRAM = new Uint8Array(0x80);
+        this._bus = null;
         if (buffer.length !== 0x4000) {
             throw new Error("buffer is not a 16k cartridge image: wrong length " + buffer.length);
         }
@@ -27499,26 +27650,19 @@ var CartridgeF6 = (function (_super) {
             this._bank2[i] = buffer[0x2000 + i];
             this._bank3[i] = buffer[0x3000 + i];
         }
-        this._bank = this._bank0;
+        this.reset();
     }
+    CartridgeF6.prototype.reset = function () {
+        this._bank = this._bank0;
+    };
     CartridgeF6.prototype.read = function (address) {
+        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        return this.peek(address);
+    };
+    CartridgeF6.prototype.peek = function (address) {
         address &= 0x0FFF;
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._saraRAM[address - 0x80];
-        }
-        switch (address) {
-            case 0x0FF6:
-                this._bank = this._bank0;
-                break;
-            case 0x0FF7:
-                this._bank = this._bank1;
-                break;
-            case 0x0FF8:
-                this._bank = this._bank2;
-                break;
-            case 0x0FF9:
-                this._bank = this._bank3;
-                break;
         }
         return this._bank[address];
     };
@@ -27526,6 +27670,23 @@ var CartridgeF6 = (function (_super) {
         address &= 0x0FFF;
         if (address < 0x80 && this._supportSC) {
             this._hasSC = true;
+        }
+        this._access(address, value);
+    };
+    CartridgeF6.prototype.getType = function () {
+        return CartridgeInfo_1.default.CartridgeType.bankswitch_16k_F6;
+    };
+    CartridgeF6.prototype.randomize = function (rng) {
+        for (var i = 0; i < this._saraRAM.length; i++) {
+            this._saraRAM[i] = rng.int(0xFF);
+        }
+    };
+    CartridgeF6.prototype.setBus = function (bus) {
+        this._bus = bus;
+        return this;
+    };
+    CartridgeF6.prototype._access = function (address, value) {
+        if (address < 0x80 && this._hasSC) {
             this._saraRAM[address] = value & 0xFF;
             return;
         }
@@ -27542,16 +27703,6 @@ var CartridgeF6 = (function (_super) {
             case 0x0FF9:
                 this._bank = this._bank3;
                 break;
-            default:
-                _super.prototype.write.call(this, address, value);
-        }
-    };
-    CartridgeF6.prototype.getType = function () {
-        return CartridgeInfo_1.default.CartridgeType.bankswitch_16k_F6;
-    };
-    CartridgeF6.prototype.randomize = function (rng) {
-        for (var i = 0; i < this._saraRAM.length; i++) {
-            this._saraRAM[i] = rng.int(0xFF);
         }
     };
     return CartridgeF6;
@@ -27559,7 +27710,7 @@ var CartridgeF6 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeF6;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258}],253:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260}],255:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27583,31 +27734,21 @@ var CartridgeF8 = (function (_super) {
             this._bank0[i] = buffer[i];
             this._bank1[i] = buffer[0x1000 + i];
         }
-        this._bank = this._bank0;
+        this.reset();
     }
+    CartridgeF8.prototype.reset = function () {
+        this._bank = this._bank0;
+    };
     CartridgeF8.prototype.read = function (address) {
         address &= 0x0FFF;
-        switch (address) {
-            case 0x0FF8:
-                this._bank = this._bank0;
-                break;
-            case 0x0FF9:
-                this._bank = this._bank1;
-                break;
-        }
+        this._handleBankswitch(address);
         return this._bank[address];
     };
+    CartridgeF8.prototype.peek = function (address) {
+        return this._bank[address & 0x0FFF];
+    };
     CartridgeF8.prototype.write = function (address, value) {
-        switch (address & 0x0FFF) {
-            case 0x0FF8:
-                this._bank = this._bank0;
-                return;
-            case 0x0FF9:
-                this._bank = this._bank1;
-                return;
-            default:
-                return _super.prototype.write.call(this, address, value);
-        }
+        this._handleBankswitch(address & 0x0FFF);
     };
     CartridgeF8.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_F8;
@@ -27618,12 +27759,22 @@ var CartridgeF8 = (function (_super) {
         );
         return signatureCounts[0] >= 2;
     };
+    CartridgeF8.prototype._handleBankswitch = function (address) {
+        switch (address) {
+            case 0x0FF8:
+                this._bank = this._bank0;
+                break;
+            case 0x0FF9:
+                this._bank = this._bank1;
+                break;
+        }
+    };
     return CartridgeF8;
 }(AbstractCartridge_1.default));
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeF8;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258,"./util":261}],254:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260,"./util":263}],256:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27648,16 +27799,22 @@ var CartridgeFA = (function (_super) {
             this._bank1[i] = buffer[0x1000 + i];
             this._bank2[i] = buffer[0x2000 + i];
         }
-        this._bank = this._bank0;
+        this.reset();
     }
+    CartridgeFA.prototype.reset = function () {
+        this._bank = this._bank0;
+    };
     CartridgeFA.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ram.length; i++) {
             this._ram[i] = rng.int(0xFF);
         }
     };
     CartridgeFA.prototype.read = function (address) {
+        this._handleBankswitch(address & 0x0FFF);
+        return this.peek(address);
+    };
+    CartridgeFA.prototype.peek = function (address) {
         address &= 0x0FFF;
-        this._handleBankswitch(address);
         if (address >= 0x0100 && address < 0x0200) {
             return this._ram[address & 0xFF];
         }
@@ -27696,7 +27853,7 @@ var CartridgeFA = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeFA;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258}],255:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260}],257:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27732,8 +27889,13 @@ var CartridgeFA2 = (function (_super) {
                 this._banks[j][i] = buffer[j * 0x1000 + i + offset];
             }
         }
-        this._bank = this._banks[0];
+        this.reset();
     }
+    CartridgeFA2.prototype.reset = function () {
+        this._accessCounter = 0;
+        this._accessCounterLimit = 0;
+        this._bank = this._banks[0];
+    };
     CartridgeFA2.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_FA2;
     };
@@ -27747,8 +27909,11 @@ var CartridgeFA2 = (function (_super) {
         return this;
     };
     CartridgeFA2.prototype.read = function (address) {
+        this.write(address & 0x0FFF, this._bus.getLastDataBusValue());
+        return this.peek(address);
+    };
+    CartridgeFA2.prototype.peek = function (address) {
         address &= 0x0FFF;
-        this.write(address, this._bus.getLastDataBusValue());
         if (address >= 0x0100 && address < 0x0200) {
             return this._ram[address - 0x0100];
         }
@@ -27804,7 +27969,7 @@ var CartridgeFA2 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeFA2;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258}],256:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260}],258:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -27827,8 +27992,11 @@ var CartridgeFE = (function (_super) {
             this._bank0[i] = buffer[i];
             this._bank1[i] = buffer[0x1000 + i];
         }
-        this._bank = this._bank0;
+        this.reset();
     }
+    CartridgeFE.prototype.reset = function () {
+        this._bank = this._bank0;
+    };
     CartridgeFE.prototype.read = function (address) {
         return this._bank[address & 0x0FFF];
     };
@@ -27844,7 +28012,7 @@ var CartridgeFE = (function (_super) {
         return this;
     };
     CartridgeFE.prototype.notifyCpuCycleComplete = function () {
-        var lastInstruction = this._bus.read(this._cpu.getLastInstructionPointer());
+        var lastInstruction = this._bus.peek(this._cpu.getLastInstructionPointer());
         if (lastInstruction === 0x20 ||
             lastInstruction === 0x60 // RTS
         ) {
@@ -27874,7 +28042,7 @@ var CartridgeFE = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeFE;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258,"./util":261}],257:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260,"./util":263}],259:[function(require,module,exports){
 "use strict";
 var Cartridge2k_1 = require('./Cartridge2k');
 var Cartridge4k_1 = require('./Cartridge4k');
@@ -27935,7 +28103,7 @@ var CartridgeFactory = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeFactory;
 
-},{"./Cartridge2k":244,"./Cartridge3F":245,"./Cartridge4k":246,"./CartridgeDetector":247,"./CartridgeE0":248,"./CartridgeE7":249,"./CartridgeF0":250,"./CartridgeF4":251,"./CartridgeF6":252,"./CartridgeF8":253,"./CartridgeFA":254,"./CartridgeFA2":255,"./CartridgeFE":256,"./CartridgeInfo":258,"./CartridgeUA":260}],258:[function(require,module,exports){
+},{"./Cartridge2k":246,"./Cartridge3F":247,"./Cartridge4k":248,"./CartridgeDetector":249,"./CartridgeE0":250,"./CartridgeE7":251,"./CartridgeF0":252,"./CartridgeF4":253,"./CartridgeF6":254,"./CartridgeF8":255,"./CartridgeFA":256,"./CartridgeFA2":257,"./CartridgeFE":258,"./CartridgeInfo":260,"./CartridgeUA":262}],260:[function(require,module,exports){
 "use strict";
 var CartridgeInfo = (function () {
     function CartridgeInfo() {
@@ -28017,7 +28185,7 @@ var CartridgeInfo;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeInfo;
 
-},{}],259:[function(require,module,exports){
+},{}],261:[function(require,module,exports){
 "use strict";
 var CartridgeInterface;
 (function (CartridgeInterface) {
@@ -28039,7 +28207,7 @@ var CartridgeInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeInterface;
 
-},{}],260:[function(require,module,exports){
+},{}],262:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -28064,8 +28232,11 @@ var CartridgeUA = (function (_super) {
             this._bank0[i] = buffer[i];
             this._bank1[i] = buffer[0x1000 + i];
         }
-        this._bank = this._bank0;
+        this.reset();
     }
+    CartridgeUA.prototype.reset = function () {
+        this._bank = this._bank0;
+    };
     CartridgeUA.prototype.read = function (address) {
         return this._bank[address & 0x0FFF];
     };
@@ -28107,7 +28278,7 @@ var CartridgeUA = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeUA;
 
-},{"./AbstractCartridge":243,"./CartridgeInfo":258,"./util":261}],261:[function(require,module,exports){
+},{"./AbstractCartridge":245,"./CartridgeInfo":260,"./util":263}],263:[function(require,module,exports){
 "use strict";
 function searchForSignatures(buffer, signatures) {
     var candidates = [], counts = signatures.map(function (signature) { return 0; });
@@ -28145,16 +28316,16 @@ function searchForSignatures(buffer, signatures) {
 }
 exports.searchForSignatures = searchForSignatures;
 
-},{}],262:[function(require,module,exports){
+},{}],264:[function(require,module,exports){
 "use strict";
-var Event_1 = require('../../../tools/event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var ToneGenerator_1 = require('./ToneGenerator');
 var Audio = (function () {
     function Audio(_config) {
         this._config = _config;
-        this.bufferChanged = new Event_1.default();
-        this.volumeChanged = new Event_1.default();
-        this.stop = new Event_1.default();
+        this.bufferChanged = new microevent_ts_1.Event();
+        this.volumeChanged = new microevent_ts_1.Event();
+        this.stop = new microevent_ts_1.Event();
         this._volume = -1;
         this._tone = -1;
         this._frequency = -1;
@@ -28220,7 +28391,7 @@ var Audio = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Audio;
 
-},{"../../../tools/event/Event":278,"./ToneGenerator":272}],263:[function(require,module,exports){
+},{"./ToneGenerator":274,"microevent.ts":223}],265:[function(require,module,exports){
 "use strict";
 var Count;
 (function (Count) {
@@ -28326,7 +28497,7 @@ var Ball = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Ball;
 
-},{}],264:[function(require,module,exports){
+},{}],266:[function(require,module,exports){
 "use strict";
 var DelayQueue = (function () {
     function DelayQueue(_length, size) {
@@ -28395,9 +28566,9 @@ var QueueEntry = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DelayQueue;
 
-},{}],265:[function(require,module,exports){
+},{}],267:[function(require,module,exports){
 "use strict";
-var Event_1 = require('../../../tools/event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var Config_1 = require('../Config');
 var Metrics;
 (function (Metrics) {
@@ -28423,7 +28594,7 @@ var State;
 var FrameManager = (function () {
     function FrameManager(_config) {
         this._config = _config;
-        this.newFrame = new Event_1.default();
+        this.newFrame = new microevent_ts_1.Event();
         this.vblank = false;
         this.surfaceBuffer = null;
         this._vblankLines = 0;
@@ -28594,7 +28765,7 @@ var FrameManager = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FrameManager;
 
-},{"../../../tools/event/Event":278,"../Config":240}],266:[function(require,module,exports){
+},{"../Config":242,"microevent.ts":223}],268:[function(require,module,exports){
 "use strict";
 var LatchedInput = (function () {
     function LatchedInput(_switch) {
@@ -28629,7 +28800,7 @@ var LatchedInput = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = LatchedInput;
 
-},{}],267:[function(require,module,exports){
+},{}],269:[function(require,module,exports){
 "use strict";
 var drawCounterDecodes_1 = require('./drawCounterDecodes');
 var Count;
@@ -28735,7 +28906,7 @@ var Missile = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Missile;
 
-},{"./drawCounterDecodes":273}],268:[function(require,module,exports){
+},{"./drawCounterDecodes":275}],270:[function(require,module,exports){
 "use strict";
 var C = 68e-9, // capacitor
 RPOT = 1e6, // total paddle resistance
@@ -28803,7 +28974,7 @@ var PaddleReader = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PaddleReader;
 
-},{}],269:[function(require,module,exports){
+},{}],271:[function(require,module,exports){
 "use strict";
 var drawCounterDecodes_1 = require('./drawCounterDecodes');
 var Count;
@@ -29019,7 +29190,7 @@ var Player = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Player;
 
-},{"./drawCounterDecodes":273}],270:[function(require,module,exports){
+},{"./drawCounterDecodes":275}],272:[function(require,module,exports){
 "use strict";
 var ColorMode;
 (function (ColorMode) {
@@ -29138,9 +29309,9 @@ var Playfield = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Playfield;
 
-},{}],271:[function(require,module,exports){
+},{}],273:[function(require,module,exports){
 "use strict";
-var Event_1 = require('../../../tools/event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var Config_1 = require('../Config');
 var Audio_1 = require('./Audio');
 var Missile_1 = require('./Missile');
@@ -29195,7 +29366,7 @@ var Tia = (function () {
         var _this = this;
         this._config = _config;
         this._rng = _rng;
-        this.trap = new Event_1.default();
+        this.trap = new microevent_ts_1.Event();
         this._cpu = null;
         this._bus = null;
         this._delayQueue = new DelayQueue_1.default(10, 20);
@@ -29452,6 +29623,9 @@ var Tia = (function () {
                 break;
         }
         return (result & 0xC0) | (lastDataBusValue & 0x3F);
+    };
+    Tia.prototype.peek = function (address) {
+        return this.read(address);
     };
     Tia.prototype.write = function (address, value) {
         var v = 0;
@@ -29870,7 +30044,7 @@ var Tia;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Tia;
 
-},{"../../../tools/event/Event":278,"../Config":240,"./Audio":262,"./Ball":263,"./DelayQueue":264,"./FrameManager":265,"./LatchedInput":266,"./Missile":267,"./PaddleReader":268,"./Player":269,"./Playfield":270,"./palette":274}],272:[function(require,module,exports){
+},{"../Config":242,"./Audio":264,"./Ball":265,"./DelayQueue":266,"./FrameManager":267,"./LatchedInput":268,"./Missile":269,"./PaddleReader":270,"./Player":271,"./Playfield":272,"./palette":276,"microevent.ts":223}],274:[function(require,module,exports){
 "use strict";
 var Config_1 = require('../Config');
 var AudioOutputBuffer_1 = require('../../../tools/AudioOutputBuffer');
@@ -29977,7 +30151,7 @@ var ToneGenerator = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ToneGenerator;
 
-},{"../../../tools/AudioOutputBuffer":275,"../Config":240}],273:[function(require,module,exports){
+},{"../../../tools/AudioOutputBuffer":277,"../Config":242}],275:[function(require,module,exports){
 "use strict";
 var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160), decodesWide = new Uint8Array(160);
 exports.decodesMissile = [
@@ -30026,7 +30200,7 @@ var init;
     decodes6[28] = decodes6[60] = 1;
 })(init || (init = {}));
 
-},{}],274:[function(require,module,exports){
+},{}],276:[function(require,module,exports){
 "use strict";
 exports.NTSC = new Uint32Array([
     0xff000000,
@@ -30419,7 +30593,7 @@ exports.SECAM = new Uint32Array([
     0xffededed,
 ]);
 
-},{}],275:[function(require,module,exports){
+},{}],277:[function(require,module,exports){
 "use strict";
 var AudioOutputBuffer = (function () {
     function AudioOutputBuffer(_content, _sampleRate) {
@@ -30440,13 +30614,13 @@ var AudioOutputBuffer = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AudioOutputBuffer;
 
-},{}],276:[function(require,module,exports){
+},{}],278:[function(require,module,exports){
 "use strict";
-var Event_1 = require('./event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var ClockProbe = (function () {
     function ClockProbe(_scheduler) {
         this._scheduler = _scheduler;
-        this.frequencyUpdate = new Event_1.default();
+        this.frequencyUpdate = new microevent_ts_1.Event();
         this._counter = 0;
         this._frequency = 0;
     }
@@ -30497,7 +30671,7 @@ var ClockProbe = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ClockProbe;
 
-},{"./event/Event":278}],277:[function(require,module,exports){
+},{"microevent.ts":223}],279:[function(require,module,exports){
 "use strict";
 var Mutex = (function () {
     function Mutex() {
@@ -30546,94 +30720,16 @@ var Mutex = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Mutex;
 
-},{}],278:[function(require,module,exports){
+},{}],280:[function(require,module,exports){
 "use strict";
-var factories = [];
-factories[0] = function () {
-    return function dispatcher0() { };
-};
-factories[1] = function (callback, context) {
-    if (typeof (context) === 'undefined')
-        return callback;
-    return function dispatcher1(payload) {
-        callback(payload, context);
-    };
-};
-function getFactory(handlerCount) {
-    if (!factories[handlerCount])
-        factories[handlerCount] = compileFactory(handlerCount);
-    return factories[handlerCount];
-}
-function compileFactory(handlerCount) {
-    var src = 'return function dispatcher' + handlerCount + '(payload) {\n';
-    var argsHandlers = [], argsContexts = [];
-    for (var i = 0; i < handlerCount; i++) {
-        argsHandlers.push('cb' + i);
-        argsContexts.push('ctx' + i);
-        src += '    cb' + i + '(payload, ctx' + i + ');\n';
-    }
-    src += '};';
-    return new (Function.bind.apply(Function, [void 0].concat(argsHandlers.concat(argsContexts), [src])))();
-}
-var Event = (function () {
-    function Event() {
-        this.hasHandlers = false;
-        this._handlers = [];
-        this._contexts = [];
-        this._createDispatcher();
-    }
-    Event.prototype.addHandler = function (handler, context) {
-        if (!this.isHandlerAttached(handler, context)) {
-            this._handlers.push(handler);
-            this._contexts.push(context);
-            this._createDispatcher();
-            this._updateHasHandlers();
-        }
-        return this;
-    };
-    Event.prototype.removeHandler = function (handler, context) {
-        var idx = this._getHandlerIndex(handler, context);
-        if (typeof (idx) !== 'undefined') {
-            this._handlers.splice(idx, 1);
-            this._contexts.splice(idx, 1);
-            this._createDispatcher();
-            this._updateHasHandlers();
-        }
-        return this;
-    };
-    Event.prototype.isHandlerAttached = function (handler, context) {
-        return typeof (this._getHandlerIndex(handler, context)) !== 'undefined';
-    };
-    Event.prototype._updateHasHandlers = function () {
-        this.hasHandlers = !!this._handlers.length;
-    };
-    Event.prototype._getHandlerIndex = function (handler, context) {
-        var handlerCount = this._handlers.length;
-        var idx;
-        for (idx = 0; idx < handlerCount; idx++) {
-            if (this._handlers[idx] === handler && this._contexts[idx] === context)
-                break;
-        }
-        return idx < handlerCount ? idx : undefined;
-    };
-    Event.prototype._createDispatcher = function () {
-        this.dispatch = getFactory(this._handlers.length).apply(this, this._handlers.concat(this._contexts));
-    };
-    return Event;
-}());
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = Event;
-
-},{}],279:[function(require,module,exports){
-"use strict";
+var microevent_ts_1 = require('microevent.ts');
 var PoolMember_1 = require('./PoolMember');
-var Event_1 = require('../event/Event');
 var Pool = (function () {
     function Pool(_factory) {
         this._factory = _factory;
         this.event = {
-            release: new Event_1.default(),
-            dispose: new Event_1.default()
+            release: new microevent_ts_1.Event(),
+            dispose: new microevent_ts_1.Event()
         };
         this._pool = [];
         this._poolSize = 0;
@@ -30679,7 +30775,7 @@ var Pool = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Pool;
 
-},{"../event/Event":278,"./PoolMember":280}],280:[function(require,module,exports){
+},{"./PoolMember":281,"microevent.ts":223}],281:[function(require,module,exports){
 "use strict";
 var PoolMember = (function () {
     function PoolMember(_value, _releaseCB, _disposeCB) {
@@ -30706,7 +30802,7 @@ var PoolMember = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PoolMember;
 
-},{}],281:[function(require,module,exports){
+},{}],282:[function(require,module,exports){
 "use strict";
 var SeedrandomGenerator = (function () {
     function SeedrandomGenerator(_rng) {
@@ -30732,7 +30828,7 @@ var SeedrandomGenerator = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SeedrandomGenerator;
 
-},{}],282:[function(require,module,exports){
+},{}],283:[function(require,module,exports){
 "use strict";
 var seedrandom = require('seedrandom');
 var SeedrandomGenerator_1 = require('./SeedrandomGenerator');
@@ -30752,7 +30848,7 @@ function restoreRng(state) {
 }
 exports.restoreRng = restoreRng;
 
-},{"./SeedrandomGenerator":281,"seedrandom":222}],283:[function(require,module,exports){
+},{"./SeedrandomGenerator":282,"seedrandom":224}],284:[function(require,module,exports){
 "use strict";
 var polyfill = require('setimmediate2');
 var ImmediateScheduler = (function () {
@@ -30776,7 +30872,7 @@ var ImmediateScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ImmediateScheduler;
 
-},{"setimmediate2":230}],284:[function(require,module,exports){
+},{"setimmediate2":232}],285:[function(require,module,exports){
 "use strict";
 var polyfill = require('setimmediate2');
 var CORRECTION_THESHOLD = 3, MAX_ACCUMULATED_DELTA = 100;
@@ -30829,7 +30925,7 @@ var LimitingImmediateScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = LimitingImmediateScheduler;
 
-},{"setimmediate2":230}],285:[function(require,module,exports){
+},{"setimmediate2":232}],286:[function(require,module,exports){
 "use strict";
 var PeriodicScheduler = (function () {
     function PeriodicScheduler(_period) {
@@ -30861,7 +30957,7 @@ var PeriodicScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PeriodicScheduler;
 
-},{}],286:[function(require,module,exports){
+},{}],287:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface_1 = require('./RGBASurfaceInterface');
 var ArrayBufferSurface = (function () {
@@ -30900,7 +30996,7 @@ var ArrayBufferSurface = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ArrayBufferSurface;
 
-},{"./RGBASurfaceInterface":287}],287:[function(require,module,exports){
+},{"./RGBASurfaceInterface":288}],288:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface;
 (function (RGBASurfaceInterface) {
@@ -30913,10 +31009,9 @@ var RGBASurfaceInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = RGBASurfaceInterface;
 
-},{}],288:[function(require,module,exports){
+},{}],289:[function(require,module,exports){
 "use strict";
-var Event_1 = require('../event/Event');
-{ }
+var microevent_ts_1 = require('microevent.ts');
 var MSG_RESOLVE_TRANSACTION = "resolve_transaction", MSG_REJECT_TRANSACTION = "reject_transaction", MSG_ERROR = "error";
 var MessageType;
 (function (MessageType) {
@@ -30928,7 +31023,7 @@ var MessageType;
 var RpcProvider = (function () {
     function RpcProvider(_dispatch) {
         this._dispatch = _dispatch;
-        this.error = new Event_1.default();
+        this.error = new microevent_ts_1.Event();
         this._rpcHandlers = {};
         this._signalHandlers = {};
         this._pendingTransactions = {};
@@ -31048,16 +31143,16 @@ var RpcProvider = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = RpcProvider;
 
-},{"../event/Event":278}],289:[function(require,module,exports){
+},{"microevent.ts":223}],290:[function(require,module,exports){
 "use strict";
+var microevent_ts_1 = require('microevent.ts');
 var Pool_1 = require('../../tools/pool/Pool');
-var Event_1 = require('../../tools/event/Event');
 var ArrayBufferSurface_1 = require('../../tools/surface/ArrayBufferSurface');
 var VideoEndpoint = (function () {
     function VideoEndpoint(_video) {
         var _this = this;
         this._video = _video;
-        this.newFrame = new Event_1.default();
+        this.newFrame = new microevent_ts_1.Event();
         this._poolMembers = new WeakMap();
         this._surfaces = new WeakMap();
         this._pool = new Pool_1.default(function () { return new ImageData(_this._video.getWidth(), _this._video.getHeight()); });
@@ -31084,7 +31179,7 @@ var VideoEndpoint = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoEndpoint;
 
-},{"../../tools/event/Event":278,"../../tools/pool/Pool":279,"../../tools/surface/ArrayBufferSurface":286}],290:[function(require,module,exports){
+},{"../../tools/pool/Pool":280,"../../tools/surface/ArrayBufferSurface":287,"microevent.ts":223}],291:[function(require,module,exports){
 "use strict";
 var EmulationServiceInterface_1 = require('./EmulationServiceInterface');
 var DriverManager = (function () {
@@ -31171,7 +31266,7 @@ var DriverManager;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":291}],291:[function(require,module,exports){
+},{"./EmulationServiceInterface":292}],292:[function(require,module,exports){
 "use strict";
 var EmulationServiceInterface;
 (function (EmulationServiceInterface) {
@@ -31186,7 +31281,7 @@ var EmulationServiceInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationServiceInterface;
 
-},{}],292:[function(require,module,exports){
+},{}],293:[function(require,module,exports){
 "use strict";
 var VideoEndpoint_1 = require('../../../driver/VideoEndpoint');
 var EmulationContext = (function () {
@@ -31235,8 +31330,9 @@ var EmulationContext = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationContext;
 
-},{"../../../driver/VideoEndpoint":289}],293:[function(require,module,exports){
+},{"../../../driver/VideoEndpoint":290}],294:[function(require,module,exports){
 "use strict";
+var microevent_ts_1 = require('microevent.ts');
 var EmulationServiceInterface_1 = require('../EmulationServiceInterface');
 var EmulationContext_1 = require('./EmulationContext');
 var Board_1 = require('../../../../machine/stella/Board');
@@ -31246,12 +31342,11 @@ var LimitingImmediateScheduler_1 = require('../../../../tools/scheduler/Limiting
 var ClockProbe_1 = require('../../../../tools/ClockProbe');
 var PeriodicScheduler_1 = require('../../../../tools/scheduler/PeriodicScheduler');
 var Mutex_1 = require('../../../../tools/Mutex');
-var Event_1 = require('../../../../tools/event/Event');
 var CLOCK_UPDATE_INTERVAL = 2000;
 var EmulationService = (function () {
     function EmulationService() {
-        this.stateChanged = new Event_1.default();
-        this.emulationError = new Event_1.default();
+        this.stateChanged = new microevent_ts_1.Event();
+        this.emulationError = new microevent_ts_1.Event();
         this._enforceRateLimit = true;
         this._state = EmulationServiceInterface_1.default.State.stopped;
         this._lastError = null;
@@ -31431,7 +31526,7 @@ var EmulationService = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":238,"../../../../machine/stella/cartridge/CartridgeFactory":257,"../../../../tools/ClockProbe":276,"../../../../tools/Mutex":277,"../../../../tools/event/Event":278,"../../../../tools/scheduler/ImmedateScheduler":283,"../../../../tools/scheduler/LimitingImmediateScheduler":284,"../../../../tools/scheduler/PeriodicScheduler":285,"../EmulationServiceInterface":291,"./EmulationContext":292}],294:[function(require,module,exports){
+},{"../../../../machine/stella/Board":240,"../../../../machine/stella/cartridge/CartridgeFactory":259,"../../../../tools/ClockProbe":278,"../../../../tools/Mutex":279,"../../../../tools/scheduler/ImmedateScheduler":284,"../../../../tools/scheduler/LimitingImmediateScheduler":285,"../../../../tools/scheduler/PeriodicScheduler":286,"../EmulationServiceInterface":292,"./EmulationContext":293,"microevent.ts":223}],295:[function(require,module,exports){
 "use strict";
 var messages_1 = require('./messages');
 var AudioDriver = (function () {
@@ -31483,7 +31578,7 @@ var AudioDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AudioDriver;
 
-},{"./messages":298}],295:[function(require,module,exports){
+},{"./messages":299}],296:[function(require,module,exports){
 "use strict";
 var messages_1 = require('./messages');
 var ControlDriver = (function () {
@@ -31545,7 +31640,7 @@ var ControlDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ControlDriver;
 
-},{"./messages":298}],296:[function(require,module,exports){
+},{"./messages":299}],297:[function(require,module,exports){
 "use strict";
 var EmulationService_1 = require('../vanilla/EmulationService');
 var DriverManager_1 = require('../DriverManager');
@@ -31630,7 +31725,7 @@ var EmulationBackend = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationBackend;
 
-},{"../DriverManager":290,"../vanilla/EmulationService":293,"./AudioDriver":294,"./ControlDriver":295,"./VideoDriver":297,"./messages":298}],297:[function(require,module,exports){
+},{"../DriverManager":291,"../vanilla/EmulationService":294,"./AudioDriver":295,"./ControlDriver":296,"./VideoDriver":298,"./messages":299}],298:[function(require,module,exports){
 "use strict";
 var Pool_1 = require('../../../../tools/pool/Pool');
 var ArrayBufferSurface_1 = require('../../../../tools/surface/ArrayBufferSurface');
@@ -31721,7 +31816,7 @@ var VideoDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoDriver;
 
-},{"../../../../tools/pool/Pool":279,"../../../../tools/surface/ArrayBufferSurface":286,"./messages":298}],298:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":280,"../../../../tools/surface/ArrayBufferSurface":287,"./messages":299}],299:[function(require,module,exports){
 "use strict";
 exports.RPC_TYPE = {
     emulationPause: 'emulation/pause',
@@ -31748,7 +31843,7 @@ Object.freeze(exports.SIGNAL_TYPE);
 ;
 ;
 
-},{}],299:[function(require,module,exports){
+},{}],300:[function(require,module,exports){
 "use strict";
 var RpcProvider_1 = require('../../src/tools/worker/RpcProvider');
 var EmulationBackend_1 = require('../../src/web/stella/service/worker/EmulationBackend');
@@ -31757,5 +31852,5 @@ rpcProvider.error.addHandler(function (e) { return console.log(e ? e.message : '
 onmessage = function (messageEvent) { return rpcProvider.dispatch(messageEvent.data); };
 emulationBackend.startup();
 
-},{"../../src/tools/worker/RpcProvider":288,"../../src/web/stella/service/worker/EmulationBackend":296}]},{},[299])
+},{"../../src/tools/worker/RpcProvider":289,"../../src/web/stella/service/worker/EmulationBackend":297}]},{},[300])
 //# sourceMappingURL=stella_worker.js.map

@@ -3031,6 +3031,89 @@ function hasOwnProperty(obj, prop) {
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{"./support/isBuffer":8,"_process":7,"inherits":5}],10:[function(require,module,exports){
+"use strict";
+var factories = [];
+factories[0] = function () {
+    return function dispatcher0() { };
+};
+factories[1] = function (callback, context) {
+    if (typeof (context) === 'undefined')
+        return callback;
+    return function dispatcher1(payload) {
+        callback(payload, context);
+    };
+};
+function getFactory(handlerCount) {
+    if (!factories[handlerCount])
+        factories[handlerCount] = compileFactory(handlerCount);
+    return factories[handlerCount];
+}
+function compileFactory(handlerCount) {
+    var src = 'return function dispatcher' + handlerCount + '(payload) {\n';
+    var argsHandlers = [], argsContexts = [];
+    for (var i = 0; i < handlerCount; i++) {
+        argsHandlers.push('cb' + i);
+        argsContexts.push('ctx' + i);
+        src += '    cb' + i + '(payload, ctx' + i + ');\n';
+    }
+    src += '};';
+    return new (Function.bind.apply(Function, [void 0].concat(argsHandlers.concat(argsContexts), [src])))();
+}
+var Event = (function () {
+    function Event() {
+        this.hasHandlers = false;
+        this._handlers = [];
+        this._contexts = [];
+        this._createDispatcher();
+    }
+    Event.prototype.addHandler = function (handler, context) {
+        if (!this.isHandlerAttached(handler, context)) {
+            this._handlers.push(handler);
+            this._contexts.push(context);
+            this._createDispatcher();
+            this._updateHasHandlers();
+        }
+        return this;
+    };
+    Event.prototype.removeHandler = function (handler, context) {
+        var idx = this._getHandlerIndex(handler, context);
+        if (typeof (idx) !== 'undefined') {
+            this._handlers.splice(idx, 1);
+            this._contexts.splice(idx, 1);
+            this._createDispatcher();
+            this._updateHasHandlers();
+        }
+        return this;
+    };
+    Event.prototype.isHandlerAttached = function (handler, context) {
+        return typeof (this._getHandlerIndex(handler, context)) !== 'undefined';
+    };
+    Event.prototype._updateHasHandlers = function () {
+        this.hasHandlers = !!this._handlers.length;
+    };
+    Event.prototype._getHandlerIndex = function (handler, context) {
+        var handlerCount = this._handlers.length;
+        var idx;
+        for (idx = 0; idx < handlerCount; idx++) {
+            if (this._handlers[idx] === handler && this._contexts[idx] === context)
+                break;
+        }
+        return idx < handlerCount ? idx : undefined;
+    };
+    Event.prototype._createDispatcher = function () {
+        this.dispatch = getFactory(this._handlers.length).apply(this, this._handlers.concat(this._contexts));
+    };
+    return Event;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = Event;
+
+},{}],11:[function(require,module,exports){
+"use strict";
+var Event_1 = require('./Event');
+exports.Event = Event_1.default;
+
+},{"./Event":10}],12:[function(require,module,exports){
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3418,17 +3501,17 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
-var Event_1 = require('../tools/event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var AbstractCLI = (function () {
     function AbstractCLI() {
         this.events = {
-            outputAvailable: new Event_1.default(),
-            quit: new Event_1.default(),
-            promptChanged: new Event_1.default(),
-            prompt: new Event_1.default(),
-            availableCommandsChanged: new Event_1.default()
+            outputAvailable: new microevent_ts_1.Event(),
+            quit: new microevent_ts_1.Event(),
+            promptChanged: new microevent_ts_1.Event(),
+            prompt: new microevent_ts_1.Event(),
+            availableCommandsChanged: new microevent_ts_1.Event()
         };
     }
     return AbstractCLI;
@@ -3436,7 +3519,7 @@ var AbstractCLI = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractCLI;
 
-},{"../tools/event/Event":31}],12:[function(require,module,exports){
+},{"microevent.ts":11}],14:[function(require,module,exports){
 "use strict";
 var CommandInterpreter = (function () {
     function CommandInterpreter(commandTable) {
@@ -3478,7 +3561,7 @@ var CommandInterpreter = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CommandInterpreter;
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 var pathlib = require('path');
 var Completer = (function () {
@@ -3545,7 +3628,7 @@ var Completer;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Completer;
 
-},{"path":6}],14:[function(require,module,exports){
+},{"path":6}],16:[function(require,module,exports){
 "use strict";
 var BoardInterface_1 = require('../machine/board/BoardInterface');
 var hex = require('../tools/hex');
@@ -3715,7 +3798,7 @@ var DebuggerFrontend = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DebuggerFrontend;
 
-},{"../machine/board/BoardInterface":20,"../tools/hex":32,"util":9}],15:[function(require,module,exports){
+},{"../machine/board/BoardInterface":22,"../tools/hex":33,"util":9}],17:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -3968,7 +4051,7 @@ var EhBasicCLI = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EhBasicCLI;
 
-},{"../machine/Debugger":19,"../machine/ehbasic/Board":25,"../tools/ClockProbe":29,"../tools/scheduler/ImmedateScheduler":33,"../tools/scheduler/PeriodicScheduler":34,"./AbstractCLI":11,"./CommandInterpreter":12,"./DebuggerFrontend":14,"path":6}],16:[function(require,module,exports){
+},{"../machine/Debugger":21,"../machine/ehbasic/Board":27,"../tools/ClockProbe":31,"../tools/scheduler/ImmedateScheduler":34,"../tools/scheduler/PeriodicScheduler":35,"./AbstractCLI":13,"./CommandInterpreter":14,"./DebuggerFrontend":16,"path":6}],18:[function(require,module,exports){
 /// <reference path="../interface/jquery.terminal.d.ts"/>
 "use strict";
 var Completer_1 = require('./Completer');
@@ -4014,7 +4097,7 @@ var JqtermCLIRunner = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = JqtermCLIRunner;
 
-},{"./Completer":13}],17:[function(require,module,exports){
+},{"./Completer":15}],19:[function(require,module,exports){
 "use strict";
 var pathlib = require('path');
 var AbstractFileSystemProvider = (function () {
@@ -4048,7 +4131,7 @@ var AbstractFileSystemProvider = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractFileSystemProvider;
 
-},{"path":6}],18:[function(require,module,exports){
+},{"path":6}],20:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
@@ -4125,7 +4208,7 @@ exports.default = PrepackagedFilesystemProvider;
 
 }).call(this,require("buffer").Buffer)
 
-},{"./AbstractFileSystemProvider":17,"buffer":1,"util":9}],19:[function(require,module,exports){
+},{"./AbstractFileSystemProvider":19,"buffer":1,"util":9}],21:[function(require,module,exports){
 "use strict";
 var Instruction_1 = require('./cpu/Instruction');
 var Disassembler_1 = require('./cpu/Disassembler');
@@ -4353,7 +4436,7 @@ var Debugger = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Debugger;
 
-},{"../tools/binary":30,"../tools/hex":32,"./board/BoardInterface":20,"./cpu/CpuInterface":22,"./cpu/Disassembler":23,"./cpu/Instruction":24,"util":9}],20:[function(require,module,exports){
+},{"../tools/binary":32,"../tools/hex":33,"./board/BoardInterface":22,"./cpu/CpuInterface":24,"./cpu/Disassembler":25,"./cpu/Instruction":26,"util":9}],22:[function(require,module,exports){
 "use strict";
 var BoardInterface;
 (function (BoardInterface) {
@@ -4372,7 +4455,7 @@ var BoardInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = BoardInterface;
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 var Instruction_1 = require('./Instruction');
 var CpuInterface_1 = require('./CpuInterface');
@@ -5263,7 +5346,7 @@ var Cpu = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cpu;
 
-},{"./CpuInterface":22,"./Instruction":24}],22:[function(require,module,exports){
+},{"./CpuInterface":24,"./Instruction":26}],24:[function(require,module,exports){
 "use strict";
 var CpuInterface;
 (function (CpuInterface) {
@@ -5283,7 +5366,7 @@ var CpuInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CpuInterface;
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
 var Instruction_1 = require('./Instruction');
 var hex = require('../../tools/hex');
@@ -5350,7 +5433,7 @@ var Disassembler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Disassembler;
 
-},{"../../tools/hex":32,"./Instruction":24}],24:[function(require,module,exports){
+},{"../../tools/hex":33,"./Instruction":26}],26:[function(require,module,exports){
 "use strict";
 var Instruction = (function () {
     function Instruction(operation, addressingMode) {
@@ -5672,7 +5755,7 @@ var Instruction;
 })(Instruction || (Instruction = {}));
 ;
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -5697,7 +5780,7 @@ var Board = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Board;
 
-},{"../vanilla/Board":27,"./Memory":26}],26:[function(require,module,exports){
+},{"../vanilla/Board":29,"./Memory":28}],28:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -5753,18 +5836,18 @@ var Memory = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Memory;
 
-},{"../vanilla/Memory":28}],27:[function(require,module,exports){
+},{"../vanilla/Memory":30}],29:[function(require,module,exports){
 "use strict";
+var microevent_ts_1 = require('microevent.ts');
 var BoardInterface_1 = require('../board/BoardInterface');
 var CpuInterface_1 = require('../cpu/CpuInterface');
 var Cpu_1 = require('../cpu/Cpu');
 var Memory_1 = require('./Memory');
-var Event_1 = require('../../tools/event/Event');
 var Board = (function () {
     function Board(cpuFactory) {
         var _this = this;
-        this.clock = new Event_1.default();
-        this.trap = new Event_1.default();
+        this.clock = new microevent_ts_1.Event();
+        this.trap = new microevent_ts_1.Event();
         this._trap = false;
         this._clockMode = 1 /* lazy */;
         this._timer = {
@@ -5874,7 +5957,7 @@ var Board = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Board;
 
-},{"../../tools/event/Event":31,"../board/BoardInterface":20,"../cpu/Cpu":21,"../cpu/CpuInterface":22,"./Memory":28}],28:[function(require,module,exports){
+},{"../board/BoardInterface":22,"../cpu/Cpu":23,"../cpu/CpuInterface":24,"./Memory":30,"microevent.ts":11}],30:[function(require,module,exports){
 "use strict";
 var Memory = (function () {
     function Memory() {
@@ -5905,13 +5988,13 @@ var Memory = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Memory;
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 "use strict";
-var Event_1 = require('./event/Event');
+var microevent_ts_1 = require('microevent.ts');
 var ClockProbe = (function () {
     function ClockProbe(_scheduler) {
         this._scheduler = _scheduler;
-        this.frequencyUpdate = new Event_1.default();
+        this.frequencyUpdate = new microevent_ts_1.Event();
         this._counter = 0;
         this._frequency = 0;
     }
@@ -5962,7 +6045,7 @@ var ClockProbe = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ClockProbe;
 
-},{"./event/Event":31}],30:[function(require,module,exports){
+},{"microevent.ts":11}],32:[function(require,module,exports){
 "use strict";
 function encode(value, width) {
     var result = Math.abs(value).toString(2);
@@ -5974,85 +6057,7 @@ function encode(value, width) {
 }
 exports.encode = encode;
 
-},{}],31:[function(require,module,exports){
-"use strict";
-var factories = [];
-factories[0] = function () {
-    return function dispatcher0() { };
-};
-factories[1] = function (callback, context) {
-    if (typeof (context) === 'undefined')
-        return callback;
-    return function dispatcher1(payload) {
-        callback(payload, context);
-    };
-};
-function getFactory(handlerCount) {
-    if (!factories[handlerCount])
-        factories[handlerCount] = compileFactory(handlerCount);
-    return factories[handlerCount];
-}
-function compileFactory(handlerCount) {
-    var src = 'return function dispatcher' + handlerCount + '(payload) {\n';
-    var argsHandlers = [], argsContexts = [];
-    for (var i = 0; i < handlerCount; i++) {
-        argsHandlers.push('cb' + i);
-        argsContexts.push('ctx' + i);
-        src += '    cb' + i + '(payload, ctx' + i + ');\n';
-    }
-    src += '};';
-    return new (Function.bind.apply(Function, [void 0].concat(argsHandlers.concat(argsContexts), [src])))();
-}
-var Event = (function () {
-    function Event() {
-        this.hasHandlers = false;
-        this._handlers = [];
-        this._contexts = [];
-        this._createDispatcher();
-    }
-    Event.prototype.addHandler = function (handler, context) {
-        if (!this.isHandlerAttached(handler, context)) {
-            this._handlers.push(handler);
-            this._contexts.push(context);
-            this._createDispatcher();
-            this._updateHasHandlers();
-        }
-        return this;
-    };
-    Event.prototype.removeHandler = function (handler, context) {
-        var idx = this._getHandlerIndex(handler, context);
-        if (typeof (idx) !== 'undefined') {
-            this._handlers.splice(idx, 1);
-            this._contexts.splice(idx, 1);
-            this._createDispatcher();
-            this._updateHasHandlers();
-        }
-        return this;
-    };
-    Event.prototype.isHandlerAttached = function (handler, context) {
-        return typeof (this._getHandlerIndex(handler, context)) !== 'undefined';
-    };
-    Event.prototype._updateHasHandlers = function () {
-        this.hasHandlers = !!this._handlers.length;
-    };
-    Event.prototype._getHandlerIndex = function (handler, context) {
-        var handlerCount = this._handlers.length;
-        var idx;
-        for (idx = 0; idx < handlerCount; idx++) {
-            if (this._handlers[idx] === handler && this._contexts[idx] === context)
-                break;
-        }
-        return idx < handlerCount ? idx : undefined;
-    };
-    Event.prototype._createDispatcher = function () {
-        this.dispatch = getFactory(this._handlers.length).apply(this, this._handlers.concat(this._contexts));
-    };
-    return Event;
-}());
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = Event;
-
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 "use strict";
 function encode(value, width) {
     var result = Math.abs(value).toString(16).toUpperCase();
@@ -6079,7 +6084,7 @@ function decode(value) {
 }
 exports.decode = decode;
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 var polyfill = require('setimmediate2');
 var ImmediateScheduler = (function () {
@@ -6103,7 +6108,7 @@ var ImmediateScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ImmediateScheduler;
 
-},{"setimmediate2":10}],34:[function(require,module,exports){
+},{"setimmediate2":12}],35:[function(require,module,exports){
 "use strict";
 var PeriodicScheduler = (function () {
     function PeriodicScheduler(_period) {
@@ -6151,5 +6156,5 @@ function run(fileBlob, terminalElt, interruptButton, clearButton) {
 }
 exports.run = run;
 
-},{"../cli/EhBasicCLI":15,"../cli/JqtermCLIRunner":16,"../fs/PrepackagedFilesystemProvider":18}]},{},[])
+},{"../cli/EhBasicCLI":17,"../cli/JqtermCLIRunner":18,"../fs/PrepackagedFilesystemProvider":20}]},{},[])
 //# sourceMappingURL=ehBasicCLI.js.map
