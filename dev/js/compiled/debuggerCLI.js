@@ -1,4 +1,120 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict'
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function placeHoldersCount (b64) {
+  var len = b64.length
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // the number of equal signs (place holders)
+  // if there are two placeholders, than the two characters before it
+  // represent one byte
+  // if there is only one, then the three characters before it represent 2 bytes
+  // this is just a cheap hack to not do indexOf twice
+  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+}
+
+function byteLength (b64) {
+  // base64 is 4/3 + up to two characters of the original data
+  return b64.length * 3 / 4 - placeHoldersCount(b64)
+}
+
+function toByteArray (b64) {
+  var i, j, l, tmp, placeHolders, arr
+  var len = b64.length
+  placeHolders = placeHoldersCount(b64)
+
+  arr = new Arr(len * 3 / 4 - placeHolders)
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  l = placeHolders > 0 ? len - 4 : len
+
+  var L = 0
+
+  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+    arr[L++] = (tmp >> 16) & 0xFF
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  if (placeHolders === 2) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[L++] = tmp & 0xFF
+  } else if (placeHolders === 1) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var output = ''
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    output += lookup[tmp >> 2]
+    output += lookup[(tmp << 4) & 0x3F]
+    output += '=='
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+    output += lookup[tmp >> 10]
+    output += lookup[(tmp >> 4) & 0x3F]
+    output += lookup[(tmp << 2) & 0x3F]
+    output += '='
+  }
+
+  parts.push(output)
+
+  return parts.join('')
+}
+
+},{}],2:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -1792,118 +1908,7 @@ function isnan (val) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"base64-js":2,"ieee754":3,"isarray":4}],2:[function(require,module,exports){
-'use strict'
-
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-function init () {
-  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-  for (var i = 0, len = code.length; i < len; ++i) {
-    lookup[i] = code[i]
-    revLookup[code.charCodeAt(i)] = i
-  }
-
-  revLookup['-'.charCodeAt(0)] = 62
-  revLookup['_'.charCodeAt(0)] = 63
-}
-
-init()
-
-function toByteArray (b64) {
-  var i, j, l, tmp, placeHolders, arr
-  var len = b64.length
-
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
-  placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
-
-  // base64 is 4/3 + up to two characters of the original data
-  arr = new Arr(len * 3 / 4 - placeHolders)
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  l = placeHolders > 0 ? len - 4 : len
-
-  var L = 0
-
-  for (i = 0, j = 0; i < l; i += 4, j += 3) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-    arr[L++] = (tmp >> 16) & 0xFF
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  if (placeHolders === 2) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[L++] = tmp & 0xFF
-  } else if (placeHolders === 1) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var output = ''
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    output += lookup[tmp >> 2]
-    output += lookup[(tmp << 4) & 0x3F]
-    output += '=='
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-    output += lookup[tmp >> 10]
-    output += lookup[(tmp >> 4) & 0x3F]
-    output += lookup[(tmp << 2) & 0x3F]
-    output += '='
-  }
-
-  parts.push(output)
-
-  return parts.join('')
-}
-
-},{}],3:[function(require,module,exports){
+},{"base64-js":1,"ieee754":3,"isarray":4}],3:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -1997,31 +2002,89 @@ module.exports = Array.isArray || function (arr) {
 };
 
 },{}],5:[function(require,module,exports){
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    ctor.prototype = Object.create(superCtor.prototype, {
-      constructor: {
-        value: ctor,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
-  }
+"use strict";
+var factories = [];
+factories[0] = function () {
+    return function dispatcher0() { };
+};
+factories[1] = function (callback, context) {
+    if (typeof (context) === 'undefined')
+        return callback;
+    return function dispatcher1(payload) {
+        callback(payload, context);
+    };
+};
+function getFactory(handlerCount) {
+    if (!factories[handlerCount])
+        factories[handlerCount] = compileFactory(handlerCount);
+    return factories[handlerCount];
 }
+function compileFactory(handlerCount) {
+    var src = 'return function dispatcher' + handlerCount + '(payload) {\n';
+    var argsHandlers = [], argsContexts = [];
+    for (var i = 0; i < handlerCount; i++) {
+        argsHandlers.push('cb' + i);
+        argsContexts.push('ctx' + i);
+        src += '    cb' + i + '(payload, ctx' + i + ');\n';
+    }
+    src += '};';
+    return new (Function.bind.apply(Function, [void 0].concat(argsHandlers.concat(argsContexts), [src])))();
+}
+var Event = (function () {
+    function Event() {
+        this.hasHandlers = false;
+        this._handlers = [];
+        this._contexts = [];
+        this._createDispatcher();
+    }
+    Event.prototype.addHandler = function (handler, context) {
+        if (!this.isHandlerAttached(handler, context)) {
+            this._handlers.push(handler);
+            this._contexts.push(context);
+            this._createDispatcher();
+            this._updateHasHandlers();
+        }
+        return this;
+    };
+    Event.prototype.removeHandler = function (handler, context) {
+        var idx = this._getHandlerIndex(handler, context);
+        if (typeof (idx) !== 'undefined') {
+            this._handlers.splice(idx, 1);
+            this._contexts.splice(idx, 1);
+            this._createDispatcher();
+            this._updateHasHandlers();
+        }
+        return this;
+    };
+    Event.prototype.isHandlerAttached = function (handler, context) {
+        return typeof (this._getHandlerIndex(handler, context)) !== 'undefined';
+    };
+    Event.prototype._updateHasHandlers = function () {
+        this.hasHandlers = !!this._handlers.length;
+    };
+    Event.prototype._getHandlerIndex = function (handler, context) {
+        var handlerCount = this._handlers.length;
+        var idx;
+        for (idx = 0; idx < handlerCount; idx++) {
+            if (this._handlers[idx] === handler && this._contexts[idx] === context)
+                break;
+        }
+        return idx < handlerCount ? idx : undefined;
+    };
+    Event.prototype._createDispatcher = function () {
+        this.dispatch = getFactory(this._handlers.length).apply(this, this._handlers.concat(this._contexts));
+    };
+    return Event;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = Event;
 
 },{}],6:[function(require,module,exports){
+"use strict";
+var Event_1 = require('./Event');
+exports.Event = Event_1.default;
+
+},{"./Event":5}],7:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2250,7 +2313,7 @@ var substr = 'ab'.substr(-1) === 'b'
 
 }).call(this,require('_process'))
 
-},{"_process":7}],7:[function(require,module,exports){
+},{"_process":8}],8:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -2432,14 +2495,39 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],10:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],9:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -3030,90 +3118,7 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./support/isBuffer":8,"_process":7,"inherits":5}],10:[function(require,module,exports){
-"use strict";
-var factories = [];
-factories[0] = function () {
-    return function dispatcher0() { };
-};
-factories[1] = function (callback, context) {
-    if (typeof (context) === 'undefined')
-        return callback;
-    return function dispatcher1(payload) {
-        callback(payload, context);
-    };
-};
-function getFactory(handlerCount) {
-    if (!factories[handlerCount])
-        factories[handlerCount] = compileFactory(handlerCount);
-    return factories[handlerCount];
-}
-function compileFactory(handlerCount) {
-    var src = 'return function dispatcher' + handlerCount + '(payload) {\n';
-    var argsHandlers = [], argsContexts = [];
-    for (var i = 0; i < handlerCount; i++) {
-        argsHandlers.push('cb' + i);
-        argsContexts.push('ctx' + i);
-        src += '    cb' + i + '(payload, ctx' + i + ');\n';
-    }
-    src += '};';
-    return new (Function.bind.apply(Function, [void 0].concat(argsHandlers.concat(argsContexts), [src])))();
-}
-var Event = (function () {
-    function Event() {
-        this.hasHandlers = false;
-        this._handlers = [];
-        this._contexts = [];
-        this._createDispatcher();
-    }
-    Event.prototype.addHandler = function (handler, context) {
-        if (!this.isHandlerAttached(handler, context)) {
-            this._handlers.push(handler);
-            this._contexts.push(context);
-            this._createDispatcher();
-            this._updateHasHandlers();
-        }
-        return this;
-    };
-    Event.prototype.removeHandler = function (handler, context) {
-        var idx = this._getHandlerIndex(handler, context);
-        if (typeof (idx) !== 'undefined') {
-            this._handlers.splice(idx, 1);
-            this._contexts.splice(idx, 1);
-            this._createDispatcher();
-            this._updateHasHandlers();
-        }
-        return this;
-    };
-    Event.prototype.isHandlerAttached = function (handler, context) {
-        return typeof (this._getHandlerIndex(handler, context)) !== 'undefined';
-    };
-    Event.prototype._updateHasHandlers = function () {
-        this.hasHandlers = !!this._handlers.length;
-    };
-    Event.prototype._getHandlerIndex = function (handler, context) {
-        var handlerCount = this._handlers.length;
-        var idx;
-        for (idx = 0; idx < handlerCount; idx++) {
-            if (this._handlers[idx] === handler && this._contexts[idx] === context)
-                break;
-        }
-        return idx < handlerCount ? idx : undefined;
-    };
-    Event.prototype._createDispatcher = function () {
-        this.dispatch = getFactory(this._handlers.length).apply(this, this._handlers.concat(this._contexts));
-    };
-    return Event;
-}());
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = Event;
-
-},{}],11:[function(require,module,exports){
-"use strict";
-var Event_1 = require('./Event');
-exports.Event = Event_1.default;
-
-},{"./Event":10}],12:[function(require,module,exports){
+},{"./support/isBuffer":10,"_process":8,"inherits":9}],12:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var AbstractCLI = (function () {
@@ -3131,7 +3136,7 @@ var AbstractCLI = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractCLI;
 
-},{"microevent.ts":11}],13:[function(require,module,exports){
+},{"microevent.ts":6}],13:[function(require,module,exports){
 "use strict";
 var CommandInterpreter = (function () {
     function CommandInterpreter(commandTable) {
@@ -3240,7 +3245,7 @@ var Completer;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Completer;
 
-},{"path":6}],15:[function(require,module,exports){
+},{"path":7}],15:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -3359,7 +3364,7 @@ var DebuggerCLI = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DebuggerCLI;
 
-},{"../machine/Debugger":20,"../machine/vanilla/Board":26,"./AbstractCLI":12,"./CommandInterpreter":13,"./DebuggerFrontend":16,"path":6}],16:[function(require,module,exports){
+},{"../machine/Debugger":20,"../machine/vanilla/Board":26,"./AbstractCLI":12,"./CommandInterpreter":13,"./DebuggerFrontend":16,"path":7}],16:[function(require,module,exports){
 "use strict";
 var BoardInterface_1 = require('../machine/board/BoardInterface');
 var hex = require('../tools/hex');
@@ -3529,7 +3534,7 @@ var DebuggerFrontend = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DebuggerFrontend;
 
-},{"../machine/board/BoardInterface":21,"../tools/hex":29,"util":9}],17:[function(require,module,exports){
+},{"../machine/board/BoardInterface":21,"../tools/hex":29,"util":11}],17:[function(require,module,exports){
 /// <reference path="../interface/jquery.terminal.d.ts"/>
 "use strict";
 var Completer_1 = require('./Completer');
@@ -3609,7 +3614,7 @@ var AbstractFileSystemProvider = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractFileSystemProvider;
 
-},{"path":6}],19:[function(require,module,exports){
+},{"path":7}],19:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
@@ -3686,7 +3691,7 @@ exports.default = PrepackagedFilesystemProvider;
 
 }).call(this,require("buffer").Buffer)
 
-},{"./AbstractFileSystemProvider":18,"buffer":1,"util":9}],20:[function(require,module,exports){
+},{"./AbstractFileSystemProvider":18,"buffer":2,"util":11}],20:[function(require,module,exports){
 "use strict";
 var Instruction_1 = require('./cpu/Instruction');
 var Disassembler_1 = require('./cpu/Disassembler');
@@ -3914,7 +3919,7 @@ var Debugger = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Debugger;
 
-},{"../tools/binary":28,"../tools/hex":29,"./board/BoardInterface":21,"./cpu/CpuInterface":23,"./cpu/Disassembler":24,"./cpu/Instruction":25,"util":9}],21:[function(require,module,exports){
+},{"../tools/binary":28,"../tools/hex":29,"./board/BoardInterface":21,"./cpu/CpuInterface":23,"./cpu/Disassembler":24,"./cpu/Instruction":25,"util":11}],21:[function(require,module,exports){
 "use strict";
 var BoardInterface;
 (function (BoardInterface) {
@@ -5354,7 +5359,7 @@ var Board = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Board;
 
-},{"../board/BoardInterface":21,"../cpu/Cpu":22,"../cpu/CpuInterface":23,"./Memory":27,"microevent.ts":11}],27:[function(require,module,exports){
+},{"../board/BoardInterface":21,"../cpu/Cpu":22,"../cpu/CpuInterface":23,"./Memory":27,"microevent.ts":6}],27:[function(require,module,exports){
 "use strict";
 var Memory = (function () {
     function Memory() {

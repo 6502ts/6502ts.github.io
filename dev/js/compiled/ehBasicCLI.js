@@ -1,4 +1,120 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict'
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function placeHoldersCount (b64) {
+  var len = b64.length
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // the number of equal signs (place holders)
+  // if there are two placeholders, than the two characters before it
+  // represent one byte
+  // if there is only one, then the three characters before it represent 2 bytes
+  // this is just a cheap hack to not do indexOf twice
+  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+}
+
+function byteLength (b64) {
+  // base64 is 4/3 + up to two characters of the original data
+  return b64.length * 3 / 4 - placeHoldersCount(b64)
+}
+
+function toByteArray (b64) {
+  var i, j, l, tmp, placeHolders, arr
+  var len = b64.length
+  placeHolders = placeHoldersCount(b64)
+
+  arr = new Arr(len * 3 / 4 - placeHolders)
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  l = placeHolders > 0 ? len - 4 : len
+
+  var L = 0
+
+  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+    arr[L++] = (tmp >> 16) & 0xFF
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  if (placeHolders === 2) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[L++] = tmp & 0xFF
+  } else if (placeHolders === 1) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var output = ''
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    output += lookup[tmp >> 2]
+    output += lookup[(tmp << 4) & 0x3F]
+    output += '=='
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+    output += lookup[tmp >> 10]
+    output += lookup[(tmp >> 4) & 0x3F]
+    output += lookup[(tmp << 2) & 0x3F]
+    output += '='
+  }
+
+  parts.push(output)
+
+  return parts.join('')
+}
+
+},{}],2:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -1792,118 +1908,7 @@ function isnan (val) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"base64-js":2,"ieee754":3,"isarray":4}],2:[function(require,module,exports){
-'use strict'
-
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-function init () {
-  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-  for (var i = 0, len = code.length; i < len; ++i) {
-    lookup[i] = code[i]
-    revLookup[code.charCodeAt(i)] = i
-  }
-
-  revLookup['-'.charCodeAt(0)] = 62
-  revLookup['_'.charCodeAt(0)] = 63
-}
-
-init()
-
-function toByteArray (b64) {
-  var i, j, l, tmp, placeHolders, arr
-  var len = b64.length
-
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
-  placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
-
-  // base64 is 4/3 + up to two characters of the original data
-  arr = new Arr(len * 3 / 4 - placeHolders)
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  l = placeHolders > 0 ? len - 4 : len
-
-  var L = 0
-
-  for (i = 0, j = 0; i < l; i += 4, j += 3) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-    arr[L++] = (tmp >> 16) & 0xFF
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  if (placeHolders === 2) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[L++] = tmp & 0xFF
-  } else if (placeHolders === 1) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var output = ''
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    output += lookup[tmp >> 2]
-    output += lookup[(tmp << 4) & 0x3F]
-    output += '=='
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-    output += lookup[tmp >> 10]
-    output += lookup[(tmp >> 4) & 0x3F]
-    output += lookup[(tmp << 2) & 0x3F]
-    output += '='
-  }
-
-  parts.push(output)
-
-  return parts.join('')
-}
-
-},{}],3:[function(require,module,exports){
+},{"base64-js":1,"ieee754":3,"isarray":4}],3:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -1997,31 +2002,89 @@ module.exports = Array.isArray || function (arr) {
 };
 
 },{}],5:[function(require,module,exports){
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    ctor.prototype = Object.create(superCtor.prototype, {
-      constructor: {
-        value: ctor,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
-  }
+"use strict";
+var factories = [];
+factories[0] = function () {
+    return function dispatcher0() { };
+};
+factories[1] = function (callback, context) {
+    if (typeof (context) === 'undefined')
+        return callback;
+    return function dispatcher1(payload) {
+        callback(payload, context);
+    };
+};
+function getFactory(handlerCount) {
+    if (!factories[handlerCount])
+        factories[handlerCount] = compileFactory(handlerCount);
+    return factories[handlerCount];
 }
+function compileFactory(handlerCount) {
+    var src = 'return function dispatcher' + handlerCount + '(payload) {\n';
+    var argsHandlers = [], argsContexts = [];
+    for (var i = 0; i < handlerCount; i++) {
+        argsHandlers.push('cb' + i);
+        argsContexts.push('ctx' + i);
+        src += '    cb' + i + '(payload, ctx' + i + ');\n';
+    }
+    src += '};';
+    return new (Function.bind.apply(Function, [void 0].concat(argsHandlers.concat(argsContexts), [src])))();
+}
+var Event = (function () {
+    function Event() {
+        this.hasHandlers = false;
+        this._handlers = [];
+        this._contexts = [];
+        this._createDispatcher();
+    }
+    Event.prototype.addHandler = function (handler, context) {
+        if (!this.isHandlerAttached(handler, context)) {
+            this._handlers.push(handler);
+            this._contexts.push(context);
+            this._createDispatcher();
+            this._updateHasHandlers();
+        }
+        return this;
+    };
+    Event.prototype.removeHandler = function (handler, context) {
+        var idx = this._getHandlerIndex(handler, context);
+        if (typeof (idx) !== 'undefined') {
+            this._handlers.splice(idx, 1);
+            this._contexts.splice(idx, 1);
+            this._createDispatcher();
+            this._updateHasHandlers();
+        }
+        return this;
+    };
+    Event.prototype.isHandlerAttached = function (handler, context) {
+        return typeof (this._getHandlerIndex(handler, context)) !== 'undefined';
+    };
+    Event.prototype._updateHasHandlers = function () {
+        this.hasHandlers = !!this._handlers.length;
+    };
+    Event.prototype._getHandlerIndex = function (handler, context) {
+        var handlerCount = this._handlers.length;
+        var idx;
+        for (idx = 0; idx < handlerCount; idx++) {
+            if (this._handlers[idx] === handler && this._contexts[idx] === context)
+                break;
+        }
+        return idx < handlerCount ? idx : undefined;
+    };
+    Event.prototype._createDispatcher = function () {
+        this.dispatch = getFactory(this._handlers.length).apply(this, this._handlers.concat(this._contexts));
+    };
+    return Event;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = Event;
 
 },{}],6:[function(require,module,exports){
+"use strict";
+var Event_1 = require('./Event');
+exports.Event = Event_1.default;
+
+},{"./Event":5}],7:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2250,7 +2313,7 @@ var substr = 'ab'.substr(-1) === 'b'
 
 }).call(this,require('_process'))
 
-},{"_process":7}],7:[function(require,module,exports){
+},{"_process":8}],8:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -2432,14 +2495,427 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else {
+		var a = factory();
+		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
+	}
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var context = __webpack_require__(1);
+	var useNative = __webpack_require__(2);
+	var Timer = __webpack_require__(3);
+	var setTimeoutPolifill = __webpack_require__(4);
+	var polifills = [
+	    __webpack_require__(5),
+	    __webpack_require__(6),
+	    __webpack_require__(7),
+	    __webpack_require__(8),
+	    __webpack_require__(9)
+	];
+	var setImmediate;
+	var clearImmediate;
+
+	if (useNative()) {
+	    setImmediate = context.setImmediate ||
+	        context.msSetImmediate ||
+	        usePolifill(polifills, setTimeoutPolifill);
+
+	    clearImmediate = context.clearImmediate ||
+	        context.msClearImmediate ||
+	        Timer.clear;
+
+	} else {
+	    setImmediate = setTimeoutPolifill.init();
+	    clearImmediate = Timer.clear;
+	}
+
+	exports.setImmediate = setImmediate;
+	exports.clearImmediate = clearImmediate;
+
+	exports.msSetImmediate = setImmediate;
+	exports.msClearImmediate = clearImmediate;
+
+	function usePolifill(polifills, def) {
+	    for (var i = 0; i < polifills.length; i++) {
+	        var polifill = polifills[ i ];
+	        if (polifill.canUse()) {
+	            return polifill.init();
+	        }
+	    }
+
+	    return def.init();
+	}
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports) {
+
+	/*jshint -W067*/
+	'use strict';
+
+	module.exports = (function() {
+	    return this || (1, eval)('this');
+	})();
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var context = __webpack_require__(1);
+
+	// @see http://codeforhire.com/2013/09/21/setimmediate-and-messagechannel-broken-on-internet-explorer-10/
+	module.exports = function() {
+	    return !(context.navigator && /Trident|Edge/.test(context.navigator.userAgent));
+	};
+
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var context = __webpack_require__(1);
+
+	var nextId = 1;
+	var tasks = {};
+	var lock = false;
+
+	function wrap(handler) {
+	    var args = Array.prototype.slice.call(arguments, 1);
+
+	    return function() {
+	        handler.apply(undefined, args);
+	    };
+	}
+
+	function create(args) {
+	    tasks[ nextId ] = wrap.apply(undefined, args);
+	    return nextId++;
+	}
+
+	function clear(handleId) {
+	    delete tasks[ handleId ];
+	}
+
+	function run(handleId) {
+	    if (lock) {
+	        context.setTimeout( wrap( run, handleId ), 0 );
+
+	    } else {
+	        var task = tasks[ handleId ];
+
+	        if (task) {
+	            lock = true;
+
+	            try {
+	                task();
+
+	            } finally {
+	                clear( handleId );
+	                lock = false;
+	            }
+	        }
+	    }
+	}
+
+	exports.run = run;
+	exports.wrap = wrap;
+	exports.create = create;
+	exports.clear = clear;
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var context = __webpack_require__(1);
+	var Timer = __webpack_require__(3);
+
+	exports.init = function() {
+	    var polifill = function() {
+	        var handleId = Timer.create(arguments);
+	        context.setTimeout( Timer.wrap( Timer.run, handleId ), 0 );
+	        return handleId;
+	    };
+	    polifill.usePolifill = 'setTimeout';
+	    return polifill;
+	};
+
+	exports.canUse = function() {
+	    return true;
+	};
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var context = __webpack_require__(1);
+	var Timer = __webpack_require__(3);
+
+	exports.init = function() {
+	    var polifill = function() {
+	        var handleId = Timer.create(arguments);
+	        context.process.nextTick( Timer.wrap( Timer.run, handleId ) );
+	        return handleId;
+	    };
+	    polifill.usePolifill = 'nextTick';
+	    return polifill;
+	};
+
+	// Don't get fooled by e.g. browserify environments.
+	// For Node.js before 0.9
+	exports.canUse = function() {
+	    return (Object.prototype.toString.call(context.process) === '[object process]');
+	};
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var context = __webpack_require__(1);
+	var Timer = __webpack_require__(3);
+
+	exports.init = function() {
+	    var messagePrefix = 'setImmediate$' + Math.random() + '$';
+
+	    var onGlobalMessage = function(event) {
+	        if (event.source === context &&
+	            typeof(event.data) === 'string' &&
+	            event.data.indexOf(messagePrefix) === 0) {
+
+	            Timer.run(Number(event.data.slice(messagePrefix.length)));
+	        }
+	    };
+
+	    if (context.addEventListener) {
+	        context.addEventListener('message', onGlobalMessage, false);
+
+	    } else {
+	        context.attachEvent('onmessage', onGlobalMessage);
+	    }
+
+	    var polifill = function() {
+	        var handleId = Timer.create(arguments);
+	        context.postMessage(messagePrefix + handleId, '*');
+	        return handleId;
+	    };
+	    polifill.usePolifill = 'postMessage';
+	    return polifill;
+	};
+
+	// For non-IE10 modern browsers
+	exports.canUse = function() {
+	    if (context.importScripts || !context.postMessage) {
+	        return false;
+	    }
+
+	    var asynch = true;
+	    var oldOnMessage = context.onmessage;
+	    context.onmessage = function() {
+	        asynch = false;
+	    };
+
+	    context.postMessage('', '*');
+	    context.onmessage = oldOnMessage;
+	    return asynch;
+	};
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var context = __webpack_require__(1);
+	var Timer = __webpack_require__(3);
+
+	exports.init = function() {
+	    var channel = new context.MessageChannel();
+
+	    channel.port1.onmessage = function(event) {
+	        Timer.run(Number(event.data));
+	    };
+
+	    var polifill = function() {
+	        var handleId = Timer.create(arguments);
+	        channel.port2.postMessage(handleId);
+	        return handleId;
+	    };
+	    polifill.usePolifill = 'messageChannel';
+	    return polifill;
+	};
+
+	// For web workers, where supported
+	exports.canUse = function() {
+	    return Boolean(context.MessageChannel);
+	};
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var context = __webpack_require__(1);
+	var Timer = __webpack_require__(3);
+
+	exports.init = function() {
+	    var html = context.document.documentElement;
+	    var polifill = function() {
+	        var handleId = Timer.create(arguments);
+	        var script = context.document.createElement('script');
+
+	        script.onreadystatechange = function() {
+	            Timer.run(handleId);
+	            script.onreadystatechange = null;
+	            html.removeChild(script);
+	            script = null;
+	        };
+
+	        html.appendChild(script);
+	        return handleId;
+	    };
+
+	    polifill.usePolifill = 'readyStateChange';
+	    return polifill;
+	};
+
+	// For IE 6–8
+	exports.canUse = function() {
+	    return (context.document && ('onreadystatechange' in context.document.createElement('script')));
+	};
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var context = __webpack_require__(1);
+	var Timer = __webpack_require__(3);
+
+	exports.init = function() {
+	    var polifill = function() {
+	        var handleId = Timer.create(arguments);
+	        var img = new context.Image();
+	        img.onload = img.onerror = Timer.wrap( Timer.run, handleId );
+	        img.src = '';
+
+	        return handleId;
+	    };
+	    polifill.usePolifill = 'image';
+	    return polifill;
+	};
+
+	exports.canUse = function() {
+	    return Boolean(context.window && context.Image);
+	};
+
+
+/***/ }
+/******/ ])
+});
+;
+},{}],10:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],11:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -3030,478 +3506,7 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./support/isBuffer":8,"_process":7,"inherits":5}],10:[function(require,module,exports){
-"use strict";
-var factories = [];
-factories[0] = function () {
-    return function dispatcher0() { };
-};
-factories[1] = function (callback, context) {
-    if (typeof (context) === 'undefined')
-        return callback;
-    return function dispatcher1(payload) {
-        callback(payload, context);
-    };
-};
-function getFactory(handlerCount) {
-    if (!factories[handlerCount])
-        factories[handlerCount] = compileFactory(handlerCount);
-    return factories[handlerCount];
-}
-function compileFactory(handlerCount) {
-    var src = 'return function dispatcher' + handlerCount + '(payload) {\n';
-    var argsHandlers = [], argsContexts = [];
-    for (var i = 0; i < handlerCount; i++) {
-        argsHandlers.push('cb' + i);
-        argsContexts.push('ctx' + i);
-        src += '    cb' + i + '(payload, ctx' + i + ');\n';
-    }
-    src += '};';
-    return new (Function.bind.apply(Function, [void 0].concat(argsHandlers.concat(argsContexts), [src])))();
-}
-var Event = (function () {
-    function Event() {
-        this.hasHandlers = false;
-        this._handlers = [];
-        this._contexts = [];
-        this._createDispatcher();
-    }
-    Event.prototype.addHandler = function (handler, context) {
-        if (!this.isHandlerAttached(handler, context)) {
-            this._handlers.push(handler);
-            this._contexts.push(context);
-            this._createDispatcher();
-            this._updateHasHandlers();
-        }
-        return this;
-    };
-    Event.prototype.removeHandler = function (handler, context) {
-        var idx = this._getHandlerIndex(handler, context);
-        if (typeof (idx) !== 'undefined') {
-            this._handlers.splice(idx, 1);
-            this._contexts.splice(idx, 1);
-            this._createDispatcher();
-            this._updateHasHandlers();
-        }
-        return this;
-    };
-    Event.prototype.isHandlerAttached = function (handler, context) {
-        return typeof (this._getHandlerIndex(handler, context)) !== 'undefined';
-    };
-    Event.prototype._updateHasHandlers = function () {
-        this.hasHandlers = !!this._handlers.length;
-    };
-    Event.prototype._getHandlerIndex = function (handler, context) {
-        var handlerCount = this._handlers.length;
-        var idx;
-        for (idx = 0; idx < handlerCount; idx++) {
-            if (this._handlers[idx] === handler && this._contexts[idx] === context)
-                break;
-        }
-        return idx < handlerCount ? idx : undefined;
-    };
-    Event.prototype._createDispatcher = function () {
-        this.dispatch = getFactory(this._handlers.length).apply(this, this._handlers.concat(this._contexts));
-    };
-    return Event;
-}());
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = Event;
-
-},{}],11:[function(require,module,exports){
-"use strict";
-var Event_1 = require('./Event');
-exports.Event = Event_1.default;
-
-},{"./Event":10}],12:[function(require,module,exports){
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	else {
-		var a = factory();
-		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
-	}
-})(this, function() {
-return /******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
-/******/ 			return installedModules[moduleId].exports;
-
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			exports: {},
-/******/ 			id: moduleId,
-/******/ 			loaded: false
-/******/ 		};
-
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
-/******/ 		// Flag the module as loaded
-/******/ 		module.loaded = true;
-
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-
-
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(0);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var context = __webpack_require__(1);
-	var useNative = __webpack_require__(2);
-	var Timer = __webpack_require__(3);
-	var setTimeoutPolifill = __webpack_require__(4);
-	var polifills = [
-	    __webpack_require__(5),
-	    __webpack_require__(6),
-	    __webpack_require__(7),
-	    __webpack_require__(8),
-	    __webpack_require__(9)
-	];
-	var setImmediate;
-	var clearImmediate;
-
-	if (useNative()) {
-	    setImmediate = context.setImmediate ||
-	        context.msSetImmediate ||
-	        usePolifill(polifills, setTimeoutPolifill);
-
-	    clearImmediate = context.clearImmediate ||
-	        context.msClearImmediate ||
-	        Timer.clear;
-
-	} else {
-	    setImmediate = setTimeoutPolifill.init();
-	    clearImmediate = Timer.clear;
-	}
-
-	exports.setImmediate = setImmediate;
-	exports.clearImmediate = clearImmediate;
-
-	exports.msSetImmediate = setImmediate;
-	exports.msClearImmediate = clearImmediate;
-
-	function usePolifill(polifills, def) {
-	    for (var i = 0; i < polifills.length; i++) {
-	        var polifill = polifills[ i ];
-	        if (polifill.canUse()) {
-	            return polifill.init();
-	        }
-	    }
-
-	    return def.init();
-	}
-
-
-/***/ },
-/* 1 */
-/***/ function(module, exports) {
-
-	/*jshint -W067*/
-	'use strict';
-
-	module.exports = (function() {
-	    return this || (1, eval)('this');
-	})();
-
-
-/***/ },
-/* 2 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var context = __webpack_require__(1);
-
-	// @see http://codeforhire.com/2013/09/21/setimmediate-and-messagechannel-broken-on-internet-explorer-10/
-	module.exports = function() {
-	    return !(context.navigator && /Trident|Edge/.test(context.navigator.userAgent));
-	};
-
-
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var context = __webpack_require__(1);
-
-	var nextId = 1;
-	var tasks = {};
-	var lock = false;
-
-	function wrap(handler) {
-	    var args = Array.prototype.slice.call(arguments, 1);
-
-	    return function() {
-	        handler.apply(undefined, args);
-	    };
-	}
-
-	function create(args) {
-	    tasks[ nextId ] = wrap.apply(undefined, args);
-	    return nextId++;
-	}
-
-	function clear(handleId) {
-	    delete tasks[ handleId ];
-	}
-
-	function run(handleId) {
-	    if (lock) {
-	        context.setTimeout( wrap( run, handleId ), 0 );
-
-	    } else {
-	        var task = tasks[ handleId ];
-
-	        if (task) {
-	            lock = true;
-
-	            try {
-	                task();
-
-	            } finally {
-	                clear( handleId );
-	                lock = false;
-	            }
-	        }
-	    }
-	}
-
-	exports.run = run;
-	exports.wrap = wrap;
-	exports.create = create;
-	exports.clear = clear;
-
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var context = __webpack_require__(1);
-	var Timer = __webpack_require__(3);
-
-	exports.init = function() {
-	    var polifill = function() {
-	        var handleId = Timer.create(arguments);
-	        context.setTimeout( Timer.wrap( Timer.run, handleId ), 0 );
-	        return handleId;
-	    };
-	    polifill.usePolifill = 'setTimeout';
-	    return polifill;
-	};
-
-	exports.canUse = function() {
-	    return true;
-	};
-
-
-/***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var context = __webpack_require__(1);
-	var Timer = __webpack_require__(3);
-
-	exports.init = function() {
-	    var polifill = function() {
-	        var handleId = Timer.create(arguments);
-	        context.process.nextTick( Timer.wrap( Timer.run, handleId ) );
-	        return handleId;
-	    };
-	    polifill.usePolifill = 'nextTick';
-	    return polifill;
-	};
-
-	// Don't get fooled by e.g. browserify environments.
-	// For Node.js before 0.9
-	exports.canUse = function() {
-	    return (Object.prototype.toString.call(context.process) === '[object process]');
-	};
-
-
-/***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var context = __webpack_require__(1);
-	var Timer = __webpack_require__(3);
-
-	exports.init = function() {
-	    var messagePrefix = 'setImmediate$' + Math.random() + '$';
-
-	    var onGlobalMessage = function(event) {
-	        if (event.source === context &&
-	            typeof(event.data) === 'string' &&
-	            event.data.indexOf(messagePrefix) === 0) {
-
-	            Timer.run(Number(event.data.slice(messagePrefix.length)));
-	        }
-	    };
-
-	    if (context.addEventListener) {
-	        context.addEventListener('message', onGlobalMessage, false);
-
-	    } else {
-	        context.attachEvent('onmessage', onGlobalMessage);
-	    }
-
-	    var polifill = function() {
-	        var handleId = Timer.create(arguments);
-	        context.postMessage(messagePrefix + handleId, '*');
-	        return handleId;
-	    };
-	    polifill.usePolifill = 'postMessage';
-	    return polifill;
-	};
-
-	// For non-IE10 modern browsers
-	exports.canUse = function() {
-	    if (context.importScripts || !context.postMessage) {
-	        return false;
-	    }
-
-	    var asynch = true;
-	    var oldOnMessage = context.onmessage;
-	    context.onmessage = function() {
-	        asynch = false;
-	    };
-
-	    context.postMessage('', '*');
-	    context.onmessage = oldOnMessage;
-	    return asynch;
-	};
-
-
-/***/ },
-/* 7 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var context = __webpack_require__(1);
-	var Timer = __webpack_require__(3);
-
-	exports.init = function() {
-	    var channel = new context.MessageChannel();
-
-	    channel.port1.onmessage = function(event) {
-	        Timer.run(Number(event.data));
-	    };
-
-	    var polifill = function() {
-	        var handleId = Timer.create(arguments);
-	        channel.port2.postMessage(handleId);
-	        return handleId;
-	    };
-	    polifill.usePolifill = 'messageChannel';
-	    return polifill;
-	};
-
-	// For web workers, where supported
-	exports.canUse = function() {
-	    return Boolean(context.MessageChannel);
-	};
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var context = __webpack_require__(1);
-	var Timer = __webpack_require__(3);
-
-	exports.init = function() {
-	    var html = context.document.documentElement;
-	    var polifill = function() {
-	        var handleId = Timer.create(arguments);
-	        var script = context.document.createElement('script');
-
-	        script.onreadystatechange = function() {
-	            Timer.run(handleId);
-	            script.onreadystatechange = null;
-	            html.removeChild(script);
-	            script = null;
-	        };
-
-	        html.appendChild(script);
-	        return handleId;
-	    };
-
-	    polifill.usePolifill = 'readyStateChange';
-	    return polifill;
-	};
-
-	// For IE 6–8
-	exports.canUse = function() {
-	    return (context.document && ('onreadystatechange' in context.document.createElement('script')));
-	};
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var context = __webpack_require__(1);
-	var Timer = __webpack_require__(3);
-
-	exports.init = function() {
-	    var polifill = function() {
-	        var handleId = Timer.create(arguments);
-	        var img = new context.Image();
-	        img.onload = img.onerror = Timer.wrap( Timer.run, handleId );
-	        img.src = '';
-
-	        return handleId;
-	    };
-	    polifill.usePolifill = 'image';
-	    return polifill;
-	};
-
-	exports.canUse = function() {
-	    return Boolean(context.window && context.Image);
-	};
-
-
-/***/ }
-/******/ ])
-});
-;
-},{}],13:[function(require,module,exports){
+},{"./support/isBuffer":11,"_process":8,"inherits":10}],13:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var AbstractCLI = (function () {
@@ -3519,7 +3524,7 @@ var AbstractCLI = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractCLI;
 
-},{"microevent.ts":11}],14:[function(require,module,exports){
+},{"microevent.ts":6}],14:[function(require,module,exports){
 "use strict";
 var CommandInterpreter = (function () {
     function CommandInterpreter(commandTable) {
@@ -3628,7 +3633,7 @@ var Completer;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Completer;
 
-},{"path":6}],16:[function(require,module,exports){
+},{"path":7}],16:[function(require,module,exports){
 "use strict";
 var BoardInterface_1 = require('../machine/board/BoardInterface');
 var hex = require('../tools/hex');
@@ -3798,7 +3803,7 @@ var DebuggerFrontend = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DebuggerFrontend;
 
-},{"../machine/board/BoardInterface":22,"../tools/hex":33,"util":9}],17:[function(require,module,exports){
+},{"../machine/board/BoardInterface":22,"../tools/hex":33,"util":12}],17:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -4051,7 +4056,7 @@ var EhBasicCLI = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EhBasicCLI;
 
-},{"../machine/Debugger":21,"../machine/ehbasic/Board":27,"../tools/ClockProbe":31,"../tools/scheduler/ImmedateScheduler":34,"../tools/scheduler/PeriodicScheduler":35,"./AbstractCLI":13,"./CommandInterpreter":14,"./DebuggerFrontend":16,"path":6}],18:[function(require,module,exports){
+},{"../machine/Debugger":21,"../machine/ehbasic/Board":27,"../tools/ClockProbe":31,"../tools/scheduler/ImmedateScheduler":34,"../tools/scheduler/PeriodicScheduler":35,"./AbstractCLI":13,"./CommandInterpreter":14,"./DebuggerFrontend":16,"path":7}],18:[function(require,module,exports){
 /// <reference path="../interface/jquery.terminal.d.ts"/>
 "use strict";
 var Completer_1 = require('./Completer');
@@ -4131,7 +4136,7 @@ var AbstractFileSystemProvider = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractFileSystemProvider;
 
-},{"path":6}],20:[function(require,module,exports){
+},{"path":7}],20:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
@@ -4208,7 +4213,7 @@ exports.default = PrepackagedFilesystemProvider;
 
 }).call(this,require("buffer").Buffer)
 
-},{"./AbstractFileSystemProvider":19,"buffer":1,"util":9}],21:[function(require,module,exports){
+},{"./AbstractFileSystemProvider":19,"buffer":2,"util":12}],21:[function(require,module,exports){
 "use strict";
 var Instruction_1 = require('./cpu/Instruction');
 var Disassembler_1 = require('./cpu/Disassembler');
@@ -4436,7 +4441,7 @@ var Debugger = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Debugger;
 
-},{"../tools/binary":32,"../tools/hex":33,"./board/BoardInterface":22,"./cpu/CpuInterface":24,"./cpu/Disassembler":25,"./cpu/Instruction":26,"util":9}],22:[function(require,module,exports){
+},{"../tools/binary":32,"../tools/hex":33,"./board/BoardInterface":22,"./cpu/CpuInterface":24,"./cpu/Disassembler":25,"./cpu/Instruction":26,"util":12}],22:[function(require,module,exports){
 "use strict";
 var BoardInterface;
 (function (BoardInterface) {
@@ -5957,7 +5962,7 @@ var Board = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Board;
 
-},{"../board/BoardInterface":22,"../cpu/Cpu":23,"../cpu/CpuInterface":24,"./Memory":30,"microevent.ts":11}],30:[function(require,module,exports){
+},{"../board/BoardInterface":22,"../cpu/Cpu":23,"../cpu/CpuInterface":24,"./Memory":30,"microevent.ts":6}],30:[function(require,module,exports){
 "use strict";
 var Memory = (function () {
     function Memory() {
@@ -6045,7 +6050,7 @@ var ClockProbe = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ClockProbe;
 
-},{"microevent.ts":11}],32:[function(require,module,exports){
+},{"microevent.ts":6}],32:[function(require,module,exports){
 "use strict";
 function encode(value, width) {
     var result = Math.abs(value).toString(2);
@@ -6108,7 +6113,7 @@ var ImmediateScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ImmediateScheduler;
 
-},{"setimmediate2":12}],35:[function(require,module,exports){
+},{"setimmediate2":9}],35:[function(require,module,exports){
 "use strict";
 var PeriodicScheduler = (function () {
     function PeriodicScheduler(_period) {
