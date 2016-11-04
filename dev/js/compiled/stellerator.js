@@ -1907,14 +1907,14 @@ var _symbol = require("../core-js/symbol");
 
 var _symbol2 = _interopRequireDefault(_symbol);
 
-var _typeof = typeof _symbol2.default === "function" && typeof _iterator2.default === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof _symbol2.default === "function" && obj.constructor === _symbol2.default ? "symbol" : typeof obj; };
+var _typeof = typeof _symbol2.default === "function" && typeof _iterator2.default === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof _symbol2.default === "function" && obj.constructor === _symbol2.default && obj !== _symbol2.default.prototype ? "symbol" : typeof obj; };
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = typeof _symbol2.default === "function" && _typeof(_iterator2.default) === "symbol" ? function (obj) {
   return typeof obj === "undefined" ? "undefined" : _typeof(obj);
 } : function (obj) {
-  return obj && typeof _symbol2.default === "function" && obj.constructor === _symbol2.default ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof(obj);
+  return obj && typeof _symbol2.default === "function" && obj.constructor === _symbol2.default && obj !== _symbol2.default.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof(obj);
 };
 },{"../core-js/symbol":23,"../core-js/symbol/iterator":24}],31:[function(require,module,exports){
 require('../../modules/es6.string.iterator');
@@ -31498,18 +31498,16 @@ var Alert = function (_React$Component) {
   Alert.prototype.render = function render() {
     var _extends2;
 
-    var _props = this.props;
-    var onDismiss = _props.onDismiss;
-    var closeLabel = _props.closeLabel;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['onDismiss', 'closeLabel', 'className', 'children']);
+    var _props = this.props,
+        onDismiss = _props.onDismiss,
+        closeLabel = _props.closeLabel,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['onDismiss', 'closeLabel', 'className', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var dismissable = !!onDismiss;
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {}, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'dismissable')] = dismissable, _extends2));
@@ -31606,17 +31604,15 @@ var Badge = function (_React$Component) {
   };
 
   Badge.prototype.render = function render() {
-    var _props = this.props;
-    var pullRight = _props.pullRight;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['pullRight', 'className', 'children']);
+    var _props = this.props,
+        pullRight = _props.pullRight,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['pullRight', 'className', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends3['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), {
       'pull-right': pullRight,
@@ -31692,15 +31688,13 @@ var Breadcrumb = function (_React$Component) {
   }
 
   Breadcrumb.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -31789,13 +31783,13 @@ var BreadcrumbItem = function (_React$Component) {
   }
 
   BreadcrumbItem.prototype.render = function render() {
-    var _props = this.props;
-    var active = _props.active;
-    var href = _props.href;
-    var title = _props.title;
-    var target = _props.target;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['active', 'href', 'title', 'target', 'className']);
+    var _props = this.props,
+        active = _props.active,
+        href = _props.href,
+        title = _props.title,
+        target = _props.target,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['active', 'href', 'title', 'target', 'className']);
 
     // Don't try to render these props on non-active <span>.
 
@@ -31902,8 +31896,8 @@ var Button = function (_React$Component) {
   };
 
   Button.prototype.renderButton = function renderButton(_ref, className) {
-    var componentClass = _ref.componentClass;
-    var elementProps = (0, _objectWithoutProperties3['default'])(_ref, ['componentClass']);
+    var componentClass = _ref.componentClass,
+        elementProps = (0, _objectWithoutProperties3['default'])(_ref, ['componentClass']);
 
     var Component = componentClass || 'button';
 
@@ -31916,17 +31910,15 @@ var Button = function (_React$Component) {
   Button.prototype.render = function render() {
     var _extends2;
 
-    var _props = this.props;
-    var active = _props.active;
-    var block = _props.block;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['active', 'block', 'className']);
+    var _props = this.props,
+        active = _props.active,
+        block = _props.block,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['active', 'block', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {
       active: active
@@ -32002,8 +31994,8 @@ var propTypes = {
    * @type {bool}
    */
   block: (0, _all2['default'])(_react2['default'].PropTypes.bool, function (_ref) {
-    var block = _ref.block;
-    var vertical = _ref.vertical;
+    var block = _ref.block,
+        vertical = _ref.vertical;
     return block && !vertical ? new Error('`block` requires `vertical` to be set to have any effect') : null;
   })
 };
@@ -32025,18 +32017,16 @@ var ButtonGroup = function (_React$Component) {
   ButtonGroup.prototype.render = function render() {
     var _extends2;
 
-    var _props = this.props;
-    var block = _props.block;
-    var justified = _props.justified;
-    var vertical = _props.vertical;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['block', 'justified', 'vertical', 'className']);
+    var _props = this.props,
+        block = _props.block,
+        justified = _props.justified,
+        vertical = _props.vertical,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['block', 'justified', 'vertical', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {}, _extends2[(0, _bootstrapUtils.prefix)(bsProps)] = !vertical, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'vertical')] = vertical, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'justified')] = justified, _extends2[(0, _bootstrapUtils.prefix)(_Button2['default'].defaultProps, 'block')] = block, _extends2));
 
@@ -32103,15 +32093,13 @@ var ButtonToolbar = function (_React$Component) {
   }
 
   ButtonToolbar.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -32211,7 +32199,19 @@ var propTypes = {
   defaultActiveIndex: _react2['default'].PropTypes.number,
   direction: _react2['default'].PropTypes.oneOf(['prev', 'next']),
   prevIcon: _react2['default'].PropTypes.node,
-  nextIcon: _react2['default'].PropTypes.node
+  /**
+   * Label shown to screen readers only, can be used to show the previous element
+   * in the carousel.
+   * Set to null to deactivate.
+   */
+  prevLabel: _react2['default'].PropTypes.string,
+  nextIcon: _react2['default'].PropTypes.node,
+  /**
+   * Label shown to screen readers only, can be used to show the next element
+   * in the carousel.
+   * Set to null to deactivate.
+   */
+  nextLabel: _react2['default'].PropTypes.string
 };
 
 var defaultProps = {
@@ -32222,7 +32222,9 @@ var defaultProps = {
   indicators: true,
   controls: true,
   prevIcon: _react2['default'].createElement(_Glyphicon2['default'], { glyph: 'chevron-left' }),
-  nextIcon: _react2['default'].createElement(_Glyphicon2['default'], { glyph: 'chevron-right' })
+  prevLabel: 'Previous',
+  nextIcon: _react2['default'].createElement(_Glyphicon2['default'], { glyph: 'chevron-right' }),
+  nextLabel: 'Next'
 };
 
 var Carousel = function (_React$Component) {
@@ -32392,10 +32394,10 @@ var Carousel = function (_React$Component) {
   };
 
   Carousel.prototype.waitForNext = function waitForNext() {
-    var _props = this.props;
-    var slide = _props.slide;
-    var interval = _props.interval;
-    var activeIndexProp = _props.activeIndex;
+    var _props = this.props,
+        slide = _props.slide,
+        interval = _props.interval,
+        activeIndexProp = _props.activeIndex;
 
 
     if (!this.isPaused && slide && interval && activeIndexProp == null) {
@@ -32445,7 +32447,16 @@ var Carousel = function (_React$Component) {
     );
   };
 
-  Carousel.prototype.renderControls = function renderControls(wrap, children, activeIndex, prevIcon, nextIcon, bsProps) {
+  Carousel.prototype.renderControls = function renderControls(properties) {
+    var wrap = properties.wrap,
+        children = properties.children,
+        activeIndex = properties.activeIndex,
+        prevIcon = properties.prevIcon,
+        nextIcon = properties.nextIcon,
+        bsProps = properties.bsProps,
+        prevLabel = properties.prevLabel,
+        nextLabel = properties.nextLabel;
+
     var controlClassName = (0, _bootstrapUtils.prefix)(bsProps, 'control');
     var count = _ValidComponentChildren2['default'].count(children);
 
@@ -32456,7 +32467,12 @@ var Carousel = function (_React$Component) {
         className: (0, _classnames2['default'])(controlClassName, 'left'),
         onClick: this.handlePrev
       },
-      prevIcon
+      prevIcon,
+      prevLabel && _react2['default'].createElement(
+        'span',
+        { className: 'sr-only' },
+        prevLabel
+      )
     ), (wrap || activeIndex !== count - 1) && _react2['default'].createElement(
       _SafeAnchor2['default'],
       {
@@ -32464,33 +32480,38 @@ var Carousel = function (_React$Component) {
         className: (0, _classnames2['default'])(controlClassName, 'right'),
         onClick: this.handleNext
       },
-      nextIcon
+      nextIcon,
+      nextLabel && _react2['default'].createElement(
+        'span',
+        { className: 'sr-only' },
+        nextLabel
+      )
     )];
   };
 
   Carousel.prototype.render = function render() {
     var _this4 = this;
 
-    var _props2 = this.props;
-    var slide = _props2.slide;
-    var indicators = _props2.indicators;
-    var controls = _props2.controls;
-    var wrap = _props2.wrap;
-    var prevIcon = _props2.prevIcon;
-    var nextIcon = _props2.nextIcon;
-    var className = _props2.className;
-    var children = _props2.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props2, ['slide', 'indicators', 'controls', 'wrap', 'prevIcon', 'nextIcon', 'className', 'children']);
-    var _state = this.state;
-    var previousActiveIndex = _state.previousActiveIndex;
-    var direction = _state.direction;
+    var _props2 = this.props,
+        slide = _props2.slide,
+        indicators = _props2.indicators,
+        controls = _props2.controls,
+        wrap = _props2.wrap,
+        prevIcon = _props2.prevIcon,
+        prevLabel = _props2.prevLabel,
+        nextIcon = _props2.nextIcon,
+        nextLabel = _props2.nextLabel,
+        className = _props2.className,
+        children = _props2.children,
+        props = (0, _objectWithoutProperties3['default'])(_props2, ['slide', 'indicators', 'controls', 'wrap', 'prevIcon', 'prevLabel', 'nextIcon', 'nextLabel', 'className', 'children']);
+    var _state = this.state,
+        previousActiveIndex = _state.previousActiveIndex,
+        direction = _state.direction;
 
     var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['interval', 'pauseOnHover', 'onSelect', 'onSlideEnd', 'activeIndex', // Accessed via this.getActiveIndex().
-    'defaultActiveIndex', 'direction']);
-
-    var bsProps = _splitBsPropsAndOmit[0];
-    var elementProps = _splitBsPropsAndOmit[1];
-
+    'defaultActiveIndex', 'direction']),
+        bsProps = _splitBsPropsAndOmit[0],
+        elementProps = _splitBsPropsAndOmit[1];
 
     var activeIndex = this.getActiveIndex();
 
@@ -32523,7 +32544,16 @@ var Carousel = function (_React$Component) {
           });
         })
       ),
-      controls && this.renderControls(wrap, children, activeIndex, prevIcon, nextIcon, bsProps)
+      controls && this.renderControls({
+        wrap: wrap,
+        children: children,
+        activeIndex: activeIndex,
+        prevIcon: prevIcon,
+        prevLabel: prevLabel,
+        nextIcon: nextIcon,
+        nextLabel: nextLabel,
+        bsProps: bsProps
+      })
     );
   };
 
@@ -32596,16 +32626,14 @@ var CarouselCaption = function (_React$Component) {
   }
 
   CarouselCaption.prototype.render = function render() {
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -32750,13 +32778,13 @@ var CarouselItem = function (_React$Component) {
   };
 
   CarouselItem.prototype.render = function render() {
-    var _props = this.props;
-    var direction = _props.direction;
-    var active = _props.active;
-    var animateIn = _props.animateIn;
-    var animateOut = _props.animateOut;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['direction', 'active', 'animateIn', 'animateOut', 'className']);
+    var _props = this.props,
+        direction = _props.direction,
+        active = _props.active,
+        animateIn = _props.animateIn,
+        animateOut = _props.animateOut,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['direction', 'active', 'animateIn', 'animateOut', 'className']);
 
 
     delete props.onAnimateOutEnd;
@@ -32859,21 +32887,19 @@ var Checkbox = function (_React$Component) {
   }
 
   Checkbox.prototype.render = function render() {
-    var _props = this.props;
-    var inline = _props.inline;
-    var disabled = _props.disabled;
-    var validationState = _props.validationState;
-    var inputRef = _props.inputRef;
-    var className = _props.className;
-    var style = _props.style;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['inline', 'disabled', 'validationState', 'inputRef', 'className', 'style', 'children']);
+    var _props = this.props,
+        inline = _props.inline,
+        disabled = _props.disabled,
+        validationState = _props.validationState,
+        inputRef = _props.inputRef,
+        className = _props.className,
+        style = _props.style,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['inline', 'disabled', 'validationState', 'inputRef', 'className', 'style', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var input = _react2['default'].createElement('input', (0, _extends3['default'])({}, elementProps, {
       ref: inputRef,
@@ -33024,16 +33050,14 @@ var Clearfix = function (_React$Component) {
   }
 
   Clearfix.prototype.render = function render() {
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -33280,16 +33304,14 @@ var Col = function (_React$Component) {
   }
 
   Col.prototype.render = function render() {
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = [];
 
@@ -33542,14 +33564,14 @@ var Collapse = function (_React$Component) {
   };
 
   Collapse.prototype.render = function render() {
-    var _props = this.props;
-    var onEnter = _props.onEnter;
-    var onEntering = _props.onEntering;
-    var onEntered = _props.onEntered;
-    var onExit = _props.onExit;
-    var onExiting = _props.onExiting;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['onEnter', 'onEntering', 'onEntered', 'onExit', 'onExiting', 'className']);
+    var _props = this.props,
+        onEnter = _props.onEnter,
+        onEntering = _props.onEntering,
+        onEntered = _props.onEntered,
+        onExit = _props.onExit,
+        onExiting = _props.onExiting,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['onEnter', 'onEntering', 'onEntered', 'onExit', 'onExiting', 'className']);
 
 
     delete props.dimension;
@@ -33658,18 +33680,16 @@ var ControlLabel = function (_React$Component) {
     var formGroup = this.context.$bs_formGroup;
     var controlId = formGroup && formGroup.controlId;
 
-    var _props = this.props;
-    var _props$htmlFor = _props.htmlFor;
-    var htmlFor = _props$htmlFor === undefined ? controlId : _props$htmlFor;
-    var srOnly = _props.srOnly;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['htmlFor', 'srOnly', 'className']);
+    var _props = this.props,
+        _props$htmlFor = _props.htmlFor,
+        htmlFor = _props$htmlFor === undefined ? controlId : _props$htmlFor,
+        srOnly = _props.srOnly,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['htmlFor', 'srOnly', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     process.env.NODE_ENV !== 'production' ? (0, _warning2['default'])(controlId == null || htmlFor === controlId, '`controlId` is ignored on `<ControlLabel>` when `htmlFor` is specified.') : void 0;
 
@@ -33860,7 +33880,12 @@ var propTypes = {
    * If `'menuitem'`, causes the dropdown to behave like a menu item rather than
    * a menu button.
    */
-  role: _react2['default'].PropTypes.string
+  role: _react2['default'].PropTypes.string,
+
+  /**
+   * Which event when fired outside the component will cause it to be closed
+   */
+  rootCloseEvent: _react2['default'].PropTypes.oneOf(['click', 'mousedown'])
 };
 
 var defaultProps = {
@@ -34007,10 +34032,11 @@ var Dropdown = function (_React$Component) {
   Dropdown.prototype.renderMenu = function renderMenu(child, _ref) {
     var _this3 = this;
 
-    var id = _ref.id;
-    var onClose = _ref.onClose;
-    var onSelect = _ref.onSelect;
-    var props = (0, _objectWithoutProperties3['default'])(_ref, ['id', 'onClose', 'onSelect']);
+    var id = _ref.id,
+        onClose = _ref.onClose,
+        onSelect = _ref.onSelect,
+        rootCloseEvent = _ref.rootCloseEvent,
+        props = (0, _objectWithoutProperties3['default'])(_ref, ['id', 'onClose', 'onSelect', 'rootCloseEvent']);
 
     var ref = function ref(c) {
       _this3.menu = c;
@@ -34027,7 +34053,8 @@ var Dropdown = function (_React$Component) {
       labelledBy: id,
       bsClass: (0, _bootstrapUtils.prefix)(props, 'menu'),
       onClose: (0, _createChainedFunction2['default'])(child.props.onClose, onClose, this.handleClose),
-      onSelect: (0, _createChainedFunction2['default'])(child.props.onSelect, onSelect, this.handleClose)
+      onSelect: (0, _createChainedFunction2['default'])(child.props.onSelect, onSelect, this.handleClose),
+      rootCloseEvent: rootCloseEvent
     }));
   };
 
@@ -34035,20 +34062,21 @@ var Dropdown = function (_React$Component) {
     var _classes,
         _this4 = this;
 
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var id = _props.id;
-    var dropup = _props.dropup;
-    var disabled = _props.disabled;
-    var pullRight = _props.pullRight;
-    var open = _props.open;
-    var onClose = _props.onClose;
-    var onSelect = _props.onSelect;
-    var role = _props.role;
-    var bsClass = _props.bsClass;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'id', 'dropup', 'disabled', 'pullRight', 'open', 'onClose', 'onSelect', 'role', 'bsClass', 'className', 'children']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        id = _props.id,
+        dropup = _props.dropup,
+        disabled = _props.disabled,
+        pullRight = _props.pullRight,
+        open = _props.open,
+        onClose = _props.onClose,
+        onSelect = _props.onSelect,
+        role = _props.role,
+        bsClass = _props.bsClass,
+        className = _props.className,
+        rootCloseEvent = _props.rootCloseEvent,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'id', 'dropup', 'disabled', 'pullRight', 'open', 'onClose', 'onSelect', 'role', 'bsClass', 'className', 'rootCloseEvent', 'children']);
 
 
     delete props.onToggle;
@@ -34076,7 +34104,7 @@ var Dropdown = function (_React$Component) {
             });
           case MENU_ROLE:
             return _this4.renderMenu(child, {
-              id: id, open: open, pullRight: pullRight, bsClass: bsClass, onClose: onClose, onSelect: onSelect
+              id: id, open: open, pullRight: pullRight, bsClass: bsClass, onClose: onClose, onSelect: onSelect, rootCloseEvent: rootCloseEvent
             });
           default:
             return child;
@@ -34165,18 +34193,16 @@ var DropdownButton = function (_React$Component) {
   }
 
   DropdownButton.prototype.render = function render() {
-    var _props = this.props;
-    var bsSize = _props.bsSize;
-    var bsStyle = _props.bsStyle;
-    var title = _props.title;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['bsSize', 'bsStyle', 'title', 'children']);
+    var _props = this.props,
+        bsSize = _props.bsSize,
+        bsStyle = _props.bsStyle,
+        title = _props.title,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['bsSize', 'bsStyle', 'title', 'children']);
 
-    var _splitComponentProps = (0, _splitComponentProps3['default'])(props, _Dropdown2['default'].ControlledComponent);
-
-    var dropdownProps = _splitComponentProps[0];
-    var toggleProps = _splitComponentProps[1];
-
+    var _splitComponentProps = (0, _splitComponentProps3['default'])(props, _Dropdown2['default'].ControlledComponent),
+        dropdownProps = _splitComponentProps[0],
+        toggleProps = _splitComponentProps[1];
 
     return _react2['default'].createElement(
       _Dropdown2['default'],
@@ -34273,7 +34299,8 @@ var propTypes = {
   pullRight: _react2['default'].PropTypes.bool,
   onClose: _react2['default'].PropTypes.func,
   labelledBy: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.string, _react2['default'].PropTypes.number]),
-  onSelect: _react2['default'].PropTypes.func
+  onSelect: _react2['default'].PropTypes.func,
+  rootCloseEvent: _react2['default'].PropTypes.oneOf(['click', 'mousedown'])
 };
 
 var defaultProps = {
@@ -34328,10 +34355,9 @@ var DropdownMenu = function (_React$Component) {
   };
 
   DropdownMenu.prototype.focusNext = function focusNext() {
-    var _getItemsAndActiveInd = this.getItemsAndActiveIndex();
-
-    var items = _getItemsAndActiveInd.items;
-    var activeIndex = _getItemsAndActiveInd.activeIndex;
+    var _getItemsAndActiveInd = this.getItemsAndActiveIndex(),
+        items = _getItemsAndActiveInd.items,
+        activeIndex = _getItemsAndActiveInd.activeIndex;
 
     if (items.length === 0) {
       return;
@@ -34342,10 +34368,9 @@ var DropdownMenu = function (_React$Component) {
   };
 
   DropdownMenu.prototype.focusPrevious = function focusPrevious() {
-    var _getItemsAndActiveInd2 = this.getItemsAndActiveIndex();
-
-    var items = _getItemsAndActiveInd2.items;
-    var activeIndex = _getItemsAndActiveInd2.activeIndex;
+    var _getItemsAndActiveInd2 = this.getItemsAndActiveIndex(),
+        items = _getItemsAndActiveInd2.items,
+        activeIndex = _getItemsAndActiveInd2.activeIndex;
 
     if (items.length === 0) {
       return;
@@ -34359,21 +34384,20 @@ var DropdownMenu = function (_React$Component) {
     var _extends2,
         _this2 = this;
 
-    var _props = this.props;
-    var open = _props.open;
-    var pullRight = _props.pullRight;
-    var onClose = _props.onClose;
-    var labelledBy = _props.labelledBy;
-    var onSelect = _props.onSelect;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['open', 'pullRight', 'onClose', 'labelledBy', 'onSelect', 'className', 'children']);
+    var _props = this.props,
+        open = _props.open,
+        pullRight = _props.pullRight,
+        onClose = _props.onClose,
+        labelledBy = _props.labelledBy,
+        onSelect = _props.onSelect,
+        className = _props.className,
+        rootCloseEvent = _props.rootCloseEvent,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['open', 'pullRight', 'onClose', 'labelledBy', 'onSelect', 'className', 'rootCloseEvent', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {}, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'right')] = pullRight, _extends2));
 
@@ -34381,7 +34405,8 @@ var DropdownMenu = function (_React$Component) {
       _RootCloseWrapper2['default'],
       {
         disabled: !open,
-        onRootClose: onClose
+        onRootClose: onClose,
+        event: rootCloseEvent
       },
       _react2['default'].createElement(
         'ul',
@@ -34475,14 +34500,14 @@ var DropdownToggle = function (_React$Component) {
   }
 
   DropdownToggle.prototype.render = function render() {
-    var _props = this.props;
-    var noCaret = _props.noCaret;
-    var open = _props.open;
-    var useAnchor = _props.useAnchor;
-    var bsClass = _props.bsClass;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['noCaret', 'open', 'useAnchor', 'bsClass', 'className', 'children']);
+    var _props = this.props,
+        noCaret = _props.noCaret,
+        open = _props.open,
+        useAnchor = _props.useAnchor,
+        bsClass = _props.bsClass,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['noCaret', 'open', 'useAnchor', 'bsClass', 'className', 'children']);
 
 
     delete props.bsRole;
@@ -34695,18 +34720,16 @@ var Form = function (_React$Component) {
   }
 
   Form.prototype.render = function render() {
-    var _props = this.props;
-    var horizontal = _props.horizontal;
-    var inline = _props.inline;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['horizontal', 'inline', 'componentClass', 'className']);
+    var _props = this.props,
+        horizontal = _props.horizontal,
+        inline = _props.inline,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['horizontal', 'inline', 'componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = [];
     if (horizontal) {
@@ -34815,19 +34838,17 @@ var FormControl = function (_React$Component) {
     var formGroup = this.context.$bs_formGroup;
     var controlId = formGroup && formGroup.controlId;
 
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var type = _props.type;
-    var _props$id = _props.id;
-    var id = _props$id === undefined ? controlId : _props$id;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'type', 'id', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        type = _props.type,
+        _props$id = _props.id,
+        id = _props$id === undefined ? controlId : _props$id,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'type', 'id', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     process.env.NODE_ENV !== 'production' ? (0, _warning2['default'])(controlId == null || id === controlId, '`controlId` is ignored on `<FormControl>` when `id` is specified.') : void 0;
 
@@ -34941,16 +34962,14 @@ var FormControlFeedback = function (_React$Component) {
   };
 
   FormControlFeedback.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className', 'children']);
+    var _props = this.props,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -35030,16 +35049,14 @@ var FormControlStatic = function (_React$Component) {
   }
 
   FormControlStatic.prototype.render = function render() {
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -35120,9 +35137,9 @@ var FormGroup = function (_React$Component) {
   }
 
   FormGroup.prototype.getChildContext = function getChildContext() {
-    var _props = this.props;
-    var controlId = _props.controlId;
-    var validationState = _props.validationState;
+    var _props = this.props,
+        controlId = _props.controlId,
+        validationState = _props.validationState;
 
 
     return {
@@ -35142,17 +35159,15 @@ var FormGroup = function (_React$Component) {
   };
 
   FormGroup.prototype.render = function render() {
-    var _props2 = this.props;
-    var validationState = _props2.validationState;
-    var className = _props2.className;
-    var children = _props2.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props2, ['validationState', 'className', 'children']);
+    var _props2 = this.props,
+        validationState = _props2.validationState,
+        className = _props2.className,
+        children = _props2.children,
+        props = (0, _objectWithoutProperties3['default'])(_props2, ['validationState', 'className', 'children']);
 
-    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['controlId']);
-
-    var bsProps = _splitBsPropsAndOmit[0];
-    var elementProps = _splitBsPropsAndOmit[1];
-
+    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['controlId']),
+        bsProps = _splitBsPropsAndOmit[0],
+        elementProps = _splitBsPropsAndOmit[1];
 
     var classes = (0, _extends3['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), {
       'has-feedback': this.hasFeedback(children)
@@ -35233,16 +35248,14 @@ var Glyphicon = function (_React$Component) {
   Glyphicon.prototype.render = function render() {
     var _extends2;
 
-    var _props = this.props;
-    var glyph = _props.glyph;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['glyph', 'className']);
+    var _props = this.props,
+        glyph = _props.glyph,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['glyph', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {}, _extends2[(0, _bootstrapUtils.prefix)(bsProps, glyph)] = true, _extends2));
 
@@ -35326,17 +35339,15 @@ var Grid = function (_React$Component) {
   }
 
   Grid.prototype.render = function render() {
-    var _props = this.props;
-    var fluid = _props.fluid;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['fluid', 'componentClass', 'className']);
+    var _props = this.props,
+        fluid = _props.fluid,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['fluid', 'componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.prefix)(bsProps, fluid && 'fluid');
 
@@ -35399,15 +35410,13 @@ var HelpBlock = function (_React$Component) {
   }
 
   HelpBlock.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -35498,19 +35507,17 @@ var Image = function (_React$Component) {
   Image.prototype.render = function render() {
     var _classes;
 
-    var _props = this.props;
-    var responsive = _props.responsive;
-    var rounded = _props.rounded;
-    var circle = _props.circle;
-    var thumbnail = _props.thumbnail;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['responsive', 'rounded', 'circle', 'thumbnail', 'className']);
+    var _props = this.props,
+        responsive = _props.responsive,
+        rounded = _props.rounded,
+        circle = _props.circle,
+        thumbnail = _props.thumbnail,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['responsive', 'rounded', 'circle', 'thumbnail', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (_classes = {}, _classes[(0, _bootstrapUtils.prefix)(bsProps, 'responsive')] = responsive, _classes[(0, _bootstrapUtils.prefix)(bsProps, 'rounded')] = rounded, _classes[(0, _bootstrapUtils.prefix)(bsProps, 'circle')] = circle, _classes[(0, _bootstrapUtils.prefix)(bsProps, 'thumbnail')] = thumbnail, _classes);
 
@@ -35583,15 +35590,13 @@ var InputGroup = function (_React$Component) {
   }
 
   InputGroup.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -35654,15 +35659,13 @@ var InputGroupAddon = function (_React$Component) {
   }
 
   InputGroupAddon.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -35722,15 +35725,13 @@ var InputGroupButton = function (_React$Component) {
   }
 
   InputGroupButton.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -35802,16 +35803,14 @@ var Jumbotron = function (_React$Component) {
   }
 
   Jumbotron.prototype.render = function render() {
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -35896,16 +35895,14 @@ var Label = function (_React$Component) {
   };
 
   Label.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className', 'children']);
+    var _props = this.props,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends3['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), {
 
@@ -36010,18 +36007,16 @@ var ListGroup = function (_React$Component) {
   }
 
   ListGroup.prototype.render = function render() {
-    var _props = this.props;
-    var children = _props.children;
-    var _props$componentClass = _props.componentClass;
-    var Component = _props$componentClass === undefined ? getDefaultComponent(children) : _props$componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['children', 'componentClass', 'className']);
+    var _props = this.props,
+        children = _props.children,
+        _props$componentClass = _props.componentClass,
+        Component = _props$componentClass === undefined ? getDefaultComponent(children) : _props$componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['children', 'componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -36127,20 +36122,18 @@ var ListGroupItem = function (_React$Component) {
   };
 
   ListGroupItem.prototype.render = function render() {
-    var _props = this.props;
-    var active = _props.active;
-    var disabled = _props.disabled;
-    var className = _props.className;
-    var header = _props.header;
-    var listItem = _props.listItem;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['active', 'disabled', 'className', 'header', 'listItem', 'children']);
+    var _props = this.props,
+        active = _props.active,
+        disabled = _props.disabled,
+        className = _props.className,
+        header = _props.header,
+        listItem = _props.listItem,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['active', 'disabled', 'className', 'header', 'listItem', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends3['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), {
       active: active,
@@ -36273,16 +36266,14 @@ var Media = function (_React$Component) {
   }
 
   Media.prototype.render = function render() {
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -36364,16 +36355,14 @@ var MediaBody = function (_React$Component) {
   }
 
   MediaBody.prototype.render = function render() {
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -36448,16 +36437,14 @@ var MediaHeading = function (_React$Component) {
   }
 
   MediaHeading.prototype.render = function render() {
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -36531,16 +36518,14 @@ var MediaLeft = function (_React$Component) {
   }
 
   MediaLeft.prototype.render = function render() {
-    var _props = this.props;
-    var align = _props.align;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['align', 'className']);
+    var _props = this.props,
+        align = _props.align,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['align', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -36607,15 +36592,13 @@ var MediaList = function (_React$Component) {
   }
 
   MediaList.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -36675,15 +36658,13 @@ var MediaListItem = function (_React$Component) {
   }
 
   MediaListItem.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -36754,16 +36735,14 @@ var MediaRight = function (_React$Component) {
   }
 
   MediaRight.prototype.render = function render() {
-    var _props = this.props;
-    var align = _props.align;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['align', 'className']);
+    var _props = this.props,
+        align = _props.align,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['align', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -36849,8 +36828,8 @@ var propTypes = {
    * groups of menu items.
    */
   divider: (0, _all2['default'])(_react2['default'].PropTypes.bool, function (_ref) {
-    var divider = _ref.divider;
-    var children = _ref.children;
+    var divider = _ref.divider,
+        children = _ref.children;
     return divider && children ? new Error('Children will not be rendered for dividers') : null;
   }),
 
@@ -36903,11 +36882,11 @@ var MenuItem = function (_React$Component) {
   }
 
   MenuItem.prototype.handleClick = function handleClick(event) {
-    var _props = this.props;
-    var href = _props.href;
-    var disabled = _props.disabled;
-    var onSelect = _props.onSelect;
-    var eventKey = _props.eventKey;
+    var _props = this.props,
+        href = _props.href,
+        disabled = _props.disabled,
+        onSelect = _props.onSelect,
+        eventKey = _props.eventKey;
 
 
     if (!href || disabled) {
@@ -36924,21 +36903,19 @@ var MenuItem = function (_React$Component) {
   };
 
   MenuItem.prototype.render = function render() {
-    var _props2 = this.props;
-    var active = _props2.active;
-    var disabled = _props2.disabled;
-    var divider = _props2.divider;
-    var header = _props2.header;
-    var onClick = _props2.onClick;
-    var className = _props2.className;
-    var style = _props2.style;
-    var props = (0, _objectWithoutProperties3['default'])(_props2, ['active', 'disabled', 'divider', 'header', 'onClick', 'className', 'style']);
+    var _props2 = this.props,
+        active = _props2.active,
+        disabled = _props2.disabled,
+        divider = _props2.divider,
+        header = _props2.header,
+        onClick = _props2.onClick,
+        className = _props2.className,
+        style = _props2.style,
+        props = (0, _objectWithoutProperties3['default'])(_props2, ['active', 'disabled', 'divider', 'header', 'onClick', 'className', 'style']);
 
-    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['eventKey', 'onSelect']);
-
-    var bsProps = _splitBsPropsAndOmit[0];
-    var elementProps = _splitBsPropsAndOmit[1];
-
+    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['eventKey', 'onSelect']),
+        bsProps = _splitBsPropsAndOmit[0],
+        elementProps = _splitBsPropsAndOmit[1];
 
     if (divider) {
       // Forcibly blank out the children; separators shouldn't render any.
@@ -37261,23 +37238,21 @@ var Modal = function (_React$Component) {
   Modal.prototype.render = function render() {
     var _this2 = this;
 
-    var _props = this.props;
-    var backdrop = _props.backdrop;
-    var animation = _props.animation;
-    var show = _props.show;
-    var Dialog = _props.dialogComponentClass;
-    var className = _props.className;
-    var style = _props.style;
-    var children = _props.children;
-    var onEntering = _props.onEntering;
-    var onExited = _props.onExited;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['backdrop', 'animation', 'show', 'dialogComponentClass', 'className', 'style', 'children', 'onEntering', 'onExited']);
+    var _props = this.props,
+        backdrop = _props.backdrop,
+        animation = _props.animation,
+        show = _props.show,
+        Dialog = _props.dialogComponentClass,
+        className = _props.className,
+        style = _props.style,
+        children = _props.children,
+        onEntering = _props.onEntering,
+        onExited = _props.onExited,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['backdrop', 'animation', 'show', 'dialogComponentClass', 'className', 'style', 'children', 'onEntering', 'onExited']);
 
-    var _splitComponentProps = (0, _splitComponentProps3['default'])(props, _Modal2['default']);
-
-    var baseModalProps = _splitComponentProps[0];
-    var dialogProps = _splitComponentProps[1];
-
+    var _splitComponentProps = (0, _splitComponentProps3['default'])(props, _Modal2['default']),
+        baseModalProps = _splitComponentProps[0],
+        dialogProps = _splitComponentProps[1];
 
     var inClassName = show && !animation && 'in';
 
@@ -37374,15 +37349,13 @@ var ModalBody = function (_React$Component) {
   }
 
   ModalBody.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -37453,18 +37426,16 @@ var ModalDialog = function (_React$Component) {
   ModalDialog.prototype.render = function render() {
     var _extends2;
 
-    var _props = this.props;
-    var dialogClassName = _props.dialogClassName;
-    var className = _props.className;
-    var style = _props.style;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['dialogClassName', 'className', 'style', 'children']);
+    var _props = this.props,
+        dialogClassName = _props.dialogClassName,
+        className = _props.className,
+        style = _props.style,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['dialogClassName', 'className', 'style', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var bsClassName = (0, _bootstrapUtils.prefix)(bsProps);
 
@@ -37545,15 +37516,13 @@ var ModalFooter = function (_React$Component) {
   }
 
   ModalFooter.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -37651,22 +37620,20 @@ var ModalHeader = function (_React$Component) {
   }
 
   ModalHeader.prototype.render = function render() {
-    var _props = this.props;
-    var label = _props['aria-label'];
-    var closeButton = _props.closeButton;
-    var onHide = _props.onHide;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['aria-label', 'closeButton', 'onHide', 'className', 'children']);
+    var _props = this.props,
+        label = _props['aria-label'],
+        closeButton = _props.closeButton,
+        onHide = _props.onHide,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['aria-label', 'closeButton', 'onHide', 'className', 'children']);
 
 
     var modal = this.context.$bs_modal;
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -37748,15 +37715,13 @@ var ModalTitle = function (_React$Component) {
   }
 
   ModalTitle.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -37857,8 +37822,8 @@ var propTypes = {
   stacked: _react2['default'].PropTypes.bool,
 
   justified: (0, _all2['default'])(_react2['default'].PropTypes.bool, function (_ref) {
-    var justified = _ref.justified;
-    var navbar = _ref.navbar;
+    var justified = _ref.justified,
+        navbar = _ref.navbar;
     return justified && navbar ? Error('justified navbar `Nav`s are not supported') : null;
   }),
 
@@ -37912,7 +37877,8 @@ var defaultProps = {
 
 var contextTypes = {
   $bs_navbar: _react2['default'].PropTypes.shape({
-    bsClass: _react2['default'].PropTypes.string
+    bsClass: _react2['default'].PropTypes.string,
+    onSelect: _react2['default'].PropTypes.func
   }),
 
   $bs_tabContainer: _react2['default'].PropTypes.shape({
@@ -37942,11 +37908,9 @@ var Nav = function (_React$Component) {
 
     var children = this.props.children;
 
-    var _getActiveProps = this.getActiveProps();
-
-    var activeKey = _getActiveProps.activeKey;
-    var activeHref = _getActiveProps.activeHref;
-
+    var _getActiveProps = this.getActiveProps(),
+        activeKey = _getActiveProps.activeKey,
+        activeHref = _getActiveProps.activeHref;
 
     var activeChild = _ValidComponentChildren2['default'].find(children, function (child) {
       return _this2.isActive(child, activeKey, activeHref);
@@ -38000,11 +37964,9 @@ var Nav = function (_React$Component) {
       return child.props.eventKey && !child.props.disabled;
     });
 
-    var _getActiveProps2 = this.getActiveProps();
-
-    var activeKey = _getActiveProps2.activeKey;
-    var activeHref = _getActiveProps2.activeHref;
-
+    var _getActiveProps2 = this.getActiveProps(),
+        activeKey = _getActiveProps2.activeKey,
+        activeHref = _getActiveProps2.activeHref;
 
     var activeChild = _ValidComponentChildren2['default'].find(children, function (child) {
       return _this3.isActive(child, activeKey, activeHref);
@@ -38059,13 +38021,13 @@ var Nav = function (_React$Component) {
       return null;
     }
 
-    var _child$props = child.props;
-    var id = _child$props.id;
-    var controls = _child$props['aria-controls'];
-    var eventKey = _child$props.eventKey;
-    var role = _child$props.role;
-    var onKeyDown = _child$props.onKeyDown;
-    var tabIndex = _child$props.tabIndex;
+    var _child$props = child.props,
+        id = _child$props.id,
+        controls = _child$props['aria-controls'],
+        eventKey = _child$props.eventKey,
+        role = _child$props.role,
+        onKeyDown = _child$props.onKeyDown,
+        tabIndex = _child$props.tabIndex;
 
 
     if (tabContainer) {
@@ -38096,35 +38058,32 @@ var Nav = function (_React$Component) {
     var _extends2,
         _this5 = this;
 
-    var _props = this.props;
-    var stacked = _props.stacked;
-    var justified = _props.justified;
-    var onSelect = _props.onSelect;
-    var propsRole = _props.role;
-    var propsNavbar = _props.navbar;
-    var pullRight = _props.pullRight;
-    var pullLeft = _props.pullLeft;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['stacked', 'justified', 'onSelect', 'role', 'navbar', 'pullRight', 'pullLeft', 'className', 'children']);
+    var _props = this.props,
+        stacked = _props.stacked,
+        justified = _props.justified,
+        onSelect = _props.onSelect,
+        propsRole = _props.role,
+        propsNavbar = _props.navbar,
+        pullRight = _props.pullRight,
+        pullLeft = _props.pullLeft,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['stacked', 'justified', 'onSelect', 'role', 'navbar', 'pullRight', 'pullLeft', 'className', 'children']);
 
 
     var tabContainer = this.context.$bs_tabContainer;
     var role = propsRole || (tabContainer ? 'tablist' : null);
 
-    var _getActiveProps3 = this.getActiveProps();
-
-    var activeKey = _getActiveProps3.activeKey;
-    var activeHref = _getActiveProps3.activeHref;
+    var _getActiveProps3 = this.getActiveProps(),
+        activeKey = _getActiveProps3.activeKey,
+        activeHref = _getActiveProps3.activeHref;
 
     delete props.activeKey; // Accessed via this.getActiveProps().
     delete props.activeHref; // Accessed via this.getActiveProps().
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {}, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'stacked')] = stacked, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'justified')] = justified, _extends2));
 
@@ -38155,7 +38114,7 @@ var Nav = function (_React$Component) {
       }),
       _ValidComponentChildren2['default'].map(children, function (child) {
         var active = _this5.isActive(child, activeKey, activeHref);
-        var childOnSelect = (0, _createChainedFunction2['default'])(child.props.onSelect, onSelect, tabContainer && tabContainer.onSelect);
+        var childOnSelect = (0, _createChainedFunction2['default'])(child.props.onSelect, onSelect, navbar && navbar.onSelect, tabContainer && tabContainer.onSelect);
 
         return (0, _react.cloneElement)(child, (0, _extends4['default'])({}, _this5.getTabProps(child, tabContainer, role, active, childOnSelect), {
           active: active,
@@ -38268,24 +38227,23 @@ var NavDropdown = function (_React$Component) {
   NavDropdown.prototype.render = function render() {
     var _this3 = this;
 
-    var _props = this.props;
-    var title = _props.title;
-    var activeKey = _props.activeKey;
-    var activeHref = _props.activeHref;
-    var className = _props.className;
-    var style = _props.style;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['title', 'activeKey', 'activeHref', 'className', 'style', 'children']);
+    var _props = this.props,
+        title = _props.title,
+        activeKey = _props.activeKey,
+        activeHref = _props.activeHref,
+        className = _props.className,
+        style = _props.style,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['title', 'activeKey', 'activeHref', 'className', 'style', 'children']);
 
 
     var active = this.isActive(this, activeKey, activeHref);
     delete props.active; // Accessed via this.isActive().
     delete props.eventKey; // Accessed via this.isActive().
 
-    var _splitComponentProps = (0, _splitComponentProps3['default'])(props, _Dropdown2['default'].ControlledComponent);
-
-    var dropdownProps = _splitComponentProps[0];
-    var toggleProps = _splitComponentProps[1];
+    var _splitComponentProps = (0, _splitComponentProps3['default'])(props, _Dropdown2['default'].ControlledComponent),
+        dropdownProps = _splitComponentProps[0],
+        toggleProps = _splitComponentProps[1];
 
     // Unlike for the other dropdowns, styling needs to go to the `<Dropdown>`
     // rather than the `<Dropdown.Toggle>`.
@@ -38402,13 +38360,13 @@ var NavItem = function (_React$Component) {
   };
 
   NavItem.prototype.render = function render() {
-    var _props = this.props;
-    var active = _props.active;
-    var disabled = _props.disabled;
-    var onClick = _props.onClick;
-    var className = _props.className;
-    var style = _props.style;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['active', 'disabled', 'onClick', 'className', 'style']);
+    var _props = this.props,
+        active = _props.active,
+        disabled = _props.disabled,
+        onClick = _props.onClick,
+        className = _props.className,
+        style = _props.style,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['active', 'disabled', 'onClick', 'className', 'style']);
 
 
     delete props.onSelect;
@@ -38513,7 +38471,14 @@ var _bootstrapUtils = require('./utils/bootstrapUtils');
 
 var _StyleConfig = require('./utils/StyleConfig');
 
+var _createChainedFunction = require('./utils/createChainedFunction');
+
+var _createChainedFunction2 = _interopRequireDefault(_createChainedFunction);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+// TODO: Remove this pragma once we upgrade eslint-config-airbnb.
+/* eslint-disable react/no-multi-comp */
 
 var propTypes = {
   /**
@@ -38552,7 +38517,36 @@ var propTypes = {
    * @controllable navExpanded
    */
   onToggle: _react2['default'].PropTypes.func,
-
+  /**
+   * A callback fired when a descendant of a child `<Nav>` is selected. Should
+   * be used to execute complex closing or other miscellaneous actions desired
+   * after selecting a descendant of `<Nav>`. Does nothing if no `<Nav>` or `<Nav>`
+   * descendants exist. The callback is called with an eventKey, which is a
+   * prop from the selected `<Nav>` descendant, and an event.
+   *
+   * ```js
+   * function (
+   * 	Any eventKey,
+   * 	SyntheticEvent event?
+   * )
+   * ```
+   *
+   * For basic closing behavior after all `<Nav>` descendant onSelect events in
+   * mobile viewports, try using collapseOnSelect.
+   *
+   * Note: If you are manually closing the navbar using this `OnSelect` prop,
+   * ensure that you are setting `expanded` to false and not *toggling* between
+   * true and false.
+   */
+  onSelect: _react2['default'].PropTypes.func,
+  /**
+   * Sets `expanded` to `false` after the onSelect event of a descendant of a
+   * child `<Nav>`. Does nothing if no `<Nav>` or `<Nav>` descendants exist.
+   *
+   * The onSelect callback should be used instead for more complex operations
+   * that need to be executed after the `select` event of `<Nav>` descendants.
+   */
+  collapseOnSelect: _react2['default'].PropTypes.bool,
   /**
    * Explicitly set the visiblity of the navbar body
    *
@@ -38561,8 +38555,7 @@ var propTypes = {
   expanded: _react2['default'].PropTypes.bool,
 
   role: _react2['default'].PropTypes.string
-}; // TODO: Remove this pragma once we upgrade eslint-config-airbnb.
-/* eslint-disable react/no-multi-comp */
+};
 
 var defaultProps = {
   componentClass: 'nav',
@@ -38570,14 +38563,16 @@ var defaultProps = {
   fixedBottom: false,
   staticTop: false,
   inverse: false,
-  fluid: false
+  fluid: false,
+  collapseOnSelect: false
 };
 
 var childContextTypes = {
   $bs_navbar: _react.PropTypes.shape({
     bsClass: _react.PropTypes.string,
     expanded: _react.PropTypes.bool,
-    onToggle: _react.PropTypes.func.isRequired
+    onToggle: _react.PropTypes.func.isRequired,
+    onSelect: _react.PropTypes.func
   })
 };
 
@@ -38590,28 +38585,43 @@ var Navbar = function (_React$Component) {
     var _this = (0, _possibleConstructorReturn3['default'])(this, _React$Component.call(this, props, context));
 
     _this.handleToggle = _this.handleToggle.bind(_this);
+    _this.handleCollapse = _this.handleCollapse.bind(_this);
     return _this;
   }
 
   Navbar.prototype.getChildContext = function getChildContext() {
-    var _props = this.props;
-    var bsClass = _props.bsClass;
-    var expanded = _props.expanded;
+    var _props = this.props,
+        bsClass = _props.bsClass,
+        expanded = _props.expanded,
+        onSelect = _props.onSelect,
+        collapseOnSelect = _props.collapseOnSelect;
 
 
     return {
       $bs_navbar: {
         bsClass: bsClass,
         expanded: expanded,
-        onToggle: this.handleToggle
+        onToggle: this.handleToggle,
+        onSelect: (0, _createChainedFunction2['default'])(onSelect, collapseOnSelect ? this.handleCollapse : null)
       }
     };
   };
 
+  Navbar.prototype.handleCollapse = function handleCollapse() {
+    var _props2 = this.props,
+        onToggle = _props2.onToggle,
+        expanded = _props2.expanded;
+
+
+    if (expanded) {
+      onToggle(false);
+    }
+  };
+
   Navbar.prototype.handleToggle = function handleToggle() {
-    var _props2 = this.props;
-    var onToggle = _props2.onToggle;
-    var expanded = _props2.expanded;
+    var _props3 = this.props,
+        onToggle = _props3.onToggle,
+        expanded = _props3.expanded;
 
 
     onToggle(!expanded);
@@ -38620,25 +38630,25 @@ var Navbar = function (_React$Component) {
   Navbar.prototype.render = function render() {
     var _extends2;
 
-    var _props3 = this.props;
-    var Component = _props3.componentClass;
-    var fixedTop = _props3.fixedTop;
-    var fixedBottom = _props3.fixedBottom;
-    var staticTop = _props3.staticTop;
-    var inverse = _props3.inverse;
-    var fluid = _props3.fluid;
-    var className = _props3.className;
-    var children = _props3.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props3, ['componentClass', 'fixedTop', 'fixedBottom', 'staticTop', 'inverse', 'fluid', 'className', 'children']);
+    var _props4 = this.props,
+        Component = _props4.componentClass,
+        fixedTop = _props4.fixedTop,
+        fixedBottom = _props4.fixedBottom,
+        staticTop = _props4.staticTop,
+        inverse = _props4.inverse,
+        fluid = _props4.fluid,
+        className = _props4.className,
+        children = _props4.children,
+        props = (0, _objectWithoutProperties3['default'])(_props4, ['componentClass', 'fixedTop', 'fixedBottom', 'staticTop', 'inverse', 'fluid', 'className', 'children']);
 
-    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['expanded', 'onToggle']);
-
-    var bsProps = _splitBsPropsAndOmit[0];
-    var elementProps = _splitBsPropsAndOmit[1];
+    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['expanded', 'onToggle', 'onSelect', 'collapseOnSelect']),
+        bsProps = _splitBsPropsAndOmit[0],
+        elementProps = _splitBsPropsAndOmit[1];
 
     // will result in some false positives but that seems better
     // than false negatives. strict `undefined` check allows explicit
     // "nulling" of the role if the user really doesn't want one
+
 
     if (elementProps.role === undefined && Component !== 'nav') {
       elementProps.role = 'navigation';
@@ -38676,13 +38686,13 @@ var UncontrollableNavbar = (0, _uncontrollable2['default'])(Navbar, { expanded: 
 
 function createSimpleWrapper(tag, suffix, displayName) {
   var Wrapper = function Wrapper(_ref, _ref2) {
-    var Component = _ref.componentClass;
-    var className = _ref.className;
-    var pullRight = _ref.pullRight;
-    var pullLeft = _ref.pullLeft;
-    var props = (0, _objectWithoutProperties3['default'])(_ref, ['componentClass', 'className', 'pullRight', 'pullLeft']);
-    var _ref2$$bs_navbar = _ref2.$bs_navbar;
-    var navbarProps = _ref2$$bs_navbar === undefined ? { bsClass: 'navbar' } : _ref2$$bs_navbar;
+    var Component = _ref.componentClass,
+        className = _ref.className,
+        pullRight = _ref.pullRight,
+        pullLeft = _ref.pullLeft,
+        props = (0, _objectWithoutProperties3['default'])(_ref, ['componentClass', 'className', 'pullRight', 'pullLeft']);
+    var _ref2$$bs_navbar = _ref2.$bs_navbar,
+        navbarProps = _ref2$$bs_navbar === undefined ? { bsClass: 'navbar' } : _ref2$$bs_navbar;
     return _react2['default'].createElement(Component, (0, _extends4['default'])({}, props, {
       className: (0, _classnames2['default'])(className, (0, _bootstrapUtils.prefix)(navbarProps, suffix), pullRight && (0, _bootstrapUtils.prefix)(navbarProps, 'right'), pullLeft && (0, _bootstrapUtils.prefix)(navbarProps, 'left'))
     }));
@@ -38723,7 +38733,7 @@ UncontrollableNavbar.Link = createSimpleWrapper('a', 'link', 'NavbarLink');
 // Set bsStyles here so they can be overridden.
 exports['default'] = (0, _bootstrapUtils.bsStyles)([_StyleConfig.Style.DEFAULT, _StyleConfig.Style.INVERSE], _StyleConfig.Style.DEFAULT, UncontrollableNavbar);
 module.exports = exports['default'];
-},{"./Grid":350,"./NavbarBrand":378,"./NavbarCollapse":379,"./NavbarHeader":380,"./NavbarToggle":381,"./utils/StyleConfig":411,"./utils/bootstrapUtils":414,"babel-runtime/helpers/classCallCheck":25,"babel-runtime/helpers/extends":26,"babel-runtime/helpers/inherits":27,"babel-runtime/helpers/objectWithoutProperties":28,"babel-runtime/helpers/possibleConstructorReturn":29,"classnames":149,"react":635,"react-prop-types/lib/elementType":437,"uncontrollable":680}],378:[function(require,module,exports){
+},{"./Grid":350,"./NavbarBrand":378,"./NavbarCollapse":379,"./NavbarHeader":380,"./NavbarToggle":381,"./utils/StyleConfig":411,"./utils/bootstrapUtils":414,"./utils/createChainedFunction":416,"babel-runtime/helpers/classCallCheck":25,"babel-runtime/helpers/extends":26,"babel-runtime/helpers/inherits":27,"babel-runtime/helpers/objectWithoutProperties":28,"babel-runtime/helpers/possibleConstructorReturn":29,"classnames":149,"react":635,"react-prop-types/lib/elementType":437,"uncontrollable":680}],378:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -38775,10 +38785,10 @@ var NavbarBrand = function (_React$Component) {
   }
 
   NavbarBrand.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className', 'children']);
+    var _props = this.props,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className', 'children']);
 
     var navbarProps = this.context.$bs_navbar || { bsClass: 'navbar' };
 
@@ -38857,9 +38867,9 @@ var NavbarCollapse = function (_React$Component) {
   }
 
   NavbarCollapse.prototype.render = function render() {
-    var _props = this.props;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['children']);
+    var _props = this.props,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['children']);
 
     var navbarProps = this.context.$bs_navbar || { bsClass: 'navbar' };
 
@@ -38935,9 +38945,9 @@ var NavbarHeader = function (_React$Component) {
   }
 
   NavbarHeader.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
     var navbarProps = this.context.$bs_navbar || { bsClass: 'navbar' };
 
@@ -39019,11 +39029,11 @@ var NavbarToggle = function (_React$Component) {
   }
 
   NavbarToggle.prototype.render = function render() {
-    var _props = this.props;
-    var onClick = _props.onClick;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['onClick', 'className', 'children']);
+    var _props = this.props,
+        onClick = _props.onClick,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['onClick', 'className', 'children']);
 
     var navbarProps = this.context.$bs_navbar || { bsClass: 'navbar' };
 
@@ -39178,10 +39188,10 @@ var Overlay = function (_React$Component) {
   }
 
   Overlay.prototype.render = function render() {
-    var _props = this.props;
-    var animation = _props.animation;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['animation', 'children']);
+    var _props = this.props,
+        animation = _props.animation,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['animation', 'children']);
 
 
     var transition = animation === true ? _Fade2['default'] : animation || null;
@@ -39503,16 +39513,16 @@ var OverlayTrigger = function (_React$Component) {
   };
 
   OverlayTrigger.prototype.render = function render() {
-    var _props = this.props;
-    var trigger = _props.trigger;
-    var overlay = _props.overlay;
-    var children = _props.children;
-    var onBlur = _props.onBlur;
-    var onClick = _props.onClick;
-    var onFocus = _props.onFocus;
-    var onMouseOut = _props.onMouseOut;
-    var onMouseOver = _props.onMouseOver;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['trigger', 'overlay', 'children', 'onBlur', 'onClick', 'onFocus', 'onMouseOut', 'onMouseOver']);
+    var _props = this.props,
+        trigger = _props.trigger,
+        overlay = _props.overlay,
+        children = _props.children,
+        onBlur = _props.onBlur,
+        onClick = _props.onClick,
+        onFocus = _props.onFocus,
+        onMouseOut = _props.onMouseOut,
+        onMouseOver = _props.onMouseOver,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['trigger', 'overlay', 'children', 'onBlur', 'onClick', 'onFocus', 'onMouseOut', 'onMouseOver']);
 
 
     delete props.delay;
@@ -39609,16 +39619,14 @@ var PageHeader = function (_React$Component) {
   }
 
   PageHeader.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className', 'children']);
+    var _props = this.props,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -39719,17 +39727,15 @@ var Pager = function (_React$Component) {
   }
 
   Pager.prototype.render = function render() {
-    var _props = this.props;
-    var onSelect = _props.onSelect;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['onSelect', 'className', 'children']);
+    var _props = this.props,
+        onSelect = _props.onSelect,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['onSelect', 'className', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -39826,10 +39832,10 @@ var PagerItem = function (_React$Component) {
   }
 
   PagerItem.prototype.handleSelect = function handleSelect(e) {
-    var _props = this.props;
-    var disabled = _props.disabled;
-    var onSelect = _props.onSelect;
-    var eventKey = _props.eventKey;
+    var _props = this.props,
+        disabled = _props.disabled,
+        onSelect = _props.onSelect,
+        eventKey = _props.eventKey;
 
 
     if (onSelect || disabled) {
@@ -39846,14 +39852,14 @@ var PagerItem = function (_React$Component) {
   };
 
   PagerItem.prototype.render = function render() {
-    var _props2 = this.props;
-    var disabled = _props2.disabled;
-    var previous = _props2.previous;
-    var next = _props2.next;
-    var onClick = _props2.onClick;
-    var className = _props2.className;
-    var style = _props2.style;
-    var props = (0, _objectWithoutProperties3['default'])(_props2, ['disabled', 'previous', 'next', 'onClick', 'className', 'style']);
+    var _props2 = this.props,
+        disabled = _props2.disabled,
+        previous = _props2.previous,
+        next = _props2.next,
+        onClick = _props2.onClick,
+        className = _props2.className,
+        style = _props2.style,
+        props = (0, _objectWithoutProperties3['default'])(_props2, ['disabled', 'previous', 'next', 'onClick', 'className', 'style']);
 
 
     delete props.onSelect;
@@ -40002,8 +40008,8 @@ var Pagination = function (_React$Component) {
 
     if (maxButtons) {
       var hiddenPagesBefore = activePage - parseInt(maxButtons / 2, 10);
-      startPage = hiddenPagesBefore > 2 ? hiddenPagesBefore : 1;
-      hasHiddenPagesAfter = startPage + maxButtons < items;
+      startPage = Math.max(hiddenPagesBefore, 1);
+      hasHiddenPagesAfter = items >= startPage + maxButtons;
 
       if (!hasHiddenPagesAfter) {
         endPage = items;
@@ -40089,26 +40095,24 @@ var Pagination = function (_React$Component) {
   };
 
   Pagination.prototype.render = function render() {
-    var _props = this.props;
-    var activePage = _props.activePage;
-    var items = _props.items;
-    var maxButtons = _props.maxButtons;
-    var boundaryLinks = _props.boundaryLinks;
-    var ellipsis = _props.ellipsis;
-    var first = _props.first;
-    var last = _props.last;
-    var prev = _props.prev;
-    var next = _props.next;
-    var onSelect = _props.onSelect;
-    var buttonComponentClass = _props.buttonComponentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['activePage', 'items', 'maxButtons', 'boundaryLinks', 'ellipsis', 'first', 'last', 'prev', 'next', 'onSelect', 'buttonComponentClass', 'className']);
+    var _props = this.props,
+        activePage = _props.activePage,
+        items = _props.items,
+        maxButtons = _props.maxButtons,
+        boundaryLinks = _props.boundaryLinks,
+        ellipsis = _props.ellipsis,
+        first = _props.first,
+        last = _props.last,
+        prev = _props.prev,
+        next = _props.next,
+        onSelect = _props.onSelect,
+        buttonComponentClass = _props.buttonComponentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['activePage', 'items', 'maxButtons', 'boundaryLinks', 'ellipsis', 'first', 'last', 'prev', 'next', 'onSelect', 'buttonComponentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -40262,10 +40266,10 @@ var PaginationButton = function (_React$Component) {
   }
 
   PaginationButton.prototype.handleClick = function handleClick(event) {
-    var _props = this.props;
-    var disabled = _props.disabled;
-    var onSelect = _props.onSelect;
-    var eventKey = _props.eventKey;
+    var _props = this.props,
+        disabled = _props.disabled,
+        onSelect = _props.onSelect,
+        eventKey = _props.eventKey;
 
 
     if (disabled) {
@@ -40278,14 +40282,14 @@ var PaginationButton = function (_React$Component) {
   };
 
   PaginationButton.prototype.render = function render() {
-    var _props2 = this.props;
-    var Component = _props2.componentClass;
-    var active = _props2.active;
-    var disabled = _props2.disabled;
-    var onClick = _props2.onClick;
-    var className = _props2.className;
-    var style = _props2.style;
-    var props = (0, _objectWithoutProperties3['default'])(_props2, ['componentClass', 'active', 'disabled', 'onClick', 'className', 'style']);
+    var _props2 = this.props,
+        Component = _props2.componentClass,
+        active = _props2.active,
+        disabled = _props2.disabled,
+        onClick = _props2.onClick,
+        className = _props2.className,
+        style = _props2.style,
+        props = (0, _objectWithoutProperties3['default'])(_props2, ['componentClass', 'active', 'disabled', 'onClick', 'className', 'style']);
 
 
     if (Component === _SafeAnchor2['default']) {
@@ -40462,7 +40466,8 @@ var Panel = function (_React$Component) {
         onClick: this.handleClickTitle,
         'aria-controls': id,
         'aria-expanded': expanded,
-        'aria-selected': expanded
+        'aria-selected': expanded,
+        className: expanded ? null : 'collapsed'
       },
       header
     );
@@ -40526,29 +40531,27 @@ var Panel = function (_React$Component) {
   };
 
   Panel.prototype.render = function render() {
-    var _props = this.props;
-    var collapsible = _props.collapsible;
-    var header = _props.header;
-    var id = _props.id;
-    var footer = _props.footer;
-    var propsExpanded = _props.expanded;
-    var headerRole = _props.headerRole;
-    var panelRole = _props.panelRole;
-    var className = _props.className;
-    var children = _props.children;
-    var onEnter = _props.onEnter;
-    var onEntering = _props.onEntering;
-    var onEntered = _props.onEntered;
-    var onExit = _props.onExit;
-    var onExiting = _props.onExiting;
-    var onExited = _props.onExited;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['collapsible', 'header', 'id', 'footer', 'expanded', 'headerRole', 'panelRole', 'className', 'children', 'onEnter', 'onEntering', 'onEntered', 'onExit', 'onExiting', 'onExited']);
+    var _props = this.props,
+        collapsible = _props.collapsible,
+        header = _props.header,
+        id = _props.id,
+        footer = _props.footer,
+        propsExpanded = _props.expanded,
+        headerRole = _props.headerRole,
+        panelRole = _props.panelRole,
+        className = _props.className,
+        children = _props.children,
+        onEnter = _props.onEnter,
+        onEntering = _props.onEntering,
+        onEntered = _props.onEntered,
+        onExit = _props.onExit,
+        onExiting = _props.onExiting,
+        onExited = _props.onExited,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['collapsible', 'header', 'id', 'footer', 'expanded', 'headerRole', 'panelRole', 'className', 'children', 'onEnter', 'onEntering', 'onEntered', 'onExit', 'onExiting', 'onExited']);
 
-    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['defaultExpanded', 'eventKey', 'onSelect']);
-
-    var bsProps = _splitBsPropsAndOmit[0];
-    var elementProps = _splitBsPropsAndOmit[1];
-
+    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['defaultExpanded', 'eventKey', 'onSelect']),
+        bsProps = _splitBsPropsAndOmit[0],
+        elementProps = _splitBsPropsAndOmit[1];
 
     var expanded = propsExpanded != null ? propsExpanded : this.state.expanded;
 
@@ -40678,18 +40681,16 @@ var PanelGroup = function (_React$Component) {
   PanelGroup.prototype.render = function render() {
     var _this2 = this;
 
-    var _props = this.props;
-    var accordion = _props.accordion;
-    var propsActiveKey = _props.activeKey;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['accordion', 'activeKey', 'className', 'children']);
+    var _props = this.props,
+        accordion = _props.accordion,
+        propsActiveKey = _props.activeKey,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['accordion', 'activeKey', 'className', 'children']);
 
-    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['defaultActiveKey', 'onSelect']);
-
-    var bsProps = _splitBsPropsAndOmit[0];
-    var elementProps = _splitBsPropsAndOmit[1];
-
+    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['defaultActiveKey', 'onSelect']),
+        bsProps = _splitBsPropsAndOmit[0],
+        elementProps = _splitBsPropsAndOmit[1];
 
     var activeKey = void 0;
     if (accordion) {
@@ -40825,23 +40826,21 @@ var Popover = function (_React$Component) {
   Popover.prototype.render = function render() {
     var _extends2;
 
-    var _props = this.props;
-    var placement = _props.placement;
-    var positionTop = _props.positionTop;
-    var positionLeft = _props.positionLeft;
-    var arrowOffsetTop = _props.arrowOffsetTop;
-    var arrowOffsetLeft = _props.arrowOffsetLeft;
-    var title = _props.title;
-    var className = _props.className;
-    var style = _props.style;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['placement', 'positionTop', 'positionLeft', 'arrowOffsetTop', 'arrowOffsetLeft', 'title', 'className', 'style', 'children']);
+    var _props = this.props,
+        placement = _props.placement,
+        positionTop = _props.positionTop,
+        positionLeft = _props.positionLeft,
+        arrowOffsetTop = _props.arrowOffsetTop,
+        arrowOffsetLeft = _props.arrowOffsetLeft,
+        title = _props.title,
+        className = _props.className,
+        style = _props.style,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['placement', 'positionTop', 'positionLeft', 'arrowOffsetTop', 'arrowOffsetLeft', 'title', 'className', 'style', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {}, _extends2[placement] = true, _extends2));
 
@@ -41003,22 +41002,20 @@ var ProgressBar = function (_React$Component) {
   ProgressBar.prototype.renderProgressBar = function renderProgressBar(_ref) {
     var _extends2;
 
-    var min = _ref.min;
-    var now = _ref.now;
-    var max = _ref.max;
-    var label = _ref.label;
-    var srOnly = _ref.srOnly;
-    var striped = _ref.striped;
-    var active = _ref.active;
-    var className = _ref.className;
-    var style = _ref.style;
-    var props = (0, _objectWithoutProperties3['default'])(_ref, ['min', 'now', 'max', 'label', 'srOnly', 'striped', 'active', 'className', 'style']);
+    var min = _ref.min,
+        now = _ref.now,
+        max = _ref.max,
+        label = _ref.label,
+        srOnly = _ref.srOnly,
+        striped = _ref.striped,
+        active = _ref.active,
+        className = _ref.className,
+        style = _ref.style,
+        props = (0, _objectWithoutProperties3['default'])(_ref, ['min', 'now', 'max', 'label', 'srOnly', 'striped', 'active', 'className', 'style']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {
       active: active
@@ -41043,27 +41040,27 @@ var ProgressBar = function (_React$Component) {
   };
 
   ProgressBar.prototype.render = function render() {
-    var _props = this.props;
-    var isChild = _props.isChild;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['isChild']);
+    var _props = this.props,
+        isChild = _props.isChild,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['isChild']);
 
 
     if (isChild) {
       return this.renderProgressBar(props);
     }
 
-    var min = props.min;
-    var now = props.now;
-    var max = props.max;
-    var label = props.label;
-    var srOnly = props.srOnly;
-    var striped = props.striped;
-    var active = props.active;
-    var bsClass = props.bsClass;
-    var bsStyle = props.bsStyle;
-    var className = props.className;
-    var children = props.children;
-    var wrapperProps = (0, _objectWithoutProperties3['default'])(props, ['min', 'now', 'max', 'label', 'srOnly', 'striped', 'active', 'bsClass', 'bsStyle', 'className', 'children']);
+    var min = props.min,
+        now = props.now,
+        max = props.max,
+        label = props.label,
+        srOnly = props.srOnly,
+        striped = props.striped,
+        active = props.active,
+        bsClass = props.bsClass,
+        bsStyle = props.bsStyle,
+        className = props.className,
+        children = props.children,
+        wrapperProps = (0, _objectWithoutProperties3['default'])(props, ['min', 'now', 'max', 'label', 'srOnly', 'striped', 'active', 'bsClass', 'bsStyle', 'className', 'children']);
 
 
     return _react2['default'].createElement(
@@ -41160,21 +41157,19 @@ var Radio = function (_React$Component) {
   }
 
   Radio.prototype.render = function render() {
-    var _props = this.props;
-    var inline = _props.inline;
-    var disabled = _props.disabled;
-    var validationState = _props.validationState;
-    var inputRef = _props.inputRef;
-    var className = _props.className;
-    var style = _props.style;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['inline', 'disabled', 'validationState', 'inputRef', 'className', 'style', 'children']);
+    var _props = this.props,
+        inline = _props.inline,
+        disabled = _props.disabled,
+        validationState = _props.validationState,
+        inputRef = _props.inputRef,
+        className = _props.className,
+        style = _props.style,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['inline', 'disabled', 'validationState', 'inputRef', 'className', 'style', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var input = _react2['default'].createElement('input', (0, _extends3['default'])({}, elementProps, {
       ref: inputRef,
@@ -41303,18 +41298,16 @@ var ResponsiveEmbed = function (_React$Component) {
   ResponsiveEmbed.prototype.render = function render() {
     var _extends2;
 
-    var _props = this.props;
-    var a16by9 = _props.a16by9;
-    var a4by3 = _props.a4by3;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['a16by9', 'a4by3', 'className', 'children']);
+    var _props = this.props,
+        a16by9 = _props.a16by9,
+        a4by3 = _props.a4by3,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['a16by9', 'a4by3', 'className', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     process.env.NODE_ENV !== 'production' ? (0, _warning2['default'])(a16by9 || a4by3, 'Either `a16by9` or `a4by3` must be set.') : void 0;
     process.env.NODE_ENV !== 'production' ? (0, _warning2['default'])(!(a16by9 && a4by3), 'Only one of `a16by9` or `a4by3` can be set.') : void 0;
@@ -41398,16 +41391,14 @@ var Row = function (_React$Component) {
   }
 
   Row.prototype.render = function render() {
-    var _props = this.props;
-    var Component = _props.componentClass;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
+    var _props = this.props,
+        Component = _props.componentClass,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['componentClass', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -41500,10 +41491,10 @@ var SafeAnchor = function (_React$Component) {
   }
 
   SafeAnchor.prototype.handleClick = function handleClick(event) {
-    var _props = this.props;
-    var disabled = _props.disabled;
-    var href = _props.href;
-    var onClick = _props.onClick;
+    var _props = this.props,
+        disabled = _props.disabled,
+        href = _props.href,
+        onClick = _props.onClick;
 
 
     if (disabled || isTrivialHref(href)) {
@@ -41521,17 +41512,17 @@ var SafeAnchor = function (_React$Component) {
   };
 
   SafeAnchor.prototype.render = function render() {
-    var _props2 = this.props;
-    var Component = _props2.componentClass;
-    var disabled = _props2.disabled;
-    var props = (0, _objectWithoutProperties3['default'])(_props2, ['componentClass', 'disabled']);
+    var _props2 = this.props,
+        Component = _props2.componentClass,
+        disabled = _props2.disabled,
+        props = (0, _objectWithoutProperties3['default'])(_props2, ['componentClass', 'disabled']);
 
 
     if (isTrivialHref(props.href)) {
       props.role = props.role || 'button';
       // we want to make sure there is a href attribute on the node
       // otherwise, the cursor incorrectly styled (except with role='button')
-      props.href = props.href || '';
+      props.href = props.href || '#';
     }
 
     if (disabled) {
@@ -41631,19 +41622,17 @@ var SplitButton = function (_React$Component) {
   }
 
   SplitButton.prototype.render = function render() {
-    var _props = this.props;
-    var bsSize = _props.bsSize;
-    var bsStyle = _props.bsStyle;
-    var title = _props.title;
-    var toggleLabel = _props.toggleLabel;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['bsSize', 'bsStyle', 'title', 'toggleLabel', 'children']);
+    var _props = this.props,
+        bsSize = _props.bsSize,
+        bsStyle = _props.bsStyle,
+        title = _props.title,
+        toggleLabel = _props.toggleLabel,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['bsSize', 'bsStyle', 'title', 'toggleLabel', 'children']);
 
-    var _splitComponentProps = (0, _splitComponentProps3['default'])(props, _Dropdown2['default'].ControlledComponent);
-
-    var dropdownProps = _splitComponentProps[0];
-    var buttonProps = _splitComponentProps[1];
-
+    var _splitComponentProps = (0, _splitComponentProps3['default'])(props, _Dropdown2['default'].ControlledComponent),
+        dropdownProps = _splitComponentProps[0],
+        buttonProps = _splitComponentProps[1];
 
     return _react2['default'].createElement(
       _Dropdown2['default'],
@@ -41922,11 +41911,11 @@ var TabContainer = function (_React$Component) {
   }
 
   TabContainer.prototype.getChildContext = function getChildContext() {
-    var _props = this.props;
-    var activeKey = _props.activeKey;
-    var onSelect = _props.onSelect;
-    var generateChildId = _props.generateChildId;
-    var id = _props.id;
+    var _props = this.props,
+        activeKey = _props.activeKey,
+        onSelect = _props.onSelect,
+        generateChildId = _props.generateChildId,
+        id = _props.id;
 
 
     var getId = generateChildId || function (key, type) {
@@ -41948,9 +41937,9 @@ var TabContainer = function (_React$Component) {
   };
 
   TabContainer.prototype.render = function render() {
-    var _props2 = this.props;
-    var children = _props2.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props2, ['children']);
+    var _props2 = this.props,
+        children = _props2.children,
+        props = (0, _objectWithoutProperties3['default'])(_props2, ['children']);
 
 
     delete props.generateChildId;
@@ -42071,10 +42060,10 @@ var TabContent = function (_React$Component) {
   }
 
   TabContent.prototype.getChildContext = function getChildContext() {
-    var _props = this.props;
-    var bsClass = _props.bsClass;
-    var animation = _props.animation;
-    var unmountOnExit = _props.unmountOnExit;
+    var _props = this.props,
+        bsClass = _props.bsClass,
+        animation = _props.animation,
+        unmountOnExit = _props.unmountOnExit;
 
 
     var stateActiveKey = this.state.activeKey;
@@ -42150,16 +42139,14 @@ var TabContent = function (_React$Component) {
   };
 
   TabContent.prototype.render = function render() {
-    var _props2 = this.props;
-    var Component = _props2.componentClass;
-    var className = _props2.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props2, ['componentClass', 'className']);
+    var _props2 = this.props,
+        Component = _props2.componentClass,
+        className = _props2.className,
+        props = (0, _objectWithoutProperties3['default'])(_props2, ['componentClass', 'className']);
 
-    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['animation', 'unmountOnExit']);
-
-    var bsProps = _splitBsPropsAndOmit[0];
-    var elementProps = _splitBsPropsAndOmit[1];
-
+    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['animation', 'unmountOnExit']),
+        bsProps = _splitBsPropsAndOmit[0],
+        elementProps = _splitBsPropsAndOmit[1];
 
     return _react2['default'].createElement(Component, (0, _extends3['default'])({}, elementProps, {
       className: (0, _classnames2['default'])(className, (0, _bootstrapUtils.prefix)(bsProps, 'content'))
@@ -42403,26 +42390,24 @@ var TabPane = function (_React$Component) {
   };
 
   TabPane.prototype.render = function render() {
-    var _props = this.props;
-    var eventKey = _props.eventKey;
-    var className = _props.className;
-    var onEnter = _props.onEnter;
-    var onEntering = _props.onEntering;
-    var onEntered = _props.onEntered;
-    var onExit = _props.onExit;
-    var onExiting = _props.onExiting;
-    var onExited = _props.onExited;
-    var propsUnmountOnExit = _props.unmountOnExit;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['eventKey', 'className', 'onEnter', 'onEntering', 'onEntered', 'onExit', 'onExiting', 'onExited', 'unmountOnExit']);
-    var _context = this.context;
-    var tabContent = _context.$bs_tabContent;
-    var tabContainer = _context.$bs_tabContainer;
+    var _props = this.props,
+        eventKey = _props.eventKey,
+        className = _props.className,
+        onEnter = _props.onEnter,
+        onEntering = _props.onEntering,
+        onEntered = _props.onEntered,
+        onExit = _props.onExit,
+        onExiting = _props.onExiting,
+        onExited = _props.onExited,
+        propsUnmountOnExit = _props.unmountOnExit,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['eventKey', 'className', 'onEnter', 'onEntering', 'onEntered', 'onExit', 'onExiting', 'onExited', 'unmountOnExit']);
+    var _context = this.context,
+        tabContent = _context.$bs_tabContent,
+        tabContainer = _context.$bs_tabContainer;
 
-    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['animation']);
-
-    var bsProps = _splitBsPropsAndOmit[0];
-    var elementProps = _splitBsPropsAndOmit[1];
-
+    var _splitBsPropsAndOmit = (0, _bootstrapUtils.splitBsPropsAndOmit)(props, ['animation']),
+        bsProps = _splitBsPropsAndOmit[0],
+        elementProps = _splitBsPropsAndOmit[1];
 
     var active = this.isActive();
     var animation = this.getAnimation();
@@ -42553,20 +42538,18 @@ var Table = function (_React$Component) {
   Table.prototype.render = function render() {
     var _extends2;
 
-    var _props = this.props;
-    var striped = _props.striped;
-    var bordered = _props.bordered;
-    var condensed = _props.condensed;
-    var hover = _props.hover;
-    var responsive = _props.responsive;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['striped', 'bordered', 'condensed', 'hover', 'responsive', 'className']);
+    var _props = this.props,
+        striped = _props.striped,
+        bordered = _props.bordered,
+        condensed = _props.condensed,
+        hover = _props.hover,
+        responsive = _props.responsive,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['striped', 'bordered', 'condensed', 'hover', 'responsive', 'className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {}, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'striped')] = striped, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'bordered')] = bordered, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'condensed')] = condensed, _extends2[(0, _bootstrapUtils.prefix)(bsProps, 'hover')] = hover, _extends2));
 
@@ -42719,11 +42702,11 @@ var Tabs = function (_React$Component) {
   }
 
   Tabs.prototype.renderTab = function renderTab(child) {
-    var _child$props = child.props;
-    var title = _child$props.title;
-    var eventKey = _child$props.eventKey;
-    var disabled = _child$props.disabled;
-    var tabClassName = _child$props.tabClassName;
+    var _child$props = child.props,
+        title = _child$props.title,
+        eventKey = _child$props.eventKey,
+        disabled = _child$props.disabled,
+        tabClassName = _child$props.tabClassName;
 
     if (title == null) {
       return null;
@@ -42741,18 +42724,18 @@ var Tabs = function (_React$Component) {
   };
 
   Tabs.prototype.render = function render() {
-    var _props = this.props;
-    var id = _props.id;
-    var onSelect = _props.onSelect;
-    var animation = _props.animation;
-    var unmountOnExit = _props.unmountOnExit;
-    var bsClass = _props.bsClass;
-    var className = _props.className;
-    var style = _props.style;
-    var children = _props.children;
-    var _props$activeKey = _props.activeKey;
-    var activeKey = _props$activeKey === undefined ? getDefaultActiveKey(children) : _props$activeKey;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['id', 'onSelect', 'animation', 'unmountOnExit', 'bsClass', 'className', 'style', 'children', 'activeKey']);
+    var _props = this.props,
+        id = _props.id,
+        onSelect = _props.onSelect,
+        animation = _props.animation,
+        unmountOnExit = _props.unmountOnExit,
+        bsClass = _props.bsClass,
+        className = _props.className,
+        style = _props.style,
+        children = _props.children,
+        _props$activeKey = _props.activeKey,
+        activeKey = _props$activeKey === undefined ? getDefaultActiveKey(children) : _props$activeKey,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['id', 'onSelect', 'animation', 'unmountOnExit', 'bsClass', 'className', 'style', 'children', 'activeKey']);
 
 
     return _react2['default'].createElement(
@@ -42853,18 +42836,16 @@ var Thumbnail = function (_React$Component) {
   }
 
   Thumbnail.prototype.render = function render() {
-    var _props = this.props;
-    var src = _props.src;
-    var alt = _props.alt;
-    var className = _props.className;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['src', 'alt', 'className', 'children']);
+    var _props = this.props,
+        src = _props.src,
+        alt = _props.alt,
+        className = _props.className,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['src', 'alt', 'className', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var Component = elementProps.href ? _SafeAnchor2['default'] : 'div';
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
@@ -42978,22 +42959,20 @@ var Tooltip = function (_React$Component) {
   Tooltip.prototype.render = function render() {
     var _extends2;
 
-    var _props = this.props;
-    var placement = _props.placement;
-    var positionTop = _props.positionTop;
-    var positionLeft = _props.positionLeft;
-    var arrowOffsetTop = _props.arrowOffsetTop;
-    var arrowOffsetLeft = _props.arrowOffsetLeft;
-    var className = _props.className;
-    var style = _props.style;
-    var children = _props.children;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['placement', 'positionTop', 'positionLeft', 'arrowOffsetTop', 'arrowOffsetLeft', 'className', 'style', 'children']);
+    var _props = this.props,
+        placement = _props.placement,
+        positionTop = _props.positionTop,
+        positionLeft = _props.positionLeft,
+        arrowOffsetTop = _props.arrowOffsetTop,
+        arrowOffsetLeft = _props.arrowOffsetLeft,
+        className = _props.className,
+        style = _props.style,
+        children = _props.children,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['placement', 'positionTop', 'positionLeft', 'arrowOffsetTop', 'arrowOffsetLeft', 'className', 'style', 'children']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _extends4['default'])({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {}, _extends2[placement] = true, _extends2));
 
@@ -43079,15 +43058,13 @@ var Well = function (_React$Component) {
   }
 
   Well.prototype.render = function render() {
-    var _props = this.props;
-    var className = _props.className;
-    var props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
+    var _props = this.props,
+        className = _props.className,
+        props = (0, _objectWithoutProperties3['default'])(_props, ['className']);
 
-    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props);
-
-    var bsProps = _splitBsProps[0];
-    var elementProps = _splitBsProps[1];
-
+    var _splitBsProps = (0, _bootstrapUtils.splitBsProps)(props),
+        bsProps = _splitBsProps[0],
+        elementProps = _splitBsProps[1];
 
     var classes = (0, _bootstrapUtils.getClassSet)(bsProps);
 
@@ -44033,8 +44010,8 @@ function isBsProp(propName) {
 function splitBsProps(props) {
   var elementProps = {};
   (0, _entries2['default'])(props).forEach(function (_ref) {
-    var propName = _ref[0];
-    var propValue = _ref[1];
+    var propName = _ref[0],
+        propValue = _ref[1];
 
     if (!isBsProp(propName)) {
       elementProps[propName] = propValue;
@@ -44052,8 +44029,8 @@ function splitBsPropsAndOmit(props, omittedPropNames) {
 
   var elementProps = {};
   (0, _entries2['default'])(props).forEach(function (_ref2) {
-    var propName = _ref2[0];
-    var propValue = _ref2[1];
+    var propName = _ref2[0],
+        propValue = _ref2[1];
 
     if (!isBsProp(propName) && !isOmittedProp[propName]) {
       elementProps[propName] = propValue;
@@ -44264,8 +44241,8 @@ function splitComponentProps(props, Component) {
   var childProps = {};
 
   (0, _entries2["default"])(props).forEach(function (_ref) {
-    var propName = _ref[0];
-    var propValue = _ref[1];
+    var propName = _ref[0],
+        propValue = _ref[1];
 
     if (componentPropTypes[propName]) {
       parentProps[propName] = propValue;
@@ -47487,9 +47464,9 @@ function routerMiddleware(history) {
           return next(action);
         }
 
-        var _action$payload = action.payload;
-        var method = _action$payload.method;
-        var args = _action$payload.args;
+        var _action$payload = action.payload,
+            method = _action$payload.method,
+            args = _action$payload.args;
 
         history[method].apply(history, _toConsumableArray(args));
       };
@@ -47523,12 +47500,11 @@ var initialState = {
  * this state is discouraged.
  */
 function routerReducer() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
 
-  var _ref = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-  var type = _ref.type;
-  var payload = _ref.payload;
+  var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+      type = _ref.type,
+      payload = _ref.payload;
 
   if (type === LOCATION_CHANGE) {
     return _extends({}, state, { locationBeforeTransitions: payload });
@@ -47566,12 +47542,11 @@ var defaultSelectLocationState = function defaultSelectLocationState(state) {
  * correct router state.
  */
 function syncHistoryWithStore(history, store) {
-  var _ref = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
-  var _ref$selectLocationSt = _ref.selectLocationState;
-  var selectLocationState = _ref$selectLocationSt === undefined ? defaultSelectLocationState : _ref$selectLocationSt;
-  var _ref$adjustUrlOnRepla = _ref.adjustUrlOnReplay;
-  var adjustUrlOnReplay = _ref$adjustUrlOnRepla === undefined ? true : _ref$adjustUrlOnRepla;
+  var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+      _ref$selectLocationSt = _ref.selectLocationState,
+      selectLocationState = _ref$selectLocationSt === undefined ? defaultSelectLocationState : _ref$selectLocationSt,
+      _ref$adjustUrlOnRepla = _ref.adjustUrlOnReplay,
+      adjustUrlOnReplay = _ref$adjustUrlOnRepla === undefined ? true : _ref$adjustUrlOnRepla;
 
   // Ensure that the reducer is mounted on the store and functioning properly.
   if (typeof selectLocationState(store.getState()) === 'undefined') {
@@ -47642,6 +47617,11 @@ function syncHistoryWithStore(history, store) {
     });
   };
   unsubscribeFromHistory = history.listen(handleLocationChange);
+
+  // support history 3.x
+  if (history.getCurrentLocation) {
+    handleLocationChange(history.getCurrentLocation());
+  }
 
   // The enhanced history uses store as source of truth
   return _extends({}, history, {
@@ -76272,6 +76252,180 @@ module.exports = warning;
 
 },{"_process":315}],685:[function(require,module,exports){
 "use strict";
+var microevent_ts_1 = require('microevent.ts');
+var MSG_RESOLVE_TRANSACTION = "resolve_transaction", MSG_REJECT_TRANSACTION = "reject_transaction", MSG_ERROR = "error";
+var RpcProvider = (function () {
+    function RpcProvider(_dispatch, _rpcTimeout) {
+        if (_rpcTimeout === void 0) { _rpcTimeout = 0; }
+        this._dispatch = _dispatch;
+        this._rpcTimeout = _rpcTimeout;
+        this.error = new microevent_ts_1.Event();
+        this._rpcHandlers = {};
+        this._signalHandlers = {};
+        this._pendingTransactions = {};
+        this._nextTransactionId = 0;
+    }
+    RpcProvider.prototype.dispatch = function (payload) {
+        var message = payload;
+        switch (message.type) {
+            case RpcProvider.MessageType.signal:
+                return this._handleSignal(message);
+            case RpcProvider.MessageType.rpc:
+                return this._handeRpc(message);
+            case RpcProvider.MessageType.internal:
+                return this._handleInternal(message);
+            default:
+                this._raiseError("invalid message type " + message.type);
+        }
+    };
+    RpcProvider.prototype.rpc = function (id, payload, transfer) {
+        var _this = this;
+        var transactionId = this._nextTransactionId++;
+        this._dispatch({
+            type: RpcProvider.MessageType.rpc,
+            transactionId: transactionId,
+            id: id,
+            payload: payload
+        }, transfer ? transfer : undefined);
+        return new Promise(function (resolve, reject) {
+            var transaction = _this._pendingTransactions[transactionId] = {
+                id: transactionId,
+                resolve: resolve,
+                reject: reject
+            };
+            if (_this._rpcTimeout > 0) {
+                _this._pendingTransactions[transactionId].timeoutHandle =
+                    setTimeout(function () { return _this._transactionTimeout(transaction); }, _this._rpcTimeout);
+            }
+        });
+    };
+    ;
+    RpcProvider.prototype.signal = function (id, payload, transfer) {
+        this._dispatch({
+            type: RpcProvider.MessageType.signal,
+            id: id,
+            payload: payload,
+        }, transfer ? transfer : undefined);
+        return this;
+    };
+    RpcProvider.prototype.registerRpcHandler = function (id, handler) {
+        if (this._rpcHandlers[id]) {
+            throw new Error("rpc handler for " + id + " already registered");
+        }
+        this._rpcHandlers[id] = handler;
+        return this;
+    };
+    ;
+    RpcProvider.prototype.registerSignalHandler = function (id, handler) {
+        if (!this._signalHandlers[id]) {
+            this._signalHandlers[id] = [];
+        }
+        this._signalHandlers[id].push(handler);
+        return this;
+    };
+    RpcProvider.prototype.deregisterRpcHandler = function (id, handler) {
+        if (this._rpcHandlers[id]) {
+            delete this._rpcHandlers[id];
+        }
+        return this;
+    };
+    ;
+    RpcProvider.prototype.deregisterSignalHandler = function (id, handler) {
+        if (this._signalHandlers[id]) {
+            this._signalHandlers[id] = this._signalHandlers[id].filter(function (h) { return handler !== h; });
+        }
+        return this;
+    };
+    RpcProvider.prototype._raiseError = function (error) {
+        this.error.dispatch(new Error(error));
+        this._dispatch({
+            type: RpcProvider.MessageType.internal,
+            id: MSG_ERROR,
+            payload: error
+        });
+    };
+    RpcProvider.prototype._handleSignal = function (message) {
+        if (!this._signalHandlers[message.id]) {
+            return this._raiseError("invalid signal " + message.id);
+        }
+        this._signalHandlers[message.id].forEach(function (handler) { return handler(message.payload); });
+    };
+    RpcProvider.prototype._handeRpc = function (message) {
+        var _this = this;
+        if (!this._rpcHandlers[message.id]) {
+            return this._raiseError("invalid rpc " + message.id);
+        }
+        Promise.resolve(this._rpcHandlers[message.id](message.payload))
+            .then(function (result) { return _this._dispatch({
+            type: RpcProvider.MessageType.internal,
+            id: MSG_RESOLVE_TRANSACTION,
+            transactionId: message.transactionId,
+            payload: result
+        }); }, function (reason) { return _this._dispatch({
+            type: RpcProvider.MessageType.internal,
+            id: MSG_REJECT_TRANSACTION,
+            transactionId: message.transactionId,
+            payload: reason
+        }); });
+    };
+    RpcProvider.prototype._handleInternal = function (message) {
+        switch (message.id) {
+            case MSG_RESOLVE_TRANSACTION:
+                if (!this._pendingTransactions[message.transactionId]) {
+                    return this._raiseError("no pending transaction with id " + message.transactionId);
+                }
+                this._pendingTransactions[message.transactionId].resolve(message.payload);
+                this._clearTransaction(this._pendingTransactions[message.transactionId]);
+                break;
+            case MSG_REJECT_TRANSACTION:
+                if (!this._pendingTransactions[message.transactionId]) {
+                    return this._raiseError("no pending transaction with id " + message.transactionId);
+                }
+                this._pendingTransactions[message.transactionId].reject(message.payload);
+                this._clearTransaction(this._pendingTransactions[message.transactionId]);
+                break;
+            case MSG_ERROR:
+                this.error.dispatch(new Error("remote error: " + message.payload));
+                break;
+            default:
+                this._raiseError("unhandled internal message " + message.id);
+                break;
+        }
+    };
+    RpcProvider.prototype._transactionTimeout = function (transaction) {
+        transaction.reject('transaction timed out');
+        this._raiseError("transaction " + transaction.id + " timed out");
+        delete this._pendingTransactions[transaction.id];
+        return;
+    };
+    RpcProvider.prototype._clearTransaction = function (transaction) {
+        if (typeof (transaction.timeoutHandle) !== 'undefined') {
+            clearTimeout(transaction.timeoutHandle);
+        }
+        delete this._pendingTransactions[transaction.id];
+    };
+    return RpcProvider;
+}());
+var RpcProvider;
+(function (RpcProvider) {
+    (function (MessageType) {
+        MessageType[MessageType["signal"] = 0] = "signal";
+        MessageType[MessageType["rpc"] = 1] = "rpc";
+        MessageType[MessageType["internal"] = 2] = "internal";
+    })(RpcProvider.MessageType || (RpcProvider.MessageType = {}));
+    var MessageType = RpcProvider.MessageType;
+    ;
+})(RpcProvider || (RpcProvider = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = RpcProvider;
+
+},{"microevent.ts":304}],686:[function(require,module,exports){
+"use strict";
+var RpcProvider_1 = require('./RpcProvider');
+exports.RpcProvider = RpcProvider_1.default;
+
+},{"./RpcProvider":685}],687:[function(require,module,exports){
+"use strict";
 var BoardInterface;
 (function (BoardInterface) {
     ;
@@ -76289,7 +76443,7 @@ var BoardInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = BoardInterface;
 
-},{}],686:[function(require,module,exports){
+},{}],688:[function(require,module,exports){
 "use strict";
 var Instruction_1 = require('./Instruction');
 var CpuInterface_1 = require('./CpuInterface');
@@ -77180,7 +77334,7 @@ var Cpu = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cpu;
 
-},{"./CpuInterface":687,"./Instruction":688}],687:[function(require,module,exports){
+},{"./CpuInterface":689,"./Instruction":690}],689:[function(require,module,exports){
 "use strict";
 var CpuInterface;
 (function (CpuInterface) {
@@ -77200,7 +77354,7 @@ var CpuInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CpuInterface;
 
-},{}],688:[function(require,module,exports){
+},{}],690:[function(require,module,exports){
 "use strict";
 var Instruction = (function () {
     function Instruction(operation, addressingMode) {
@@ -77522,7 +77676,7 @@ var Instruction;
 })(Instruction || (Instruction = {}));
 ;
 
-},{}],689:[function(require,module,exports){
+},{}],691:[function(require,module,exports){
 "use strict";
 var Switch_1 = require('./Switch');
 var DigitalJoystick = (function () {
@@ -77553,7 +77707,7 @@ var DigitalJoystick = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DigitalJoystick;
 
-},{"./Switch":691}],690:[function(require,module,exports){
+},{"./Switch":693}],692:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var Switch_1 = require('./Switch');
@@ -77578,7 +77732,7 @@ var Paddle = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Paddle;
 
-},{"./Switch":691,"microevent.ts":304}],691:[function(require,module,exports){
+},{"./Switch":693,"microevent.ts":304}],693:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var Switch = (function () {
@@ -77607,7 +77761,7 @@ var Switch = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Switch;
 
-},{"microevent.ts":304}],692:[function(require,module,exports){
+},{"microevent.ts":304}],694:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var BoardInterface_1 = require('../board/BoardInterface');
@@ -77840,7 +77994,7 @@ var Board = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Board;
 
-},{"../../tools/rng/factory":735,"../board/BoardInterface":685,"../cpu/Cpu":686,"../cpu/CpuInterface":687,"../io/DigitalJoystick":689,"../io/Paddle":690,"./Bus":693,"./Config":694,"./ControlPanel":695,"./Pia":696,"./tia/Tia":725,"microevent.ts":304}],693:[function(require,module,exports){
+},{"../../tools/rng/factory":737,"../board/BoardInterface":687,"../cpu/Cpu":688,"../cpu/CpuInterface":689,"../io/DigitalJoystick":691,"../io/Paddle":692,"./Bus":695,"./Config":696,"./ControlPanel":697,"./Pia":698,"./tia/Tia":727,"microevent.ts":304}],695:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var Bus = (function () {
@@ -77967,7 +78121,7 @@ var Bus;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Bus;
 
-},{"microevent.ts":304}],694:[function(require,module,exports){
+},{"microevent.ts":304}],696:[function(require,module,exports){
 "use strict";
 var Config = (function () {
     function Config(tvMode, enableAudio, randomSeed, emulatePaddles) {
@@ -77998,7 +78152,7 @@ var Config;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Config;
 
-},{}],695:[function(require,module,exports){
+},{}],697:[function(require,module,exports){
 "use strict";
 var Switch_1 = require('../io/Switch');
 var ControlPanel = (function () {
@@ -78029,7 +78183,7 @@ var ControlPanel = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ControlPanel;
 
-},{"../io/Switch":691}],696:[function(require,module,exports){
+},{"../io/Switch":693}],698:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var Pia = (function () {
@@ -78208,7 +78362,7 @@ var Pia;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Pia;
 
-},{"microevent.ts":304}],697:[function(require,module,exports){
+},{"microevent.ts":304}],699:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var CartridgeInterface_1 = require('./CartridgeInterface');
@@ -78252,7 +78406,7 @@ var AbstractCartridge = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractCartridge;
 
-},{"./CartridgeInfo":712,"./CartridgeInterface":713,"microevent.ts":304}],698:[function(require,module,exports){
+},{"./CartridgeInfo":714,"./CartridgeInterface":715,"microevent.ts":304}],700:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -78285,7 +78439,7 @@ var Cartridge2k = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cartridge2k;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712}],699:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714}],701:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -78350,7 +78504,7 @@ var Cartridge3F = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cartridge3F;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712,"./util":715}],700:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714,"./util":717}],702:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -78383,7 +78537,7 @@ var Cartridge4k = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cartridge4k;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712}],701:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714}],703:[function(require,module,exports){
 "use strict";
 var CartridgeInfo_1 = require('./CartridgeInfo');
 var CartridgeF8_1 = require('./CartridgeF8');
@@ -78445,7 +78599,7 @@ var CartridgeDetector = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeDetector;
 
-},{"./Cartridge3F":699,"./CartridgeE0":702,"./CartridgeE7":703,"./CartridgeF8":707,"./CartridgeFE":710,"./CartridgeInfo":712,"./CartridgeUA":714}],702:[function(require,module,exports){
+},{"./Cartridge3F":701,"./CartridgeE0":704,"./CartridgeE7":705,"./CartridgeF8":709,"./CartridgeFE":712,"./CartridgeInfo":714,"./CartridgeUA":716}],704:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -78535,7 +78689,7 @@ var CartridgeE0 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeE0;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712,"./util":715}],703:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714,"./util":717}],705:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -78672,7 +78826,7 @@ var CartrdigeE7 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartrdigeE7;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712,"./util":715}],704:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714,"./util":717}],706:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -78731,7 +78885,7 @@ var CartridgeF0 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeF0;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712}],705:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714}],707:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -78812,7 +78966,7 @@ var CartridgeF4 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeF4;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712}],706:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714}],708:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -78904,7 +79058,7 @@ var CartridgeF6 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeF6;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712}],707:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714}],709:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -78968,7 +79122,7 @@ var CartridgeF8 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeF8;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712,"./util":715}],708:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714,"./util":717}],710:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -79047,7 +79201,7 @@ var CartridgeFA = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeFA;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712}],709:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714}],711:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -79158,7 +79312,7 @@ var CartridgeFA2 = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeFA2;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712}],710:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714}],712:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -79231,7 +79385,7 @@ var CartridgeFE = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeFE;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712,"./util":715}],711:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714,"./util":717}],713:[function(require,module,exports){
 "use strict";
 var Cartridge2k_1 = require('./Cartridge2k');
 var Cartridge4k_1 = require('./Cartridge4k');
@@ -79292,7 +79446,7 @@ var CartridgeFactory = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeFactory;
 
-},{"./Cartridge2k":698,"./Cartridge3F":699,"./Cartridge4k":700,"./CartridgeDetector":701,"./CartridgeE0":702,"./CartridgeE7":703,"./CartridgeF0":704,"./CartridgeF4":705,"./CartridgeF6":706,"./CartridgeF8":707,"./CartridgeFA":708,"./CartridgeFA2":709,"./CartridgeFE":710,"./CartridgeInfo":712,"./CartridgeUA":714}],712:[function(require,module,exports){
+},{"./Cartridge2k":700,"./Cartridge3F":701,"./Cartridge4k":702,"./CartridgeDetector":703,"./CartridgeE0":704,"./CartridgeE7":705,"./CartridgeF0":706,"./CartridgeF4":707,"./CartridgeF6":708,"./CartridgeF8":709,"./CartridgeFA":710,"./CartridgeFA2":711,"./CartridgeFE":712,"./CartridgeInfo":714,"./CartridgeUA":716}],714:[function(require,module,exports){
 "use strict";
 var CartridgeInfo = (function () {
     function CartridgeInfo() {
@@ -79374,7 +79528,7 @@ var CartridgeInfo;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeInfo;
 
-},{}],713:[function(require,module,exports){
+},{}],715:[function(require,module,exports){
 "use strict";
 var CartridgeInterface;
 (function (CartridgeInterface) {
@@ -79391,7 +79545,7 @@ var CartridgeInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeInterface;
 
-},{}],714:[function(require,module,exports){
+},{}],716:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -79462,7 +79616,7 @@ var CartridgeUA = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeUA;
 
-},{"./AbstractCartridge":697,"./CartridgeInfo":712,"./util":715}],715:[function(require,module,exports){
+},{"./AbstractCartridge":699,"./CartridgeInfo":714,"./util":717}],717:[function(require,module,exports){
 "use strict";
 function searchForSignatures(buffer, signatures) {
     var candidates = [], counts = signatures.map(function (signature) { return 0; });
@@ -79500,7 +79654,7 @@ function searchForSignatures(buffer, signatures) {
 }
 exports.searchForSignatures = searchForSignatures;
 
-},{}],716:[function(require,module,exports){
+},{}],718:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var ToneGenerator_1 = require('./ToneGenerator');
@@ -79575,7 +79729,7 @@ var Audio = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Audio;
 
-},{"./ToneGenerator":726,"microevent.ts":304}],717:[function(require,module,exports){
+},{"./ToneGenerator":728,"microevent.ts":304}],719:[function(require,module,exports){
 "use strict";
 var Ball = (function () {
     function Ball(_collisionMask) {
@@ -79677,7 +79831,7 @@ var Ball = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Ball;
 
-},{}],718:[function(require,module,exports){
+},{}],720:[function(require,module,exports){
 "use strict";
 var DelayQueue = (function () {
     function DelayQueue(_length, size) {
@@ -79746,7 +79900,7 @@ var QueueEntry = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DelayQueue;
 
-},{}],719:[function(require,module,exports){
+},{}],721:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var Config_1 = require('../Config');
@@ -79924,7 +80078,7 @@ var FrameManager = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FrameManager;
 
-},{"../Config":694,"microevent.ts":304}],720:[function(require,module,exports){
+},{"../Config":696,"microevent.ts":304}],722:[function(require,module,exports){
 "use strict";
 var LatchedInput = (function () {
     function LatchedInput(_switch) {
@@ -79959,7 +80113,7 @@ var LatchedInput = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = LatchedInput;
 
-},{}],721:[function(require,module,exports){
+},{}],723:[function(require,module,exports){
 "use strict";
 var drawCounterDecodes_1 = require('./drawCounterDecodes');
 var Missile = (function () {
@@ -80061,7 +80215,7 @@ var Missile = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Missile;
 
-},{"./drawCounterDecodes":727}],722:[function(require,module,exports){
+},{"./drawCounterDecodes":729}],724:[function(require,module,exports){
 "use strict";
 var C = 68e-9, // capacitor
 RPOT = 1e6, // total paddle resistance
@@ -80129,7 +80283,7 @@ var PaddleReader = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PaddleReader;
 
-},{}],723:[function(require,module,exports){
+},{}],725:[function(require,module,exports){
 "use strict";
 var drawCounterDecodes_1 = require('./drawCounterDecodes');
 var Player = (function () {
@@ -80338,7 +80492,7 @@ var Player = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Player;
 
-},{"./drawCounterDecodes":727}],724:[function(require,module,exports){
+},{"./drawCounterDecodes":729}],726:[function(require,module,exports){
 "use strict";
 ;
 var Playfield = (function () {
@@ -80452,7 +80606,7 @@ var Playfield = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Playfield;
 
-},{}],725:[function(require,module,exports){
+},{}],727:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var Config_1 = require('../Config');
@@ -81080,7 +81234,7 @@ var Tia;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Tia;
 
-},{"../Config":694,"./Audio":716,"./Ball":717,"./DelayQueue":718,"./FrameManager":719,"./LatchedInput":720,"./Missile":721,"./PaddleReader":722,"./Player":723,"./Playfield":724,"./palette":728,"microevent.ts":304}],726:[function(require,module,exports){
+},{"../Config":696,"./Audio":718,"./Ball":719,"./DelayQueue":720,"./FrameManager":721,"./LatchedInput":722,"./Missile":723,"./PaddleReader":724,"./Player":725,"./Playfield":726,"./palette":730,"microevent.ts":304}],728:[function(require,module,exports){
 "use strict";
 var Config_1 = require('../Config');
 var AudioOutputBuffer_1 = require('../../../tools/AudioOutputBuffer');
@@ -81187,7 +81341,7 @@ var ToneGenerator = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ToneGenerator;
 
-},{"../../../tools/AudioOutputBuffer":729,"../Config":694}],727:[function(require,module,exports){
+},{"../../../tools/AudioOutputBuffer":731,"../Config":696}],729:[function(require,module,exports){
 "use strict";
 var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160), decodesWide = new Uint8Array(160);
 exports.decodesMissile = [
@@ -81236,7 +81390,7 @@ var init;
     decodes6[28] = decodes6[60] = 1;
 })(init || (init = {}));
 
-},{}],728:[function(require,module,exports){
+},{}],730:[function(require,module,exports){
 "use strict";
 exports.NTSC = new Uint32Array([
     0xff000000,
@@ -81629,7 +81783,7 @@ exports.SECAM = new Uint32Array([
     0xffededed,
 ]);
 
-},{}],729:[function(require,module,exports){
+},{}],731:[function(require,module,exports){
 "use strict";
 var AudioOutputBuffer = (function () {
     function AudioOutputBuffer(_content, _sampleRate) {
@@ -81650,7 +81804,7 @@ var AudioOutputBuffer = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AudioOutputBuffer;
 
-},{}],730:[function(require,module,exports){
+},{}],732:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var ClockProbe = (function () {
@@ -81707,7 +81861,7 @@ var ClockProbe = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ClockProbe;
 
-},{"microevent.ts":304}],731:[function(require,module,exports){
+},{"microevent.ts":304}],733:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 var md5sum = require('md5');
@@ -81718,7 +81872,7 @@ exports.calculateFromUint8Array = calculateFromUint8Array;
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":146,"md5":300}],732:[function(require,module,exports){
+},{"buffer":146,"md5":300}],734:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var PoolMember_1 = require('./PoolMember');
@@ -81773,7 +81927,7 @@ var Pool = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Pool;
 
-},{"./PoolMember":733,"microevent.ts":304}],733:[function(require,module,exports){
+},{"./PoolMember":735,"microevent.ts":304}],735:[function(require,module,exports){
 "use strict";
 var PoolMember = (function () {
     function PoolMember(_value, _releaseCB, _disposeCB) {
@@ -81800,7 +81954,7 @@ var PoolMember = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PoolMember;
 
-},{}],734:[function(require,module,exports){
+},{}],736:[function(require,module,exports){
 "use strict";
 var SeedrandomGenerator = (function () {
     function SeedrandomGenerator(_rng) {
@@ -81826,7 +81980,7 @@ var SeedrandomGenerator = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SeedrandomGenerator;
 
-},{}],735:[function(require,module,exports){
+},{}],737:[function(require,module,exports){
 "use strict";
 var seedrandom = require('seedrandom');
 var SeedrandomGenerator_1 = require('./SeedrandomGenerator');
@@ -81846,7 +82000,7 @@ function restoreRng(state) {
 }
 exports.restoreRng = restoreRng;
 
-},{"./SeedrandomGenerator":734,"seedrandom":656}],736:[function(require,module,exports){
+},{"./SeedrandomGenerator":736,"seedrandom":656}],738:[function(require,module,exports){
 "use strict";
 var polyfill = require('setimmediate2');
 var ImmediateScheduler = (function () {
@@ -81870,7 +82024,7 @@ var ImmediateScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ImmediateScheduler;
 
-},{"setimmediate2":664}],737:[function(require,module,exports){
+},{"setimmediate2":664}],739:[function(require,module,exports){
 "use strict";
 var polyfill = require('setimmediate2');
 var CORRECTION_THESHOLD = 3, MAX_ACCUMULATED_DELTA = 100;
@@ -81923,7 +82077,7 @@ var LimitingImmediateScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = LimitingImmediateScheduler;
 
-},{"setimmediate2":664}],738:[function(require,module,exports){
+},{"setimmediate2":664}],740:[function(require,module,exports){
 "use strict";
 var PeriodicScheduler = (function () {
     function PeriodicScheduler(_period) {
@@ -81955,7 +82109,7 @@ var PeriodicScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PeriodicScheduler;
 
-},{}],739:[function(require,module,exports){
+},{}],741:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface_1 = require('./RGBASurfaceInterface');
 var ArrayBufferSurface = (function () {
@@ -81994,7 +82148,7 @@ var ArrayBufferSurface = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ArrayBufferSurface;
 
-},{"./RGBASurfaceInterface":740}],740:[function(require,module,exports){
+},{"./RGBASurfaceInterface":742}],742:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface;
 (function (RGBASurfaceInterface) {
@@ -82003,141 +82157,7 @@ var RGBASurfaceInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = RGBASurfaceInterface;
 
-},{}],741:[function(require,module,exports){
-"use strict";
-var microevent_ts_1 = require('microevent.ts');
-var MSG_RESOLVE_TRANSACTION = "resolve_transaction", MSG_REJECT_TRANSACTION = "reject_transaction", MSG_ERROR = "error";
-var MessageType;
-(function (MessageType) {
-    MessageType[MessageType["signal"] = 0] = "signal";
-    MessageType[MessageType["rpc"] = 1] = "rpc";
-    MessageType[MessageType["internal"] = 2] = "internal";
-})(MessageType || (MessageType = {}));
-;
-var RpcProvider = (function () {
-    function RpcProvider(_dispatch) {
-        this._dispatch = _dispatch;
-        this.error = new microevent_ts_1.Event();
-        this._rpcHandlers = {};
-        this._signalHandlers = {};
-        this._pendingTransactions = {};
-        this._nextTransactionId = 0;
-    }
-    RpcProvider.prototype.dispatch = function (payload) {
-        var message = payload;
-        switch (message.type) {
-            case MessageType.signal:
-                return this._handleSignal(message);
-            case MessageType.rpc:
-                return this._handeRpc(message);
-            case MessageType.internal:
-                return this._handleInternal(message);
-            default:
-                this._raiseError("invalid message type " + message.type);
-        }
-    };
-    RpcProvider.prototype.rpc = function (id, payload, transfer) {
-        var _this = this;
-        var transactionId = this._nextTransactionId++;
-        this._dispatch({
-            type: MessageType.rpc,
-            transactionId: transactionId,
-            id: id,
-            payload: payload,
-            transfer: transfer
-        }, transfer ? [transfer] : undefined);
-        return new Promise(function (resolve, reject) { return _this._pendingTransactions[transactionId] = {
-            id: transactionId,
-            resolve: resolve,
-            reject: reject
-        }; });
-    };
-    ;
-    RpcProvider.prototype.signal = function (id, payload, transfer) {
-        this._dispatch({
-            type: MessageType.signal,
-            id: id,
-            payload: payload,
-            transfer: transfer
-        }, transfer ? [transfer] : undefined);
-    };
-    RpcProvider.prototype.registerRpcHandler = function (id, handler) {
-        if (this._rpcHandlers[id]) {
-            throw new Error("rpc handler for " + id + " already registered");
-        }
-        this._rpcHandlers[id] = handler;
-        return this;
-    };
-    ;
-    RpcProvider.prototype.registerSignalHandler = function (id, handler) {
-        if (!this._signalHandlers[id]) {
-            this._signalHandlers[id] = [];
-        }
-        this._signalHandlers[id].push(handler);
-        return this;
-    };
-    RpcProvider.prototype._raiseError = function (error) {
-        this.error.dispatch(new Error(error));
-        this._dispatch({
-            type: MessageType.internal,
-            id: MSG_ERROR,
-            payload: error
-        });
-    };
-    RpcProvider.prototype._handleSignal = function (message) {
-        if (!this._signalHandlers[message.id]) {
-            return this._raiseError("invalid signal " + message.id);
-        }
-        this._signalHandlers[message.id].forEach(function (handler) { return handler(message.payload, message.transfer); });
-    };
-    RpcProvider.prototype._handeRpc = function (message) {
-        var _this = this;
-        if (!this._rpcHandlers[message.id]) {
-            return this._raiseError("invalid rpc " + message.id);
-        }
-        Promise.resolve(this._rpcHandlers[message.id](message.payload, message.transfer))
-            .then(function (result) { return _this._dispatch({
-            type: MessageType.internal,
-            id: MSG_RESOLVE_TRANSACTION,
-            transactionId: message.transactionId,
-            payload: result
-        }); }, function (reason) { return _this._dispatch({
-            type: MessageType.internal,
-            id: MSG_REJECT_TRANSACTION,
-            transactionId: message.transactionId,
-            payload: reason
-        }); });
-    };
-    RpcProvider.prototype._handleInternal = function (message) {
-        switch (message.id) {
-            case MSG_RESOLVE_TRANSACTION:
-                if (!this._pendingTransactions[message.transactionId]) {
-                    return this._raiseError("no pending transaction with id " + message.transactionId);
-                }
-                this._pendingTransactions[message.transactionId].resolve(message.payload);
-                delete this._pendingTransactions[message.transactionId];
-                break;
-            case MSG_RESOLVE_TRANSACTION:
-                if (!this._pendingTransactions[message.transactionId]) {
-                    return this._raiseError("no pending transaction with id " + message.transactionId);
-                }
-                this._pendingTransactions[message.transactionId].reject(message.payload);
-                delete this._pendingTransactions[message.transactionId];
-                break;
-            case MSG_ERROR:
-                this.error.dispatch(new Error("remote error: " + message.payload));
-                break;
-            default:
-                this._raiseError("unhandled internal message " + message.id);
-                break;
-        }
-    };
-    return RpcProvider;
-}());
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = RpcProvider;
-
-},{"microevent.ts":304}],742:[function(require,module,exports){
+},{}],743:[function(require,module,exports){
 "use strict";
 var screenfull = require('screenfull');
 var FullscreenVideoDriver = (function () {
@@ -82191,7 +82211,7 @@ var FullscreenVideoDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FullscreenVideoDriver;
 
-},{"screenfull":655}],743:[function(require,module,exports){
+},{"screenfull":655}],744:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var MIN_POLL_INTERVAL = 50;
@@ -82434,7 +82454,7 @@ function createShadowJoystick() {
 }
 var _a;
 
-},{"microevent.ts":304}],744:[function(require,module,exports){
+},{"microevent.ts":304}],745:[function(require,module,exports){
 "use strict";
 var MouseAsPaddleDriver = (function () {
     function MouseAsPaddleDriver() {
@@ -82474,7 +82494,7 @@ var MouseAsPaddleDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = MouseAsPaddleDriver;
 
-},{}],745:[function(require,module,exports){
+},{}],746:[function(require,module,exports){
 "use strict";
 var SimpleCanvasVideo = (function () {
     function SimpleCanvasVideo(_canvas) {
@@ -82516,7 +82536,7 @@ var SimpleCanvasVideo = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SimpleCanvasVideo;
 
-},{}],746:[function(require,module,exports){
+},{}],747:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var Pool_1 = require('../../tools/pool/Pool');
@@ -82552,7 +82572,7 @@ var VideoEndpoint = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/Pool":732,"../../tools/surface/ArrayBufferSurface":739,"microevent.ts":304}],747:[function(require,module,exports){
+},{"../../tools/pool/Pool":734,"../../tools/surface/ArrayBufferSurface":741,"microevent.ts":304}],748:[function(require,module,exports){
 "use strict";
 var WebAudioDriver = (function () {
     function WebAudioDriver(channels) {
@@ -82674,7 +82694,7 @@ var Channel = (function () {
     return Channel;
 }());
 
-},{}],748:[function(require,module,exports){
+},{}],749:[function(require,module,exports){
 "use strict";
 
 var fragmentShaderSource = "precision mediump float;\n\nvarying vec2 v_TextureCoordinate;\n\nuniform sampler2D u_Sampler0, u_Sampler1, u_Sampler2, u_sampler;\nuniform float u_Gamma;\n\nvoid main() {\n    vec4 compositedTexel =\n        0.4 * texture2D(u_Sampler0, v_TextureCoordinate) +\n        0.4 * texture2D(u_Sampler1, v_TextureCoordinate) +\n        0.2 * texture2D(u_Sampler2, v_TextureCoordinate);\n\n    gl_FragColor = vec4(pow(compositedTexel.rgb, vec3(u_Gamma)), 1.);\n}\n";
@@ -82815,7 +82835,7 @@ var WebglVideoDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = WebglVideoDriver;
 
-},{}],749:[function(require,module,exports){
+},{}],750:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var Switch_1 = require('../../../machine/io/Switch');
@@ -83003,7 +83023,7 @@ var KeyboardIO;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = KeyboardIO;
 
-},{"../../../machine/io/Switch":691,"microevent.ts":304}],750:[function(require,module,exports){
+},{"../../../machine/io/Switch":693,"microevent.ts":304}],751:[function(require,module,exports){
 "use strict";
 var WebAudio_1 = require('../../driver/WebAudio');
 var WebAudioDriver = (function () {
@@ -83033,7 +83053,7 @@ var WebAudioDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":747}],751:[function(require,module,exports){
+},{"../../driver/WebAudio":748}],752:[function(require,module,exports){
 "use strict";
 var EmulationServiceInterface_1 = require('./EmulationServiceInterface');
 var DriverManager = (function () {
@@ -83120,7 +83140,7 @@ var DriverManager;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":752}],752:[function(require,module,exports){
+},{"./EmulationServiceInterface":753}],753:[function(require,module,exports){
 "use strict";
 var EmulationServiceInterface;
 (function (EmulationServiceInterface) {
@@ -83135,7 +83155,7 @@ var EmulationServiceInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationServiceInterface;
 
-},{}],753:[function(require,module,exports){
+},{}],754:[function(require,module,exports){
 "use strict";
 var VideoEndpoint_1 = require('../../../driver/VideoEndpoint');
 var EmulationContext = (function () {
@@ -83184,7 +83204,7 @@ var EmulationContext = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationContext;
 
-},{"../../../driver/VideoEndpoint":746}],754:[function(require,module,exports){
+},{"../../../driver/VideoEndpoint":747}],755:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var EmulationServiceInterface_1 = require('../EmulationServiceInterface');
@@ -83380,7 +83400,7 @@ var EmulationService = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":692,"../../../../machine/stella/cartridge/CartridgeFactory":711,"../../../../tools/ClockProbe":730,"../../../../tools/scheduler/ImmedateScheduler":736,"../../../../tools/scheduler/LimitingImmediateScheduler":737,"../../../../tools/scheduler/PeriodicScheduler":738,"../EmulationServiceInterface":752,"./EmulationContext":753,"async-mutex":16,"microevent.ts":304}],755:[function(require,module,exports){
+},{"../../../../machine/stella/Board":694,"../../../../machine/stella/cartridge/CartridgeFactory":713,"../../../../tools/ClockProbe":732,"../../../../tools/scheduler/ImmedateScheduler":738,"../../../../tools/scheduler/LimitingImmediateScheduler":739,"../../../../tools/scheduler/PeriodicScheduler":740,"../EmulationServiceInterface":753,"./EmulationContext":754,"async-mutex":16,"microevent.ts":304}],756:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var ToneGenerator_1 = require('../../../../machine/stella/tia/ToneGenerator');
@@ -83437,7 +83457,7 @@ var AudioProxy = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AudioProxy;
 
-},{"../../../../machine/stella/tia/ToneGenerator":726,"./messages":760,"microevent.ts":304}],756:[function(require,module,exports){
+},{"../../../../machine/stella/tia/ToneGenerator":728,"./messages":761,"microevent.ts":304}],757:[function(require,module,exports){
 "use strict";
 var DigitalJoystick_1 = require('../../../../machine/io/DigitalJoystick');
 var ControlPanel_1 = require('../../../../machine/stella/ControlPanel');
@@ -83507,7 +83527,7 @@ var ControlProxy = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ControlProxy;
 
-},{"../../../../machine/io/DigitalJoystick":689,"../../../../machine/io/Paddle":690,"../../../../machine/stella/ControlPanel":695,"./messages":760}],757:[function(require,module,exports){
+},{"../../../../machine/io/DigitalJoystick":691,"../../../../machine/io/Paddle":692,"../../../../machine/stella/ControlPanel":697,"./messages":761}],758:[function(require,module,exports){
 "use strict";
 var EmulationContext = (function () {
     function EmulationContext(_videoProxy, _controlProxy, audioChannels) {
@@ -83544,10 +83564,10 @@ var EmulationContext = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationContext;
 
-},{}],758:[function(require,module,exports){
+},{}],759:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
-var RpcProvider_1 = require('../../../../tools/worker/RpcProvider');
+var worker_rpc_1 = require('worker-rpc');
 var EmulationServiceInterface_1 = require('../EmulationServiceInterface');
 var EmulationContext_1 = require('./EmulationContext');
 var VideoProxy_1 = require('./VideoProxy');
@@ -83578,7 +83598,7 @@ var EmulationService = (function () {
     EmulationService.prototype.init = function () {
         var _this = this;
         this._worker = new Worker(this._url);
-        this._rpc = new RpcProvider_1.default(function (message, transfer) { return _this._worker.postMessage(message, transfer); });
+        this._rpc = new worker_rpc_1.RpcProvider(function (message, transfer) { return _this._worker.postMessage(message, transfer); });
         this._audioChannels = [
             new AudioProxy_1.default(0, this._rpc).init(),
             new AudioProxy_1.default(1, this._rpc).init()
@@ -83763,7 +83783,7 @@ var EmulationService = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationService;
 
-},{"../../../../tools/worker/RpcProvider":741,"../EmulationServiceInterface":752,"./AudioProxy":755,"./ControlProxy":756,"./EmulationContext":757,"./VideoProxy":759,"./messages":760,"async-mutex":16,"microevent.ts":304}],759:[function(require,module,exports){
+},{"../EmulationServiceInterface":753,"./AudioProxy":756,"./ControlProxy":757,"./EmulationContext":758,"./VideoProxy":760,"./messages":761,"async-mutex":16,"microevent.ts":304,"worker-rpc":686}],760:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var messages_1 = require('./messages');
@@ -83817,7 +83837,7 @@ var VideoProxy = (function () {
                     _this._rpc.signal(messages_1.SIGNAL_TYPE.videoReturnSurface, {
                         id: message.id,
                         buffer: message.buffer
-                    });
+                    }, [message.buffer]);
                 }
             },
             dispose: function () { return undefined; }
@@ -83828,7 +83848,7 @@ var VideoProxy = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoProxy;
 
-},{"./messages":760,"microevent.ts":304}],760:[function(require,module,exports){
+},{"./messages":761,"microevent.ts":304}],761:[function(require,module,exports){
 "use strict";
 exports.RPC_TYPE = {
     emulationPause: 'emulation/pause',
@@ -83855,7 +83875,7 @@ Object.freeze(exports.SIGNAL_TYPE);
 ;
 ;
 
-},{}],761:[function(require,module,exports){
+},{}],762:[function(require,module,exports){
 "use strict";
 exports.Type = {
     changeCartridgeType: 'current-cartridge/change-cartridge-type',
@@ -83917,7 +83937,7 @@ function toggleAudioEnabled(audioEnabled) {
 }
 exports.toggleAudioEnabled = toggleAudioEnabled;
 
-},{}],762:[function(require,module,exports){
+},{}],763:[function(require,module,exports){
 "use strict";
 exports.Type = {
     start: 'emulation/start',
@@ -84010,7 +84030,7 @@ function enforceRateLimit(enforce) {
 }
 exports.enforceRateLimit = enforceRateLimit;
 
-},{}],763:[function(require,module,exports){
+},{}],764:[function(require,module,exports){
 "use strict";
 exports.Type = {
     initialize: 'environment/initialize'
@@ -84026,7 +84046,7 @@ function initialize(_a) {
 }
 exports.initialize = initialize;
 
-},{}],764:[function(require,module,exports){
+},{}],765:[function(require,module,exports){
 "use strict";
 exports.Type = {
     setMode: 'gui-state/set-mode',
@@ -84074,7 +84094,7 @@ function loadClosePendingChangesModal() {
 }
 exports.loadClosePendingChangesModal = loadClosePendingChangesModal;
 
-},{}],765:[function(require,module,exports){
+},{}],766:[function(require,module,exports){
 "use strict";
 exports.Type = {
     batch: 'batch',
@@ -84132,7 +84152,7 @@ function initCartridges(cartridges) {
 }
 exports.initCartridges = initCartridges;
 
-},{}],766:[function(require,module,exports){
+},{}],767:[function(require,module,exports){
 "use strict";
 exports.Types = {
     setSmoothScaling: 'settings/setSmoothScaling',
@@ -84182,7 +84202,7 @@ function isSettingsChange(a) {
 }
 exports.isSettingsChange = isSettingsChange;
 
-},{}],767:[function(require,module,exports){
+},{}],768:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84341,7 +84361,7 @@ var Emulation = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Emulation;
 
-},{"../../../driver/FullscreenVideo":742,"../../../driver/MouseAsPaddle":744,"../../../driver/SimpleCanvasVideo":745,"../../../driver/webgl/WebglVideo":748,"../../driver/KeyboardIO":749,"../../service/DriverManager":751,"../../service/EmulationServiceInterface":752,"./emulation/ControlPanel":783,"react":635,"react-bootstrap":409}],768:[function(require,module,exports){
+},{"../../../driver/FullscreenVideo":743,"../../../driver/MouseAsPaddle":745,"../../../driver/SimpleCanvasVideo":746,"../../../driver/webgl/WebglVideo":749,"../../driver/KeyboardIO":750,"../../service/DriverManager":752,"../../service/EmulationServiceInterface":753,"./emulation/ControlPanel":784,"react":635,"react-bootstrap":409}],769:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84376,7 +84396,7 @@ var FileUploadButton;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FileUploadButton;
 
-},{"react":635}],769:[function(require,module,exports){
+},{"react":635}],770:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84405,7 +84425,7 @@ var Help;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Help;
 
-},{"./Markdown":770,"react":635,"react-bootstrap":409}],770:[function(require,module,exports){
+},{"./Markdown":771,"react":635,"react-bootstrap":409}],771:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84456,7 +84476,7 @@ var Markdown = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Markdown;
 
-},{"commonmark":153,"react":635}],771:[function(require,module,exports){
+},{"commonmark":153,"react":635}],772:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84511,7 +84531,7 @@ var Navbar;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Navbar;
 
-},{"../../service/EmulationServiceInterface":752,"react":635,"react-bootstrap":409,"react-router-bootstrap":449}],772:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":753,"react":635,"react-bootstrap":409,"react-router-bootstrap":449}],773:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84539,7 +84559,7 @@ var PendingChangesModal;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PendingChangesModal;
 
-},{"react":635,"react-bootstrap":409}],773:[function(require,module,exports){
+},{"react":635,"react-bootstrap":409}],774:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84603,7 +84623,7 @@ var Settings;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Settings;
 
-},{"./Switch":774,"react":635,"react-bootstrap":409}],774:[function(require,module,exports){
+},{"./Switch":775,"react":635,"react-bootstrap":409}],775:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84625,7 +84645,7 @@ var Switch;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Switch;
 
-},{"react":635,"react-bootstrap":409}],775:[function(require,module,exports){
+},{"react":635,"react-bootstrap":409}],776:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84671,7 +84691,7 @@ var ValidatingInput;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ValidatingInput;
 
-},{"react":635,"react-bootstrap":409}],776:[function(require,module,exports){
+},{"react":635,"react-bootstrap":409}],777:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84698,7 +84718,7 @@ var CartridgeControls;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeControls;
 
-},{"../FileUploadButton":768,"react":635,"react-bootstrap":409}],777:[function(require,module,exports){
+},{"../FileUploadButton":769,"react":635,"react-bootstrap":409}],778:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84725,7 +84745,7 @@ var CartridgeList;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeList;
 
-},{"react":635}],778:[function(require,module,exports){
+},{"react":635}],779:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84744,7 +84764,7 @@ var CartridgeNameInput;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeNameInput;
 
-},{"react":635,"react-bootstrap":409}],779:[function(require,module,exports){
+},{"react":635,"react-bootstrap":409}],780:[function(require,module,exports){
 "use strict";
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -84790,7 +84810,7 @@ var CartridgeSettings;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeSettings;
 
-},{"../Switch":774,"./CartridgeNameInput":778,"./CartridgeTypeSelect":780,"./RandomSeedEdit":781,"./TvModeSelect":782,"react":635,"react-bootstrap":409}],780:[function(require,module,exports){
+},{"../Switch":775,"./CartridgeNameInput":779,"./CartridgeTypeSelect":781,"./RandomSeedEdit":782,"./TvModeSelect":783,"react":635,"react-bootstrap":409}],781:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84824,7 +84844,7 @@ var CartridgeTypeSelect = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeTypeSelect;
 
-},{"../../../../../machine/stella/cartridge/CartridgeInfo":712,"react":635,"react-bootstrap":409}],781:[function(require,module,exports){
+},{"../../../../../machine/stella/cartridge/CartridgeInfo":714,"react":635,"react-bootstrap":409}],782:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84852,7 +84872,7 @@ var RandomSeedEdit;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = RandomSeedEdit;
 
-},{"../Switch":774,"../ValidatingInput":775,"react":635}],782:[function(require,module,exports){
+},{"../Switch":775,"../ValidatingInput":776,"react":635}],783:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84874,7 +84894,7 @@ var TvModeSelect;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = TvModeSelect;
 
-},{"../../../../../machine/stella/Config":694,"react":635,"react-bootstrap":409}],783:[function(require,module,exports){
+},{"../../../../../machine/stella/Config":696,"react":635,"react-bootstrap":409}],784:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84919,7 +84939,7 @@ var ControlPanel;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ControlPanel;
 
-},{"../../../service/EmulationServiceInterface":752,"../Switch":774,"react":635,"react-bootstrap":409}],784:[function(require,module,exports){
+},{"../../../service/EmulationServiceInterface":753,"../Switch":775,"react":635,"react-bootstrap":409}],785:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84955,7 +84975,7 @@ function App(emulationService) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = App;
 
-},{"./Navbar":788,"react":635}],785:[function(require,module,exports){
+},{"./Navbar":789,"react":635}],786:[function(require,module,exports){
 "use strict";
 // tslint:disable-next-line
 var React = require('react');
@@ -84988,7 +85008,7 @@ function CartridgeManager() {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeManager;
 
-},{"./cartridge_manager/CartridgeControls":790,"./cartridge_manager/CartridgeList":791,"./cartridge_manager/CartridgeSettings":792,"./pendingChangesModal":793,"react":635,"react-bootstrap":409}],786:[function(require,module,exports){
+},{"./cartridge_manager/CartridgeControls":791,"./cartridge_manager/CartridgeList":792,"./cartridge_manager/CartridgeSettings":793,"./pendingChangesModal":794,"react":635,"react-bootstrap":409}],787:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var react_router_redux_1 = require('react-router-redux');
@@ -85023,7 +85043,7 @@ var EmulationContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationContainer;
 
-},{"../actions/emulation":762,"../components/Emulation":767,"../state/GuiState":814,"react-redux":442,"react-router-redux":451}],787:[function(require,module,exports){
+},{"../actions/emulation":763,"../components/Emulation":768,"../state/GuiState":815,"react-redux":442,"react-router-redux":451}],788:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var Help_1 = require('../components/Help');
@@ -85037,7 +85057,7 @@ var HelpContainer = react_redux_1.connect(mapStateToProps)(Help_1.default);
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = HelpContainer;
 
-},{"../components/Help":769,"react-redux":442}],788:[function(require,module,exports){
+},{"../components/Help":770,"react-redux":442}],789:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var Navbar_1 = require('../components/Navbar');
@@ -85054,7 +85074,7 @@ var NavbarContainer = react_redux_1.connect(mapStateToProps, {}, null, { pure: f
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = NavbarContainer;
 
-},{"../components/Navbar":771,"../state/GuiState":814,"react-redux":442}],789:[function(require,module,exports){
+},{"../components/Navbar":772,"../state/GuiState":815,"react-redux":442}],790:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var Settings_1 = require('../components/Settings');
@@ -85076,7 +85096,7 @@ var SettingsContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SettingsContainer;
 
-},{"../actions/settings":766,"../components/Settings":773,"react-redux":442}],790:[function(require,module,exports){
+},{"../actions/settings":767,"../components/Settings":774,"react-redux":442}],791:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var react_router_redux_1 = require('react-router-redux');
@@ -85111,7 +85131,7 @@ var CartridgeControlsContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeControlsContainer;
 
-},{"../../actions/emulation":762,"../../actions/guiState":764,"../../actions/root":765,"../../components/cartridge_manager/CartridgeControls":776,"../../state/GuiState":814,"react-redux":442,"react-router-redux":451}],791:[function(require,module,exports){
+},{"../../actions/emulation":763,"../../actions/guiState":765,"../../actions/root":766,"../../components/cartridge_manager/CartridgeControls":777,"../../state/GuiState":815,"react-redux":442,"react-router-redux":451}],792:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var CartridgeList_1 = require('../../components/cartridge_manager/CartridgeList');
@@ -85133,7 +85153,7 @@ var CartridgeListContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeListContainer;
 
-},{"../../actions/guiState":764,"../../actions/root":765,"../../components/cartridge_manager/CartridgeList":777,"react-redux":442}],792:[function(require,module,exports){
+},{"../../actions/guiState":765,"../../actions/root":766,"../../components/cartridge_manager/CartridgeList":778,"react-redux":442}],793:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var currentCartridge_1 = require('../../actions/currentCartridge');
@@ -85166,7 +85186,7 @@ var CartridgeSettingsContainer = react_redux_1.connect(mapStateToProps, {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CartridgeSettingsContainer;
 
-},{"../../../../../machine/stella/Config":694,"../../../../../machine/stella/cartridge/CartridgeInfo":712,"../../actions/currentCartridge":761,"../../actions/root":765,"../../components/cartridge_manager/CartridgeSettings":779,"react-redux":442}],793:[function(require,module,exports){
+},{"../../../../../machine/stella/Config":696,"../../../../../machine/stella/cartridge/CartridgeInfo":714,"../../actions/currentCartridge":762,"../../actions/root":766,"../../components/cartridge_manager/CartridgeSettings":780,"react-redux":442}],794:[function(require,module,exports){
 "use strict";
 var react_redux_1 = require('react-redux');
 var guiState_1 = require('../actions/guiState');
@@ -85187,7 +85207,7 @@ function factory(showModal, closeActionEmitter, applyActionEmitter) {
     })(PendingChangesModal_1.default);
 }
 
-},{"../actions/guiState":764,"../actions/root":765,"../components/PendingChangesModal":772,"react-redux":442}],794:[function(require,module,exports){
+},{"../actions/guiState":765,"../actions/root":766,"../components/PendingChangesModal":773,"react-redux":442}],795:[function(require,module,exports){
 "use strict";
 var emulation_1 = require('./actions/emulation');
 function startGamepadDriverDispatcher(driver, store) {
@@ -85196,7 +85216,7 @@ function startGamepadDriverDispatcher(driver, store) {
 }
 exports.startGamepadDriverDispatcher = startGamepadDriverDispatcher;
 
-},{"./actions/emulation":762}],795:[function(require,module,exports){
+},{"./actions/emulation":763}],796:[function(require,module,exports){
 "use strict";
 var EmulationService_1 = require('../service/worker/EmulationService');
 var EmulationService_2 = require('../service/vanilla/EmulationService');
@@ -85247,7 +85267,7 @@ function initGamepad(emulationService, driverManager, store) {
     }
 }
 
-},{"../../driver/Gamepad":743,"../driver/WebAudio":750,"../service/DriverManager":751,"../service/vanilla/EmulationService":754,"../service/worker/EmulationService":758,"./dispatchers":794}],796:[function(require,module,exports){
+},{"../../driver/Gamepad":744,"../driver/WebAudio":751,"../service/DriverManager":752,"../service/vanilla/EmulationService":755,"../service/worker/EmulationService":759,"./dispatchers":795}],797:[function(require,module,exports){
 "use strict";
 var emulation_1 = require('../actions/emulation');
 var Dispatcher = (function () {
@@ -85276,7 +85296,7 @@ var Dispatcher = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Dispatcher;
 
-},{"../actions/emulation":762}],797:[function(require,module,exports){
+},{"../actions/emulation":763}],798:[function(require,module,exports){
 "use strict";
 var Config_1 = require('../../../../machine/stella/Config');
 var emulation_1 = require('../actions/emulation');
@@ -85347,7 +85367,7 @@ var EmulationMiddleware = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationMiddleware;
 
-},{"../../../../machine/stella/Config":694,"../actions/emulation":762}],798:[function(require,module,exports){
+},{"../../../../machine/stella/Config":696,"../actions/emulation":763}],799:[function(require,module,exports){
 (function (process){
 "use strict";
 // tslint:disable-next-line
@@ -85411,7 +85431,7 @@ Promise
 
 }).call(this,require('_process'))
 
-},{"./actions/environment":763,"./actions/root":765,"./actions/settings":766,"./containers/App":784,"./containers/CartridgeManager":785,"./containers/Emulation":786,"./containers/Help":787,"./containers/Settings":789,"./emulation":795,"./emulation/Dispatcher":796,"./emulation/Middleware":797,"./middleware":799,"./persistence/Manager":802,"./persistence/middleware":804,"./reducers/root":809,"./state/State":816,"_process":315,"react":635,"react-dom":420,"react-redux":442,"react-router":484,"react-router-redux":451,"redux":652,"redux-thunk":646}],799:[function(require,module,exports){
+},{"./actions/environment":764,"./actions/root":766,"./actions/settings":767,"./containers/App":785,"./containers/CartridgeManager":786,"./containers/Emulation":787,"./containers/Help":788,"./containers/Settings":790,"./emulation":796,"./emulation/Dispatcher":797,"./emulation/Middleware":798,"./middleware":800,"./persistence/Manager":803,"./persistence/middleware":805,"./reducers/root":810,"./state/State":817,"_process":315,"react":635,"react-dom":420,"react-redux":442,"react-router":484,"react-router-redux":451,"redux":652,"redux-thunk":646}],800:[function(require,module,exports){
 "use strict";
 var root_1 = require('./actions/root');
 exports.batchMiddleware = (function (api) { return function (next) { return function (a) {
@@ -85428,7 +85448,7 @@ function dispatchBatchedActions(action, dispatch) {
     return dispatcher(undefined);
 }
 
-},{"./actions/root":765}],800:[function(require,module,exports){
+},{"./actions/root":766}],801:[function(require,module,exports){
 "use strict";
 var Config_1 = require('../../../../machine/stella/Config');
 var CartridgeInfo_1 = require('../../../../machine/stella/cartridge/CartridgeInfo');
@@ -85494,7 +85514,7 @@ function toState(cartridge) {
 }
 exports.toState = toState;
 
-},{"../../../../machine/stella/Config":694,"../../../../machine/stella/cartridge/CartridgeInfo":712,"../state/Cartridge":811}],801:[function(require,module,exports){
+},{"../../../../machine/stella/Config":696,"../../../../machine/stella/cartridge/CartridgeInfo":714,"../state/Cartridge":812}],802:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -85546,7 +85566,7 @@ var Database = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Database;
 
-},{"dexie":177}],802:[function(require,module,exports){
+},{"dexie":177}],803:[function(require,module,exports){
 "use strict";
 var Database_1 = require('./Database');
 var Cartridge_1 = require('./Cartridge');
@@ -85600,7 +85620,7 @@ var Manager = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Manager;
 
-},{"./Cartridge":800,"./Database":801,"./Settings":803}],803:[function(require,module,exports){
+},{"./Cartridge":801,"./Database":802,"./Settings":804}],804:[function(require,module,exports){
 "use strict";
 var Settings_1 = require('../state/Settings');
 exports.UNIQUE_ID = 0;
@@ -85619,7 +85639,7 @@ function toState(record) {
 }
 exports.toState = toState;
 
-},{"../state/Settings":815}],804:[function(require,module,exports){
+},{"../state/Settings":816}],805:[function(require,module,exports){
 "use strict";
 var root_1 = require('../actions/root');
 var settings_1 = require('../actions/settings');
@@ -85649,7 +85669,7 @@ function create(manager) {
 }
 exports.create = create;
 
-},{"../actions/root":765,"../actions/settings":766}],805:[function(require,module,exports){
+},{"../actions/root":766,"../actions/settings":767}],806:[function(require,module,exports){
 "use strict";
 var currentCartridge_1 = require('../actions/currentCartridge');
 var Cartridge_1 = require('../state/Cartridge');
@@ -85704,7 +85724,7 @@ function toggleAudioEnabled(state, action) {
     return new Cartridge_1.default({ audioEnabled: action.audioEnabled }, state);
 }
 
-},{"../actions/currentCartridge":761,"../state/Cartridge":811}],806:[function(require,module,exports){
+},{"../actions/currentCartridge":762,"../state/Cartridge":812}],807:[function(require,module,exports){
 "use strict";
 var Emulation_1 = require('../state/Emulation');
 var emulation_1 = require('../actions/emulation');
@@ -85775,7 +85795,7 @@ function userPause(state) {
     return new Emulation_1.default({ pausedByUser: true }, state);
 }
 
-},{"../../service/EmulationServiceInterface":752,"../actions/emulation":762,"../state/Emulation":812}],807:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":753,"../actions/emulation":763,"../state/Emulation":813}],808:[function(require,module,exports){
 "use strict";
 var Environment_1 = require('../state/Environment');
 var environment_1 = require('../actions/environment');
@@ -85796,7 +85816,7 @@ function initialize(state, action) {
     }, state);
 }
 
-},{"../actions/environment":763,"../state/Environment":813}],808:[function(require,module,exports){
+},{"../actions/environment":764,"../state/Environment":814}],809:[function(require,module,exports){
 "use strict";
 var guiState_1 = require('../actions/guiState');
 var GuiState_1 = require('../state/GuiState');
@@ -85849,7 +85869,7 @@ function loadClosePendingChangesModal(state) {
     }, state);
 }
 
-},{"../actions/guiState":764,"../state/GuiState":814}],809:[function(require,module,exports){
+},{"../actions/guiState":765,"../state/GuiState":815}],810:[function(require,module,exports){
 "use strict";
 var react_router_redux_1 = require('react-router-redux');
 var root_1 = require('../actions/root');
@@ -85943,7 +85963,7 @@ function saveCurrentCartride(state) {
     return new State_1.default({ cartridges: cartridges }, state);
 }
 
-},{"../../../../machine/stella/Config":694,"../../../../machine/stella/cartridge/CartridgeDetector":701,"../../../../tools/hash/md5":731,"../actions/root":765,"../state/Cartridge":811,"../state/State":816,"./currentCartridge":805,"./emulation":806,"./environment":807,"./guiState":808,"./settings":810,"react-router-redux":451}],810:[function(require,module,exports){
+},{"../../../../machine/stella/Config":696,"../../../../machine/stella/cartridge/CartridgeDetector":703,"../../../../tools/hash/md5":733,"../actions/root":766,"../state/Cartridge":812,"../state/State":817,"./currentCartridge":806,"./emulation":807,"./environment":808,"./guiState":809,"./settings":811,"react-router-redux":451}],811:[function(require,module,exports){
 "use strict";
 var Settings_1 = require('../state/Settings');
 var settings_1 = require('../actions/settings');
@@ -85981,7 +86001,7 @@ function setUseWorker(state, action) {
     return new Settings_1.default({ useWorker: action.value }, state);
 }
 
-},{"../actions/settings":766,"../state/Settings":815}],811:[function(require,module,exports){
+},{"../actions/settings":767,"../state/Settings":816}],812:[function(require,module,exports){
 "use strict";
 var Config_1 = require('../../../../machine/stella/Config');
 var CartridgeInfo_1 = require('../../../../machine/stella/cartridge/CartridgeInfo');
@@ -86014,7 +86034,7 @@ var Cartridge = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cartridge;
 
-},{"../../../../machine/stella/Config":694,"../../../../machine/stella/cartridge/CartridgeInfo":712}],812:[function(require,module,exports){
+},{"../../../../machine/stella/Config":696,"../../../../machine/stella/cartridge/CartridgeInfo":714}],813:[function(require,module,exports){
 "use strict";
 var EmulationServiceInterface_1 = require('../../service/EmulationServiceInterface');
 var EmulationState = (function () {
@@ -86035,7 +86055,7 @@ var EmulationState = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationState;
 
-},{"../../service/EmulationServiceInterface":752}],813:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":753}],814:[function(require,module,exports){
 "use strict";
 var Environment = (function () {
     function Environment(changes, old) {
@@ -86048,7 +86068,7 @@ var Environment = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Environment;
 
-},{}],814:[function(require,module,exports){
+},{}],815:[function(require,module,exports){
 "use strict";
 var GuiState = (function () {
     function GuiState(changes, old) {
@@ -86071,7 +86091,7 @@ var GuiState;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = GuiState;
 
-},{}],815:[function(require,module,exports){
+},{}],816:[function(require,module,exports){
 "use strict";
 var Settings = (function () {
     function Settings(changes, old) {
@@ -86092,7 +86112,7 @@ var Settings = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Settings;
 
-},{}],816:[function(require,module,exports){
+},{}],817:[function(require,module,exports){
 "use strict";
 var State = (function () {
     function State(changes, old) {
@@ -86105,5 +86125,5 @@ var State = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = State;
 
-},{}]},{},[798])
+},{}]},{},[799])
 //# sourceMappingURL=stellerator.js.map
