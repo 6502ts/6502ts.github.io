@@ -83620,20 +83620,22 @@ var EmulationService = (function () {
             .rpc(messages_1.RPC_TYPE.emulationStart, { buffer: buffer, config: config, cartridgeType: cartridgeType })
             .then(function (_state) {
             state = _state;
-            return _this._rpc.rpc(messages_1.RPC_TYPE.emulationGetParameters);
+            return state === EmulationServiceInterface_1.default.State.paused ?
+                _this._rpc.rpc(messages_1.RPC_TYPE.emulationGetParameters) :
+                undefined;
         })
             .then(function (emulationParameters) {
-            _this._saveConfig = config;
-            _this._savedParameters = emulationParameters;
-            return _this._startProxies(emulationParameters, config);
-        }, function (e) {
-            _this._saveConfig = null;
-            _this._savedParameters = null;
-            return _this._rpc
-                .rpc(messages_1.RPC_TYPE.emulationStop)
-                .then(function () { return Promise.reject(e); }, function () { return Promise.reject(e); });
-        })
-            .then(function () { return _this._applyState(state); }); });
+            if (emulationParameters) {
+                _this._saveConfig = config;
+                _this._savedParameters = emulationParameters;
+                _this._startProxies(emulationParameters, config);
+            }
+            else {
+                _this._saveConfig = null;
+                _this._savedParameters = null;
+            }
+            return _this._applyState(state);
+        }); });
     };
     EmulationService.prototype.pause = function () {
         var _this = this;
@@ -83641,7 +83643,7 @@ var EmulationService = (function () {
             .rpc(messages_1.RPC_TYPE.emulationPause)
             .then(function (state) {
             _this._pauseProxies();
-            _this._applyState(state);
+            return _this._applyState(state);
         }); });
     };
     EmulationService.prototype.stop = function () {
@@ -83650,7 +83652,7 @@ var EmulationService = (function () {
             .rpc(messages_1.RPC_TYPE.emulationStop)
             .then(function (state) {
             _this._stopProxies();
-            _this._applyState(state);
+            return _this._applyState(state);
         }); });
     };
     EmulationService.prototype.reset = function () {
@@ -83674,7 +83676,7 @@ var EmulationService = (function () {
             .rpc(messages_1.RPC_TYPE.emulationResume)
             .then(function (state) {
             _this._resumeProxies();
-            _this._applyState(state);
+            return _this._applyState(state);
         }); });
     };
     EmulationService.prototype.setRateLimit = function (enforce) {
