@@ -3609,7 +3609,7 @@ var Completer = (function () {
         var _this = this;
         return paths.map(function (path) {
             try {
-                return (_this._fsProvider.getTypeSync(path) === 0 /* DIRECTORY */ ?
+                return (_this._fsProvider.getTypeSync(path) === 0 ?
                     pathlib.join(path, pathlib.sep) : path);
             }
             catch (e) {
@@ -3685,9 +3685,9 @@ var DebuggerFrontend = (function () {
             return '';
         var message = trap.message ? trap.message : 'unknown';
         switch (trap.reason) {
-            case 0 /* cpu */:
+            case 0:
                 return util.format('CPU TRAP: %s', message);
-            case 2 /* debug */:
+            case 2:
                 return util.format('DEBUGGER TRAP: %s', message);
             default:
                 return util.format('UNKNOWN TRAP: %s', message);
@@ -3840,11 +3840,11 @@ var EhBasicCLI = (function (_super) {
         commandInterpreter.registerCommands({
             quit: function () {
                 if (_this._allowQuit)
-                    _this._setState(2 /* quit */);
+                    _this._setState(2);
                 return 'bye';
             },
             run: function () {
-                _this._setState(1 /* run */);
+                _this._setState(1);
                 return 'running, press ctl-c to interrupt...';
             },
             input: function (args, cmd) {
@@ -3905,7 +3905,7 @@ var EhBasicCLI = (function (_super) {
         });
     };
     EhBasicCLI.prototype.startup = function () {
-        this._setState(0 /* debug */);
+        this._setState(0);
         var scheduler = new PeriodicScheduler_1.default(OUTPUT_FLUSH_INTERVAL);
         this._flushOutputTask = scheduler.start(function (cli) { return cli._flushOutput(); }, this);
         this._prompt();
@@ -3926,13 +3926,13 @@ var EhBasicCLI = (function (_super) {
     };
     EhBasicCLI.prototype.interrupt = function () {
         switch (this._state) {
-            case 1 /* run */:
-                this._setState(0 /* debug */);
+            case 1:
+                this._setState(0);
                 this._prompt();
                 break;
-            case 0 /* debug */:
+            case 0:
                 if (this._allowQuit)
-                    this._setState(2 /* quit */);
+                    this._setState(2);
                 break;
         }
     };
@@ -3941,14 +3941,14 @@ var EhBasicCLI = (function (_super) {
     };
     EhBasicCLI.prototype.pushInput = function (data) {
         switch (this._state) {
-            case 1 /* run */:
+            case 1:
                 var size = data.length;
                 for (var i = 0; i < size; i++) {
                     this._inputBuffer.push(data.charCodeAt(i) & 0xFF);
                 }
                 this._inputBuffer.push(0x0D);
                 break;
-            case 0 /* debug */:
+            case 0:
                 try {
                     this._outputLine(this._commandInterpreter.execute(data));
                 }
@@ -3966,10 +3966,10 @@ var EhBasicCLI = (function (_super) {
         var prompt = this._clockProbe.getFrequency() > 0 ?
             (this._clockProbe.getFrequency() / 1000000).toFixed(2) + ' MHz ' : '';
         switch (this._state) {
-            case 1 /* run */:
+            case 1:
                 prompt += '[run] # ';
                 break;
-            case 0 /* debug */:
+            case 0:
                 prompt += '[dbg] # ';
                 break;
         }
@@ -3984,7 +3984,7 @@ var EhBasicCLI = (function (_super) {
         var timer = this._board.getTimer();
         this._state = newState;
         switch (this._state) {
-            case 1 /* run */:
+            case 1:
                 if (this._outputBuffer) {
                     this._outputRaw(this._outputBuffer);
                     this._outputBuffer = '';
@@ -3992,11 +3992,11 @@ var EhBasicCLI = (function (_super) {
                 timer.start(this._scheduler);
                 this._clockProbe.start();
                 break;
-            case 0 /* debug */:
+            case 0:
                 timer.stop();
                 this._clockProbe.stop();
                 break;
-            case 2 /* quit */:
+            case 2:
                 timer.stop();
                 if (this._allowQuit)
                     this.events.quit.dispatch(undefined);
@@ -4006,13 +4006,13 @@ var EhBasicCLI = (function (_super) {
     };
     EhBasicCLI.prototype._serialOutHandler = function (value) {
         switch (this._state) {
-            case 0 /* debug */:
+            case 0:
                 this._outputBuffer += String.fromCharCode(value);
                 this._outputLine('output event, buffer now\n' +
                     this._outputBuffer +
                     "\n");
                 break;
-            case 1 /* run */:
+            case 1:
                 this._outputRaw(String.fromCharCode(value));
                 break;
         }
@@ -4022,7 +4022,7 @@ var EhBasicCLI = (function (_super) {
             this._promptForInput = true;
             return this._inputBuffer.shift();
         }
-        if (this._state === 1 /* run */ && this._promptForInput) {
+        if (this._state === 1 && this._promptForInput) {
             this._promptForInput = false;
             this._outputLine();
             this._prompt();
@@ -4045,8 +4045,8 @@ var EhBasicCLI = (function (_super) {
         this.events.prompt.dispatch(undefined);
     };
     EhBasicCLI.prototype._onTrap = function (trap, ctx) {
-        if (ctx._state === 1 /* run */) {
-            ctx._setState(0 /* debug */);
+        if (ctx._state === 1) {
+            ctx._setState(0);
             ctx._outputLine('\n' + ctx._debuggerFrontend.describeTrap(trap));
             ctx._prompt();
         }
@@ -4057,7 +4057,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EhBasicCLI;
 
 },{"../machine/Debugger":21,"../machine/ehbasic/Board":27,"../tools/ClockProbe":31,"../tools/scheduler/ImmedateScheduler":34,"../tools/scheduler/PeriodicScheduler":35,"./AbstractCLI":13,"./CommandInterpreter":14,"./DebuggerFrontend":16,"path":7}],18:[function(require,module,exports){
-/// <reference path="../interface/jquery.terminal.d.ts"/>
 "use strict";
 var Completer_1 = require('./Completer');
 var JqtermCLIRunner = (function () {
@@ -4181,10 +4180,10 @@ var PrepackagedFilesystemProvider = (function (_super) {
         if (typeof (content) === 'undefined')
             throw new Error(util.format('%s not part of file bundle', name));
         if (Buffer.isBuffer(content)) {
-            return 1 /* FILE */;
+            return 1;
         }
         else {
-            return 0 /* DIRECTORY */;
+            return 0;
         }
     };
     PrepackagedFilesystemProvider.prototype._lookup = function (path) {
@@ -4320,7 +4319,7 @@ var Debugger = (function () {
     Debugger.prototype.dumpState = function () {
         var state = this._cpu.state;
         switch (this._cpu.executionState) {
-            case 0 /* boot */:
+            case 0:
         }
         var result = '' +
             'A = ' + hex.encode(state.a, 2) + '   ' +
@@ -4352,7 +4351,7 @@ var Debugger = (function () {
             cycles++;
             if (lastExecutionState !== this._cpu.executionState) {
                 lastExecutionState = this._cpu.executionState;
-                if (lastExecutionState === 1 /* fetch */) {
+                if (lastExecutionState === 1) {
                     instruction++;
                 }
             }
@@ -4389,11 +4388,11 @@ var Debugger = (function () {
             return 'halted';
         }
         switch (this._cpu.executionState) {
-            case 0 /* boot */:
+            case 0:
                 return 'boot';
-            case 1 /* fetch */:
+            case 1:
                 return 'fetch';
-            case 2 /* execute */:
+            case 2:
                 return 'execute';
         }
     };
@@ -4401,16 +4400,16 @@ var Debugger = (function () {
         if (this._traceEnabled || this._breakpointsEnabled) {
             this._lastInstructionPointer = this._cpu.getLastInstructionPointer() || 0;
             this._board.cpuClock.addHandler(this._cpuClockHandler, this);
-            this._board.setClockMode(0 /* instruction */);
+            this._board.setClockMode(0);
         }
         else {
             this._board.cpuClock.removeHandler(this._cpuClockHandler, this);
-            this._board.setClockMode(1 /* lazy */);
+            this._board.setClockMode(1);
         }
     };
     Debugger.prototype._cpuClockHandler = function (clocks, ctx) {
         var lastInstructionPointer = ctx._cpu.getLastInstructionPointer();
-        if (ctx._cpu.executionState !== 1 /* fetch */ ||
+        if (ctx._cpu.executionState !== 1 ||
             lastInstructionPointer === ctx._lastInstructionPointer) {
             return;
         }
@@ -4422,7 +4421,7 @@ var Debugger = (function () {
                 ctx._traceLength++;
         }
         if (ctx._breakpointsEnabled && ctx._breakpoints[ctx._cpu.state.p]) {
-            ctx._board.triggerTrap(2 /* debug */, util.format('breakpoint "%s" at %s', ctx._breakpointDescriptions[ctx._cpu.state.p] || '', hex.encode(ctx._cpu.state.p)));
+            ctx._board.triggerTrap(2, util.format('breakpoint "%s" at %s', ctx._breakpointDescriptions[ctx._cpu.state.p] || '', hex.encode(ctx._cpu.state.p)));
         }
     };
     Debugger.prototype._trapHandler = function (trap, dbg) {
@@ -4465,30 +4464,30 @@ exports.default = BoardInterface;
 var Instruction_1 = require('./Instruction');
 var CpuInterface_1 = require('./CpuInterface');
 function setFlagsNZ(state, operand) {
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */)) |
+    state.flags = (state.flags & ~(128 | 2)) |
         (operand & 0x80) |
-        (operand ? 0 : 2 /* z */);
+        (operand ? 0 : 2);
 }
 function opBoot(state, bus) {
     state.p = bus.readWord(0xFFFC);
 }
 function opAdc(state, bus, operand) {
-    if (state.flags & 8 /* d */) {
-        var d0 = (operand & 0x0F) + (state.a & 0x0F) + (state.flags & 1 /* c */), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
+    if (state.flags & 8) {
+        var d0 = (operand & 0x0F) + (state.a & 0x0F) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
         state.a = (d0 % 10) | ((d1 % 10) << 4);
-        state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+        state.flags = (state.flags & ~(128 | 2 | 1)) |
             (state.a & 0x80) |
-            (state.a ? 0 : 2 /* z */) |
-            (d1 > 9 ? 1 /* c */ : 0); // carry
+            (state.a ? 0 : 2) |
+            (d1 > 9 ? 1 : 0);
     }
     else {
-        var sum = state.a + operand + (state.flags & 1 /* c */), result = sum & 0xFF;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
         state.flags =
-            (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */ | 64 /* v */)) |
+            (state.flags & ~(128 | 2 | 1 | 64)) |
                 (result & 0x80) |
-                (result ? 0 : 2 /* z */) |
+                (result ? 0 : 2) |
                 (sum >>> 8) |
-                (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1); // overflow
+                (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
         state.a = result;
     }
 }
@@ -4499,24 +4498,24 @@ function opAnd(state, bus, operand) {
 function opAslAcc(state) {
     var old = state.a;
     state.a = (state.a << 1) & 0xFF;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
+        (state.a ? 0 : 2) |
         (old >>> 7);
 }
 function opAslMem(state, bus, operand) {
     var old = bus.read(operand), value = (old << 1) & 0xFF;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (value & 0x80) |
-        (value ? 0 : 2 /* z */) |
+        (value ? 0 : 2) |
         (old >>> 7);
 }
 function opBit(state, bus, operand) {
     state.flags =
-        (state.flags & ~(128 /* n */ | 64 /* v */ | 2 /* z */)) |
-            (operand & (128 /* n */ | 64 /* v */)) |
-            ((operand & state.a) ? 0 : 2 /* z */);
+        (state.flags & ~(128 | 64 | 2)) |
+            (operand & (128 | 64)) |
+            ((operand & state.a) ? 0 : 2);
 }
 function opBrk(state, bus) {
     var nextOpAddr = (state.p + 1) & 0xFFFF;
@@ -4524,42 +4523,42 @@ function opBrk(state, bus) {
     state.s = (state.s + 0xFF) & 0xFF;
     bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
     state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, state.flags | 16 /* b */);
+    bus.write(state.s + 0x0100, state.flags | 16);
     state.s = (state.s + 0xFF) & 0xFF;
-    state.flags |= 4 /* i */;
+    state.flags |= 4;
     state.p = (bus.readWord(0xFFFE));
 }
 function opClc(state) {
-    state.flags &= ~1 /* c */;
+    state.flags &= ~1;
 }
 function opCld(state) {
-    state.flags &= ~8 /* d */;
+    state.flags &= ~8;
 }
 function opCli(state) {
-    state.flags &= ~4 /* i */;
+    state.flags &= ~4;
 }
 function opClv(state) {
-    state.flags &= ~64 /* v */;
+    state.flags &= ~64;
 }
 function opCmp(state, bus, operand) {
     var diff = state.a + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2 /* z */) |
+        ((diff & 0xFF) ? 0 : 2) |
         (diff >>> 8);
 }
 function opCpx(state, bus, operand) {
     var diff = state.x + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2 /* z */) |
+        ((diff & 0xFF) ? 0 : 2) |
         (diff >>> 8);
 }
 function opCpy(state, bus, operand) {
     var diff = state.y + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2 /* z */) |
+        ((diff & 0xFF) ? 0 : 2) |
         (diff >>> 8);
 }
 function opDec(state, bus, operand) {
@@ -4618,18 +4617,18 @@ function opLdy(state, bus, operand) {
 function opLsrAcc(state) {
     var old = state.a;
     state.a = state.a >>> 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (state.a ? 0 : 2) |
+        (old & 1);
 }
 function opLsrMem(state, bus, operand) {
     var old = bus.read(operand), value = old >>> 1;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (value & 0x80) |
-        (value ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (value ? 0 : 2) |
+        (old & 1);
 }
 function opNop() { }
 function opOra(state, bus, operand) {
@@ -4641,7 +4640,7 @@ function opPhp(state, bus) {
     state.s = (state.s + 0xFF) & 0xFF;
 }
 function opPlp(state, bus) {
-    var mask = 16 /* b */ | 32 /* e */;
+    var mask = 16 | 32;
     state.s = (state.s + 0x01) & 0xFF;
     state.flags = (state.flags & mask) | (bus.read(0x0100 + state.s) & ~mask);
 }
@@ -4656,35 +4655,35 @@ function opPla(state, bus) {
 }
 function opRolAcc(state) {
     var old = state.a;
-    state.a = ((state.a << 1) & 0xFF) | (state.flags & 1 /* c */);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.a = ((state.a << 1) & 0xFF) | (state.flags & 1);
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
+        (state.a ? 0 : 2) |
         (old >>> 7);
 }
 function opRolMem(state, bus, operand) {
-    var old = bus.read(operand), value = ((old << 1) & 0xFF) | (state.flags & 1 /* c */);
+    var old = bus.read(operand), value = ((old << 1) & 0xFF) | (state.flags & 1);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (value & 0x80) |
-        (value ? 0 : 2 /* z */) |
+        (value ? 0 : 2) |
         (old >>> 7);
 }
 function opRorAcc(state) {
     var old = state.a;
-    state.a = (state.a >>> 1) | ((state.flags & 1 /* c */) << 7);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.a = (state.a >>> 1) | ((state.flags & 1) << 7);
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (state.a ? 0 : 2) |
+        (old & 1);
 }
 function opRorMem(state, bus, operand) {
-    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1 /* c */) << 7);
+    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (value & 0x80) |
-        (value ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (value ? 0 : 2) |
+        (old & 1);
 }
 function opRti(state, bus) {
     var returnPtr;
@@ -4705,33 +4704,33 @@ function opRts(state, bus) {
     state.p = (returnPtr + 1) & 0xFFFF;
 }
 function opSbc(state, bus, operand) {
-    if (state.flags & 8 /* d */) {
-        var d0 = ((state.a & 0x0F) - (operand & 0x0F) - (~state.flags & 1 /* c */)), d1 = ((state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0));
+    if (state.flags & 8) {
+        var d0 = ((state.a & 0x0F) - (operand & 0x0F) - (~state.flags & 1)), d1 = ((state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0));
         state.a = (d0 < 0 ? 10 + d0 : d0) | ((d1 < 0 ? 10 + d1 : d1) << 4);
-        state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+        state.flags = (state.flags & ~(128 | 2 | 1)) |
             (state.a & 0x80) |
-            (state.a ? 0 : 2 /* z */) |
-            (d1 < 0 ? 0 : 1 /* c */); // carry / borrow
+            (state.a ? 0 : 2) |
+            (d1 < 0 ? 0 : 1);
     }
     else {
         operand = (~operand & 0xFF);
-        var sum = state.a + operand + (state.flags & 1 /* c */), result = sum & 0xFF;
-        state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */ | 64 /* v */)) |
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
+        state.flags = (state.flags & ~(128 | 2 | 1 | 64)) |
             (result & 0x80) |
-            (result ? 0 : 2 /* z */) |
+            (result ? 0 : 2) |
             (sum >>> 8) |
-            (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1); // overflow
+            (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
         state.a = result;
     }
 }
 function opSec(state) {
-    state.flags |= 1 /* c */;
+    state.flags |= 1;
 }
 function opSed(state) {
-    state.flags |= 8 /* d */;
+    state.flags |= 8;
 }
 function opSei(state) {
-    state.flags |= 4 /* i */;
+    state.flags |= 4;
 }
 function opSta(state, bus, operand) {
     bus.write(operand, state.a);
@@ -4768,26 +4767,26 @@ function opTya(state) {
 function opAlr(state, bus, operand) {
     var old = state.a;
     state.a = (state.a & operand) >>> 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (state.a ? 0 : 2) |
+        (old & 1);
 }
 function opAxs(state, bus, operand) {
     var value = (state.a & state.x) + (~operand & 0xFF) + 1;
     state.x = value & 0xFF;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.x & 0x80) |
-        ((state.x & 0xFF) ? 0 : 2 /* z */) |
+        ((state.x & 0xFF) ? 0 : 2) |
         (value >>> 8);
 }
 function opDcp(state, bus, operand) {
     var value = (bus.read(operand) + 0xFF) & 0xFF;
     bus.write(operand, value);
     var diff = state.a + (~value & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2 /* z */) |
+        ((diff & 0xFF) ? 0 : 2) |
         (diff >>> 8);
 }
 function opLax(state, bus, operand) {
@@ -4799,7 +4798,7 @@ var Cpu = (function () {
     function Cpu(_bus, _rng) {
         this._bus = _bus;
         this._rng = _rng;
-        this.executionState = 0 /* boot */;
+        this.executionState = 0;
         this.state = new CpuInterface_1.default.State();
         this._opCycles = 0;
         this._instructionCallback = null;
@@ -4854,8 +4853,8 @@ var Cpu = (function () {
         this.state.s = this._rng ? this._rng.int(0xFF) : 0;
         this.state.p = this._rng ? this._rng.int(0xFFFF) : 0;
         this.state.flags = (this._rng ? this._rng.int(0xFF) : 0) |
-            4 /* i */ | 32 /* e */ | 16 /* b */;
-        this.executionState = 0 /* boot */;
+            4 | 32 | 16;
+        this.executionState = 0;
         this._opCycles = 7;
         this._interruptPending = false;
         this._nmiPending = false;
@@ -4867,15 +4866,14 @@ var Cpu = (function () {
             return;
         }
         switch (this.executionState) {
-            case 0 /* boot */:
-            case 2 /* execute */:
+            case 0:
+            case 2:
                 if (--this._opCycles === 0) {
                     this._instructionCallback(this.state, this._bus, this._operand);
-                    this.executionState = 1 /* fetch */;
+                    this.executionState = 1;
                 }
                 break;
-            case 1 /* fetch */:
-                // TODO: interrupt handling
+            case 1:
                 this._fetch();
         }
         return this;
@@ -4885,18 +4883,18 @@ var Cpu = (function () {
         var addressingMode = instruction.addressingMode, dereference = false, slowIndexedAccess = false;
         this._lastInstructionPointer = this.state.p;
         switch (instruction.operation) {
-            case 0 /* adc */:
+            case 0:
                 this._opCycles = 0;
                 this._instructionCallback = opAdc;
                 dereference = true;
                 break;
-            case 1 /* and */:
+            case 1:
                 this._opCycles = 0;
                 this._instructionCallback = opAnd;
                 dereference = true;
                 break;
-            case 2 /* asl */:
-                if (addressingMode === 0 /* implied */) {
+            case 2:
+                if (addressingMode === 0) {
                     this._opCycles = 1;
                     this._instructionCallback = opAslAcc;
                 }
@@ -4906,9 +4904,9 @@ var Cpu = (function () {
                     slowIndexedAccess = true;
                 }
                 break;
-            case 3 /* bcc */:
-                if (this.state.flags & 1 /* c */) {
-                    addressingMode = 0 /* implied */;
+            case 3:
+                if (this.state.flags & 1) {
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
@@ -4918,62 +4916,50 @@ var Cpu = (function () {
                     this._opCycles = 0;
                 }
                 break;
-            case 4 /* bcs */:
-                if (this.state.flags & 1 /* c */) {
+            case 4:
+                if (this.state.flags & 1) {
                     this._instructionCallback = opJmp;
                     this._opCycles = 0;
                 }
                 else {
-                    addressingMode = 0 /* implied */;
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
                 }
                 break;
-            case 5 /* beq */:
-                if (this.state.flags & 2 /* z */) {
+            case 5:
+                if (this.state.flags & 2) {
                     this._instructionCallback = opJmp;
                     this._opCycles = 0;
                 }
                 else {
-                    addressingMode = 0 /* implied */;
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
                 }
                 break;
-            case 6 /* bit */:
+            case 6:
                 this._opCycles = 0;
                 this._instructionCallback = opBit;
                 dereference = true;
                 break;
-            case 7 /* bmi */:
-                if (this.state.flags & 128 /* n */) {
+            case 7:
+                if (this.state.flags & 128) {
                     this._instructionCallback = opJmp;
                     this._opCycles = 0;
                 }
                 else {
-                    addressingMode = 0 /* implied */;
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
                 }
                 break;
-            case 8 /* bne */:
-                if (this.state.flags & 2 /* z */) {
-                    addressingMode = 0 /* implied */;
-                    this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
-                    this._opCycles = 1;
-                }
-                else {
-                    this._instructionCallback = opJmp;
-                    this._opCycles = 0;
-                }
-                break;
-            case 9 /* bpl */:
-                if (this.state.flags & 128 /* n */) {
-                    addressingMode = 0 /* implied */;
+            case 8:
+                if (this.state.flags & 2) {
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
@@ -4983,9 +4969,9 @@ var Cpu = (function () {
                     this._opCycles = 0;
                 }
                 break;
-            case 11 /* bvc */:
-                if (this.state.flags & 64 /* v */) {
-                    addressingMode = 0 /* implied */;
+            case 9:
+                if (this.state.flags & 128) {
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
@@ -4995,109 +4981,121 @@ var Cpu = (function () {
                     this._opCycles = 0;
                 }
                 break;
-            case 12 /* bvs */:
-                if (this.state.flags & 64 /* v */) {
+            case 11:
+                if (this.state.flags & 64) {
+                    addressingMode = 0;
+                    this._instructionCallback = opNop;
+                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this._opCycles = 1;
+                }
+                else {
+                    this._instructionCallback = opJmp;
+                    this._opCycles = 0;
+                }
+                break;
+            case 12:
+                if (this.state.flags & 64) {
                     this._instructionCallback = opJmp;
                     this._opCycles = 0;
                 }
                 else {
-                    addressingMode = 0 /* implied */;
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
                 }
                 break;
-            case 10 /* brk */:
+            case 10:
                 this._opCycles = 6;
                 this._instructionCallback = opBrk;
                 break;
-            case 13 /* clc */:
+            case 13:
                 this._opCycles = 1;
                 this._instructionCallback = opClc;
                 break;
-            case 14 /* cld */:
+            case 14:
                 this._opCycles = 1;
                 this._instructionCallback = opCld;
                 break;
-            case 15 /* cli */:
+            case 15:
                 this._opCycles = 1;
                 this._instructionCallback = opCli;
                 break;
-            case 16 /* clv */:
+            case 16:
                 this._opCycles = 1;
                 this._instructionCallback = opClv;
                 break;
-            case 17 /* cmp */:
+            case 17:
                 this._opCycles = 0;
                 this._instructionCallback = opCmp;
                 dereference = true;
                 break;
-            case 18 /* cpx */:
+            case 18:
                 this._opCycles = 0;
                 this._instructionCallback = opCpx;
                 dereference = true;
                 break;
-            case 19 /* cpy */:
+            case 19:
                 this._opCycles = 0;
                 this._instructionCallback = opCpy;
                 dereference = true;
                 break;
-            case 20 /* dec */:
+            case 20:
                 this._opCycles = 3;
                 this._instructionCallback = opDec;
                 slowIndexedAccess = true;
                 break;
-            case 21 /* dex */:
+            case 21:
                 this._opCycles = 1;
                 this._instructionCallback = opDex;
                 break;
-            case 22 /* dey */:
+            case 22:
                 this._opCycles = 1;
                 this._instructionCallback = opDey;
                 break;
-            case 23 /* eor */:
+            case 23:
                 this._opCycles = 0;
                 this._instructionCallback = opEor;
                 dereference = true;
                 break;
-            case 24 /* inc */:
+            case 24:
                 this._opCycles = 3;
                 this._instructionCallback = opInc;
                 slowIndexedAccess = true;
                 break;
-            case 25 /* inx */:
+            case 25:
                 this._opCycles = 1;
                 this._instructionCallback = opInx;
                 break;
-            case 26 /* iny */:
+            case 26:
                 this._opCycles = 1;
                 this._instructionCallback = opIny;
                 break;
-            case 27 /* jmp */:
+            case 27:
                 this._opCycles = 0;
                 this._instructionCallback = opJmp;
                 break;
-            case 28 /* jsr */:
+            case 28:
                 this._opCycles = 3;
                 this._instructionCallback = opJsr;
                 break;
-            case 29 /* lda */:
+            case 29:
                 this._opCycles = 0;
                 this._instructionCallback = opLda;
                 dereference = true;
                 break;
-            case 30 /* ldx */:
+            case 30:
                 this._opCycles = 0;
                 this._instructionCallback = opLdx;
                 dereference = true;
                 break;
-            case 31 /* ldy */:
+            case 31:
                 this._opCycles = 0;
                 this._instructionCallback = opLdy;
                 dereference = true;
                 break;
-            case 32 /* lsr */:
-                if (addressingMode === 0 /* implied */) {
+            case 32:
+                if (addressingMode === 0) {
                     this._opCycles = 1;
                     this._instructionCallback = opLsrAcc;
                 }
@@ -5107,36 +5105,36 @@ var Cpu = (function () {
                     slowIndexedAccess = true;
                 }
                 break;
-            case 33 /* nop */:
-            case 56 /* dop */:
-            case 57 /* top */:
+            case 33:
+            case 56:
+            case 57:
                 this._opCycles = 0;
                 dereference = true;
                 this._instructionCallback = opNop;
                 break;
-            case 34 /* ora */:
+            case 34:
                 this._opCycles = 0;
                 this._instructionCallback = opOra;
                 dereference = true;
                 break;
-            case 36 /* php */:
+            case 36:
                 this._opCycles = 2;
                 this._instructionCallback = opPhp;
                 break;
-            case 35 /* pha */:
+            case 35:
                 this._opCycles = 2;
                 this._instructionCallback = opPha;
                 break;
-            case 37 /* pla */:
+            case 37:
                 this._opCycles = 3;
                 this._instructionCallback = opPla;
                 break;
-            case 38 /* plp */:
+            case 38:
                 this._opCycles = 3;
                 this._instructionCallback = opPlp;
                 break;
-            case 39 /* rol */:
-                if (addressingMode === 0 /* implied */) {
+            case 39:
+                if (addressingMode === 0) {
                     this._opCycles = 1;
                     this._instructionCallback = opRolAcc;
                 }
@@ -5146,8 +5144,8 @@ var Cpu = (function () {
                     slowIndexedAccess = true;
                 }
                 break;
-            case 40 /* ror */:
-                if (addressingMode === 0 /* implied */) {
+            case 40:
+                if (addressingMode === 0) {
                     this._opCycles = 1;
                     this._instructionCallback = opRorAcc;
                 }
@@ -5157,84 +5155,84 @@ var Cpu = (function () {
                     slowIndexedAccess = true;
                 }
                 break;
-            case 41 /* rti */:
+            case 41:
                 this._opCycles = 5;
                 this._instructionCallback = opRti;
                 break;
-            case 42 /* rts */:
+            case 42:
                 this._opCycles = 5;
                 this._instructionCallback = opRts;
                 break;
-            case 43 /* sbc */:
+            case 43:
                 this._opCycles = 0;
                 this._instructionCallback = opSbc;
                 dereference = true;
                 break;
-            case 44 /* sec */:
+            case 44:
                 this._opCycles = 1;
                 this._instructionCallback = opSec;
                 break;
-            case 45 /* sed */:
+            case 45:
                 this._opCycles = 1;
                 this._instructionCallback = opSed;
                 break;
-            case 46 /* sei */:
+            case 46:
                 this._opCycles = 1;
                 this._instructionCallback = opSei;
                 break;
-            case 47 /* sta */:
+            case 47:
                 this._opCycles = 1;
                 this._instructionCallback = opSta;
                 slowIndexedAccess = true;
                 break;
-            case 48 /* stx */:
+            case 48:
                 this._opCycles = 1;
                 this._instructionCallback = opStx;
                 slowIndexedAccess = true;
                 break;
-            case 49 /* sty */:
+            case 49:
                 this._opCycles = 1;
                 this._instructionCallback = opSty;
                 slowIndexedAccess = true;
                 break;
-            case 50 /* tax */:
+            case 50:
                 this._opCycles = 1;
                 this._instructionCallback = opTax;
                 break;
-            case 51 /* tay */:
+            case 51:
                 this._opCycles = 1;
                 this._instructionCallback = opTay;
                 break;
-            case 52 /* tsx */:
+            case 52:
                 this._opCycles = 1;
                 this._instructionCallback = opTsx;
                 break;
-            case 53 /* txa */:
+            case 53:
                 this._opCycles = 1;
                 this._instructionCallback = opTxa;
                 break;
-            case 54 /* txs */:
+            case 54:
                 this._opCycles = 1;
                 this._instructionCallback = opTxs;
                 break;
-            case 55 /* tya */:
+            case 55:
                 this._opCycles = 1;
                 this._instructionCallback = opTya;
                 break;
-            case 58 /* alr */:
+            case 58:
                 this._opCycles = 0;
                 this._instructionCallback = opAlr;
                 break;
-            case 59 /* axs */:
+            case 59:
                 this._opCycles = 0;
                 this._instructionCallback = opAxs;
                 break;
-            case 60 /* dcp */:
+            case 60:
                 this._opCycles = 3;
                 this._instructionCallback = opDcp;
                 slowIndexedAccess = true;
                 break;
-            case 61 /* lax */:
+            case 61:
                 this._opCycles = 0;
                 this._instructionCallback = opLax;
                 dereference = true;
@@ -5247,23 +5245,23 @@ var Cpu = (function () {
         this.state.p = (this.state.p + 1) & 0xFFFF;
         var value, base;
         switch (addressingMode) {
-            case 1 /* immediate */:
+            case 1:
                 this._operand = this._bus.read(this.state.p);
                 dereference = false;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles++;
                 break;
-            case 2 /* zeroPage */:
+            case 2:
                 this._operand = this._bus.read(this.state.p);
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles++;
                 break;
-            case 3 /* absolute */:
+            case 3:
                 this._operand = this._bus.readWord(this.state.p);
                 this.state.p = (this.state.p + 2) & 0xFFFF;
                 this._opCycles += 2;
                 break;
-            case 4 /* indirect */:
+            case 4:
                 value = this._bus.readWord(this.state.p);
                 if ((value & 0xFF) === 0xFF)
                     this._operand = this._bus.read(value) + (this._bus.read(value & 0xFF00) << 8);
@@ -5272,21 +5270,21 @@ var Cpu = (function () {
                 this.state.p = (this.state.p + 2) & 0xFFFF;
                 this._opCycles += 4;
                 break;
-            case 5 /* relative */:
+            case 5:
                 value = this._bus.read(this.state.p);
                 value = (value & 0x80) ? -(~(value - 1) & 0xFF) : value;
                 this._operand = (this.state.p + value + 0x10001) & 0xFFFF;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles += (((this._operand & 0xFF00) !== (this.state.p & 0xFF00)) ? 3 : 2);
                 break;
-            case 6 /* zeroPageX */:
+            case 6:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
                 this._operand = (base + this.state.x) & 0xFF;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles += 2;
                 break;
-            case 7 /* absoluteX */:
+            case 7:
                 value = this._bus.readWord(this.state.p);
                 this._operand = (value + this.state.x) & 0xFFFF;
                 if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
@@ -5295,14 +5293,14 @@ var Cpu = (function () {
                 this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
                 this.state.p = (this.state.p + 2) & 0xFFFF;
                 break;
-            case 9 /* zeroPageY */:
+            case 9:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
                 this._operand = (base + this.state.y) & 0xFF;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles += 2;
                 break;
-            case 10 /* absoluteY */:
+            case 10:
                 value = this._bus.readWord(this.state.p);
                 this._operand = (value + this.state.y) & 0xFFFF;
                 if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
@@ -5311,7 +5309,7 @@ var Cpu = (function () {
                 this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
                 this.state.p = (this.state.p + 2) & 0xFFFF;
                 break;
-            case 8 /* indexedIndirectX */:
+            case 8:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
                 value = (base + this.state.x) & 0xFF;
@@ -5324,7 +5322,7 @@ var Cpu = (function () {
                 this._opCycles += 4;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 break;
-            case 11 /* indirectIndexedY */:
+            case 11:
                 value = this._bus.read(this.state.p);
                 if (value === 0xFF) {
                     value = this._bus.read(0xFF) + (this._bus.read(0x00) << 8);
@@ -5344,7 +5342,7 @@ var Cpu = (function () {
             this._operand = this._bus.read(this._operand);
             this._opCycles++;
         }
-        this.executionState = 2 /* execute */;
+        this.executionState = 2;
     };
     return Cpu;
 }());
@@ -5392,32 +5390,32 @@ var Disassembler = (function () {
         };
         var decodeSint8 = function (value) { return (value & 0x80) ? (-(~(value - 1) & 0xFF)) : value; };
         switch (instruction.addressingMode) {
-            case 0 /* implied */:
+            case 0:
                 return operation;
-            case 1 /* immediate */:
+            case 1:
                 return operation + ' #' + read8();
-            case 2 /* zeroPage */:
+            case 2:
                 return operation + ' ' + read8();
-            case 3 /* absolute */:
+            case 3:
                 return operation + ' ' + read16();
-            case 4 /* indirect */:
+            case 4:
                 return operation + ' (' + read16() + ')';
-            case 5 /* relative */:
+            case 5:
                 var distance = decodeSint8(this._peek(address + 1));
                 return operation + ' ' +
                     hex.encode(distance, 2) + ' ; -> '
                     + hex.encode((0x10002 + address + distance) % 0x10000, 4);
-            case 6 /* zeroPageX */:
+            case 6:
                 return operation + ' ' + read8() + ',X';
-            case 7 /* absoluteX */:
+            case 7:
                 return operation + ' ' + read16() + ',X';
-            case 8 /* indexedIndirectX */:
+            case 8:
                 return operation + ' (' + read8() + ',X)';
-            case 9 /* zeroPageY */:
+            case 9:
                 return operation + ' ' + read8() + ',Y';
-            case 10 /* absoluteY */:
+            case 10:
                 return operation + ' ' + read16() + ',Y';
-            case 11 /* indirectIndexedY */:
+            case 11:
                 return operation + ' (' + read8() + '),Y';
             default:
                 return 'INVALID';
@@ -5447,18 +5445,18 @@ var Instruction = (function () {
     }
     Instruction.prototype.getSize = function () {
         switch (this.addressingMode) {
-            case 1 /* immediate */:
-            case 2 /* zeroPage */:
-            case 6 /* zeroPageX */:
-            case 9 /* zeroPageY */:
-            case 8 /* indexedIndirectX */:
-            case 11 /* indirectIndexedY */:
-            case 5 /* relative */:
+            case 1:
+            case 2:
+            case 6:
+            case 9:
+            case 8:
+            case 11:
+            case 5:
                 return 2;
-            case 3 /* absolute */:
-            case 7 /* absoluteX */:
-            case 10 /* absoluteY */:
-            case 4 /* indirect */:
+            case 3:
+            case 7:
+            case 10:
+            case 4:
                 return 3;
             default:
                 return 1;
@@ -5543,12 +5541,11 @@ var Instruction;
 ;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Instruction;
-// Opcodes init
 var Instruction;
 (function (Instruction) {
     (function () {
         for (var i = 0; i < 256; i++) {
-            Instruction.opcodes[i] = new Instruction(62 /* invalid */, 12 /* invalid */);
+            Instruction.opcodes[i] = new Instruction(62, 12);
         }
     })();
     (function () {
@@ -5556,61 +5553,61 @@ var Instruction;
         for (var i = 0; i < 8; i++) {
             switch (i) {
                 case 0:
-                    operation = 34 /* ora */;
+                    operation = 34;
                     break;
                 case 1:
-                    operation = 1 /* and */;
+                    operation = 1;
                     break;
                 case 2:
-                    operation = 23 /* eor */;
+                    operation = 23;
                     break;
                 case 3:
-                    operation = 0 /* adc */;
+                    operation = 0;
                     break;
                 case 4:
-                    operation = 47 /* sta */;
+                    operation = 47;
                     break;
                 case 5:
-                    operation = 29 /* lda */;
+                    operation = 29;
                     break;
                 case 6:
-                    operation = 17 /* cmp */;
+                    operation = 17;
                     break;
                 case 7:
-                    operation = 43 /* sbc */;
+                    operation = 43;
                     break;
             }
             ;
             for (var j = 0; j < 8; j++) {
                 switch (j) {
                     case 0:
-                        addressingMode = 8 /* indexedIndirectX */;
+                        addressingMode = 8;
                         break;
                     case 1:
-                        addressingMode = 2 /* zeroPage */;
+                        addressingMode = 2;
                         break;
                     case 2:
-                        addressingMode = 1 /* immediate */;
+                        addressingMode = 1;
                         break;
                     case 3:
-                        addressingMode = 3 /* absolute */;
+                        addressingMode = 3;
                         break;
                     case 4:
-                        addressingMode = 11 /* indirectIndexedY */;
+                        addressingMode = 11;
                         break;
                     case 5:
-                        addressingMode = 6 /* zeroPageX */;
+                        addressingMode = 6;
                         break;
                     case 6:
-                        addressingMode = 10 /* absoluteY */;
+                        addressingMode = 10;
                         break;
                     case 7:
-                        addressingMode = 7 /* absoluteX */;
+                        addressingMode = 7;
                         break;
                 }
-                if (operation === 47 /* sta */ && addressingMode === 1 /* immediate */)
-                    addressingMode = 12 /* invalid */;
-                if (operation !== 62 /* invalid */ && addressingMode !== 12 /* invalid */) {
+                if (operation === 47 && addressingMode === 1)
+                    addressingMode = 12;
+                if (operation !== 62 && addressingMode !== 12) {
                     opcode = (i << 5) | (j << 2) | 1;
                     Instruction.opcodes[opcode].operation = operation;
                     Instruction.opcodes[opcode].addressingMode = addressingMode;
@@ -5618,144 +5615,143 @@ var Instruction;
             }
         }
         function set(opcode, operation, addressingMode) {
-            if (Instruction.opcodes[opcode].operation !== 62 /* invalid */) {
+            if (Instruction.opcodes[opcode].operation !== 62) {
                 throw new Error("entry for opcode " + opcode + " already exists");
             }
             Instruction.opcodes[opcode].operation = operation;
             Instruction.opcodes[opcode].addressingMode = addressingMode;
         }
-        set(0x06, 2 /* asl */, 2 /* zeroPage */);
-        set(0x0A, 2 /* asl */, 0 /* implied */);
-        set(0x0E, 2 /* asl */, 3 /* absolute */);
-        set(0x16, 2 /* asl */, 6 /* zeroPageX */);
-        set(0x1E, 2 /* asl */, 7 /* absoluteX */);
-        set(0x26, 39 /* rol */, 2 /* zeroPage */);
-        set(0x2A, 39 /* rol */, 0 /* implied */);
-        set(0x2E, 39 /* rol */, 3 /* absolute */);
-        set(0x36, 39 /* rol */, 6 /* zeroPageX */);
-        set(0x3E, 39 /* rol */, 7 /* absoluteX */);
-        set(0x46, 32 /* lsr */, 2 /* zeroPage */);
-        set(0x4A, 32 /* lsr */, 0 /* implied */);
-        set(0x4E, 32 /* lsr */, 3 /* absolute */);
-        set(0x56, 32 /* lsr */, 6 /* zeroPageX */);
-        set(0x5E, 32 /* lsr */, 7 /* absoluteX */);
-        set(0x66, 40 /* ror */, 2 /* zeroPage */);
-        set(0x6A, 40 /* ror */, 0 /* implied */);
-        set(0x6E, 40 /* ror */, 3 /* absolute */);
-        set(0x76, 40 /* ror */, 6 /* zeroPageX */);
-        set(0x7E, 40 /* ror */, 7 /* absoluteX */);
-        set(0x86, 48 /* stx */, 2 /* zeroPage */);
-        set(0x8E, 48 /* stx */, 3 /* absolute */);
-        set(0x96, 48 /* stx */, 9 /* zeroPageY */);
-        set(0xA2, 30 /* ldx */, 1 /* immediate */);
-        set(0xA6, 30 /* ldx */, 2 /* zeroPage */);
-        set(0xAE, 30 /* ldx */, 3 /* absolute */);
-        set(0xB6, 30 /* ldx */, 9 /* zeroPageY */);
-        set(0xBE, 30 /* ldx */, 10 /* absoluteY */);
-        set(0xC6, 20 /* dec */, 2 /* zeroPage */);
-        set(0xCE, 20 /* dec */, 3 /* absolute */);
-        set(0xD6, 20 /* dec */, 6 /* zeroPageX */);
-        set(0xDE, 20 /* dec */, 7 /* absoluteX */);
-        set(0xE6, 24 /* inc */, 2 /* zeroPage */);
-        set(0xEE, 24 /* inc */, 3 /* absolute */);
-        set(0xF6, 24 /* inc */, 6 /* zeroPageX */);
-        set(0xFE, 24 /* inc */, 7 /* absoluteX */);
-        set(0x24, 6 /* bit */, 2 /* zeroPage */);
-        set(0x2C, 6 /* bit */, 3 /* absolute */);
-        set(0x4C, 27 /* jmp */, 3 /* absolute */);
-        set(0x6C, 27 /* jmp */, 4 /* indirect */);
-        set(0x84, 49 /* sty */, 2 /* zeroPage */);
-        set(0x8C, 49 /* sty */, 3 /* absolute */);
-        set(0x94, 49 /* sty */, 6 /* zeroPageX */);
-        set(0xA0, 31 /* ldy */, 1 /* immediate */);
-        set(0xA4, 31 /* ldy */, 2 /* zeroPage */);
-        set(0xAC, 31 /* ldy */, 3 /* absolute */);
-        set(0xB4, 31 /* ldy */, 6 /* zeroPageX */);
-        set(0xBC, 31 /* ldy */, 7 /* absoluteX */);
-        set(0xC0, 19 /* cpy */, 1 /* immediate */);
-        set(0xC4, 19 /* cpy */, 2 /* zeroPage */);
-        set(0xCC, 19 /* cpy */, 3 /* absolute */);
-        set(0xE0, 18 /* cpx */, 1 /* immediate */);
-        set(0xE4, 18 /* cpx */, 2 /* zeroPage */);
-        set(0xEC, 18 /* cpx */, 3 /* absolute */);
-        set(0x10, 9 /* bpl */, 5 /* relative */);
-        set(0x30, 7 /* bmi */, 5 /* relative */);
-        set(0x50, 11 /* bvc */, 5 /* relative */);
-        set(0x70, 12 /* bvs */, 5 /* relative */);
-        set(0x90, 3 /* bcc */, 5 /* relative */);
-        set(0xB0, 4 /* bcs */, 5 /* relative */);
-        set(0xD0, 8 /* bne */, 5 /* relative */);
-        set(0xF0, 5 /* beq */, 5 /* relative */);
-        set(0x00, 10 /* brk */, 0 /* implied */);
-        set(0x20, 28 /* jsr */, 3 /* absolute */);
-        set(0x40, 41 /* rti */, 0 /* implied */);
-        set(0x60, 42 /* rts */, 0 /* implied */);
-        set(0x08, 36 /* php */, 0 /* implied */);
-        set(0x28, 38 /* plp */, 0 /* implied */);
-        set(0x48, 35 /* pha */, 0 /* implied */);
-        set(0x68, 37 /* pla */, 0 /* implied */);
-        set(0x88, 22 /* dey */, 0 /* implied */);
-        set(0xA8, 51 /* tay */, 0 /* implied */);
-        set(0xC8, 26 /* iny */, 0 /* implied */);
-        set(0xE8, 25 /* inx */, 0 /* implied */);
-        set(0x18, 13 /* clc */, 0 /* implied */);
-        set(0x38, 44 /* sec */, 0 /* implied */);
-        set(0x58, 15 /* cli */, 0 /* implied */);
-        set(0x78, 46 /* sei */, 0 /* implied */);
-        set(0x98, 55 /* tya */, 0 /* implied */);
-        set(0xB8, 16 /* clv */, 0 /* implied */);
-        set(0xD8, 14 /* cld */, 0 /* implied */);
-        set(0xF8, 45 /* sed */, 0 /* implied */);
-        set(0x8A, 53 /* txa */, 0 /* implied */);
-        set(0x9A, 54 /* txs */, 0 /* implied */);
-        set(0xAA, 50 /* tax */, 0 /* implied */);
-        set(0xBA, 52 /* tsx */, 0 /* implied */);
-        set(0xCA, 21 /* dex */, 0 /* implied */);
-        set(0xEA, 33 /* nop */, 0 /* implied */);
-        // instructions for undocumented opcodes
-        set(0x1A, 33 /* nop */, 0 /* implied */);
-        set(0x3A, 33 /* nop */, 0 /* implied */);
-        set(0x5A, 33 /* nop */, 0 /* implied */);
-        set(0x7A, 33 /* nop */, 0 /* implied */);
-        set(0xDA, 33 /* nop */, 0 /* implied */);
-        set(0xFA, 33 /* nop */, 0 /* implied */);
-        set(0x04, 56 /* dop */, 2 /* zeroPage */);
-        set(0x14, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x34, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x44, 56 /* dop */, 2 /* zeroPage */);
-        set(0x54, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x64, 56 /* dop */, 2 /* zeroPage */);
-        set(0x74, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x80, 56 /* dop */, 1 /* immediate */);
-        set(0x82, 56 /* dop */, 1 /* immediate */);
-        set(0x89, 56 /* dop */, 1 /* immediate */);
-        set(0xC2, 56 /* dop */, 1 /* immediate */);
-        set(0xD4, 56 /* dop */, 6 /* zeroPageX */);
-        set(0xE2, 56 /* dop */, 1 /* immediate */);
-        set(0xF4, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x0C, 57 /* top */, 3 /* absolute */);
-        set(0x1C, 57 /* top */, 7 /* absoluteX */);
-        set(0x3C, 57 /* top */, 7 /* absoluteX */);
-        set(0x5C, 57 /* top */, 7 /* absoluteX */);
-        set(0x7C, 57 /* top */, 7 /* absoluteX */);
-        set(0xDC, 57 /* top */, 7 /* absoluteX */);
-        set(0xFC, 57 /* top */, 7 /* absoluteX */);
-        set(0xEB, 43 /* sbc */, 1 /* immediate */);
-        set(0x4B, 58 /* alr */, 1 /* immediate */);
-        set(0xCB, 59 /* axs */, 1 /* immediate */);
-        set(0xC7, 60 /* dcp */, 2 /* zeroPage */);
-        set(0xD7, 60 /* dcp */, 6 /* zeroPageX */);
-        set(0xCF, 60 /* dcp */, 3 /* absolute */);
-        set(0xDF, 60 /* dcp */, 7 /* absoluteX */);
-        set(0xDB, 60 /* dcp */, 10 /* absoluteY */);
-        set(0xC3, 60 /* dcp */, 8 /* indexedIndirectX */);
-        set(0xD3, 60 /* dcp */, 11 /* indirectIndexedY */);
-        set(0xA7, 61 /* lax */, 2 /* zeroPage */);
-        set(0xB7, 61 /* lax */, 9 /* zeroPageY */);
-        set(0xAF, 61 /* lax */, 3 /* absolute */);
-        set(0xBF, 61 /* lax */, 10 /* absoluteY */);
-        set(0xA3, 61 /* lax */, 8 /* indexedIndirectX */);
-        set(0xB3, 61 /* lax */, 11 /* indirectIndexedY */);
+        set(0x06, 2, 2);
+        set(0x0A, 2, 0);
+        set(0x0E, 2, 3);
+        set(0x16, 2, 6);
+        set(0x1E, 2, 7);
+        set(0x26, 39, 2);
+        set(0x2A, 39, 0);
+        set(0x2E, 39, 3);
+        set(0x36, 39, 6);
+        set(0x3E, 39, 7);
+        set(0x46, 32, 2);
+        set(0x4A, 32, 0);
+        set(0x4E, 32, 3);
+        set(0x56, 32, 6);
+        set(0x5E, 32, 7);
+        set(0x66, 40, 2);
+        set(0x6A, 40, 0);
+        set(0x6E, 40, 3);
+        set(0x76, 40, 6);
+        set(0x7E, 40, 7);
+        set(0x86, 48, 2);
+        set(0x8E, 48, 3);
+        set(0x96, 48, 9);
+        set(0xA2, 30, 1);
+        set(0xA6, 30, 2);
+        set(0xAE, 30, 3);
+        set(0xB6, 30, 9);
+        set(0xBE, 30, 10);
+        set(0xC6, 20, 2);
+        set(0xCE, 20, 3);
+        set(0xD6, 20, 6);
+        set(0xDE, 20, 7);
+        set(0xE6, 24, 2);
+        set(0xEE, 24, 3);
+        set(0xF6, 24, 6);
+        set(0xFE, 24, 7);
+        set(0x24, 6, 2);
+        set(0x2C, 6, 3);
+        set(0x4C, 27, 3);
+        set(0x6C, 27, 4);
+        set(0x84, 49, 2);
+        set(0x8C, 49, 3);
+        set(0x94, 49, 6);
+        set(0xA0, 31, 1);
+        set(0xA4, 31, 2);
+        set(0xAC, 31, 3);
+        set(0xB4, 31, 6);
+        set(0xBC, 31, 7);
+        set(0xC0, 19, 1);
+        set(0xC4, 19, 2);
+        set(0xCC, 19, 3);
+        set(0xE0, 18, 1);
+        set(0xE4, 18, 2);
+        set(0xEC, 18, 3);
+        set(0x10, 9, 5);
+        set(0x30, 7, 5);
+        set(0x50, 11, 5);
+        set(0x70, 12, 5);
+        set(0x90, 3, 5);
+        set(0xB0, 4, 5);
+        set(0xD0, 8, 5);
+        set(0xF0, 5, 5);
+        set(0x00, 10, 0);
+        set(0x20, 28, 3);
+        set(0x40, 41, 0);
+        set(0x60, 42, 0);
+        set(0x08, 36, 0);
+        set(0x28, 38, 0);
+        set(0x48, 35, 0);
+        set(0x68, 37, 0);
+        set(0x88, 22, 0);
+        set(0xA8, 51, 0);
+        set(0xC8, 26, 0);
+        set(0xE8, 25, 0);
+        set(0x18, 13, 0);
+        set(0x38, 44, 0);
+        set(0x58, 15, 0);
+        set(0x78, 46, 0);
+        set(0x98, 55, 0);
+        set(0xB8, 16, 0);
+        set(0xD8, 14, 0);
+        set(0xF8, 45, 0);
+        set(0x8A, 53, 0);
+        set(0x9A, 54, 0);
+        set(0xAA, 50, 0);
+        set(0xBA, 52, 0);
+        set(0xCA, 21, 0);
+        set(0xEA, 33, 0);
+        set(0x1A, 33, 0);
+        set(0x3A, 33, 0);
+        set(0x5A, 33, 0);
+        set(0x7A, 33, 0);
+        set(0xDA, 33, 0);
+        set(0xFA, 33, 0);
+        set(0x04, 56, 2);
+        set(0x14, 56, 6);
+        set(0x34, 56, 6);
+        set(0x44, 56, 2);
+        set(0x54, 56, 6);
+        set(0x64, 56, 2);
+        set(0x74, 56, 6);
+        set(0x80, 56, 1);
+        set(0x82, 56, 1);
+        set(0x89, 56, 1);
+        set(0xC2, 56, 1);
+        set(0xD4, 56, 6);
+        set(0xE2, 56, 1);
+        set(0xF4, 56, 6);
+        set(0x0C, 57, 3);
+        set(0x1C, 57, 7);
+        set(0x3C, 57, 7);
+        set(0x5C, 57, 7);
+        set(0x7C, 57, 7);
+        set(0xDC, 57, 7);
+        set(0xFC, 57, 7);
+        set(0xEB, 43, 1);
+        set(0x4B, 58, 1);
+        set(0xCB, 59, 1);
+        set(0xC7, 60, 2);
+        set(0xD7, 60, 6);
+        set(0xCF, 60, 3);
+        set(0xDF, 60, 7);
+        set(0xDB, 60, 10);
+        set(0xC3, 60, 8);
+        set(0xD3, 60, 11);
+        set(0xA7, 61, 2);
+        set(0xB7, 61, 9);
+        set(0xAF, 61, 3);
+        set(0xBF, 61, 10);
+        set(0xA3, 61, 8);
+        set(0xB3, 61, 11);
     })();
 })(Instruction || (Instruction = {}));
 ;
@@ -5854,7 +5850,7 @@ var Board = (function () {
         this.clock = new microevent_ts_1.Event();
         this.trap = new microevent_ts_1.Event();
         this._trap = false;
-        this._clockMode = 1 /* lazy */;
+        this._clockMode = 1;
         this._timer = {
             tick: function (clocks) { return _this._tick(clocks); },
             start: function (scheduler, sliceHint) { return _this._start(scheduler, sliceHint); },
@@ -5886,9 +5882,9 @@ var Board = (function () {
     };
     Board.prototype.boot = function () {
         var clock = 0;
-        if (this._cpu.executionState !== 0 /* boot */)
+        if (this._cpu.executionState !== 0)
             throw new Error("Already booted!");
-        while (this._cpu.executionState !== 1 /* fetch */) {
+        while (this._cpu.executionState !== 1) {
             this._cpu.cycle();
             clock++;
         }
@@ -5927,8 +5923,8 @@ var Board = (function () {
         while (i++ < clocks && !this._trap) {
             this._cpu.cycle();
             clock++;
-            if (this._clockMode === 0 /* instruction */ &&
-                this._cpu.executionState === 1 /* fetch */ &&
+            if (this._clockMode === 0 &&
+                this._cpu.executionState === 1 &&
                 this.clock.hasHandlers) {
                 this.clock.dispatch(clock);
                 clock = 0;
@@ -5955,7 +5951,7 @@ var Board = (function () {
         this._runTask = undefined;
     };
     Board.prototype._onInvalidInstruction = function () {
-        this.triggerTrap(0 /* cpu */, 'invalid instruction');
+        this.triggerTrap(0, 'invalid instruction');
     };
     return Board;
 }());
@@ -6146,7 +6142,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PeriodicScheduler;
 
 },{}],"ehBasicCLI":[function(require,module,exports){
-/// <reference path="../interface/jquery.terminal.d.ts"/>
 "use strict";
 var EhBasicCLI_1 = require("../cli/EhBasicCLI");
 var JqtermCLIRunner_1 = require('../cli/JqtermCLIRunner');

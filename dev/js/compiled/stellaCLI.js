@@ -207,7 +207,7 @@ var assert = require('minimalistic-assert');
 // Supported tags
 var tags = [
   'seq', 'seqof', 'set', 'setof', 'objid', 'bool',
-  'gentime', 'utctime', 'null_', 'enum', 'int',
+  'gentime', 'utctime', 'null_', 'enum', 'int', 'objDesc',
   'bitstr', 'bmpstr', 'charstr', 'genstr', 'graphstr', 'ia5str', 'iso646str',
   'numstr', 'octstr', 'printstr', 't61str', 'unistr', 'utf8str', 'videostr'
 ];
@@ -371,6 +371,7 @@ tags.forEach(function(tag) {
 });
 
 Node.prototype.use = function use(item) {
+  assert(item);
   var state = this._baseState;
 
   assert(state.use === null);
@@ -614,6 +615,8 @@ Node.prototype._decodeGeneric = function decodeGeneric(tag, input, options) {
     return this._decodeNull(input, options);
   else if (tag === 'bool')
     return this._decodeBool(input, options);
+  else if (tag === 'objDesc')
+    return this._decodeStr(input, tag, options);
   else if (tag === 'int' || tag === 'enum')
     return this._decodeInt(input, state.args && state.args[0], options);
 
@@ -817,6 +820,8 @@ Node.prototype._encodePrimitive = function encodePrimitive(tag, data) {
     return this._encodeInt(data, state.args && state.reverseArgs[0]);
   else if (tag === 'bool')
     return this._encodeBool(data);
+  else if (tag === 'objDesc')
+    return this._encodeStr(data, tag);
   else
     throw new Error('Unsupported tag: ' + tag);
 };
@@ -1169,6 +1174,8 @@ DERNode.prototype._decodeStr = function decodeStr(buffer, tag) {
     return numstr;
   } else if (tag === 'octstr') {
     return buffer.raw();
+  } else if (tag === 'objDesc') {
+    return buffer.raw();
   } else if (tag === 'printstr') {
     var printstr = buffer.raw().toString('ascii');
     if (!this._isPrintstr(printstr)) {
@@ -1486,6 +1493,8 @@ DERNode.prototype._encodeStr = function encodeStr(str, tag) {
     }
     return this._createEncoderBuffer(str);
   } else if (/str$/.test(tag)) {
+    return this._createEncoderBuffer(str);
+  } else if (tag === 'objDesc') {
     return this._createEncoderBuffer(str);
   } else {
     return this.reporter.error('Encoding of string type: ' + tag +
@@ -23276,7 +23285,7 @@ var Completer = (function () {
         var _this = this;
         return paths.map(function (path) {
             try {
-                return (_this._fsProvider.getTypeSync(path) === 0 /* DIRECTORY */ ?
+                return (_this._fsProvider.getTypeSync(path) === 0 ?
                     pathlib.join(path, pathlib.sep) : path);
             }
             catch (e) {
@@ -23471,9 +23480,9 @@ var DebuggerFrontend = (function () {
             return '';
         var message = trap.message ? trap.message : 'unknown';
         switch (trap.reason) {
-            case 0 /* cpu */:
+            case 0:
                 return util.format('CPU TRAP: %s', message);
-            case 2 /* debug */:
+            case 2:
                 return util.format('DEBUGGER TRAP: %s', message);
             default:
                 return util.format('UNKNOWN TRAP: %s', message);
@@ -23590,7 +23599,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DebuggerFrontend;
 
 },{"../machine/board/BoardInterface":161,"../tools/hex":211,"util":147}],154:[function(require,module,exports){
-/// <reference path="../interface/jquery.terminal.d.ts"/>
 "use strict";
 var Completer_1 = require('./Completer');
 var JqtermCLIRunner = (function () {
@@ -23732,23 +23740,23 @@ var StellaCLI = (function (_super) {
         this._stellaConfig = new Config_1.default();
         this._limitingScheduler = new LimitingImmediateScheduler_1.default();
         this._nonLimitingScheduler = new ImmedateScheduler_1.default();
-        this._state = 0 /* setup */;
-        this._runMode = 0 /* limited */;
+        this._state = 0;
+        this._runMode = 0;
         this.events.stateChanged = new microevent_ts_1.Event();
         var systemConfigSetupProvider = new SystemConfigSetupProvider_1.default(this._stellaConfig);
         this._commandInterpreter.registerCommands({
-            run: function () { return (_this._setState(2 /* run */), 'running...'); }
+            run: function () { return (_this._setState(2), 'running...'); }
         });
         this._runModeCommandInterpreter = new CommandInterpreter_1.default({
-            stop: function () { return (_this._setState(1 /* debug */), 'stopped, entered debugger'); }
+            stop: function () { return (_this._setState(1), 'stopped, entered debugger'); }
         });
         this._setupModeCommandInterpreter = new CommandInterpreter_1.default({
             'load-cartridge': this._executeLoadCartridge.bind(this)
         });
         this._setupModeCommandInterpreter.registerCommands(systemConfigSetupProvider.getCommands());
         var runModeCommands = {
-            'set-speed-limited': function () { return (_this._setRunMode(0 /* limited */), 'speed limiting on'); },
-            'set-speed-unlimited': function () { return (_this._setRunMode(1 /* unlimited */), 'speed limiting off'); }
+            'set-speed-limited': function () { return (_this._setRunMode(0), 'speed limiting on'); },
+            'set-speed-unlimited': function () { return (_this._setRunMode(1), 'speed limiting off'); }
         };
         this._commandInterpreter.registerCommands(runModeCommands);
         this._runModeCommandInterpreter.registerCommands(runModeCommands);
@@ -23756,11 +23764,11 @@ var StellaCLI = (function (_super) {
     StellaCLI.prototype.getPrompt = function () {
         var frequency = this._clockProbe ? this._clockProbe.getFrequency() : 0, prefix = frequency > 0 ? (frequency / 1000000).toFixed(2) + " MHz " : '';
         switch (this._state) {
-            case 0 /* setup */:
+            case 0:
                 return "[setup] > ";
-            case 1 /* debug */:
+            case 1:
                 return prefix + "[debug] > ";
-            case 2 /* run */:
+            case 2:
                 return prefix + "[run] > ";
             default:
                 throw new Error('invalid run state');
@@ -23768,10 +23776,10 @@ var StellaCLI = (function (_super) {
     };
     StellaCLI.prototype.interrupt = function () {
         switch (this._state) {
-            case 1 /* debug */:
+            case 1:
                 return this._quit();
-            case 2 /* run */:
-                return this._setState(1 /* debug */);
+            case 2:
+                return this._setState(1);
         }
     };
     StellaCLI.prototype.getBoard = function () {
@@ -23785,7 +23793,7 @@ var StellaCLI = (function (_super) {
         try {
             this._cartridge = factory.createCartridge(buffer);
             this._initializeHardware();
-            this._setState(1 /* debug */);
+            this._setState(1);
             this._cartridgeFile = name;
             this._outputLine("successfully loaded " + name);
             this._outputLine("format: " + CartridgeInfo_1.default.describeCartridgeType(this._cartridge.getType()));
@@ -23796,11 +23804,11 @@ var StellaCLI = (function (_super) {
     };
     StellaCLI.prototype._getCommandInterpreter = function () {
         switch (this._state) {
-            case 0 /* setup */:
+            case 0:
                 return this._setupModeCommandInterpreter;
-            case 1 /* debug */:
+            case 1:
                 return _super.prototype._getCommandInterpreter.call(this);
-            case 2 /* run */:
+            case 2:
                 return this._runModeCommandInterpreter;
             default:
                 throw new Error('invalid run state');
@@ -23815,7 +23823,7 @@ var StellaCLI = (function (_super) {
             this._loadCartridge(file);
             this._cartridgeFile = file;
             this._initializeHardware();
-            this._setState(1 /* debug */);
+            this._setState(1);
         }
         catch (e) {
             return e.message;
@@ -23831,7 +23839,7 @@ var StellaCLI = (function (_super) {
             try {
                 this._loadCartridge(this._cartridgeFile);
                 this._initializeHardware();
-                this._setState(1 /* debug */);
+                this._setState(1);
             }
             catch (e) {
                 this._outputLine(e.message);
@@ -23864,12 +23872,12 @@ var StellaCLI = (function (_super) {
         this.events.availableCommandsChanged.dispatch(undefined);
         this.events.promptChanged.dispatch(undefined);
         switch (state) {
-            case 1 /* debug */:
+            case 1:
                 this._board.suspend();
                 this._clockProbe.stop();
                 this._board.getTimer().stop();
                 break;
-            case 2 /* run */:
+            case 2:
                 this._board.resume();
                 this._clockProbe.start();
                 this._board.getTimer().start(this._getScheduler());
@@ -23882,7 +23890,7 @@ var StellaCLI = (function (_super) {
             return;
         }
         this._runMode = runMode;
-        if (this._state === 2 /* run */) {
+        if (this._state === 2) {
             var timer = this._board.getTimer();
             timer.stop();
             timer.start(this._getScheduler());
@@ -23890,17 +23898,17 @@ var StellaCLI = (function (_super) {
     };
     StellaCLI.prototype._getScheduler = function () {
         switch (this._runMode) {
-            case 0 /* limited */:
+            case 0:
                 return this._limitingScheduler;
-            case 1 /* unlimited */:
+            case 1:
                 return this._nonLimitingScheduler;
             default:
                 throw new Error('invalid run mode');
         }
     };
     StellaCLI.prototype._onTrap = function (trap, ctx) {
-        if (ctx._state === 2 /* run */) {
-            ctx._setState(1 /* debug */);
+        if (ctx._state === 2) {
+            ctx._setState(1);
             ctx._outputLine(ctx._debuggerFrontend.describeTrap(trap));
         }
     };
@@ -23935,13 +23943,13 @@ var SystemConfigSetupProvider = (function () {
         }
         switch (args[0].toLowerCase()) {
             case 'ntsc':
-                this._config.tvMode = 0 /* ntsc */;
+                this._config.tvMode = 0;
                 break;
             case 'pal':
-                this._config.tvMode = 1 /* pal */;
+                this._config.tvMode = 1;
                 break;
             case 'secam':
-                this._config.tvMode = 2 /* secam */;
+                this._config.tvMode = 2;
                 break;
             default:
                 throw new Error("invalid TV mode \"" + args[0] + "\"");
@@ -23968,11 +23976,11 @@ var SystemConfigSetupProvider = (function () {
     };
     SystemConfigSetupProvider.prototype._humanReadableTvMode = function (mode) {
         switch (mode) {
-            case 0 /* ntsc */:
+            case 0:
                 return 'NTSC';
-            case 1 /* pal */:
+            case 1:
                 return 'PAL';
-            case 2 /* secam */:
+            case 2:
                 return 'SECAM';
             default:
                 throw new Error("invalid TV mode " + mode);
@@ -24066,10 +24074,10 @@ var PrepackagedFilesystemProvider = (function (_super) {
         if (typeof (content) === 'undefined')
             throw new Error(util.format('%s not part of file bundle', name));
         if (Buffer.isBuffer(content)) {
-            return 1 /* FILE */;
+            return 1;
         }
         else {
-            return 0 /* DIRECTORY */;
+            return 0;
         }
     };
     PrepackagedFilesystemProvider.prototype._lookup = function (path) {
@@ -24205,7 +24213,7 @@ var Debugger = (function () {
     Debugger.prototype.dumpState = function () {
         var state = this._cpu.state;
         switch (this._cpu.executionState) {
-            case 0 /* boot */:
+            case 0:
         }
         var result = '' +
             'A = ' + hex.encode(state.a, 2) + '   ' +
@@ -24237,7 +24245,7 @@ var Debugger = (function () {
             cycles++;
             if (lastExecutionState !== this._cpu.executionState) {
                 lastExecutionState = this._cpu.executionState;
-                if (lastExecutionState === 1 /* fetch */) {
+                if (lastExecutionState === 1) {
                     instruction++;
                 }
             }
@@ -24274,11 +24282,11 @@ var Debugger = (function () {
             return 'halted';
         }
         switch (this._cpu.executionState) {
-            case 0 /* boot */:
+            case 0:
                 return 'boot';
-            case 1 /* fetch */:
+            case 1:
                 return 'fetch';
-            case 2 /* execute */:
+            case 2:
                 return 'execute';
         }
     };
@@ -24286,16 +24294,16 @@ var Debugger = (function () {
         if (this._traceEnabled || this._breakpointsEnabled) {
             this._lastInstructionPointer = this._cpu.getLastInstructionPointer() || 0;
             this._board.cpuClock.addHandler(this._cpuClockHandler, this);
-            this._board.setClockMode(0 /* instruction */);
+            this._board.setClockMode(0);
         }
         else {
             this._board.cpuClock.removeHandler(this._cpuClockHandler, this);
-            this._board.setClockMode(1 /* lazy */);
+            this._board.setClockMode(1);
         }
     };
     Debugger.prototype._cpuClockHandler = function (clocks, ctx) {
         var lastInstructionPointer = ctx._cpu.getLastInstructionPointer();
-        if (ctx._cpu.executionState !== 1 /* fetch */ ||
+        if (ctx._cpu.executionState !== 1 ||
             lastInstructionPointer === ctx._lastInstructionPointer) {
             return;
         }
@@ -24307,7 +24315,7 @@ var Debugger = (function () {
                 ctx._traceLength++;
         }
         if (ctx._breakpointsEnabled && ctx._breakpoints[ctx._cpu.state.p]) {
-            ctx._board.triggerTrap(2 /* debug */, util.format('breakpoint "%s" at %s', ctx._breakpointDescriptions[ctx._cpu.state.p] || '', hex.encode(ctx._cpu.state.p)));
+            ctx._board.triggerTrap(2, util.format('breakpoint "%s" at %s', ctx._breakpointDescriptions[ctx._cpu.state.p] || '', hex.encode(ctx._cpu.state.p)));
         }
     };
     Debugger.prototype._trapHandler = function (trap, dbg) {
@@ -24350,30 +24358,30 @@ exports.default = BoardInterface;
 var Instruction_1 = require('./Instruction');
 var CpuInterface_1 = require('./CpuInterface');
 function setFlagsNZ(state, operand) {
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */)) |
+    state.flags = (state.flags & ~(128 | 2)) |
         (operand & 0x80) |
-        (operand ? 0 : 2 /* z */);
+        (operand ? 0 : 2);
 }
 function opBoot(state, bus) {
     state.p = bus.readWord(0xFFFC);
 }
 function opAdc(state, bus, operand) {
-    if (state.flags & 8 /* d */) {
-        var d0 = (operand & 0x0F) + (state.a & 0x0F) + (state.flags & 1 /* c */), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
+    if (state.flags & 8) {
+        var d0 = (operand & 0x0F) + (state.a & 0x0F) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
         state.a = (d0 % 10) | ((d1 % 10) << 4);
-        state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+        state.flags = (state.flags & ~(128 | 2 | 1)) |
             (state.a & 0x80) |
-            (state.a ? 0 : 2 /* z */) |
-            (d1 > 9 ? 1 /* c */ : 0); // carry
+            (state.a ? 0 : 2) |
+            (d1 > 9 ? 1 : 0);
     }
     else {
-        var sum = state.a + operand + (state.flags & 1 /* c */), result = sum & 0xFF;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
         state.flags =
-            (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */ | 64 /* v */)) |
+            (state.flags & ~(128 | 2 | 1 | 64)) |
                 (result & 0x80) |
-                (result ? 0 : 2 /* z */) |
+                (result ? 0 : 2) |
                 (sum >>> 8) |
-                (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1); // overflow
+                (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
         state.a = result;
     }
 }
@@ -24384,24 +24392,24 @@ function opAnd(state, bus, operand) {
 function opAslAcc(state) {
     var old = state.a;
     state.a = (state.a << 1) & 0xFF;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
+        (state.a ? 0 : 2) |
         (old >>> 7);
 }
 function opAslMem(state, bus, operand) {
     var old = bus.read(operand), value = (old << 1) & 0xFF;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (value & 0x80) |
-        (value ? 0 : 2 /* z */) |
+        (value ? 0 : 2) |
         (old >>> 7);
 }
 function opBit(state, bus, operand) {
     state.flags =
-        (state.flags & ~(128 /* n */ | 64 /* v */ | 2 /* z */)) |
-            (operand & (128 /* n */ | 64 /* v */)) |
-            ((operand & state.a) ? 0 : 2 /* z */);
+        (state.flags & ~(128 | 64 | 2)) |
+            (operand & (128 | 64)) |
+            ((operand & state.a) ? 0 : 2);
 }
 function opBrk(state, bus) {
     var nextOpAddr = (state.p + 1) & 0xFFFF;
@@ -24409,42 +24417,42 @@ function opBrk(state, bus) {
     state.s = (state.s + 0xFF) & 0xFF;
     bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
     state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, state.flags | 16 /* b */);
+    bus.write(state.s + 0x0100, state.flags | 16);
     state.s = (state.s + 0xFF) & 0xFF;
-    state.flags |= 4 /* i */;
+    state.flags |= 4;
     state.p = (bus.readWord(0xFFFE));
 }
 function opClc(state) {
-    state.flags &= ~1 /* c */;
+    state.flags &= ~1;
 }
 function opCld(state) {
-    state.flags &= ~8 /* d */;
+    state.flags &= ~8;
 }
 function opCli(state) {
-    state.flags &= ~4 /* i */;
+    state.flags &= ~4;
 }
 function opClv(state) {
-    state.flags &= ~64 /* v */;
+    state.flags &= ~64;
 }
 function opCmp(state, bus, operand) {
     var diff = state.a + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2 /* z */) |
+        ((diff & 0xFF) ? 0 : 2) |
         (diff >>> 8);
 }
 function opCpx(state, bus, operand) {
     var diff = state.x + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2 /* z */) |
+        ((diff & 0xFF) ? 0 : 2) |
         (diff >>> 8);
 }
 function opCpy(state, bus, operand) {
     var diff = state.y + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2 /* z */) |
+        ((diff & 0xFF) ? 0 : 2) |
         (diff >>> 8);
 }
 function opDec(state, bus, operand) {
@@ -24503,18 +24511,18 @@ function opLdy(state, bus, operand) {
 function opLsrAcc(state) {
     var old = state.a;
     state.a = state.a >>> 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (state.a ? 0 : 2) |
+        (old & 1);
 }
 function opLsrMem(state, bus, operand) {
     var old = bus.read(operand), value = old >>> 1;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (value & 0x80) |
-        (value ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (value ? 0 : 2) |
+        (old & 1);
 }
 function opNop() { }
 function opOra(state, bus, operand) {
@@ -24526,7 +24534,7 @@ function opPhp(state, bus) {
     state.s = (state.s + 0xFF) & 0xFF;
 }
 function opPlp(state, bus) {
-    var mask = 16 /* b */ | 32 /* e */;
+    var mask = 16 | 32;
     state.s = (state.s + 0x01) & 0xFF;
     state.flags = (state.flags & mask) | (bus.read(0x0100 + state.s) & ~mask);
 }
@@ -24541,35 +24549,35 @@ function opPla(state, bus) {
 }
 function opRolAcc(state) {
     var old = state.a;
-    state.a = ((state.a << 1) & 0xFF) | (state.flags & 1 /* c */);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.a = ((state.a << 1) & 0xFF) | (state.flags & 1);
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
+        (state.a ? 0 : 2) |
         (old >>> 7);
 }
 function opRolMem(state, bus, operand) {
-    var old = bus.read(operand), value = ((old << 1) & 0xFF) | (state.flags & 1 /* c */);
+    var old = bus.read(operand), value = ((old << 1) & 0xFF) | (state.flags & 1);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (value & 0x80) |
-        (value ? 0 : 2 /* z */) |
+        (value ? 0 : 2) |
         (old >>> 7);
 }
 function opRorAcc(state) {
     var old = state.a;
-    state.a = (state.a >>> 1) | ((state.flags & 1 /* c */) << 7);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.a = (state.a >>> 1) | ((state.flags & 1) << 7);
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (state.a ? 0 : 2) |
+        (old & 1);
 }
 function opRorMem(state, bus, operand) {
-    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1 /* c */) << 7);
+    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (value & 0x80) |
-        (value ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (value ? 0 : 2) |
+        (old & 1);
 }
 function opRti(state, bus) {
     var returnPtr;
@@ -24590,33 +24598,33 @@ function opRts(state, bus) {
     state.p = (returnPtr + 1) & 0xFFFF;
 }
 function opSbc(state, bus, operand) {
-    if (state.flags & 8 /* d */) {
-        var d0 = ((state.a & 0x0F) - (operand & 0x0F) - (~state.flags & 1 /* c */)), d1 = ((state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0));
+    if (state.flags & 8) {
+        var d0 = ((state.a & 0x0F) - (operand & 0x0F) - (~state.flags & 1)), d1 = ((state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0));
         state.a = (d0 < 0 ? 10 + d0 : d0) | ((d1 < 0 ? 10 + d1 : d1) << 4);
-        state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+        state.flags = (state.flags & ~(128 | 2 | 1)) |
             (state.a & 0x80) |
-            (state.a ? 0 : 2 /* z */) |
-            (d1 < 0 ? 0 : 1 /* c */); // carry / borrow
+            (state.a ? 0 : 2) |
+            (d1 < 0 ? 0 : 1);
     }
     else {
         operand = (~operand & 0xFF);
-        var sum = state.a + operand + (state.flags & 1 /* c */), result = sum & 0xFF;
-        state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */ | 64 /* v */)) |
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
+        state.flags = (state.flags & ~(128 | 2 | 1 | 64)) |
             (result & 0x80) |
-            (result ? 0 : 2 /* z */) |
+            (result ? 0 : 2) |
             (sum >>> 8) |
-            (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1); // overflow
+            (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
         state.a = result;
     }
 }
 function opSec(state) {
-    state.flags |= 1 /* c */;
+    state.flags |= 1;
 }
 function opSed(state) {
-    state.flags |= 8 /* d */;
+    state.flags |= 8;
 }
 function opSei(state) {
-    state.flags |= 4 /* i */;
+    state.flags |= 4;
 }
 function opSta(state, bus, operand) {
     bus.write(operand, state.a);
@@ -24653,26 +24661,26 @@ function opTya(state) {
 function opAlr(state, bus, operand) {
     var old = state.a;
     state.a = (state.a & operand) >>> 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
-        (state.a ? 0 : 2 /* z */) |
-        (old & 1 /* c */);
+        (state.a ? 0 : 2) |
+        (old & 1);
 }
 function opAxs(state, bus, operand) {
     var value = (state.a & state.x) + (~operand & 0xFF) + 1;
     state.x = value & 0xFF;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.x & 0x80) |
-        ((state.x & 0xFF) ? 0 : 2 /* z */) |
+        ((state.x & 0xFF) ? 0 : 2) |
         (value >>> 8);
 }
 function opDcp(state, bus, operand) {
     var value = (bus.read(operand) + 0xFF) & 0xFF;
     bus.write(operand, value);
     var diff = state.a + (~value & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 /* n */ | 2 /* z */ | 1 /* c */)) |
+    state.flags = (state.flags & ~(128 | 2 | 1)) |
         (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2 /* z */) |
+        ((diff & 0xFF) ? 0 : 2) |
         (diff >>> 8);
 }
 function opLax(state, bus, operand) {
@@ -24684,7 +24692,7 @@ var Cpu = (function () {
     function Cpu(_bus, _rng) {
         this._bus = _bus;
         this._rng = _rng;
-        this.executionState = 0 /* boot */;
+        this.executionState = 0;
         this.state = new CpuInterface_1.default.State();
         this._opCycles = 0;
         this._instructionCallback = null;
@@ -24739,8 +24747,8 @@ var Cpu = (function () {
         this.state.s = this._rng ? this._rng.int(0xFF) : 0;
         this.state.p = this._rng ? this._rng.int(0xFFFF) : 0;
         this.state.flags = (this._rng ? this._rng.int(0xFF) : 0) |
-            4 /* i */ | 32 /* e */ | 16 /* b */;
-        this.executionState = 0 /* boot */;
+            4 | 32 | 16;
+        this.executionState = 0;
         this._opCycles = 7;
         this._interruptPending = false;
         this._nmiPending = false;
@@ -24752,15 +24760,14 @@ var Cpu = (function () {
             return;
         }
         switch (this.executionState) {
-            case 0 /* boot */:
-            case 2 /* execute */:
+            case 0:
+            case 2:
                 if (--this._opCycles === 0) {
                     this._instructionCallback(this.state, this._bus, this._operand);
-                    this.executionState = 1 /* fetch */;
+                    this.executionState = 1;
                 }
                 break;
-            case 1 /* fetch */:
-                // TODO: interrupt handling
+            case 1:
                 this._fetch();
         }
         return this;
@@ -24770,18 +24777,18 @@ var Cpu = (function () {
         var addressingMode = instruction.addressingMode, dereference = false, slowIndexedAccess = false;
         this._lastInstructionPointer = this.state.p;
         switch (instruction.operation) {
-            case 0 /* adc */:
+            case 0:
                 this._opCycles = 0;
                 this._instructionCallback = opAdc;
                 dereference = true;
                 break;
-            case 1 /* and */:
+            case 1:
                 this._opCycles = 0;
                 this._instructionCallback = opAnd;
                 dereference = true;
                 break;
-            case 2 /* asl */:
-                if (addressingMode === 0 /* implied */) {
+            case 2:
+                if (addressingMode === 0) {
                     this._opCycles = 1;
                     this._instructionCallback = opAslAcc;
                 }
@@ -24791,9 +24798,9 @@ var Cpu = (function () {
                     slowIndexedAccess = true;
                 }
                 break;
-            case 3 /* bcc */:
-                if (this.state.flags & 1 /* c */) {
-                    addressingMode = 0 /* implied */;
+            case 3:
+                if (this.state.flags & 1) {
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
@@ -24803,62 +24810,50 @@ var Cpu = (function () {
                     this._opCycles = 0;
                 }
                 break;
-            case 4 /* bcs */:
-                if (this.state.flags & 1 /* c */) {
+            case 4:
+                if (this.state.flags & 1) {
                     this._instructionCallback = opJmp;
                     this._opCycles = 0;
                 }
                 else {
-                    addressingMode = 0 /* implied */;
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
                 }
                 break;
-            case 5 /* beq */:
-                if (this.state.flags & 2 /* z */) {
+            case 5:
+                if (this.state.flags & 2) {
                     this._instructionCallback = opJmp;
                     this._opCycles = 0;
                 }
                 else {
-                    addressingMode = 0 /* implied */;
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
                 }
                 break;
-            case 6 /* bit */:
+            case 6:
                 this._opCycles = 0;
                 this._instructionCallback = opBit;
                 dereference = true;
                 break;
-            case 7 /* bmi */:
-                if (this.state.flags & 128 /* n */) {
+            case 7:
+                if (this.state.flags & 128) {
                     this._instructionCallback = opJmp;
                     this._opCycles = 0;
                 }
                 else {
-                    addressingMode = 0 /* implied */;
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
                 }
                 break;
-            case 8 /* bne */:
-                if (this.state.flags & 2 /* z */) {
-                    addressingMode = 0 /* implied */;
-                    this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
-                    this._opCycles = 1;
-                }
-                else {
-                    this._instructionCallback = opJmp;
-                    this._opCycles = 0;
-                }
-                break;
-            case 9 /* bpl */:
-                if (this.state.flags & 128 /* n */) {
-                    addressingMode = 0 /* implied */;
+            case 8:
+                if (this.state.flags & 2) {
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
@@ -24868,9 +24863,9 @@ var Cpu = (function () {
                     this._opCycles = 0;
                 }
                 break;
-            case 11 /* bvc */:
-                if (this.state.flags & 64 /* v */) {
-                    addressingMode = 0 /* implied */;
+            case 9:
+                if (this.state.flags & 128) {
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
@@ -24880,109 +24875,121 @@ var Cpu = (function () {
                     this._opCycles = 0;
                 }
                 break;
-            case 12 /* bvs */:
-                if (this.state.flags & 64 /* v */) {
+            case 11:
+                if (this.state.flags & 64) {
+                    addressingMode = 0;
+                    this._instructionCallback = opNop;
+                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this._opCycles = 1;
+                }
+                else {
+                    this._instructionCallback = opJmp;
+                    this._opCycles = 0;
+                }
+                break;
+            case 12:
+                if (this.state.flags & 64) {
                     this._instructionCallback = opJmp;
                     this._opCycles = 0;
                 }
                 else {
-                    addressingMode = 0 /* implied */;
+                    addressingMode = 0;
                     this._instructionCallback = opNop;
                     this.state.p = (this.state.p + 1) & 0xFFFF;
                     this._opCycles = 1;
                 }
                 break;
-            case 10 /* brk */:
+            case 10:
                 this._opCycles = 6;
                 this._instructionCallback = opBrk;
                 break;
-            case 13 /* clc */:
+            case 13:
                 this._opCycles = 1;
                 this._instructionCallback = opClc;
                 break;
-            case 14 /* cld */:
+            case 14:
                 this._opCycles = 1;
                 this._instructionCallback = opCld;
                 break;
-            case 15 /* cli */:
+            case 15:
                 this._opCycles = 1;
                 this._instructionCallback = opCli;
                 break;
-            case 16 /* clv */:
+            case 16:
                 this._opCycles = 1;
                 this._instructionCallback = opClv;
                 break;
-            case 17 /* cmp */:
+            case 17:
                 this._opCycles = 0;
                 this._instructionCallback = opCmp;
                 dereference = true;
                 break;
-            case 18 /* cpx */:
+            case 18:
                 this._opCycles = 0;
                 this._instructionCallback = opCpx;
                 dereference = true;
                 break;
-            case 19 /* cpy */:
+            case 19:
                 this._opCycles = 0;
                 this._instructionCallback = opCpy;
                 dereference = true;
                 break;
-            case 20 /* dec */:
+            case 20:
                 this._opCycles = 3;
                 this._instructionCallback = opDec;
                 slowIndexedAccess = true;
                 break;
-            case 21 /* dex */:
+            case 21:
                 this._opCycles = 1;
                 this._instructionCallback = opDex;
                 break;
-            case 22 /* dey */:
+            case 22:
                 this._opCycles = 1;
                 this._instructionCallback = opDey;
                 break;
-            case 23 /* eor */:
+            case 23:
                 this._opCycles = 0;
                 this._instructionCallback = opEor;
                 dereference = true;
                 break;
-            case 24 /* inc */:
+            case 24:
                 this._opCycles = 3;
                 this._instructionCallback = opInc;
                 slowIndexedAccess = true;
                 break;
-            case 25 /* inx */:
+            case 25:
                 this._opCycles = 1;
                 this._instructionCallback = opInx;
                 break;
-            case 26 /* iny */:
+            case 26:
                 this._opCycles = 1;
                 this._instructionCallback = opIny;
                 break;
-            case 27 /* jmp */:
+            case 27:
                 this._opCycles = 0;
                 this._instructionCallback = opJmp;
                 break;
-            case 28 /* jsr */:
+            case 28:
                 this._opCycles = 3;
                 this._instructionCallback = opJsr;
                 break;
-            case 29 /* lda */:
+            case 29:
                 this._opCycles = 0;
                 this._instructionCallback = opLda;
                 dereference = true;
                 break;
-            case 30 /* ldx */:
+            case 30:
                 this._opCycles = 0;
                 this._instructionCallback = opLdx;
                 dereference = true;
                 break;
-            case 31 /* ldy */:
+            case 31:
                 this._opCycles = 0;
                 this._instructionCallback = opLdy;
                 dereference = true;
                 break;
-            case 32 /* lsr */:
-                if (addressingMode === 0 /* implied */) {
+            case 32:
+                if (addressingMode === 0) {
                     this._opCycles = 1;
                     this._instructionCallback = opLsrAcc;
                 }
@@ -24992,36 +24999,36 @@ var Cpu = (function () {
                     slowIndexedAccess = true;
                 }
                 break;
-            case 33 /* nop */:
-            case 56 /* dop */:
-            case 57 /* top */:
+            case 33:
+            case 56:
+            case 57:
                 this._opCycles = 0;
                 dereference = true;
                 this._instructionCallback = opNop;
                 break;
-            case 34 /* ora */:
+            case 34:
                 this._opCycles = 0;
                 this._instructionCallback = opOra;
                 dereference = true;
                 break;
-            case 36 /* php */:
+            case 36:
                 this._opCycles = 2;
                 this._instructionCallback = opPhp;
                 break;
-            case 35 /* pha */:
+            case 35:
                 this._opCycles = 2;
                 this._instructionCallback = opPha;
                 break;
-            case 37 /* pla */:
+            case 37:
                 this._opCycles = 3;
                 this._instructionCallback = opPla;
                 break;
-            case 38 /* plp */:
+            case 38:
                 this._opCycles = 3;
                 this._instructionCallback = opPlp;
                 break;
-            case 39 /* rol */:
-                if (addressingMode === 0 /* implied */) {
+            case 39:
+                if (addressingMode === 0) {
                     this._opCycles = 1;
                     this._instructionCallback = opRolAcc;
                 }
@@ -25031,8 +25038,8 @@ var Cpu = (function () {
                     slowIndexedAccess = true;
                 }
                 break;
-            case 40 /* ror */:
-                if (addressingMode === 0 /* implied */) {
+            case 40:
+                if (addressingMode === 0) {
                     this._opCycles = 1;
                     this._instructionCallback = opRorAcc;
                 }
@@ -25042,84 +25049,84 @@ var Cpu = (function () {
                     slowIndexedAccess = true;
                 }
                 break;
-            case 41 /* rti */:
+            case 41:
                 this._opCycles = 5;
                 this._instructionCallback = opRti;
                 break;
-            case 42 /* rts */:
+            case 42:
                 this._opCycles = 5;
                 this._instructionCallback = opRts;
                 break;
-            case 43 /* sbc */:
+            case 43:
                 this._opCycles = 0;
                 this._instructionCallback = opSbc;
                 dereference = true;
                 break;
-            case 44 /* sec */:
+            case 44:
                 this._opCycles = 1;
                 this._instructionCallback = opSec;
                 break;
-            case 45 /* sed */:
+            case 45:
                 this._opCycles = 1;
                 this._instructionCallback = opSed;
                 break;
-            case 46 /* sei */:
+            case 46:
                 this._opCycles = 1;
                 this._instructionCallback = opSei;
                 break;
-            case 47 /* sta */:
+            case 47:
                 this._opCycles = 1;
                 this._instructionCallback = opSta;
                 slowIndexedAccess = true;
                 break;
-            case 48 /* stx */:
+            case 48:
                 this._opCycles = 1;
                 this._instructionCallback = opStx;
                 slowIndexedAccess = true;
                 break;
-            case 49 /* sty */:
+            case 49:
                 this._opCycles = 1;
                 this._instructionCallback = opSty;
                 slowIndexedAccess = true;
                 break;
-            case 50 /* tax */:
+            case 50:
                 this._opCycles = 1;
                 this._instructionCallback = opTax;
                 break;
-            case 51 /* tay */:
+            case 51:
                 this._opCycles = 1;
                 this._instructionCallback = opTay;
                 break;
-            case 52 /* tsx */:
+            case 52:
                 this._opCycles = 1;
                 this._instructionCallback = opTsx;
                 break;
-            case 53 /* txa */:
+            case 53:
                 this._opCycles = 1;
                 this._instructionCallback = opTxa;
                 break;
-            case 54 /* txs */:
+            case 54:
                 this._opCycles = 1;
                 this._instructionCallback = opTxs;
                 break;
-            case 55 /* tya */:
+            case 55:
                 this._opCycles = 1;
                 this._instructionCallback = opTya;
                 break;
-            case 58 /* alr */:
+            case 58:
                 this._opCycles = 0;
                 this._instructionCallback = opAlr;
                 break;
-            case 59 /* axs */:
+            case 59:
                 this._opCycles = 0;
                 this._instructionCallback = opAxs;
                 break;
-            case 60 /* dcp */:
+            case 60:
                 this._opCycles = 3;
                 this._instructionCallback = opDcp;
                 slowIndexedAccess = true;
                 break;
-            case 61 /* lax */:
+            case 61:
                 this._opCycles = 0;
                 this._instructionCallback = opLax;
                 dereference = true;
@@ -25132,23 +25139,23 @@ var Cpu = (function () {
         this.state.p = (this.state.p + 1) & 0xFFFF;
         var value, base;
         switch (addressingMode) {
-            case 1 /* immediate */:
+            case 1:
                 this._operand = this._bus.read(this.state.p);
                 dereference = false;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles++;
                 break;
-            case 2 /* zeroPage */:
+            case 2:
                 this._operand = this._bus.read(this.state.p);
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles++;
                 break;
-            case 3 /* absolute */:
+            case 3:
                 this._operand = this._bus.readWord(this.state.p);
                 this.state.p = (this.state.p + 2) & 0xFFFF;
                 this._opCycles += 2;
                 break;
-            case 4 /* indirect */:
+            case 4:
                 value = this._bus.readWord(this.state.p);
                 if ((value & 0xFF) === 0xFF)
                     this._operand = this._bus.read(value) + (this._bus.read(value & 0xFF00) << 8);
@@ -25157,21 +25164,21 @@ var Cpu = (function () {
                 this.state.p = (this.state.p + 2) & 0xFFFF;
                 this._opCycles += 4;
                 break;
-            case 5 /* relative */:
+            case 5:
                 value = this._bus.read(this.state.p);
                 value = (value & 0x80) ? -(~(value - 1) & 0xFF) : value;
                 this._operand = (this.state.p + value + 0x10001) & 0xFFFF;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles += (((this._operand & 0xFF00) !== (this.state.p & 0xFF00)) ? 3 : 2);
                 break;
-            case 6 /* zeroPageX */:
+            case 6:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
                 this._operand = (base + this.state.x) & 0xFF;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles += 2;
                 break;
-            case 7 /* absoluteX */:
+            case 7:
                 value = this._bus.readWord(this.state.p);
                 this._operand = (value + this.state.x) & 0xFFFF;
                 if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
@@ -25180,14 +25187,14 @@ var Cpu = (function () {
                 this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
                 this.state.p = (this.state.p + 2) & 0xFFFF;
                 break;
-            case 9 /* zeroPageY */:
+            case 9:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
                 this._operand = (base + this.state.y) & 0xFF;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 this._opCycles += 2;
                 break;
-            case 10 /* absoluteY */:
+            case 10:
                 value = this._bus.readWord(this.state.p);
                 this._operand = (value + this.state.y) & 0xFFFF;
                 if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
@@ -25196,7 +25203,7 @@ var Cpu = (function () {
                 this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
                 this.state.p = (this.state.p + 2) & 0xFFFF;
                 break;
-            case 8 /* indexedIndirectX */:
+            case 8:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
                 value = (base + this.state.x) & 0xFF;
@@ -25209,7 +25216,7 @@ var Cpu = (function () {
                 this._opCycles += 4;
                 this.state.p = (this.state.p + 1) & 0xFFFF;
                 break;
-            case 11 /* indirectIndexedY */:
+            case 11:
                 value = this._bus.read(this.state.p);
                 if (value === 0xFF) {
                     value = this._bus.read(0xFF) + (this._bus.read(0x00) << 8);
@@ -25229,7 +25236,7 @@ var Cpu = (function () {
             this._operand = this._bus.read(this._operand);
             this._opCycles++;
         }
-        this.executionState = 2 /* execute */;
+        this.executionState = 2;
     };
     return Cpu;
 }());
@@ -25277,32 +25284,32 @@ var Disassembler = (function () {
         };
         var decodeSint8 = function (value) { return (value & 0x80) ? (-(~(value - 1) & 0xFF)) : value; };
         switch (instruction.addressingMode) {
-            case 0 /* implied */:
+            case 0:
                 return operation;
-            case 1 /* immediate */:
+            case 1:
                 return operation + ' #' + read8();
-            case 2 /* zeroPage */:
+            case 2:
                 return operation + ' ' + read8();
-            case 3 /* absolute */:
+            case 3:
                 return operation + ' ' + read16();
-            case 4 /* indirect */:
+            case 4:
                 return operation + ' (' + read16() + ')';
-            case 5 /* relative */:
+            case 5:
                 var distance = decodeSint8(this._peek(address + 1));
                 return operation + ' ' +
                     hex.encode(distance, 2) + ' ; -> '
                     + hex.encode((0x10002 + address + distance) % 0x10000, 4);
-            case 6 /* zeroPageX */:
+            case 6:
                 return operation + ' ' + read8() + ',X';
-            case 7 /* absoluteX */:
+            case 7:
                 return operation + ' ' + read16() + ',X';
-            case 8 /* indexedIndirectX */:
+            case 8:
                 return operation + ' (' + read8() + ',X)';
-            case 9 /* zeroPageY */:
+            case 9:
                 return operation + ' ' + read8() + ',Y';
-            case 10 /* absoluteY */:
+            case 10:
                 return operation + ' ' + read16() + ',Y';
-            case 11 /* indirectIndexedY */:
+            case 11:
                 return operation + ' (' + read8() + '),Y';
             default:
                 return 'INVALID';
@@ -25332,18 +25339,18 @@ var Instruction = (function () {
     }
     Instruction.prototype.getSize = function () {
         switch (this.addressingMode) {
-            case 1 /* immediate */:
-            case 2 /* zeroPage */:
-            case 6 /* zeroPageX */:
-            case 9 /* zeroPageY */:
-            case 8 /* indexedIndirectX */:
-            case 11 /* indirectIndexedY */:
-            case 5 /* relative */:
+            case 1:
+            case 2:
+            case 6:
+            case 9:
+            case 8:
+            case 11:
+            case 5:
                 return 2;
-            case 3 /* absolute */:
-            case 7 /* absoluteX */:
-            case 10 /* absoluteY */:
-            case 4 /* indirect */:
+            case 3:
+            case 7:
+            case 10:
+            case 4:
                 return 3;
             default:
                 return 1;
@@ -25428,12 +25435,11 @@ var Instruction;
 ;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Instruction;
-// Opcodes init
 var Instruction;
 (function (Instruction) {
     (function () {
         for (var i = 0; i < 256; i++) {
-            Instruction.opcodes[i] = new Instruction(62 /* invalid */, 12 /* invalid */);
+            Instruction.opcodes[i] = new Instruction(62, 12);
         }
     })();
     (function () {
@@ -25441,61 +25447,61 @@ var Instruction;
         for (var i = 0; i < 8; i++) {
             switch (i) {
                 case 0:
-                    operation = 34 /* ora */;
+                    operation = 34;
                     break;
                 case 1:
-                    operation = 1 /* and */;
+                    operation = 1;
                     break;
                 case 2:
-                    operation = 23 /* eor */;
+                    operation = 23;
                     break;
                 case 3:
-                    operation = 0 /* adc */;
+                    operation = 0;
                     break;
                 case 4:
-                    operation = 47 /* sta */;
+                    operation = 47;
                     break;
                 case 5:
-                    operation = 29 /* lda */;
+                    operation = 29;
                     break;
                 case 6:
-                    operation = 17 /* cmp */;
+                    operation = 17;
                     break;
                 case 7:
-                    operation = 43 /* sbc */;
+                    operation = 43;
                     break;
             }
             ;
             for (var j = 0; j < 8; j++) {
                 switch (j) {
                     case 0:
-                        addressingMode = 8 /* indexedIndirectX */;
+                        addressingMode = 8;
                         break;
                     case 1:
-                        addressingMode = 2 /* zeroPage */;
+                        addressingMode = 2;
                         break;
                     case 2:
-                        addressingMode = 1 /* immediate */;
+                        addressingMode = 1;
                         break;
                     case 3:
-                        addressingMode = 3 /* absolute */;
+                        addressingMode = 3;
                         break;
                     case 4:
-                        addressingMode = 11 /* indirectIndexedY */;
+                        addressingMode = 11;
                         break;
                     case 5:
-                        addressingMode = 6 /* zeroPageX */;
+                        addressingMode = 6;
                         break;
                     case 6:
-                        addressingMode = 10 /* absoluteY */;
+                        addressingMode = 10;
                         break;
                     case 7:
-                        addressingMode = 7 /* absoluteX */;
+                        addressingMode = 7;
                         break;
                 }
-                if (operation === 47 /* sta */ && addressingMode === 1 /* immediate */)
-                    addressingMode = 12 /* invalid */;
-                if (operation !== 62 /* invalid */ && addressingMode !== 12 /* invalid */) {
+                if (operation === 47 && addressingMode === 1)
+                    addressingMode = 12;
+                if (operation !== 62 && addressingMode !== 12) {
                     opcode = (i << 5) | (j << 2) | 1;
                     Instruction.opcodes[opcode].operation = operation;
                     Instruction.opcodes[opcode].addressingMode = addressingMode;
@@ -25503,144 +25509,143 @@ var Instruction;
             }
         }
         function set(opcode, operation, addressingMode) {
-            if (Instruction.opcodes[opcode].operation !== 62 /* invalid */) {
+            if (Instruction.opcodes[opcode].operation !== 62) {
                 throw new Error("entry for opcode " + opcode + " already exists");
             }
             Instruction.opcodes[opcode].operation = operation;
             Instruction.opcodes[opcode].addressingMode = addressingMode;
         }
-        set(0x06, 2 /* asl */, 2 /* zeroPage */);
-        set(0x0A, 2 /* asl */, 0 /* implied */);
-        set(0x0E, 2 /* asl */, 3 /* absolute */);
-        set(0x16, 2 /* asl */, 6 /* zeroPageX */);
-        set(0x1E, 2 /* asl */, 7 /* absoluteX */);
-        set(0x26, 39 /* rol */, 2 /* zeroPage */);
-        set(0x2A, 39 /* rol */, 0 /* implied */);
-        set(0x2E, 39 /* rol */, 3 /* absolute */);
-        set(0x36, 39 /* rol */, 6 /* zeroPageX */);
-        set(0x3E, 39 /* rol */, 7 /* absoluteX */);
-        set(0x46, 32 /* lsr */, 2 /* zeroPage */);
-        set(0x4A, 32 /* lsr */, 0 /* implied */);
-        set(0x4E, 32 /* lsr */, 3 /* absolute */);
-        set(0x56, 32 /* lsr */, 6 /* zeroPageX */);
-        set(0x5E, 32 /* lsr */, 7 /* absoluteX */);
-        set(0x66, 40 /* ror */, 2 /* zeroPage */);
-        set(0x6A, 40 /* ror */, 0 /* implied */);
-        set(0x6E, 40 /* ror */, 3 /* absolute */);
-        set(0x76, 40 /* ror */, 6 /* zeroPageX */);
-        set(0x7E, 40 /* ror */, 7 /* absoluteX */);
-        set(0x86, 48 /* stx */, 2 /* zeroPage */);
-        set(0x8E, 48 /* stx */, 3 /* absolute */);
-        set(0x96, 48 /* stx */, 9 /* zeroPageY */);
-        set(0xA2, 30 /* ldx */, 1 /* immediate */);
-        set(0xA6, 30 /* ldx */, 2 /* zeroPage */);
-        set(0xAE, 30 /* ldx */, 3 /* absolute */);
-        set(0xB6, 30 /* ldx */, 9 /* zeroPageY */);
-        set(0xBE, 30 /* ldx */, 10 /* absoluteY */);
-        set(0xC6, 20 /* dec */, 2 /* zeroPage */);
-        set(0xCE, 20 /* dec */, 3 /* absolute */);
-        set(0xD6, 20 /* dec */, 6 /* zeroPageX */);
-        set(0xDE, 20 /* dec */, 7 /* absoluteX */);
-        set(0xE6, 24 /* inc */, 2 /* zeroPage */);
-        set(0xEE, 24 /* inc */, 3 /* absolute */);
-        set(0xF6, 24 /* inc */, 6 /* zeroPageX */);
-        set(0xFE, 24 /* inc */, 7 /* absoluteX */);
-        set(0x24, 6 /* bit */, 2 /* zeroPage */);
-        set(0x2C, 6 /* bit */, 3 /* absolute */);
-        set(0x4C, 27 /* jmp */, 3 /* absolute */);
-        set(0x6C, 27 /* jmp */, 4 /* indirect */);
-        set(0x84, 49 /* sty */, 2 /* zeroPage */);
-        set(0x8C, 49 /* sty */, 3 /* absolute */);
-        set(0x94, 49 /* sty */, 6 /* zeroPageX */);
-        set(0xA0, 31 /* ldy */, 1 /* immediate */);
-        set(0xA4, 31 /* ldy */, 2 /* zeroPage */);
-        set(0xAC, 31 /* ldy */, 3 /* absolute */);
-        set(0xB4, 31 /* ldy */, 6 /* zeroPageX */);
-        set(0xBC, 31 /* ldy */, 7 /* absoluteX */);
-        set(0xC0, 19 /* cpy */, 1 /* immediate */);
-        set(0xC4, 19 /* cpy */, 2 /* zeroPage */);
-        set(0xCC, 19 /* cpy */, 3 /* absolute */);
-        set(0xE0, 18 /* cpx */, 1 /* immediate */);
-        set(0xE4, 18 /* cpx */, 2 /* zeroPage */);
-        set(0xEC, 18 /* cpx */, 3 /* absolute */);
-        set(0x10, 9 /* bpl */, 5 /* relative */);
-        set(0x30, 7 /* bmi */, 5 /* relative */);
-        set(0x50, 11 /* bvc */, 5 /* relative */);
-        set(0x70, 12 /* bvs */, 5 /* relative */);
-        set(0x90, 3 /* bcc */, 5 /* relative */);
-        set(0xB0, 4 /* bcs */, 5 /* relative */);
-        set(0xD0, 8 /* bne */, 5 /* relative */);
-        set(0xF0, 5 /* beq */, 5 /* relative */);
-        set(0x00, 10 /* brk */, 0 /* implied */);
-        set(0x20, 28 /* jsr */, 3 /* absolute */);
-        set(0x40, 41 /* rti */, 0 /* implied */);
-        set(0x60, 42 /* rts */, 0 /* implied */);
-        set(0x08, 36 /* php */, 0 /* implied */);
-        set(0x28, 38 /* plp */, 0 /* implied */);
-        set(0x48, 35 /* pha */, 0 /* implied */);
-        set(0x68, 37 /* pla */, 0 /* implied */);
-        set(0x88, 22 /* dey */, 0 /* implied */);
-        set(0xA8, 51 /* tay */, 0 /* implied */);
-        set(0xC8, 26 /* iny */, 0 /* implied */);
-        set(0xE8, 25 /* inx */, 0 /* implied */);
-        set(0x18, 13 /* clc */, 0 /* implied */);
-        set(0x38, 44 /* sec */, 0 /* implied */);
-        set(0x58, 15 /* cli */, 0 /* implied */);
-        set(0x78, 46 /* sei */, 0 /* implied */);
-        set(0x98, 55 /* tya */, 0 /* implied */);
-        set(0xB8, 16 /* clv */, 0 /* implied */);
-        set(0xD8, 14 /* cld */, 0 /* implied */);
-        set(0xF8, 45 /* sed */, 0 /* implied */);
-        set(0x8A, 53 /* txa */, 0 /* implied */);
-        set(0x9A, 54 /* txs */, 0 /* implied */);
-        set(0xAA, 50 /* tax */, 0 /* implied */);
-        set(0xBA, 52 /* tsx */, 0 /* implied */);
-        set(0xCA, 21 /* dex */, 0 /* implied */);
-        set(0xEA, 33 /* nop */, 0 /* implied */);
-        // instructions for undocumented opcodes
-        set(0x1A, 33 /* nop */, 0 /* implied */);
-        set(0x3A, 33 /* nop */, 0 /* implied */);
-        set(0x5A, 33 /* nop */, 0 /* implied */);
-        set(0x7A, 33 /* nop */, 0 /* implied */);
-        set(0xDA, 33 /* nop */, 0 /* implied */);
-        set(0xFA, 33 /* nop */, 0 /* implied */);
-        set(0x04, 56 /* dop */, 2 /* zeroPage */);
-        set(0x14, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x34, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x44, 56 /* dop */, 2 /* zeroPage */);
-        set(0x54, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x64, 56 /* dop */, 2 /* zeroPage */);
-        set(0x74, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x80, 56 /* dop */, 1 /* immediate */);
-        set(0x82, 56 /* dop */, 1 /* immediate */);
-        set(0x89, 56 /* dop */, 1 /* immediate */);
-        set(0xC2, 56 /* dop */, 1 /* immediate */);
-        set(0xD4, 56 /* dop */, 6 /* zeroPageX */);
-        set(0xE2, 56 /* dop */, 1 /* immediate */);
-        set(0xF4, 56 /* dop */, 6 /* zeroPageX */);
-        set(0x0C, 57 /* top */, 3 /* absolute */);
-        set(0x1C, 57 /* top */, 7 /* absoluteX */);
-        set(0x3C, 57 /* top */, 7 /* absoluteX */);
-        set(0x5C, 57 /* top */, 7 /* absoluteX */);
-        set(0x7C, 57 /* top */, 7 /* absoluteX */);
-        set(0xDC, 57 /* top */, 7 /* absoluteX */);
-        set(0xFC, 57 /* top */, 7 /* absoluteX */);
-        set(0xEB, 43 /* sbc */, 1 /* immediate */);
-        set(0x4B, 58 /* alr */, 1 /* immediate */);
-        set(0xCB, 59 /* axs */, 1 /* immediate */);
-        set(0xC7, 60 /* dcp */, 2 /* zeroPage */);
-        set(0xD7, 60 /* dcp */, 6 /* zeroPageX */);
-        set(0xCF, 60 /* dcp */, 3 /* absolute */);
-        set(0xDF, 60 /* dcp */, 7 /* absoluteX */);
-        set(0xDB, 60 /* dcp */, 10 /* absoluteY */);
-        set(0xC3, 60 /* dcp */, 8 /* indexedIndirectX */);
-        set(0xD3, 60 /* dcp */, 11 /* indirectIndexedY */);
-        set(0xA7, 61 /* lax */, 2 /* zeroPage */);
-        set(0xB7, 61 /* lax */, 9 /* zeroPageY */);
-        set(0xAF, 61 /* lax */, 3 /* absolute */);
-        set(0xBF, 61 /* lax */, 10 /* absoluteY */);
-        set(0xA3, 61 /* lax */, 8 /* indexedIndirectX */);
-        set(0xB3, 61 /* lax */, 11 /* indirectIndexedY */);
+        set(0x06, 2, 2);
+        set(0x0A, 2, 0);
+        set(0x0E, 2, 3);
+        set(0x16, 2, 6);
+        set(0x1E, 2, 7);
+        set(0x26, 39, 2);
+        set(0x2A, 39, 0);
+        set(0x2E, 39, 3);
+        set(0x36, 39, 6);
+        set(0x3E, 39, 7);
+        set(0x46, 32, 2);
+        set(0x4A, 32, 0);
+        set(0x4E, 32, 3);
+        set(0x56, 32, 6);
+        set(0x5E, 32, 7);
+        set(0x66, 40, 2);
+        set(0x6A, 40, 0);
+        set(0x6E, 40, 3);
+        set(0x76, 40, 6);
+        set(0x7E, 40, 7);
+        set(0x86, 48, 2);
+        set(0x8E, 48, 3);
+        set(0x96, 48, 9);
+        set(0xA2, 30, 1);
+        set(0xA6, 30, 2);
+        set(0xAE, 30, 3);
+        set(0xB6, 30, 9);
+        set(0xBE, 30, 10);
+        set(0xC6, 20, 2);
+        set(0xCE, 20, 3);
+        set(0xD6, 20, 6);
+        set(0xDE, 20, 7);
+        set(0xE6, 24, 2);
+        set(0xEE, 24, 3);
+        set(0xF6, 24, 6);
+        set(0xFE, 24, 7);
+        set(0x24, 6, 2);
+        set(0x2C, 6, 3);
+        set(0x4C, 27, 3);
+        set(0x6C, 27, 4);
+        set(0x84, 49, 2);
+        set(0x8C, 49, 3);
+        set(0x94, 49, 6);
+        set(0xA0, 31, 1);
+        set(0xA4, 31, 2);
+        set(0xAC, 31, 3);
+        set(0xB4, 31, 6);
+        set(0xBC, 31, 7);
+        set(0xC0, 19, 1);
+        set(0xC4, 19, 2);
+        set(0xCC, 19, 3);
+        set(0xE0, 18, 1);
+        set(0xE4, 18, 2);
+        set(0xEC, 18, 3);
+        set(0x10, 9, 5);
+        set(0x30, 7, 5);
+        set(0x50, 11, 5);
+        set(0x70, 12, 5);
+        set(0x90, 3, 5);
+        set(0xB0, 4, 5);
+        set(0xD0, 8, 5);
+        set(0xF0, 5, 5);
+        set(0x00, 10, 0);
+        set(0x20, 28, 3);
+        set(0x40, 41, 0);
+        set(0x60, 42, 0);
+        set(0x08, 36, 0);
+        set(0x28, 38, 0);
+        set(0x48, 35, 0);
+        set(0x68, 37, 0);
+        set(0x88, 22, 0);
+        set(0xA8, 51, 0);
+        set(0xC8, 26, 0);
+        set(0xE8, 25, 0);
+        set(0x18, 13, 0);
+        set(0x38, 44, 0);
+        set(0x58, 15, 0);
+        set(0x78, 46, 0);
+        set(0x98, 55, 0);
+        set(0xB8, 16, 0);
+        set(0xD8, 14, 0);
+        set(0xF8, 45, 0);
+        set(0x8A, 53, 0);
+        set(0x9A, 54, 0);
+        set(0xAA, 50, 0);
+        set(0xBA, 52, 0);
+        set(0xCA, 21, 0);
+        set(0xEA, 33, 0);
+        set(0x1A, 33, 0);
+        set(0x3A, 33, 0);
+        set(0x5A, 33, 0);
+        set(0x7A, 33, 0);
+        set(0xDA, 33, 0);
+        set(0xFA, 33, 0);
+        set(0x04, 56, 2);
+        set(0x14, 56, 6);
+        set(0x34, 56, 6);
+        set(0x44, 56, 2);
+        set(0x54, 56, 6);
+        set(0x64, 56, 2);
+        set(0x74, 56, 6);
+        set(0x80, 56, 1);
+        set(0x82, 56, 1);
+        set(0x89, 56, 1);
+        set(0xC2, 56, 1);
+        set(0xD4, 56, 6);
+        set(0xE2, 56, 1);
+        set(0xF4, 56, 6);
+        set(0x0C, 57, 3);
+        set(0x1C, 57, 7);
+        set(0x3C, 57, 7);
+        set(0x5C, 57, 7);
+        set(0x7C, 57, 7);
+        set(0xDC, 57, 7);
+        set(0xFC, 57, 7);
+        set(0xEB, 43, 1);
+        set(0x4B, 58, 1);
+        set(0xCB, 59, 1);
+        set(0xC7, 60, 2);
+        set(0xD7, 60, 6);
+        set(0xCF, 60, 3);
+        set(0xDF, 60, 7);
+        set(0xDB, 60, 10);
+        set(0xC3, 60, 8);
+        set(0xD3, 60, 11);
+        set(0xA7, 61, 2);
+        set(0xB7, 61, 9);
+        set(0xAF, 61, 3);
+        set(0xBF, 61, 10);
+        set(0xA3, 61, 8);
+        set(0xB3, 61, 11);
     })();
 })(Instruction || (Instruction = {}));
 ;
@@ -25750,7 +25755,7 @@ var Board = (function () {
         this.clock = new microevent_ts_1.Event();
         this.cpuClock = new microevent_ts_1.Event();
         this.trap = new microevent_ts_1.Event();
-        this._clockMode = 1 /* lazy */;
+        this._clockMode = 1;
         this._trap = false;
         this._audioEnabled = true;
         this._suspended = true;
@@ -25796,9 +25801,9 @@ var Board = (function () {
         this._joystick0 = joystick0;
         this._joystick1 = joystick1;
         this._paddles = paddles;
-        this._bus.event.trap.addHandler(function (payload) { return _this.triggerTrap(1 /* bus */, payload.message); });
+        this._bus.event.trap.addHandler(function (payload) { return _this.triggerTrap(1, payload.message); });
         this._clockMhz = Config_1.default.getClockMhz(config);
-        this._sliceSize = 228 * (config.tvMode === 0 /* ntsc */ ? 262 : 312);
+        this._sliceSize = 228 * (config.tvMode === 0 ? 262 : 312);
         this.reset();
     }
     Board.prototype.getCpu = function () {
@@ -25835,9 +25840,9 @@ var Board = (function () {
     Board.prototype.boot = function () {
         var cycles = 0, cpuCycles = 0;
         this.reset();
-        if (this._cpu.executionState !== 0 /* boot */)
+        if (this._cpu.executionState !== 0)
             throw new Error("Already booted!");
-        while (this._cpu.executionState !== 1 /* fetch */) {
+        while (this._cpu.executionState !== 1) {
             this._cycle();
             cycles++;
             if (this._subClock === 0) {
@@ -25922,9 +25927,9 @@ var Board = (function () {
             }
             if (lastExecutionState !== this._cpu.executionState) {
                 lastExecutionState = this._cpu.executionState;
-                if (this._cpu.executionState === 1 /* fetch */) {
+                if (this._cpu.executionState === 1) {
                     this._cartridge.notifyCpuCycleComplete();
-                    if (this._clockMode === 0 /* instruction */ &&
+                    if (this._clockMode === 0 &&
                         cpuCycles > 0 &&
                         this.cpuClock.hasHandlers) {
                         this.cpuClock.dispatch(cpuCycles);
@@ -25956,7 +25961,7 @@ var Board = (function () {
         this._runTask = undefined;
     };
     Board.prototype._onInvalidInstruction = function () {
-        this.triggerTrap(0 /* cpu */, 'invalid instruction');
+        this.triggerTrap(0, 'invalid instruction');
     };
     return Board;
 }());
@@ -25982,7 +25987,7 @@ var Bus = (function () {
     Bus.prototype.setTia = function (tia) {
         var _this = this;
         tia.trap.addHandler(function (payload) {
-            return _this.triggerTrap(0 /* tia */, 'TIA: ' + (payload.message || ''));
+            return _this.triggerTrap(0, 'TIA: ' + (payload.message || ''));
         });
         this._tia = tia;
         return this;
@@ -25990,7 +25995,7 @@ var Bus = (function () {
     Bus.prototype.setPia = function (pia) {
         var _this = this;
         pia.trap.addHandler(function (payload) {
-            return _this.triggerTrap(1 /* pia */, 'PIA: ' + (payload.message || ''));
+            return _this.triggerTrap(1, 'PIA: ' + (payload.message || ''));
         });
         this._pia = pia;
         return this;
@@ -25998,7 +26003,7 @@ var Bus = (function () {
     Bus.prototype.setCartridge = function (cartridge) {
         var _this = this;
         cartridge.trap.addHandler(function (payload) {
-            return _this.triggerTrap(2 /* cartridge */, 'CARTRIDGE: ' + (payload.message || ''));
+            return _this.triggerTrap(2, 'CARTRIDGE: ' + (payload.message || ''));
         });
         this._cartridge = cartridge;
         return this;
@@ -26007,46 +26012,41 @@ var Bus = (function () {
         return this.read(address) | ((this.read((address + 1) & 0xFFFF)) << 8);
     };
     Bus.prototype.read = function (address) {
-        // Mask out bits 13-15
         this._lastAddressBusValue = address;
         address &= 0x1FFF;
-        // Chip select A12 -> cartridge
         if (address & 0x1000) {
             this._lastDataBusValue = this._cartridge.read(address);
-            this.event.read.dispatch(2 /* cartridge */);
+            this.event.read.dispatch(2);
         }
         else if (address & 0x80) {
             this._lastDataBusValue = this._pia.read(address);
-            this.event.read.dispatch(1 /* pia */);
+            this.event.read.dispatch(1);
         }
         else {
             this._lastDataBusValue = this._tia.read(address);
-            this.event.read.dispatch(0 /* tia */);
+            this.event.read.dispatch(0);
         }
         return this._lastDataBusValue;
     };
     Bus.prototype.write = function (address, value) {
         this._lastDataBusValue = value;
         this._lastAddressBusValue = address;
-        // Mask out bits 12-15
         address &= 0x1FFF;
-        // Chip select A12 -> cartridge
         if (address & 0x1000) {
             this._cartridge.write(address, value);
-            this.event.write.dispatch(2 /* cartridge */);
+            this.event.write.dispatch(2);
         }
         else if (address & 0x80) {
             this._pia.write(address, value);
-            this.event.write.dispatch(1 /* pia */);
+            this.event.write.dispatch(1);
         }
         else {
             this._tia.write(address, value);
-            this.event.write.dispatch(0 /* tia */);
+            this.event.write.dispatch(0);
         }
     };
     Bus.prototype.peek = function (address) {
         address &= 0x1FFF;
-        // Chip select A12 -> cartridge
         if (address & 0x1000) {
             return this._cartridge.peek(address);
         }
@@ -26057,7 +26057,6 @@ var Bus = (function () {
             return this._tia.peek(address);
         }
     };
-    // Stub
     Bus.prototype.poke = function (address, value) { };
     Bus.prototype.getLastDataBusValue = function () {
         return this._lastDataBusValue;
@@ -26094,7 +26093,7 @@ exports.default = Bus;
 "use strict";
 var Config = (function () {
     function Config(tvMode, enableAudio, randomSeed, emulatePaddles) {
-        if (tvMode === void 0) { tvMode = 0 /* ntsc */; }
+        if (tvMode === void 0) { tvMode = 0; }
         if (enableAudio === void 0) { enableAudio = true; }
         if (randomSeed === void 0) { randomSeed = -1; }
         if (emulatePaddles === void 0) { emulatePaddles = true; }
@@ -26105,10 +26104,10 @@ var Config = (function () {
     }
     Config.getClockMhz = function (config) {
         switch (config.tvMode) {
-            case 0 /* ntsc */:
+            case 0:
                 return 3.579545;
-            case 1 /* pal */:
-            case 2 /* secam */:
+            case 1:
+            case 2:
                 return 3.546894;
         }
     };
@@ -26176,16 +26175,11 @@ var Pia = (function () {
             this.ram[i] = this._rng ? this._rng.int(0xFF) : 0;
         this._interruptFlag = 0;
         this._flagSetDuringThisCycle = false;
-        // Several cartridges (at least winter / summer / california games) seem
-        // to rely on a graceful buffer in terms of cycles before the timer wraps the
-        // first time. This looks like a bug in these games to me, unless there is some
-        // magic going on that I don't understand.
         this._timerBase = 1024;
         this._timerValue = 20 + (this._rng ? this._rng.int(0xFF - 20) : 0);
         this._timerSub = 0;
     };
     Pia.prototype.read = function (address) {
-        // RAM select = A9 low?
         if (address & 0x0200) {
             if (address & 0x0004) {
                 return this._readTimer(address);
@@ -26195,12 +26189,10 @@ var Pia = (function () {
             }
         }
         else {
-            // Mask out A7 - A15
             return this.ram[address & 0x7F];
         }
     };
     Pia.prototype.peek = function (address) {
-        // RAM select = A9 low?
         if (address & 0x0200) {
             if (address & 0x0004) {
                 return this._peekTimer(address);
@@ -26210,12 +26202,10 @@ var Pia = (function () {
             }
         }
         else {
-            // Mask out A7 - A15
             return this.ram[address & 0x7F];
         }
     };
     Pia.prototype.write = function (address, value) {
-        // RAM select = A9 low?
         if (address & 0x0200) {
             if (address & 0x0004) {
                 return this._writeTimer(address, value);
@@ -26225,7 +26215,6 @@ var Pia = (function () {
             }
         }
         else {
-            // Mask out A7 - A15
             this.ram[address & 0x7F] = value;
         }
     };
@@ -26243,15 +26232,14 @@ var Pia = (function () {
     };
     Pia.prototype._writeTimer = function (address, value) {
         this._interruptFlag = 0;
-        // clear bit 3 <-> interrupt enable/disable
         switch (address & 0x0297) {
-            case 663 /* t1024t */:
+            case 663:
                 return this._setTimer(1024, value);
-            case 662 /* tim64t */:
+            case 662:
                 return this._setTimer(64, value);
-            case 661 /* tim8t */:
+            case 661:
                 return this._setTimer(8, value);
-            case 660 /* tim1t */:
+            case 660:
                 return this._setTimer(1, value);
         }
     };
@@ -26262,7 +26250,7 @@ var Pia = (function () {
     };
     Pia.prototype._readIo = function (address) {
         switch (address & 0x0283) {
-            case 640 /* swcha */:
+            case 640:
                 return ((this._joystick1.getUp().read() ? 0 : 0x01) |
                     (this._joystick1.getDown().read() ? 0 : 0x02) |
                     (this._joystick1.getLeft().read() ? 0 : 0x04) |
@@ -26271,7 +26259,7 @@ var Pia = (function () {
                     (this._joystick0.getDown().read() ? 0 : 0x20) |
                     (this._joystick0.getLeft().read() ? 0 : 0x40) |
                     (this._joystick0.getRight().read() ? 0 : 0x80));
-            case 642 /* swchb */:
+            case 642:
                 return ((this._controlPanel.getResetButton().read() ? 0 : 0x01) |
                     (this._controlPanel.getSelectSwitch().read() ? 0 : 0x02) |
                     (this._controlPanel.getColorSwitch().read() ? 0 : 0x08) |
@@ -26388,7 +26376,6 @@ var Cartridge2k = (function (_super) {
     __extends(Cartridge2k, _super);
     function Cartridge2k(buffer) {
         _super.call(this);
-        // A11 - A15 masked out -> 0x0800 bytes of ROM
         this._rom = new Uint8Array(0x0800);
         if (buffer.length !== 0x0800) {
             throw new Error("buffer is not a 2k cartridge image: wrong length " + buffer.length);
@@ -26397,7 +26384,6 @@ var Cartridge2k = (function (_super) {
             this._rom[0x07FF - i] = buffer[buffer.length - 1 - i];
     }
     Cartridge2k.prototype.read = function (address) {
-        // Mask out A11 - A15
         return this._rom[address & 0x07FF];
     };
     Cartridge2k.prototype.getType = function () {
@@ -26443,10 +26429,6 @@ var Cartridge3F = (function (_super) {
     };
     Cartridge3F.prototype.setBus = function (bus) {
         this._bus = bus;
-        // Bankswitch on read breaks actual cartridges badly -> maybe the hardware actively
-        // watches out for STA on the bus? Disable for now, more research would be in order.
-        //
-        //this._bus.event.read.addHandler(Cartridge3F._onBusAccess, this);
         this._bus.event.write.addHandler(Cartridge3F._onBusAccess, this);
         return this;
     };
@@ -26458,9 +26440,7 @@ var Cartridge3F = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_3F;
     };
     Cartridge3F.matchesBuffer = function (buffer) {
-        // Signature shamelessly stolen from stella
-        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3F]] // STA $3F
-        );
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3F]]);
         return signatureCounts[0] >= 2;
     };
     Cartridge3F._onBusAccess = function (accessType, self) {
@@ -26486,7 +26466,6 @@ var Cartridge4k = (function (_super) {
     __extends(Cartridge4k, _super);
     function Cartridge4k(buffer) {
         _super.call(this);
-        // A12 - A15 masked out -> 0x1000 bytes of ROM
         this._rom = new Uint8Array(0x1000);
         if (buffer.length !== 0x1000) {
             throw new Error("buffer is not an 4k cartridge image: wrong length " + buffer.length);
@@ -26495,7 +26474,6 @@ var Cartridge4k = (function (_super) {
             this._rom[0x0FFF - i] = buffer[buffer.length - 1 - i];
     }
     Cartridge4k.prototype.read = function (address) {
-        // Mask out A12 - A15
         return this._rom[address & 0x0FFF];
     };
     Cartridge4k.prototype.getType = function () {
@@ -26624,7 +26602,6 @@ var CartridgeE0 = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_E0;
     };
     CartridgeE0.matchesBuffer = function (buffer) {
-        // Signatures shamelessly stolen from stella
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
             [0x8D, 0xE0, 0x1F],
             [0x8D, 0xE0, 0x5F],
@@ -26633,7 +26610,7 @@ var CartridgeE0 = (function (_super) {
             [0xAD, 0xE0, 0x1F],
             [0xAD, 0xE9, 0xFF],
             [0xAD, 0xED, 0xFF],
-            [0xAD, 0xF3, 0xBF] // LDA $BFF3
+            [0xAD, 0xF3, 0xBF]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -26703,24 +26680,17 @@ var CartrdigeE7 = (function (_super) {
     };
     CartrdigeE7.prototype.peek = function (address) {
         address &= 0x0FFF;
-        // 0 -> 0x07FF: bank 0 - 6 or RAM
         if (address < 0x0800) {
-            // RAM enabled?
             if (this._ram0Enabled) {
-                // 0x0000 - 0x03FF is write, 0x0400 - 0x07FF is read
                 return address >= 0x0400 ? this._ram0[address - 0x0400] : 0;
             }
             else {
-                //  bank 0 - 6
                 return this._bank0[address];
             }
         }
-        // 0x0800 -> 0x9FF is RAM
         if (address <= 0x09FF) {
-            // 0x0800 - 0x08FF is write, 0x0900 - 0x09FF is read
             return address >= 0x0900 ? this._ram1[address - 0x0900] : 0;
         }
-        // Higher address are the remaining 1.5k of bank 7
         return this._banks[7][0x07FF - (0x0FFF - address)];
     };
     CartrdigeE7.prototype.write = function (address, value) {
@@ -26773,7 +26743,6 @@ var CartrdigeE7 = (function (_super) {
         }
     };
     CartrdigeE7.matchesBuffer = function (buffer) {
-        // Signatures shamelessly stolen from stella
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
             [0xAD, 0xE2, 0xFF],
             [0xAD, 0xE5, 0xFF],
@@ -26781,7 +26750,7 @@ var CartrdigeE7 = (function (_super) {
             [0xAD, 0xE7, 0x1F],
             [0x0C, 0xE7, 0x1F],
             [0x8D, 0xE7, 0xFF],
-            [0x8D, 0xE7, 0x1F] // STA $1FE7
+            [0x8D, 0xE7, 0x1F]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -27071,9 +27040,7 @@ var CartridgeF8 = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_F8;
     };
     CartridgeF8.matchesBuffer = function (buffer) {
-        // Signatures shamelessly stolen from stella
-        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x8D, 0xF9, 0x1F]] // STA $1FF9
-        );
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x8D, 0xF9, 0x1F]]);
         return signatureCounts[0] >= 2;
     };
     CartridgeF8.prototype._handleBankswitch = function (address) {
@@ -27231,9 +27198,7 @@ var CartridgeFA2 = (function (_super) {
         }
         else if (address === 0x0FF4) {
             return this._accessCounter >= this._accessCounterLimit ?
-                // bit 6 zero: operation complete
                 (this._bank[address] & ~0x40) :
-                // bit 6 one: operation pending
                 (this._bank[address] | 0x40);
         }
         else {
@@ -27262,13 +27227,13 @@ var CartridgeFA2 = (function (_super) {
             for (var i = 0; i < 0x100; i++) {
                 this._ram[i] = this._savedRam[i];
             }
-            this._accessCounterLimit = 10 /* load */;
+            this._accessCounterLimit = 10;
         }
         else if (this._ram[0xFF] === 2) {
             for (var i = 0; i < 0x100; i++) {
                 this._savedRam[i] = this._ram[i];
             }
-            this._accessCounterLimit = 100 /* sace */;
+            this._accessCounterLimit = 100;
         }
         else {
             return;
@@ -27326,8 +27291,7 @@ var CartridgeFE = (function (_super) {
     CartridgeFE.prototype.notifyCpuCycleComplete = function () {
         var lastInstruction = this._bus.peek(this._cpu.getLastInstructionPointer());
         if (lastInstruction === 0x20 ||
-            lastInstruction === 0x60 // RTS
-        ) {
+            lastInstruction === 0x60) {
             this._bank = (this._cpu.state.p & 0x2000) > 0 ? this._bank0 : this._bank1;
         }
     };
@@ -27335,12 +27299,11 @@ var CartridgeFE = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_FE;
     };
     CartridgeFE.matchesBuffer = function (buffer) {
-        // Signatures shamelessly stolen from stella
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
             [0x20, 0x00, 0xD0, 0xC6, 0xC5],
             [0x20, 0xC3, 0xF8, 0xA5, 0x82],
             [0xD0, 0xFB, 0x20, 0x73, 0xFE],
-            [0x20, 0x00, 0xF0, 0x84, 0xD6] // JSR $F000; STY $D6
+            [0x20, 0x00, 0xF0, 0x84, 0xD6]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -27557,11 +27520,10 @@ var CartridgeUA = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_UA;
     };
     CartridgeUA.matchesBuffer = function (buffer) {
-        // Signatures shamelessly stolen from stella
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
             [0x8D, 0x40, 0x02],
             [0xAD, 0x40, 0x02],
-            [0xBD, 0x1F, 0x02] // LDA $21F,X
+            [0xBD, 0x1F, 0x02]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -27714,7 +27676,7 @@ var Ball = (function () {
         this._moving = false;
         this._width = 1;
         this._rendering = false;
-        this._renderCounter = -4 /* renderCounterOffset */;
+        this._renderCounter = -4;
         this._widths = new Uint8Array([1, 2, 4, 8]);
         this._delaying = false;
         this.reset();
@@ -27728,7 +27690,7 @@ var Ball = (function () {
         this._enabled = false;
         this._counter = 0;
         this._rendering = false;
-        this._renderCounter = -4 /* renderCounterOffset */;
+        this._renderCounter = -4;
         this._moving = false;
         this._hmmClocks = 0;
         this._delaying = false;
@@ -27739,14 +27701,13 @@ var Ball = (function () {
         this._updateEnabled();
     };
     Ball.prototype.hmbl = function (value) {
-        // Shift and flip the highest bit --- this gives us the necessary movement to the right
         this._hmmClocks = (value >>> 4) ^ 0x8;
     };
     Ball.prototype.resbl = function (hblank) {
         this._counter = hblank ? 159 : 157;
         if (!hblank) {
             this._rendering = true;
-            this._renderCounter = -4 /* renderCounterOffset */;
+            this._renderCounter = -4;
         }
     };
     Ball.prototype.ctrlpf = function (value) {
@@ -27760,7 +27721,6 @@ var Ball = (function () {
         this._moving = true;
     };
     Ball.prototype.movementTick = function (clock, apply) {
-        // Stop movement only if the clock matches exactly --- this is crucial for cosmic ark type hacks
         if (clock === this._hmmClocks) {
             this._moving = false;
         }
@@ -27776,7 +27736,7 @@ var Ball = (function () {
     Ball.prototype.tick = function () {
         if (this._counter === 156) {
             this._rendering = true;
-            this._renderCounter = -4 /* renderCounterOffset */;
+            this._renderCounter = -4;
         }
         else if (this._rendering && ++this._renderCounter >= this._width) {
             this._rendering = false;
@@ -27888,30 +27848,30 @@ var FrameManager = (function () {
         this._visibleOverscan = 0;
         this._waitForVsync = true;
         this._linesWithoutVsync = 0;
-        this._state = 0 /* waitForVsyncStart */;
+        this._state = 0;
         this._vsync = false;
         this._lineInState = 0;
         this._surfaceFactory = null;
         this._surface = null;
         switch (this._config.tvMode) {
-            case 0 /* ntsc */:
-                this._vblankLines = 40 /* vblankNTSC */;
-                this._kernelLines = 192 /* kernelNTSC */;
-                this._overscanLines = 30 /* overscanNTSC */;
+            case 0:
+                this._vblankLines = 40;
+                this._kernelLines = 192;
+                this._overscanLines = 30;
                 break;
-            case 1 /* pal */:
-            case 2 /* secam */:
-                this._vblankLines = 48 /* vblankPAL */;
-                this._kernelLines = 228 /* kernelPAL */;
-                this._overscanLines = 36 /* overscanPAL */;
+            case 1:
+            case 2:
+                this._vblankLines = 48;
+                this._kernelLines = 228;
+                this._overscanLines = 36;
                 break;
             default:
                 throw new Error("invalid tv mode " + this._config.tvMode);
         }
-        this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines * 3 /* vsync */;
-        this._maxLinesWithoutVsync = this._frameLines * 50 /* maxFramesWithoutVsync */;
-        this._visibleOverscan = 20 /* visibleOverscan */;
-        this._maxUnderscan = 10 /* maxUnderscan */;
+        this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines * 3;
+        this._maxLinesWithoutVsync = this._frameLines * 50;
+        this._visibleOverscan = 20;
+        this._maxUnderscan = 10;
         this.reset();
     }
     FrameManager.prototype.reset = function () {
@@ -27919,7 +27879,7 @@ var FrameManager = (function () {
         this.surfaceBuffer = null;
         this._waitForVsync = true;
         this._linesWithoutVsync = 0;
-        this._state = 0 /* waitForVsyncStart */;
+        this._state = 0;
         this._vsync = false;
         this._lineInState = 0;
         this._surface = null;
@@ -27930,14 +27890,14 @@ var FrameManager = (function () {
         }
         this._lineInState++;
         switch (this._state) {
-            case 0 /* waitForVsyncStart */:
-            case 1 /* waitForVsyncEnd */:
+            case 0:
+            case 1:
                 if (this._linesWithoutVsync > this._maxLinesWithoutVsync) {
                     this._waitForVsync = false;
-                    this._setState(2 /* waitForFrameStart */);
+                    this._setState(2);
                 }
                 break;
-            case 2 /* waitForFrameStart */:
+            case 2:
                 if (this._waitForVsync) {
                     if (this._lineInState >=
                         (this.vblank ? this._vblankLines : this._vblankLines - this._maxUnderscan)) {
@@ -27950,14 +27910,14 @@ var FrameManager = (function () {
                     }
                 }
                 break;
-            case 3 /* frame */:
+            case 3:
                 if (this._lineInState >= this._kernelLines + this._visibleOverscan) {
                     this._finalizeFrame();
                 }
                 break;
-            case 4 /* overscan */:
+            case 4:
                 if (this._lineInState >= this._overscanLines - this._visibleOverscan) {
-                    this._setState(this._waitForVsync ? 0 /* waitForVsyncStart */ : 2 /* waitForFrameStart */);
+                    this._setState(this._waitForVsync ? 0 : 2);
                 }
                 break;
         }
@@ -27966,7 +27926,7 @@ var FrameManager = (function () {
         }
     };
     FrameManager.prototype.isRendering = function () {
-        return this._state === 3 /* frame */;
+        return this._state === 3;
     };
     FrameManager.prototype.setVblank = function (vblank) {
         if (this._surfaceFactory) {
@@ -27979,22 +27939,21 @@ var FrameManager = (function () {
         }
         this._vsync = vsync;
         switch (this._state) {
-            case 0 /* waitForVsyncStart */:
-            case 2 /* waitForFrameStart */:
-            case 4 /* overscan */:
+            case 0:
+            case 2:
+            case 4:
                 if (vsync) {
-                    this._setState(1 /* waitForVsyncEnd */);
+                    this._setState(1);
                 }
                 break;
-            case 1 /* waitForVsyncEnd */:
+            case 1:
                 if (!vsync) {
-                    this._setState(2 /* waitForFrameStart */);
+                    this._setState(2);
                     this._linesWithoutVsync = 0;
                 }
                 break;
-            case 3 /* frame */:
+            case 3:
                 if (vsync) {
-                    // State is reset by finalizeFrame
                     this._finalizeFrame();
                 }
                 break;
@@ -28007,36 +27966,36 @@ var FrameManager = (function () {
         this._surfaceFactory = factory;
     };
     FrameManager.prototype.getCurrentLine = function () {
-        return this._state === 3 /* frame */ ? this._lineInState : 0;
+        return this._state === 3 ? this._lineInState : 0;
     };
     FrameManager.prototype.getDebugState = function () {
         return this._getReadableState() + ", line = " + this._lineInState + ", vblank = " + (this.vblank ? '1' : '0') + ", " + (this._waitForVsync ? '' : 'given up on vsync');
     };
     FrameManager.prototype._getReadableState = function () {
         switch (this._state) {
-            case 0 /* waitForVsyncStart */:
+            case 0:
                 return "wait for vsync start";
-            case 1 /* waitForVsyncEnd */:
+            case 1:
                 return "wait for vsync end";
-            case 2 /* waitForFrameStart */:
+            case 2:
                 return "wait for frame start";
-            case 3 /* frame */:
+            case 3:
                 return "frame";
-            case 4 /* overscan */:
+            case 4:
                 return "overscan";
         }
     };
     FrameManager.prototype._startFrame = function () {
-        this._setState(3 /* frame */);
+        this._setState(3);
         this._surface = this._surfaceFactory();
         this.surfaceBuffer = this._surface.getBuffer();
     };
     FrameManager.prototype._finalizeFrame = function () {
-        if (this._state !== 3 /* frame */) {
+        if (this._state !== 3) {
             throw new Error("finalize frame in invalid state " + this._state);
         }
         this.newFrame.dispatch(this._surface);
-        this._setState(4 /* overscan */);
+        this._setState(4);
     };
     FrameManager.prototype._setState = function (newState) {
         this._state = newState;
@@ -28098,7 +28057,7 @@ var Missile = (function () {
         this._moving = false;
         this._width = 1;
         this._rendering = false;
-        this._renderCounter = -4 /* renderCounterOffset */;
+        this._renderCounter = -4;
         this._widths = new Uint8Array([1, 2, 4, 8]);
         this.reset();
     }
@@ -28108,7 +28067,7 @@ var Missile = (function () {
         this._enabled = false;
         this._counter = 0;
         this._rendering = false;
-        this._renderCounter = -4 /* renderCounterOffset */;
+        this._renderCounter = -4;
         this._moving = false;
         this._hmmClocks = 0;
         this._decodes = drawCounterDecodes_1.decodesMissile[0];
@@ -28120,7 +28079,6 @@ var Missile = (function () {
         this._enabled = this._enam && (this._resmp === 0);
     };
     Missile.prototype.hmm = function (value) {
-        // Shift and flip the highest bit --- this gives us the necessary movement to the right
         this._hmmClocks = (value >>> 4) ^ 0x8;
     };
     Missile.prototype.resm = function (hblank) {
@@ -28151,7 +28109,6 @@ var Missile = (function () {
         this._moving = true;
     };
     Missile.prototype.movementTick = function (clock, apply) {
-        // Stop movement only if the clock matches exactly --- this is crucial for cosmic ark type hacks
         if (clock === this._hmmClocks) {
             this._moving = false;
         }
@@ -28167,7 +28124,7 @@ var Missile = (function () {
     Missile.prototype.tick = function () {
         if (this._decodes[this._counter]) {
             this._rendering = true;
-            this._renderCounter = -4 /* renderCounterOffset */;
+            this._renderCounter = -4;
         }
         else if (this._rendering && ++this._renderCounter >= this._width) {
             this._rendering = false;
@@ -28186,13 +28143,7 @@ exports.default = Missile;
 
 },{"./drawCounterDecodes":204}],199:[function(require,module,exports){
 "use strict";
-var C = 68e-9, // capacitor
-RPOT = 1e6, // total paddle resistance
-R0 = 1.8e3, // series resistor
-U = 5, // supply voltage
-LINES_FULL = 380; // treshold voltage in terms of scanline count
-// We only use the fourth order approximation for the exponential; should give
-// the exact trip point up to a few percent.
+var C = 68e-9, RPOT = 1e6, R0 = 1.8e3, U = 5, LINES_FULL = 380;
 function exp(x) {
     var x2 = x * x / 2, x3 = x2 * x / 3, x4 = x3 * x / 4;
     return 1 + x + x2 + x3 + x4;
@@ -28242,7 +28193,6 @@ var PaddleReader = (function () {
             return;
         }
         var timestamp = this._timestampRef();
-        // Update the voltage with the integral between the two timestamps
         this._u = U * (1 - (1 - this._u / U) *
             exp(-(timestamp - this._timestamp) / (this._value * RPOT + R0) / C / this._clockFreq));
         this._timestamp = timestamp;
@@ -28265,7 +28215,7 @@ var Player = (function () {
         this._moving = false;
         this._width = 8;
         this._rendering = false;
-        this._renderCounter = -5 /* renderCounterOffset */;
+        this._renderCounter = -5;
         this._patternNew = 0;
         this._patternOld = 0;
         this._pattern = 0;
@@ -28281,7 +28231,7 @@ var Player = (function () {
         this._moving = false;
         this._width = 8;
         this._rendering = false;
-        this._renderCounter = -5 /* renderCounterOffset */;
+        this._renderCounter = -5;
         this._decodes = drawCounterDecodes_1.decodesPlayer[0];
         this._patternNew = 0;
         this._patternOld = 0;
@@ -28338,7 +28288,6 @@ var Player = (function () {
         this._moving = true;
     };
     Player.prototype.movementTick = function (clock, apply) {
-        // Stop movement only if the clock matches exactly --- this is crucial for cosmic ark type hacks
         if (clock === this._hmmClocks) {
             this._moving = false;
         }
@@ -28356,7 +28305,7 @@ var Player = (function () {
     Player.prototype.tick = function () {
         if (this._decodes[this._counter]) {
             this._rendering = true;
-            this._renderCounter = -5 /* renderCounterOffset */;
+            this._renderCounter = -5;
         }
         else if (this._rendering && ++this._renderCounter >= this._width) {
             this._rendering = false;
@@ -28473,7 +28422,7 @@ var Playfield = (function () {
         this._color = 0;
         this._colorP0 = 0;
         this._colorP1 = 0;
-        this._colorMode = 0 /* normal */;
+        this._colorMode = 0;
         this._pattern = 0;
         this._refp = false;
         this._reflected = false;
@@ -28493,7 +28442,7 @@ var Playfield = (function () {
         this._color = 0;
         this._colorP0 = 0;
         this._colorP1 = 0;
-        this._colorMode = 0 /* normal */;
+        this._colorMode = 0;
         this._applyColors();
     };
     Playfield.prototype.pf0 = function (value) {
@@ -28515,7 +28464,7 @@ var Playfield = (function () {
     };
     Playfield.prototype.ctrlpf = function (value) {
         this._reflected = (value & 0x01) > 0;
-        this._colorMode = (value & 0x06) === 0x02 ? 1 /* score */ : 0 /* normal */;
+        this._colorMode = (value & 0x06) === 0x02 ? 1 : 0;
         this._applyColors();
     };
     Playfield.prototype.setColor = function (color) {
@@ -28561,10 +28510,10 @@ var Playfield = (function () {
     };
     Playfield.prototype._applyColors = function () {
         switch (this._colorMode) {
-            case 0 /* normal */:
+            case 0:
                 this._colorLeft = this._colorRight = this._color;
                 break;
-            case 1 /* score */:
+            case 1:
                 this._colorLeft = this._colorP0;
                 this._colorRight = this._colorP1;
                 break;
@@ -28600,33 +28549,25 @@ var Tia = (function () {
         this._cpu = null;
         this._bus = null;
         this._delayQueue = new DelayQueue_1.default(10, 20);
-        this._hstate = 0 /* blank */;
+        this._hstate = 0;
         this._freshLine = true;
-        // We need a separate counter for the blank period that will be decremented by hmove
         this._hblankCtr = 0;
-        // hclock counter
         this._hctr = 0;
-        // collision latch update required?
         this._collisionUpdateRequired = false;
-        // Count the extra clocks triggered by move
         this._movementClock = 0;
-        // Is the movement clock active and shoud pulse?
         this._movementInProgress = false;
-        // do we have an extended hblank triggered by hmove?
         this._extendedHblank = false;
         this._clock = 0.;
-        // Lines since the last cache-invalidating change. If this is > 1 we can safely use the linecache
         this._linesSinceChange = 0;
         this._colorBk = 0xFF000000;
-        this._priority = 0 /* normal */;
-        // bitfield with collision latches
+        this._priority = 0;
         this._collisionMask = 0;
-        this._player0 = new Player_1.default(31744 /* player0 */);
-        this._player1 = new Player_1.default(17344 /* player1 */);
-        this._missile0 = new Missile_1.default(8760 /* missile0 */);
-        this._missile1 = new Missile_1.default(4390 /* missile1 */);
-        this._playfield = new Playfield_1.default(1099 /* playfield */);
-        this._ball = new Ball_1.default(2197 /* ball */);
+        this._player0 = new Player_1.default(31744);
+        this._player1 = new Player_1.default(17344);
+        this._missile0 = new Missile_1.default(8760);
+        this._missile1 = new Missile_1.default(4390);
+        this._playfield = new Playfield_1.default(1099);
+        this._ball = new Ball_1.default(2197);
         this._frameManager = new FrameManager_1.default(this._config);
         this.newFrame = this._frameManager.newFrame;
         this._palette = this._getPalette(this._config);
@@ -28647,8 +28588,8 @@ var Tia = (function () {
         this._movementInProgress = false;
         this._extendedHblank = false;
         this._movementClock = 0;
-        this._priority = 0 /* normal */;
-        this._hstate = 0 /* blank */;
+        this._priority = 0;
+        this._hstate = 0;
         this._freshLine = true;
         this._collisionMask = 0;
         this._colorBk = 0xFF000000;
@@ -28701,7 +28642,7 @@ var Tia = (function () {
         this._delayQueue.execute(Tia._delayedWrite, this);
         this._collisionUpdateRequired = false;
         this._tickMovement();
-        if (this._hstate === 0 /* blank */) {
+        if (this._hstate === 0) {
             this._tickHblank();
         }
         else {
@@ -28716,54 +28657,39 @@ var Tia = (function () {
         if (!this._movementInProgress) {
             return;
         }
-        // color clock mod 4
         if ((this._hctr & 0x3) === 0) {
-            // the movement counter dirties the line cache
             this._linesSinceChange = 0;
-            // The tick is only propagated to the sprite counters if we are in blank
-            // mode --- in frame mode, it overlaps with the sprite clock and is gobbled.
-            var apply = this._hstate === 0 /* blank */;
-            // did any sprite receive the clock?
+            var apply = this._hstate === 0;
             var m = false;
             m = this._missile0.movementTick(this._movementClock, apply) || m;
             m = this._missile1.movementTick(this._movementClock, apply) || m;
             m = this._player0.movementTick(this._movementClock, apply) || m;
             m = this._player1.movementTick(this._movementClock, apply) || m;
             m = this._ball.movementTick(this._movementClock, apply) || m;
-            // stop collision counter if all latches were cleared
             this._movementInProgress = m;
-            // the collision latches must be updated if any sprite received a tick
             this._collisionUpdateRequired = m;
             this._movementClock++;
         }
     };
     Tia.prototype._tickHblank = function () {
-        // we cannot use hblankctr === 0 here because it is not positive definite
         if (this._freshLine) {
             this._hblankCtr = 0;
             this._cpu.resume();
             this._freshLine = false;
         }
         if (++this._hblankCtr >= 68) {
-            this._hstate = 1 /* frame */;
+            this._hstate = 1;
         }
         this._hctr++;
     };
     Tia.prototype._tickHframe = function () {
         var y = this._frameManager.getCurrentLine(), lineNotCached = this._linesSinceChange < 2 || y === 0, x = this._hctr - 68;
-        // collision latches must be updated if we cannot use cached line daa
         this._collisionUpdateRequired = lineNotCached;
-        // The playfield does not have its own counter and must be cycled before rendering the sprites.
-        // We can never cache this as the current pixel register must be up to date if
-        // we leave caching mode.
         this._playfield.tick(x);
-        // sprites are only rendered if we cannot reuse line data
         if (lineNotCached) {
             this._renderSprites(x);
         }
-        // spin sprite timers
         this._tickSprites();
-        // render pixel data
         if (this._frameManager.isRendering()) {
             this._renderPixel(x, y, lineNotCached);
         }
@@ -28786,10 +28712,9 @@ var Tia = (function () {
         this._ball.tick();
     };
     Tia.prototype._nextLine = function () {
-        // Reset the counters
         this._hctr = 0;
         this._linesSinceChange++;
-        this._hstate = 0 /* blank */;
+        this._hstate = 0;
         this._freshLine = true;
         this._extendedHblank = false;
         this._frameManager.nextLine();
@@ -28797,56 +28722,55 @@ var Tia = (function () {
     Tia.prototype.read = function (address) {
         var lastDataBusValue = this._bus.getLastDataBusValue();
         var result;
-        // Only keep the lowest four bits
         switch (address & 0x0F) {
-            case 8 /* inpt0 */:
+            case 8:
                 result = this._config.emulatePaddles ? this._paddles[0].inpt() : 0;
                 break;
-            case 9 /* inpt1 */:
+            case 9:
                 result = this._config.emulatePaddles ? this._paddles[1].inpt() : 0;
                 break;
-            case 10 /* inpt2 */:
+            case 10:
                 result = this._config.emulatePaddles ? this._paddles[2].inpt() : 0;
                 break;
-            case 11 /* inpt3 */:
+            case 11:
                 result = this._config.emulatePaddles ? this._paddles[3].inpt() : 0;
                 break;
-            case 12 /* inpt4 */:
+            case 12:
                 result = this._input0.inpt();
                 break;
-            case 13 /* inpt5 */:
+            case 13:
                 result = this._input1.inpt();
                 break;
-            case 0 /* cxm0p */:
-                result = (((this._collisionMask & 8760 /* missile0 */ & 31744 /* player0 */) ? 0x40 : 0) |
-                    ((this._collisionMask & 8760 /* missile0 */ & 17344 /* player1 */) ? 0x80 : 0));
+            case 0:
+                result = (((this._collisionMask & 8760 & 31744) ? 0x40 : 0) |
+                    ((this._collisionMask & 8760 & 17344) ? 0x80 : 0));
                 break;
-            case 1 /* cxm1p */:
-                result = (((this._collisionMask & 4390 /* missile1 */ & 17344 /* player1 */) ? 0x40 : 0) |
-                    ((this._collisionMask & 4390 /* missile1 */ & 31744 /* player0 */) ? 0x80 : 0));
+            case 1:
+                result = (((this._collisionMask & 4390 & 17344) ? 0x40 : 0) |
+                    ((this._collisionMask & 4390 & 31744) ? 0x80 : 0));
                 break;
-            case 2 /* cxp0fb */:
-                result = (((this._collisionMask & 31744 /* player0 */ & 2197 /* ball */) ? 0x40 : 0) |
-                    ((this._collisionMask & 31744 /* player0 */ & 1099 /* playfield */) ? 0x80 : 0));
+            case 2:
+                result = (((this._collisionMask & 31744 & 2197) ? 0x40 : 0) |
+                    ((this._collisionMask & 31744 & 1099) ? 0x80 : 0));
                 break;
-            case 3 /* cxp1fb */:
-                result = (((this._collisionMask & 17344 /* player1 */ & 2197 /* ball */) ? 0x40 : 0) |
-                    ((this._collisionMask & 17344 /* player1 */ & 1099 /* playfield */) ? 0x80 : 0));
+            case 3:
+                result = (((this._collisionMask & 17344 & 2197) ? 0x40 : 0) |
+                    ((this._collisionMask & 17344 & 1099) ? 0x80 : 0));
                 break;
-            case 4 /* cxm0fb */:
-                result = (((this._collisionMask & 8760 /* missile0 */ & 2197 /* ball */) ? 0x40 : 0) |
-                    ((this._collisionMask & 8760 /* missile0 */ & 1099 /* playfield */) ? 0x80 : 0));
+            case 4:
+                result = (((this._collisionMask & 8760 & 2197) ? 0x40 : 0) |
+                    ((this._collisionMask & 8760 & 1099) ? 0x80 : 0));
                 break;
-            case 5 /* cxm1fb */:
-                result = (((this._collisionMask & 4390 /* missile1 */ & 2197 /* ball */) ? 0x40 : 0) |
-                    ((this._collisionMask & 4390 /* missile1 */ & 1099 /* playfield */) ? 0x80 : 0));
+            case 5:
+                result = (((this._collisionMask & 4390 & 2197) ? 0x40 : 0) |
+                    ((this._collisionMask & 4390 & 1099) ? 0x80 : 0));
                 break;
-            case 7 /* cxppmm */:
-                result = (((this._collisionMask & 8760 /* missile0 */ & 4390 /* missile1 */) ? 0x40 : 0) |
-                    ((this._collisionMask & 31744 /* player0 */ & 17344 /* player1 */) ? 0x80 : 0));
+            case 7:
+                result = (((this._collisionMask & 8760 & 4390) ? 0x40 : 0) |
+                    ((this._collisionMask & 31744 & 17344) ? 0x80 : 0));
                 break;
-            case 6 /* cxblpf */:
-                result = (this._collisionMask & 2197 /* ball */ & 1099 /* playfield */) ? 0x80 : 0;
+            case 6:
+                result = (this._collisionMask & 2197 & 1099) ? 0x80 : 0;
                 break;
             default:
                 result = lastDataBusValue;
@@ -28859,15 +28783,14 @@ var Tia = (function () {
     };
     Tia.prototype.write = function (address, value) {
         var v = 0;
-        // Mask out A6 - A15
         switch (address & 0x3F) {
-            case 2 /* wsync */:
+            case 2:
                 this._cpu.halt();
                 break;
-            case 0 /* vsync */:
+            case 0:
                 this._frameManager.setVsync((value & 0x02) > 0);
                 break;
-            case 1 /* vblank */:
+            case 1:
                 this._linesSinceChange = 0;
                 this._input0.vblank(value);
                 this._input1.vblank(value);
@@ -28876,168 +28799,168 @@ var Tia = (function () {
                 }
                 this._frameManager.setVblank((value & 0x02) > 0);
                 break;
-            case 29 /* enam0 */:
+            case 29:
                 this._linesSinceChange = 0;
                 this._missile0.enam(value);
                 break;
-            case 30 /* enam1 */:
+            case 30:
                 this._linesSinceChange = 0;
                 this._missile1.enam(value);
                 break;
-            case 34 /* hmm0 */:
-                this._delayQueue.push(34 /* hmm0 */, value, 2 /* hmm */);
+            case 34:
+                this._delayQueue.push(34, value, 2);
                 break;
-            case 35 /* hmm1 */:
-                this._delayQueue.push(35 /* hmm1 */, value, 2 /* hmm */);
+            case 35:
+                this._delayQueue.push(35, value, 2);
                 break;
-            case 18 /* resm0 */:
+            case 18:
                 this._linesSinceChange = 0;
-                this._missile0.resm(this._hstate === 0 /* blank */);
+                this._missile0.resm(this._hstate === 0);
                 break;
-            case 19 /* resm1 */:
+            case 19:
                 this._linesSinceChange = 0;
-                this._missile1.resm(this._hstate === 0 /* blank */);
+                this._missile1.resm(this._hstate === 0);
                 break;
-            case 40 /* resmp0 */:
+            case 40:
                 this._linesSinceChange = 0;
                 this._missile0.resmp(value, this._player0);
                 break;
-            case 41 /* resmp1 */:
+            case 41:
                 this._linesSinceChange = 0;
                 this._missile1.resmp(value, this._player1);
                 break;
-            case 43 /* hmclr */:
-                this._delayQueue.push(43 /* hmclr */, value, 2 /* hmclr */);
+            case 43:
+                this._delayQueue.push(43, value, 2);
                 break;
-            case 4 /* nusiz0 */:
+            case 4:
                 this._linesSinceChange = 0;
                 this._missile0.nusiz(value);
                 this._player0.nusiz(value);
                 break;
-            case 5 /* nusiz1 */:
+            case 5:
                 this._linesSinceChange = 0;
                 this._missile1.nusiz(value);
                 this._player1.nusiz(value);
                 break;
-            case 42 /* hmove */:
-                this._delayQueue.push(42 /* hmove */, value, 6 /* hmove */);
+            case 42:
+                this._delayQueue.push(42, value, 6);
                 break;
-            case 9 /* colubk */:
+            case 9:
                 this._linesSinceChange = 0;
                 this._colorBk = this._palette[(value & 0xFF) >>> 1];
                 break;
-            case 6 /* colup0 */:
+            case 6:
                 this._linesSinceChange = 0;
                 v = this._palette[(value & 0xFF) >>> 1];
                 this._missile0.color = v;
                 this._player0.color = v;
                 this._playfield.setColorP0(v);
                 break;
-            case 7 /* colup1 */:
+            case 7:
                 this._linesSinceChange = 0;
                 v = this._palette[(value & 0xFF) >>> 1];
                 this._missile1.color = v;
                 this._player1.color = v;
                 this._playfield.setColorP1(v);
                 break;
-            case 13 /* pf0 */:
-                this._delayQueue.push(13 /* pf0 */, value, 2 /* pf */);
+            case 13:
+                this._delayQueue.push(13, value, 2);
                 break;
-            case 14 /* pf1 */:
-                this._delayQueue.push(14 /* pf1 */, value, 2 /* pf */);
+            case 14:
+                this._delayQueue.push(14, value, 2);
                 break;
-            case 15 /* pf2 */:
-                this._delayQueue.push(15 /* pf2 */, value, 2 /* pf */);
+            case 15:
+                this._delayQueue.push(15, value, 2);
                 break;
-            case 10 /* ctrlpf */:
+            case 10:
                 this._linesSinceChange = 0;
-                this._priority = (value & 0x04) ? 1 /* inverted */ : 0 /* normal */;
+                this._priority = (value & 0x04) ? 1 : 0;
                 this._playfield.ctrlpf(value);
                 this._ball.ctrlpf(value);
                 break;
-            case 8 /* colupf */:
+            case 8:
                 this._linesSinceChange = 0;
                 v = this._palette[(value & 0xFF) >>> 1];
                 this._playfield.setColor(v);
                 this._ball.color = v;
                 break;
-            case 27 /* grp0 */:
+            case 27:
                 this._delayQueue
-                    .push(27 /* grp0 */, value, 1 /* grp */)
-                    .push(241 /* _shuffleP1 */, 0, 1 /* shufflePlayer */);
+                    .push(27, value, 1)
+                    .push(241, 0, 1);
                 break;
-            case 28 /* grp1 */:
+            case 28:
                 this._delayQueue
-                    .push(28 /* grp1 */, value, 1 /* grp */)
-                    .push(240 /* _shuffleP0 */, 0, 1 /* shufflePlayer */);
+                    .push(28, value, 1)
+                    .push(240, 0, 1);
                 this._linesSinceChange = 0;
                 this._ball.shuffleStatus();
                 break;
-            case 16 /* resp0 */:
+            case 16:
                 this._linesSinceChange = 0;
-                this._player0.resp(this._hstate === 0 /* blank */);
+                this._player0.resp(this._hstate === 0);
                 break;
-            case 17 /* resp1 */:
+            case 17:
                 this._linesSinceChange = 0;
-                this._player1.resp(this._hstate === 0 /* blank */);
+                this._player1.resp(this._hstate === 0);
                 break;
-            case 11 /* refp0 */:
+            case 11:
                 this._linesSinceChange = 0;
                 this._player0.refp(value);
                 break;
-            case 12 /* refp1 */:
+            case 12:
                 this._linesSinceChange = 0;
                 this._player1.refp(value);
                 break;
-            case 32 /* hmp0 */:
-                this._delayQueue.push(32 /* hmp0 */, value, 2 /* hmp */);
+            case 32:
+                this._delayQueue.push(32, value, 2);
                 break;
-            case 33 /* hmp1 */:
-                this._delayQueue.push(33 /* hmp1 */, value, 2 /* hmp */);
+            case 33:
+                this._delayQueue.push(33, value, 2);
                 break;
-            case 37 /* vdelp0 */:
+            case 37:
                 this._linesSinceChange = 0;
                 this._player0.vdelp(value);
                 break;
-            case 38 /* vdelp1 */:
+            case 38:
                 this._linesSinceChange = 0;
                 this._player1.vdelp(value);
                 break;
-            case 31 /* enabl */:
+            case 31:
                 this._linesSinceChange = 0;
                 this._ball.enabl(value);
                 break;
-            case 36 /* hmbl */:
-                this._delayQueue.push(36 /* hmbl */, value, 2 /* hmbl */);
+            case 36:
+                this._delayQueue.push(36, value, 2);
                 break;
-            case 20 /* resbl */:
+            case 20:
                 this._linesSinceChange = 0;
-                this._ball.resbl(this._hstate === 0 /* blank */);
+                this._ball.resbl(this._hstate === 0);
                 break;
-            case 39 /* vdelbl */:
+            case 39:
                 this._linesSinceChange = 0;
                 this._ball.vdelbl(value);
                 break;
-            case 44 /* cxclr */:
+            case 44:
                 this._linesSinceChange = 0;
                 this._collisionMask = 0;
                 break;
-            case 21 /* audc0 */:
+            case 21:
                 this._audio0.audc(value);
                 break;
-            case 22 /* audc1 */:
+            case 22:
                 this._audio1.audc(value);
                 break;
-            case 23 /* audf0 */:
+            case 23:
                 this._audio0.audf(value);
                 break;
-            case 24 /* audf1 */:
+            case 24:
                 this._audio1.audf(value);
                 break;
-            case 25 /* audv0 */:
+            case 25:
                 this._audio0.audv(value);
                 break;
-            case 26 /* audv1 */:
+            case 26:
                 this._audio1.audv(value);
                 break;
         }
@@ -29053,9 +28976,8 @@ var Tia = (function () {
     };
     Tia._delayedWrite = function (address, value, self) {
         switch (address) {
-            case 42 /* hmove */:
+            case 42:
                 self._linesSinceChange = 0;
-                // Start the timer and increase hblank
                 self._movementClock = 0;
                 self._movementInProgress = true;
                 if (!self._extendedHblank) {
@@ -29063,62 +28985,61 @@ var Tia = (function () {
                     self._clearHmoveComb();
                     self._extendedHblank = true;
                 }
-                // Start sprite movement
                 self._missile0.startMovement();
                 self._missile1.startMovement();
                 self._player0.startMovement();
                 self._player1.startMovement();
                 self._ball.startMovement();
                 break;
-            case 13 /* pf0 */:
+            case 13:
                 self._linesSinceChange = 0;
                 self._playfield.pf0(value);
                 break;
-            case 14 /* pf1 */:
+            case 14:
                 self._linesSinceChange = 0;
                 self._playfield.pf1(value);
                 break;
-            case 15 /* pf2 */:
+            case 15:
                 self._linesSinceChange = 0;
                 self._playfield.pf2(value);
                 break;
-            case 27 /* grp0 */:
+            case 27:
                 self._linesSinceChange = 0;
                 self._player0.grp(value);
                 break;
-            case 28 /* grp1 */:
+            case 28:
                 self._linesSinceChange = 0;
                 self._player1.grp(value);
                 break;
-            case 240 /* _shuffleP0 */:
+            case 240:
                 self._linesSinceChange = 0;
                 self._player0.shufflePatterns();
                 break;
-            case 241 /* _shuffleP1 */:
+            case 241:
                 self._linesSinceChange = 0;
                 self._player1.shufflePatterns();
                 break;
-            case 32 /* hmp0 */:
+            case 32:
                 self._linesSinceChange = 0;
                 self._player0.hmp(value);
                 break;
-            case 33 /* hmp1 */:
+            case 33:
                 self._linesSinceChange = 0;
                 self._player1.hmp(value);
                 break;
-            case 34 /* hmm0 */:
+            case 34:
                 self._linesSinceChange = 0;
                 self._missile0.hmm(value);
                 break;
-            case 35 /* hmm1 */:
+            case 35:
                 self._linesSinceChange = 0;
                 self._missile1.hmm(value);
                 break;
-            case 36 /* hmbl */:
+            case 36:
                 self._linesSinceChange = 0;
                 self._ball.hmbl(value);
                 break;
-            case 43 /* hmclr */:
+            case 43:
                 self._linesSinceChange = 0;
                 self._missile0.hmm(0);
                 self._missile1.hmm(0);
@@ -29130,25 +29051,25 @@ var Tia = (function () {
     };
     Tia.prototype._getPalette = function (config) {
         switch (config.tvMode) {
-            case 0 /* ntsc */:
+            case 0:
                 return palette.NTSC;
-            case 1 /* pal */:
+            case 1:
                 return palette.PAL;
-            case 2 /* secam */:
+            case 2:
                 return palette.SECAM;
             default:
                 throw new Error('invalid TV mode');
         }
     };
     Tia.prototype._getClockFreq = function (config) {
-        return (config.tvMode === 0 /* ntsc */) ?
-            60 * 228 * 262 /* frameLinesNTSC */ :
-            50 * 228 * 312 /* frameLinesPAL */;
+        return (config.tvMode === 0) ?
+            60 * 228 * 262 :
+            50 * 228 * 312;
     };
     Tia.prototype._renderPixel = function (x, y, lineNotCached) {
         if (lineNotCached) {
             var color = this._colorBk;
-            if (this._priority === 0 /* normal */) {
+            if (this._priority === 0) {
                 color = this._playfield.getPixel(color);
                 color = this._ball.getPixel(color);
                 color = this._missile1.getPixel(color);
@@ -29179,7 +29100,7 @@ var Tia = (function () {
             ~this._playfield.collision);
     };
     Tia.prototype._clearHmoveComb = function () {
-        if (this._frameManager.isRendering() && this._hstate === 0 /* blank */) {
+        if (this._frameManager.isRendering() && this._hstate === 0) {
             var offset = this._frameManager.getCurrentLine() * 160;
             for (var i = 0; i < 8; i++) {
                 this._frameManager.surfaceBuffer[offset + i] = 0xFF000000;
@@ -29213,17 +29134,11 @@ var FREQUENCY_DIVISIORS = new Int8Array([
     1, 1, 1, 1,
     3, 3, 3, 1
 ]);
-// all ones
 var POLY0 = new Int8Array([1]);
-// 50% duty cycle
 var POLY1 = new Int8Array([1, 1]);
-// 16/31 duty cycle
 var POLY2 = new Int8Array([16, 15]);
-// 4 bit LFSR
 var POLY4 = new Int8Array([1, 2, 2, 1, 1, 1, 4, 3]);
-// 5 bit LFSR
 var POLY5 = new Int8Array([1, 2, 1, 1, 2, 2, 5, 4, 2, 1, 3, 1, 1, 1, 1, 4]);
-// 9 bit LFSR
 var POLY9 = new Int8Array([
     1, 4, 1, 3, 2, 4, 1, 2, 3, 2, 1, 1, 1, 1, 1, 1,
     2, 4, 2, 1, 4, 1, 1, 2, 2, 1, 3, 2, 1, 3, 1, 1,
@@ -29242,9 +29157,7 @@ var POLY9 = new Int8Array([
     2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 3, 3, 3, 2, 1,
     2, 1, 1, 1, 1, 1, 3, 3, 1, 2, 2, 3, 1, 3, 1, 8
 ]);
-// used by mode 15
 var POLY68 = new Int8Array([5, 6, 4, 5, 10, 5, 3, 7, 4, 10, 6, 3, 6, 4, 9, 6]);
-// used by mode 3
 var POLY465 = new Int8Array([
     2, 3, 2, 1, 4, 1, 6, 10, 2, 4, 2, 1, 1, 4, 5,
     9, 3, 3, 4, 1, 1, 1, 8, 5, 5, 5, 4, 1, 1, 1,
@@ -29281,7 +29194,6 @@ var ToneGenerator = (function () {
         }
         length = length * FREQUENCY_DIVISIORS[tone] * (frequency + 1);
         var content = new Float32Array(length);
-        // TODO rate depending on PAL/NTSC?
         var sampleRate = Config_1.default.getClockMhz(this._config) * 1000000 / 114;
         var f = 0;
         var count = 0;
@@ -29765,7 +29677,7 @@ var Board = (function () {
         this.clock = new microevent_ts_1.Event();
         this.trap = new microevent_ts_1.Event();
         this._trap = false;
-        this._clockMode = 1 /* lazy */;
+        this._clockMode = 1;
         this._timer = {
             tick: function (clocks) { return _this._tick(clocks); },
             start: function (scheduler, sliceHint) { return _this._start(scheduler, sliceHint); },
@@ -29797,9 +29709,9 @@ var Board = (function () {
     };
     Board.prototype.boot = function () {
         var clock = 0;
-        if (this._cpu.executionState !== 0 /* boot */)
+        if (this._cpu.executionState !== 0)
             throw new Error("Already booted!");
-        while (this._cpu.executionState !== 1 /* fetch */) {
+        while (this._cpu.executionState !== 1) {
             this._cpu.cycle();
             clock++;
         }
@@ -29838,8 +29750,8 @@ var Board = (function () {
         while (i++ < clocks && !this._trap) {
             this._cpu.cycle();
             clock++;
-            if (this._clockMode === 0 /* instruction */ &&
-                this._cpu.executionState === 1 /* fetch */ &&
+            if (this._clockMode === 0 &&
+                this._cpu.executionState === 1 &&
                 this.clock.hasHandlers) {
                 this.clock.dispatch(clock);
                 clock = 0;
@@ -29866,7 +29778,7 @@ var Board = (function () {
         this._runTask = undefined;
     };
     Board.prototype._onInvalidInstruction = function () {
-        this.triggerTrap(0 /* cpu */, 'invalid instruction');
+        this.triggerTrap(0, 'invalid instruction');
     };
     return Board;
 }());
@@ -30284,7 +30196,7 @@ var ArrayBufferSurface = (function () {
         return this._buffer;
     };
     ArrayBufferSurface.prototype.getByteOrder = function () {
-        return 0 /* rgba */;
+        return 0;
     };
     ArrayBufferSurface.prototype.fill = function (value) {
         for (var i = 0; i < this._buffer.length; i++) {
@@ -30605,9 +30517,7 @@ var Channel = (function () {
 var microevent_ts_1 = require('microevent.ts');
 var Switch_1 = require('../../../machine/io/Switch');
 var KeyboardIO = (function () {
-    function KeyboardIO(_target, 
-        // tslint:disable-next-line
-        mappings) {
+    function KeyboardIO(_target, mappings) {
         var _this = this;
         if (mappings === void 0) { mappings = KeyboardIO.defaultMappings; }
         this._target = _target;
@@ -30640,9 +30550,9 @@ var KeyboardIO = (function () {
         this._updateActionTable();
         var decodeAction = function (e) {
             if (_this._compiledMappings[e.keyCode]) {
-                var modifiers = ((e.shiftKey ? 4 /* shift */ : 0) |
-                    (e.ctrlKey ? 1 /* ctrl */ : 0) |
-                    (e.altKey ? 2 /* alt */ : 0));
+                var modifiers = ((e.shiftKey ? 4 : 0) |
+                    (e.ctrlKey ? 1 : 0) |
+                    (e.altKey ? 2 : 0));
                 return _this._compiledMappings[e.keyCode][modifiers];
             }
             return undefined;
@@ -30674,28 +30584,28 @@ var KeyboardIO = (function () {
         this._keydownListener = this._keyupListener = null;
     };
     KeyboardIO.prototype._updateActionTable = function () {
-        this._actionTable[12 /* fullscreen */] = this._fullscreenSwitch;
-        this._actionTable[13 /* hardReset */] = this._resetSwitch;
-        this._actionTable[14 /* togglePause */] = this._togglePauseSwitch;
-        this._actionTable[0 /* select */] = this._controlPanel.getSelectSwitch();
-        this._actionTable[1 /* reset */] = this._controlPanel.getResetButton();
-        this._actionTable[2 /* left0 */] = this._joystick0.getLeft();
-        this._actionTable[3 /* right0 */] = this._joystick0.getRight();
-        this._actionTable[4 /* up0 */] = this._joystick0.getUp();
-        this._actionTable[5 /* down0 */] = this._joystick0.getDown();
-        this._actionTable[10 /* fire0 */] = this._joystick0.getFire();
-        this._actionTable[6 /* left1 */] = this._joystick1.getLeft();
-        this._actionTable[7 /* right1 */] = this._joystick1.getRight();
-        this._actionTable[8 /* up1 */] = this._joystick1.getUp();
-        this._actionTable[9 /* down1 */] = this._joystick1.getDown();
-        this._actionTable[11 /* fire1 */] = this._joystick1.getFire();
+        this._actionTable[12] = this._fullscreenSwitch;
+        this._actionTable[13] = this._resetSwitch;
+        this._actionTable[14] = this._togglePauseSwitch;
+        this._actionTable[0] = this._controlPanel.getSelectSwitch();
+        this._actionTable[1] = this._controlPanel.getResetButton();
+        this._actionTable[2] = this._joystick0.getLeft();
+        this._actionTable[3] = this._joystick0.getRight();
+        this._actionTable[4] = this._joystick0.getUp();
+        this._actionTable[5] = this._joystick0.getDown();
+        this._actionTable[10] = this._joystick0.getFire();
+        this._actionTable[6] = this._joystick1.getLeft();
+        this._actionTable[7] = this._joystick1.getRight();
+        this._actionTable[8] = this._joystick1.getUp();
+        this._actionTable[9] = this._joystick1.getDown();
+        this._actionTable[11] = this._joystick1.getFire();
     };
     KeyboardIO.prototype._compileMappings = function (mappings) {
         var _this = this;
         var compileMapping = function (action, keycode, modifiers) {
-            if ((modifiers & ~(4 /* shift */ |
-                1 /* ctrl */ |
-                2 /* alt */)) !== 0) {
+            if ((modifiers & ~(4 |
+                1 |
+                2)) !== 0) {
                 throw new Error("invalid modifier set " + modifiers);
             }
             if (!_this._compiledMappings[keycode]) {
@@ -30714,74 +30624,74 @@ var KeyboardIO;
 (function (KeyboardIO) {
     KeyboardIO.defaultMappings = [
         {
-            action: 0 /* select */,
+            action: 0,
             spec: {
                 keycode: 32,
-                modifiers: 4 /* shift */
+                modifiers: 4
             }
         }, {
-            action: 1 /* reset */,
+            action: 1,
             spec: {
                 keycode: 13,
-                modifiers: 4 /* shift */
+                modifiers: 4
             }
         }, {
-            action: 2 /* left0 */,
+            action: 2,
             spec: [
                 65,
-                37 // left
+                37
             ]
         }, {
-            action: 3 /* right0 */,
+            action: 3,
             spec: [
                 68,
-                39 // right
+                39
             ]
         }, {
-            action: 4 /* up0 */,
+            action: 4,
             spec: [
                 87,
-                38 // up
+                38
             ]
         }, {
-            action: 5 /* down0 */,
+            action: 5,
             spec: [
                 83,
-                40 // down
+                40
             ]
         }, {
-            action: 10 /* fire0 */,
+            action: 10,
             spec: [
                 32,
-                86 // v
+                86
             ]
         }, {
-            action: 6 /* left1 */,
-            spec: 74 // j
+            action: 6,
+            spec: 74
         }, {
-            action: 7 /* right1 */,
-            spec: 76 // l
+            action: 7,
+            spec: 76
         }, {
-            action: 8 /* up1 */,
-            spec: 73 // i
+            action: 8,
+            spec: 73
         }, {
-            action: 9 /* down1 */,
-            spec: 75 // k
+            action: 9,
+            spec: 75
         }, {
-            action: 11 /* fire1 */,
-            spec: 66 // b
+            action: 11,
+            spec: 66
         }, {
-            action: 12 /* fullscreen */,
-            spec: 13 // enter
+            action: 12,
+            spec: 13
         }, {
-            action: 13 /* hardReset */,
+            action: 13,
             spec: {
                 keycode: 82,
-                modifiers: 4 /* shift */
+                modifiers: 4
             }
         }, {
-            action: 14 /* togglePause */,
-            spec: 80 // p
+            action: 14,
+            spec: 80
         }
     ];
 })(KeyboardIO || (KeyboardIO = {}));
@@ -30872,7 +30782,7 @@ function run(_a) {
 exports.run = run;
 function setupCartridgeReader(cli, cartridgeFileInput, cartridgeFileInputLabel) {
     var onCliStateChange = cartridgeFileInputLabel ?
-        function () { return (cli.getState() === 0 /* setup */ ? cartridgeFileInputLabel.show() : cartridgeFileInputLabel.hide()); } :
+        function () { return (cli.getState() === 0 ? cartridgeFileInputLabel.show() : cartridgeFileInputLabel.hide()); } :
         function () { return undefined; };
     cli.events.stateChanged.addHandler(onCliStateChange);
     onCliStateChange();
@@ -30883,7 +30793,7 @@ function setupCartridgeReader(cli, cartridgeFileInput, cartridgeFileInputLabel) 
         }
         var reader = new FileReader(), file = files[0];
         reader.addEventListener('load', function () {
-            if (cli.getState() !== 0 /* setup */) {
+            if (cli.getState() !== 0) {
                 return;
             }
             cli.loadCartridgeFromBuffer(new Uint8Array(reader.result), file.name);
