@@ -27951,6 +27951,11 @@ var DelayQueue = (function () {
             this._queue[i] = new QueueEntry(size);
         }
     }
+    DelayQueue.prototype.reset = function () {
+        for (var i = 0; i < this._length; i++) {
+            this._queue[i].nextIndex = 0;
+        }
+    };
     DelayQueue.prototype.push = function (address, value, delay) {
         if (delay >= this._length) {
             throw new Error('delay exceeds queue length');
@@ -28775,6 +28780,7 @@ var Tia = (function () {
         this._linesSinceChange = 0;
         this._collisionUpdateRequired = false;
         this._clock = 0.;
+        this._delayQueue.reset();
         this._frameManager.reset();
         this._missile0.reset();
         this._missile1.reset();
