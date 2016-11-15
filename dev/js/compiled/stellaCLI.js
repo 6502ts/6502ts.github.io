@@ -28660,7 +28660,7 @@ var Playfield = (function () {
         this._applyColors();
     };
     Playfield.prototype.tick = function (x) {
-        this._x = 0;
+        this._x = x;
         if (x === 80 || x === 0) {
             this._refp = this._reflected;
         }
