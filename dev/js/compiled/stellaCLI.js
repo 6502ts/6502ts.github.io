@@ -27631,7 +27631,7 @@ var CartridgeInfo;
             case CartridgeType.bankswitch_64k_F0:
                 return 'bankswitched 64k, F0 (Megaboy) scheme';
             case CartridgeType.unknown:
-                return 'unkown';
+                return 'unknown';
         }
     }
     CartridgeInfo.describeCartridgeType = describeCartridgeType;
@@ -28028,8 +28028,6 @@ var FrameManager = (function () {
         this._overscanLines = 0;
         this._frameLines = 0;
         this._maxLinesWithoutVsync = 0;
-        this._maxUnderscan = 0;
-        this._visibleOverscan = 0;
         this._waitForVsync = true;
         this._linesWithoutVsync = 0;
         this._state = 0;
@@ -28052,10 +28050,8 @@ var FrameManager = (function () {
             default:
                 throw new Error("invalid tv mode " + this._config.tvMode);
         }
-        this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines * 3;
+        this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines + 3;
         this._maxLinesWithoutVsync = this._frameLines * 50;
-        this._visibleOverscan = 20;
-        this._maxUnderscan = 10;
         this.reset();
     }
     FrameManager.prototype.reset = function () {
@@ -28084,7 +28080,7 @@ var FrameManager = (function () {
             case 2:
                 if (this._waitForVsync) {
                     if (this._lineInState >=
-                        (this.vblank ? this._vblankLines : this._vblankLines - this._maxUnderscan)) {
+                        (this.vblank ? this._vblankLines : this._vblankLines - 10)) {
                         this._startFrame();
                     }
                 }
@@ -28095,12 +28091,12 @@ var FrameManager = (function () {
                 }
                 break;
             case 3:
-                if (this._lineInState >= this._kernelLines + this._visibleOverscan) {
+                if (this._lineInState >= this._kernelLines + 20) {
                     this._finalizeFrame();
                 }
                 break;
             case 4:
-                if (this._lineInState >= this._overscanLines - this._visibleOverscan) {
+                if (this._lineInState >= this._overscanLines - 20) {
                     this._setState(this._waitForVsync ? 0 : 2);
                 }
                 break;
@@ -28144,7 +28140,7 @@ var FrameManager = (function () {
         }
     };
     FrameManager.prototype.getHeight = function () {
-        return this._kernelLines + this._visibleOverscan;
+        return this._kernelLines + 20;
     };
     FrameManager.prototype.setSurfaceFactory = function (factory) {
         this._surfaceFactory = factory;

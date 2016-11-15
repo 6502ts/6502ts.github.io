@@ -46614,9 +46614,7 @@ var Provider = function (_Component) {
   }
 
   Provider.prototype.render = function render() {
-    var children = this.props.children;
-
-    return _react.Children.only(children);
+    return _react.Children.only(this.props.children);
   };
 
   return Provider;
@@ -46624,10 +46622,12 @@ var Provider = function (_Component) {
 
 exports["default"] = Provider;
 
+
 if (process.env.NODE_ENV !== 'production') {
   Provider.prototype.componentWillReceiveProps = function (nextProps) {
     var store = this.store;
     var nextStore = nextProps.store;
+
 
     if (store !== nextStore) {
       warnAboutReceivingStore();
@@ -46648,9 +46648,10 @@ Provider.childContextTypes = {
 (function (process){
 'use strict';
 
+exports.__esModule = true;
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-exports.__esModule = true;
 exports["default"] = connect;
 
 var _react = require('react');
@@ -46719,12 +46720,12 @@ function tryCatch(fn, ctx) {
 var nextVersion = 0;
 
 function connect(mapStateToProps, mapDispatchToProps, mergeProps) {
-  var options = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
+  var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
   var shouldSubscribe = Boolean(mapStateToProps);
   var mapState = mapStateToProps || defaultMapStateToProps;
 
-  var mapDispatch = undefined;
+  var mapDispatch = void 0;
   if (typeof mapDispatchToProps === 'function') {
     mapDispatch = mapDispatchToProps;
   } else if (!mapDispatchToProps) {
@@ -46734,10 +46735,10 @@ function connect(mapStateToProps, mapDispatchToProps, mergeProps) {
   }
 
   var finalMergeProps = mergeProps || defaultMergeProps;
-  var _options$pure = options.pure;
-  var pure = _options$pure === undefined ? true : _options$pure;
-  var _options$withRef = options.withRef;
-  var withRef = _options$withRef === undefined ? false : _options$withRef;
+  var _options$pure = options.pure,
+      pure = _options$pure === undefined ? true : _options$pure,
+      _options$withRef = options.withRef,
+      withRef = _options$withRef === undefined ? false : _options$withRef;
 
   var checkMergedEquals = pure && finalMergeProps !== defaultMergeProps;
 
@@ -46956,11 +46957,12 @@ function connect(mapStateToProps, mapDispatchToProps, mergeProps) {
       };
 
       Connect.prototype.render = function render() {
-        var haveOwnPropsChanged = this.haveOwnPropsChanged;
-        var hasStoreStateChanged = this.hasStoreStateChanged;
-        var haveStatePropsBeenPrecalculated = this.haveStatePropsBeenPrecalculated;
-        var statePropsPrecalculationError = this.statePropsPrecalculationError;
-        var renderedElement = this.renderedElement;
+        var haveOwnPropsChanged = this.haveOwnPropsChanged,
+            hasStoreStateChanged = this.hasStoreStateChanged,
+            haveStatePropsBeenPrecalculated = this.haveStatePropsBeenPrecalculated,
+            statePropsPrecalculationError = this.statePropsPrecalculationError,
+            renderedElement = this.renderedElement;
+
 
         this.haveOwnPropsChanged = false;
         this.hasStoreStateChanged = false;
@@ -47116,8 +47118,9 @@ function warning(message) {
   }
   /* eslint-enable no-console */
   try {
-    // This error was thrown as a convenience so that you can use this stack
-    // to find the callsite that caused this warning to fire.
+    // This error was thrown as a convenience so that if you enable
+    // "break on all exceptions" in your console,
+    // it would pause the execution at this line.
     throw new Error(message);
     /* eslint-disable no-empty */
   } catch (e) {}
@@ -72690,32 +72693,8 @@ exports.compose = _compose2["default"];
 }).call(this,require('_process'))
 
 },{"./applyMiddleware":647,"./bindActionCreators":648,"./combineReducers":649,"./compose":650,"./createStore":651,"./utils/warning":653,"_process":315}],653:[function(require,module,exports){
-'use strict';
-
-exports.__esModule = true;
-exports["default"] = warning;
-/**
- * Prints a warning in the console if it exists.
- *
- * @param {String} message The warning message.
- * @returns {void}
- */
-function warning(message) {
-  /* eslint-disable no-console */
-  if (typeof console !== 'undefined' && typeof console.error === 'function') {
-    console.error(message);
-  }
-  /* eslint-enable no-console */
-  try {
-    // This error was thrown as a convenience so that if you enable
-    // "break on all exceptions" in your console,
-    // it would pause the execution at this line.
-    throw new Error(message);
-    /* eslint-disable no-empty */
-  } catch (e) {}
-  /* eslint-enable no-empty */
-}
-},{}],654:[function(require,module,exports){
+arguments[4][445][0].apply(exports,arguments)
+},{"dup":445}],654:[function(require,module,exports){
 (function (Buffer){
 /*
 CryptoJS v3.1.2
@@ -79663,7 +79642,7 @@ var CartridgeInfo;
             case CartridgeType.bankswitch_64k_F0:
                 return 'bankswitched 64k, F0 (Megaboy) scheme';
             case CartridgeType.unknown:
-                return 'unkown';
+                return 'unknown';
         }
     }
     CartridgeInfo.describeCartridgeType = describeCartridgeType;
@@ -80060,8 +80039,6 @@ var FrameManager = (function () {
         this._overscanLines = 0;
         this._frameLines = 0;
         this._maxLinesWithoutVsync = 0;
-        this._maxUnderscan = 0;
-        this._visibleOverscan = 0;
         this._waitForVsync = true;
         this._linesWithoutVsync = 0;
         this._state = 0;
@@ -80084,10 +80061,8 @@ var FrameManager = (function () {
             default:
                 throw new Error("invalid tv mode " + this._config.tvMode);
         }
-        this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines * 3;
+        this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines + 3;
         this._maxLinesWithoutVsync = this._frameLines * 50;
-        this._visibleOverscan = 20;
-        this._maxUnderscan = 10;
         this.reset();
     }
     FrameManager.prototype.reset = function () {
@@ -80116,7 +80091,7 @@ var FrameManager = (function () {
             case 2:
                 if (this._waitForVsync) {
                     if (this._lineInState >=
-                        (this.vblank ? this._vblankLines : this._vblankLines - this._maxUnderscan)) {
+                        (this.vblank ? this._vblankLines : this._vblankLines - 10)) {
                         this._startFrame();
                     }
                 }
@@ -80127,12 +80102,12 @@ var FrameManager = (function () {
                 }
                 break;
             case 3:
-                if (this._lineInState >= this._kernelLines + this._visibleOverscan) {
+                if (this._lineInState >= this._kernelLines + 20) {
                     this._finalizeFrame();
                 }
                 break;
             case 4:
-                if (this._lineInState >= this._overscanLines - this._visibleOverscan) {
+                if (this._lineInState >= this._overscanLines - 20) {
                     this._setState(this._waitForVsync ? 0 : 2);
                 }
                 break;
@@ -80176,7 +80151,7 @@ var FrameManager = (function () {
         }
     };
     FrameManager.prototype.getHeight = function () {
-        return this._kernelLines + this._visibleOverscan;
+        return this._kernelLines + 20;
     };
     FrameManager.prototype.setSurfaceFactory = function (factory) {
         this._surfaceFactory = factory;
