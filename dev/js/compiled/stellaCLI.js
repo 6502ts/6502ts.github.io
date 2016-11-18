@@ -27555,11 +27555,6 @@ exports.default = CartridgeFactory;
 
 },{"./Cartridge2k":175,"./Cartridge3E":176,"./Cartridge3F":177,"./Cartridge4k":178,"./CartridgeDetector":179,"./CartridgeE0":180,"./CartridgeE7":181,"./CartridgeF0":182,"./CartridgeF4":183,"./CartridgeF6":184,"./CartridgeF8":185,"./CartridgeFA":186,"./CartridgeFA2":187,"./CartridgeFE":188,"./CartridgeInfo":190,"./CartridgeUA":192}],190:[function(require,module,exports){
 "use strict";
-var CartridgeInfo = (function () {
-    function CartridgeInfo() {
-    }
-    return CartridgeInfo;
-}());
 var CartridgeInfo;
 (function (CartridgeInfo) {
     (function (CartridgeType) {
