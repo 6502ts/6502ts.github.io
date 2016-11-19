@@ -5128,6 +5128,9 @@ var Cpu = (function () {
                 }
                 break;
             case 33:
+                this._opCycles = 1;
+                this._instructionCallback = opNop;
+                break;
             case 56:
             case 57:
                 this._opCycles = 0;
@@ -5457,7 +5460,7 @@ var Disassembler = (function () {
         }
     };
     Disassembler.prototype._peek = function (address) {
-        return this._bus.read(address % 0x10000);
+        return this._bus.peek(address % 0x10000);
     };
     Disassembler.prototype.setBus = function (bus) {
         this._bus = bus;
