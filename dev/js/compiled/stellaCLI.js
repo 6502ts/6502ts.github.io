@@ -28462,6 +28462,8 @@ var Ball = (function () {
         this._counter = 0;
         this._moving = false;
         this._width = 1;
+        this._effectiveWidth = 0;
+        this._lastMovementTick = 0;
         this._rendering = false;
         this._renderCounter = -4;
         this._widths = new Uint8Array([1, 2, 4, 8]);
@@ -28481,6 +28483,8 @@ var Ball = (function () {
         this._moving = false;
         this._hmmClocks = 0;
         this._delaying = false;
+        this._effectiveWidth = 0;
+        this._lastMovementTick = 0;
     };
     Ball.prototype.enabl = function (value) {
         this._enabledNew = (value & 2) > 0;
@@ -28505,24 +28509,41 @@ var Ball = (function () {
         this._moving = true;
     };
     Ball.prototype.movementTick = function (clock, apply) {
+        this._lastMovementTick = this._counter;
         if (clock === this._hmmClocks) {
             this._moving = false;
         }
         if (this._moving && apply) {
             this.render();
-            this.tick();
+            this.tick(false);
         }
         return this._moving;
     };
     Ball.prototype.render = function () {
         this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
     };
-    Ball.prototype.tick = function () {
+    Ball.prototype.tick = function (isReceivingHclock) {
+        var starfieldEffect = this._moving && isReceivingHclock;
         if (this._counter === 156) {
+            var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
             this._rendering = true;
             this._renderCounter = -4;
+            if (starfieldEffect && starfieldDelta === 3) {
+                this._renderCounter++;
+            }
+            switch (starfieldDelta) {
+                case 3:
+                    this._effectiveWidth = this._width === 1 ? 2 : this._width;
+                    break;
+                case 2:
+                    this._effectiveWidth = 0;
+                    break;
+                default:
+                    this._effectiveWidth = this._width;
+                    break;
+            }
         }
-        else if (this._rendering && ++this._renderCounter >= this._width) {
+        else if (this._rendering && ++this._renderCounter >= (starfieldEffect ? this._effectiveWidth : this._width)) {
             this._rendering = false;
         }
         if (++this._counter >= 160) {
@@ -28841,6 +28862,8 @@ var Missile = (function () {
         this._counter = 0;
         this._moving = false;
         this._width = 1;
+        this._effectiveWidth = 0;
+        this._lastMovementTick = 0;
         this._rendering = false;
         this._renderCounter = -4;
         this._widths = new Uint8Array([1, 2, 4, 8]);
@@ -28858,6 +28881,8 @@ var Missile = (function () {
         this._decodes = drawCounterDecodes_1.decodesMissile[0];
         this._resmp = -1;
         this._enam = false;
+        this._effectiveWidth = 0;
+        this._lastMovementTick = 0;
     };
     Missile.prototype.enam = function (value) {
         this._enam = (value & 2) > 0;
@@ -28894,24 +28919,41 @@ var Missile = (function () {
         this._moving = true;
     };
     Missile.prototype.movementTick = function (clock, apply) {
+        this._lastMovementTick = this._counter;
         if (clock === this._hmmClocks) {
             this._moving = false;
         }
         if (this._moving && apply) {
             this.render();
-            this.tick();
+            this.tick(false);
         }
         return this._moving;
     };
     Missile.prototype.render = function () {
         this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
     };
-    Missile.prototype.tick = function () {
+    Missile.prototype.tick = function (isReceivingHclock) {
+        var starfieldEffect = this._moving && isReceivingHclock;
         if (this._decodes[this._counter]) {
+            var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
             this._rendering = true;
             this._renderCounter = -4;
+            if (starfieldEffect && starfieldDelta === 3) {
+                this._renderCounter++;
+            }
+            switch (starfieldDelta) {
+                case 3:
+                    this._effectiveWidth = this._width === 1 ? 2 : this._width;
+                    break;
+                case 2:
+                    this._effectiveWidth = 0;
+                    break;
+                default:
+                    this._effectiveWidth = this._width;
+                    break;
+            }
         }
-        else if (this._rendering && ++this._renderCounter >= this._width) {
+        else if (this._rendering && ++this._renderCounter >= (starfieldEffect ? this._effectiveWidth : this._width)) {
             this._rendering = false;
         }
         if (++this._counter >= 160) {
@@ -28929,10 +28971,6 @@ exports.default = Missile;
 },{"./drawCounterDecodes":210}],205:[function(require,module,exports){
 "use strict";
 var C = 68e-9, RPOT = 1e6, R0 = 1.8e3, U = 5, LINES_FULL = 380;
-function exp(x) {
-    var x2 = x * x / 2, x3 = x2 * x / 3, x4 = x3 * x / 4;
-    return 1 + x + x2 + x3 + x4;
-}
 var PaddleReader = (function () {
     function PaddleReader(_clockFreq, _timestampRef, _paddle) {
         var _this = this;
@@ -28979,7 +29017,7 @@ var PaddleReader = (function () {
         }
         var timestamp = this._timestampRef();
         this._u = U * (1 - (1 - this._u / U) *
-            exp(-(timestamp - this._timestamp) / (this._value * RPOT + R0) / C / this._clockFreq));
+            Math.exp(-(timestamp - this._timestamp) / (this._value * RPOT + R0) / C / this._clockFreq));
         this._timestamp = timestamp;
     };
     return PaddleReader;
@@ -29052,9 +29090,14 @@ var Player = (function () {
             this._updatePattern();
         }
     };
-    Player.prototype.resp = function (hblank) {
-        this._counter = hblank ? 159 : 157;
-        if (this._rendering && this._renderCounter < -1) {
+    Player.prototype.resp = function () {
+        this._counter = 1;
+    };
+    Player.prototype.respHblank = function () {
+        this._counter = 159;
+    };
+    Player.prototype.resetDecodeLogic = function () {
+        if (this._rendering && this._renderCounter < 0) {
             this._renderCounter = -5;
         }
     };
@@ -29117,9 +29160,9 @@ var Player = (function () {
             case 8:
                 return (this._counter - 3 + 160) % 160;
             case 16:
-                return (this._counter - 6 + 160) % 160;
+                return (this._counter - 9 + 160) % 160;
             case 32:
-                return (this._counter - 10 + 160) % 160;
+                return (this._counter - 13 + 160) % 160;
             default:
                 throw new Error("cannot happen: invalid width " + this._width);
         }
@@ -29494,11 +29537,11 @@ var Tia = (function () {
         this._ball.render();
     };
     Tia.prototype._tickSprites = function () {
-        this._missile0.tick();
-        this._missile1.tick();
+        this._missile0.tick(true);
+        this._missile1.tick(true);
         this._player0.tick();
         this._player1.tick();
-        this._ball.tick();
+        this._ball.tick(true);
     };
     Tia.prototype._nextLine = function () {
         this._hctr = 0;
@@ -29663,7 +29706,8 @@ var Tia = (function () {
                 break;
             case 10:
                 this._linesSinceChange = 0;
-                this._priority = (value & 0x04) ? 1 : 0;
+                this._priority = (value & 0x04) ? 1 :
+                    ((value & 0x02) ? 2 : 0);
                 this._playfield.ctrlpf(value);
                 this._ball.ctrlpf(value);
                 break;
@@ -29687,19 +29731,29 @@ var Tia = (function () {
                 break;
             case 16:
                 this._linesSinceChange = 0;
-                this._player0.resp(this._hstate === 0);
+                this._player0.resetDecodeLogic();
+                if (this._hstate === 0) {
+                    this._delayQueue.push(16, value, 3);
+                }
+                else {
+                    this._delayQueue.push(16, value, 4);
+                }
                 break;
             case 17:
                 this._linesSinceChange = 0;
-                this._player1.resp(this._hstate === 0);
+                this._player1.resetDecodeLogic();
+                if (this._hstate === 0) {
+                    this._delayQueue.push(17, value, 3);
+                }
+                else {
+                    this._delayQueue.push(17, value, 4);
+                }
                 break;
             case 11:
-                this._linesSinceChange = 0;
-                this._player0.refp(value);
+                this._delayQueue.push(11, value, 1);
                 break;
             case 12:
-                this._linesSinceChange = 0;
-                this._player1.refp(value);
+                this._delayQueue.push(12, value, 1);
                 break;
             case 32:
                 this._delayQueue.push(32, value, 2);
@@ -29836,6 +29890,22 @@ var Tia = (function () {
                 self._player1.hmp(0);
                 self._ball.hmbl(0);
                 break;
+            case 16:
+                self._linesSinceChange = 0;
+                self._player0.resp();
+                break;
+            case 17:
+                self._linesSinceChange = 0;
+                self._player1.resp();
+                break;
+            case 11:
+                self._linesSinceChange = 0;
+                self._player0.refp(value);
+                break;
+            case 12:
+                self._linesSinceChange = 0;
+                self._player1.refp(value);
+                break;
         }
     };
     Tia.prototype._getPalette = function (config) {
@@ -29858,21 +29928,33 @@ var Tia = (function () {
     Tia.prototype._renderPixel = function (x, y, lineNotCached) {
         if (lineNotCached) {
             var color = this._colorBk;
-            if (this._priority === 0) {
-                color = this._playfield.getPixel(color);
-                color = this._ball.getPixel(color);
-                color = this._missile1.getPixel(color);
-                color = this._player1.getPixel(color);
-                color = this._missile0.getPixel(color);
-                color = this._player0.getPixel(color);
-            }
-            else {
-                color = this._missile1.getPixel(color);
-                color = this._player1.getPixel(color);
-                color = this._missile0.getPixel(color);
-                color = this._player0.getPixel(color);
-                color = this._playfield.getPixel(color);
-                color = this._ball.getPixel(color);
+            switch (this._priority) {
+                case 0:
+                    color = this._playfield.getPixel(color);
+                    color = this._ball.getPixel(color);
+                    color = this._missile1.getPixel(color);
+                    color = this._player1.getPixel(color);
+                    color = this._missile0.getPixel(color);
+                    color = this._player0.getPixel(color);
+                    break;
+                case 1:
+                    color = this._missile1.getPixel(color);
+                    color = this._player1.getPixel(color);
+                    color = this._missile0.getPixel(color);
+                    color = this._player0.getPixel(color);
+                    color = this._playfield.getPixel(color);
+                    color = this._ball.getPixel(color);
+                    break;
+                case 2:
+                    color = this._ball.getPixel(color);
+                    color = this._missile1.getPixel(color);
+                    color = this._player1.getPixel(color);
+                    color = this._playfield.getPixel(color);
+                    color = this._missile0.getPixel(color);
+                    color = this._player0.getPixel(color);
+                    break;
+                default:
+                    throw new Error('invalid priority');
             }
             this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.vblank ? 0xFF000000 : color;
         }
