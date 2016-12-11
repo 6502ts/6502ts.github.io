@@ -81703,13 +81703,12 @@ var Tia = (function () {
                 this._frameManager.setVsync((value & 0x02) > 0);
                 break;
             case 1:
-                this._linesSinceChange = 0;
                 this._input0.vblank(value);
                 this._input1.vblank(value);
                 for (var i = 0; i < 4; i++) {
                     this._paddles[i].vblank(value);
                 }
-                this._frameManager.setVblank((value & 0x02) > 0);
+                this._delayQueue.push(1, value, 1);
                 break;
             case 29:
                 this._linesSinceChange = 0;
@@ -81899,6 +81898,10 @@ var Tia = (function () {
     };
     Tia._delayedWrite = function (address, value, self) {
         switch (address) {
+            case 1:
+                self._linesSinceChange = 0;
+                self._frameManager.setVblank((value & 0x02) > 0);
+                break;
             case 42:
                 self._linesSinceChange = 0;
                 self._movementClock = 0;
