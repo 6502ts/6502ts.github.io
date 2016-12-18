@@ -28493,8 +28493,8 @@ var Ball = (function () {
     Ball.prototype.hmbl = function (value) {
         this._hmmClocks = (value >>> 4) ^ 0x8;
     };
-    Ball.prototype.resbl = function (hblank) {
-        this._counter = hblank ? 159 : 157;
+    Ball.prototype.resbl = function (hblank, extendedHblank) {
+        this._counter = hblank ? (extendedHblank ? 158 : 159) : 157;
         this._rendering = true;
         this._renderCounter = -4;
     };
@@ -28891,8 +28891,8 @@ var Missile = (function () {
     Missile.prototype.hmm = function (value) {
         this._hmmClocks = (value >>> 4) ^ 0x8;
     };
-    Missile.prototype.resm = function (hblank) {
-        this._counter = hblank ? 159 : 157;
+    Missile.prototype.resm = function (hblank, extendedHblank) {
+        this._counter = hblank ? (extendedHblank ? 158 : 159) : 157;
     };
     Missile.prototype.resmp = function (value, player) {
         var resmp = value & 0x02;
@@ -29086,19 +29086,18 @@ var Player = (function () {
         if (this._rendering && this._renderCounter >= this._width) {
             this._rendering = false;
         }
+        if (this._rendering && this._renderCounter < 0 && this._width > 8 && oldWidth === 8) {
+            this._renderCounter += (this._renderCounter < -2 ? -1 : 1);
+        }
         if (oldWidth !== this._width) {
             this._updatePattern();
         }
     };
-    Player.prototype.resp = function () {
-        this._counter = 1;
-    };
-    Player.prototype.respHblank = function () {
-        this._counter = 159;
-    };
-    Player.prototype.resetDecodeLogic = function () {
-        if (this._rendering && this._renderCounter < 0) {
-            this._renderCounter = -5;
+    Player.prototype.resp = function (hblank, extendedHblank) {
+        this._counter = hblank ? (extendedHblank ? 158 : 159) : 157;
+        var renderCounterOffset = this._width > 8 ? -6 : -5;
+        if (this._rendering && (this._renderCounter - renderCounterOffset) < 4) {
+            this._renderCounter = renderCounterOffset;
         }
     };
     Player.prototype.refp = function (value) {
@@ -29137,6 +29136,9 @@ var Player = (function () {
         if (this._decodes[this._counter]) {
             this._rendering = true;
             this._renderCounter = -5;
+            if (this._width > 8) {
+                this._renderCounter--;
+            }
         }
         else if (this._rendering && ++this._renderCounter >= this._width) {
             this._rendering = false;
@@ -29158,7 +29160,7 @@ var Player = (function () {
     Player.prototype.getRespClock = function () {
         switch (this._width) {
             case 8:
-                return (this._counter - 3 + 160) % 160;
+                return (this._counter - 5 + 160) % 160;
             case 16:
                 return (this._counter - 9 + 160) % 160;
             case 32:
@@ -29493,11 +29495,12 @@ var Tia = (function () {
             this._linesSinceChange = 0;
             var apply = this._hstate === 0;
             var m = false;
-            m = this._missile0.movementTick(this._movementClock, apply) || m;
-            m = this._missile1.movementTick(this._movementClock, apply) || m;
-            m = this._player0.movementTick(this._movementClock, apply) || m;
-            m = this._player1.movementTick(this._movementClock, apply) || m;
-            m = this._ball.movementTick(this._movementClock, apply) || m;
+            var movementCounter = this._movementClock > 15 ? 0 : this._movementClock;
+            m = this._missile0.movementTick(movementCounter, apply) || m;
+            m = this._missile1.movementTick(movementCounter, apply) || m;
+            m = this._player0.movementTick(movementCounter, apply) || m;
+            m = this._player1.movementTick(movementCounter, apply) || m;
+            m = this._ball.movementTick(movementCounter, apply) || m;
             this._movementInProgress = m;
             this._collisionUpdateRequired = m;
             this._movementClock++;
@@ -29646,11 +29649,11 @@ var Tia = (function () {
                 break;
             case 18:
                 this._linesSinceChange = 0;
-                this._missile0.resm(this._hstate === 0);
+                this._missile0.resm(this._hstate === 0, this._hctr >= 68);
                 break;
             case 19:
                 this._linesSinceChange = 0;
-                this._missile1.resm(this._hstate === 0);
+                this._missile1.resm(this._hstate === 0, this._hctr >= 68);
                 break;
             case 40:
                 this._linesSinceChange = 0;
@@ -29730,23 +29733,11 @@ var Tia = (function () {
                 break;
             case 16:
                 this._linesSinceChange = 0;
-                this._player0.resetDecodeLogic();
-                if (this._hstate === 0) {
-                    this._delayQueue.push(16, value, 3);
-                }
-                else {
-                    this._delayQueue.push(16, value, 4);
-                }
+                this._player0.resp(this._hstate === 0, this._hctr >= 68);
                 break;
             case 17:
                 this._linesSinceChange = 0;
-                this._player1.resetDecodeLogic();
-                if (this._hstate === 0) {
-                    this._delayQueue.push(17, value, 3);
-                }
-                else {
-                    this._delayQueue.push(17, value, 4);
-                }
+                this._player1.resp(this._hstate === 0, this._hctr >= 68);
                 break;
             case 11:
                 this._delayQueue.push(11, value, 1);
@@ -29777,7 +29768,7 @@ var Tia = (function () {
                 break;
             case 20:
                 this._linesSinceChange = 0;
-                this._ball.resbl(this._hstate === 0);
+                this._ball.resbl(this._hstate === 0, this._hctr >= 68);
                 break;
             case 39:
                 this._linesSinceChange = 0;
@@ -29892,14 +29883,6 @@ var Tia = (function () {
                 self._player0.hmp(0);
                 self._player1.hmp(0);
                 self._ball.hmbl(0);
-                break;
-            case 16:
-                self._linesSinceChange = 0;
-                self._player0.resp();
-                break;
-            case 17:
-                self._linesSinceChange = 0;
-                self._player1.resp();
                 break;
             case 11:
                 self._linesSinceChange = 0;
@@ -30098,7 +30081,7 @@ exports.default = ToneGenerator;
 
 },{"../../../tools/AudioOutputBuffer":214,"../Config":173}],210:[function(require,module,exports){
 "use strict";
-var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160), decodesWide = new Uint8Array(160);
+var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160);
 exports.decodesMissile = [
     decodes0,
     decodes1,
@@ -30115,9 +30098,9 @@ exports.decodesPlayer = [
     decodes2,
     decodes3,
     decodes4,
-    decodesWide,
+    decodes0,
     decodes6,
-    decodesWide
+    decodes0
 ];
 var init;
 (function (init) {
@@ -30134,10 +30117,6 @@ var init;
         }
         decodes[156] = 1;
     });
-    for (var i = 0; i < 160; i++) {
-        decodesWide[i] = 0;
-    }
-    decodesWide[157] = 1;
     decodes1[12] = 1;
     decodes2[28] = 1;
     decodes3[12] = decodes3[28] = 1;
