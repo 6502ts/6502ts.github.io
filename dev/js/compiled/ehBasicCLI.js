@@ -2552,8 +2552,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-
 	var context = __webpack_require__(1);
 	var useNative = __webpack_require__(2);
 	var Timer = __webpack_require__(3);
@@ -2604,8 +2602,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports) {
 
-	/*jshint -W067*/
-	'use strict';
+	/* jshint -W067 */
 
 	module.exports = (function() {
 	    return this || (1, eval)('this');
@@ -2628,20 +2625,40 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-
 	var context = __webpack_require__(1);
-
 	var nextId = 1;
 	var tasks = {};
 	var lock = false;
 
 	function wrap(handler) {
 	    var args = Array.prototype.slice.call(arguments, 1);
-
-	    return function() {
-	        handler.apply(undefined, args);
-	    };
+	    var fn;
+	    switch (args.length){
+	        case 0:
+	            fn = function() {
+	                handler.call(undefined);
+	            };
+	            break;
+	        case 1:
+	            fn = function() {
+	                handler.call(undefined, args[0]);
+	            };
+	            break;
+	        case 2:
+	            fn = function() {
+	                handler.call(undefined, args[0], args[1]);
+	            };
+	            break;
+	        case 3:
+	            fn = function() {
+	                handler.call(undefined, args[0], args[1], args[2]);
+	            };
+	            break;
+	        default: fn = function() {
+	            handler.apply(undefined, args);
+	        };
+	    }
+	    return fn;
 	}
 
 	function create(args) {
@@ -2684,8 +2701,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
 
@@ -2707,8 +2722,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
@@ -2733,8 +2746,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
@@ -2772,6 +2783,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (context.importScripts || !context.postMessage) {
 	        return false;
 	    }
+	    if (context.navigator && /Chrome/.test(context.navigator.userAgent)) {
+	        //skip this method due to heavy minor GC on heavy use.
+	        return false;
+	    }
 
 	    var asynch = true;
 	    var oldOnMessage = context.onmessage;
@@ -2788,8 +2803,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
@@ -2819,8 +2832,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
@@ -2855,8 +2866,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 9 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);

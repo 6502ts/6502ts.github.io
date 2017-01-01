@@ -1333,7 +1333,7 @@ function derDecodeLen(buf, primitive, fail) {
 
   // Long form
   var num = len & 0x7f;
-  if (num >= 4)
+  if (num > 4)
     return buf.error('length octect is too long');
 
   len = 0;
@@ -21160,8 +21160,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-
 	var context = __webpack_require__(1);
 	var useNative = __webpack_require__(2);
 	var Timer = __webpack_require__(3);
@@ -21212,8 +21210,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports) {
 
-	/*jshint -W067*/
-	'use strict';
+	/* jshint -W067 */
 
 	module.exports = (function() {
 	    return this || (1, eval)('this');
@@ -21236,20 +21233,40 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-
 	var context = __webpack_require__(1);
-
 	var nextId = 1;
 	var tasks = {};
 	var lock = false;
 
 	function wrap(handler) {
 	    var args = Array.prototype.slice.call(arguments, 1);
-
-	    return function() {
-	        handler.apply(undefined, args);
-	    };
+	    var fn;
+	    switch (args.length){
+	        case 0:
+	            fn = function() {
+	                handler.call(undefined);
+	            };
+	            break;
+	        case 1:
+	            fn = function() {
+	                handler.call(undefined, args[0]);
+	            };
+	            break;
+	        case 2:
+	            fn = function() {
+	                handler.call(undefined, args[0], args[1]);
+	            };
+	            break;
+	        case 3:
+	            fn = function() {
+	                handler.call(undefined, args[0], args[1], args[2]);
+	            };
+	            break;
+	        default: fn = function() {
+	            handler.apply(undefined, args);
+	        };
+	    }
+	    return fn;
 	}
 
 	function create(args) {
@@ -21292,8 +21309,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
 
@@ -21315,8 +21330,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
@@ -21341,8 +21354,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
@@ -21380,6 +21391,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (context.importScripts || !context.postMessage) {
 	        return false;
 	    }
+	    if (context.navigator && /Chrome/.test(context.navigator.userAgent)) {
+	        //skip this method due to heavy minor GC on heavy use.
+	        return false;
+	    }
 
 	    var asynch = true;
 	    var oldOnMessage = context.onmessage;
@@ -21396,8 +21411,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
@@ -21427,8 +21440,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
@@ -21463,8 +21474,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 9 */
 /***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 
 	var context = __webpack_require__(1);
 	var Timer = __webpack_require__(3);
@@ -26716,7 +26725,7 @@ var Cartridge2k = (function (_super) {
     function Cartridge2k(buffer) {
         _super.call(this);
         this._rom = new Uint8Array(0x0800);
-        if (buffer.length !== 0x0800) {
+        if (buffer.length > 0x0800) {
             throw new Error("buffer is not a 2k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < buffer.length && i < 0x0800; i++)
@@ -26955,9 +26964,10 @@ var CartridgeDetector = (function () {
         if (buffer.length % 8448 === 0) {
             return CartridgeInfo_1.default.CartridgeType.bankswitch_supercharger;
         }
+        if (buffer.length <= 0x0800) {
+            return CartridgeInfo_1.default.CartridgeType.vanilla_2k;
+        }
         switch (buffer.length) {
-            case 0x0800:
-                return CartridgeInfo_1.default.CartridgeType.vanilla_2k;
             case 0x1000:
                 return CartridgeInfo_1.default.CartridgeType.vanilla_4k;
             case 0x2000:
@@ -28493,10 +28503,10 @@ var Ball = (function () {
     Ball.prototype.hmbl = function (value) {
         this._hmmClocks = (value >>> 4) ^ 0x8;
     };
-    Ball.prototype.resbl = function (hblank, extendedHblank) {
-        this._counter = hblank ? (extendedHblank ? 158 : 159) : 157;
+    Ball.prototype.resbl = function (counter) {
+        this._counter = counter;
         this._rendering = true;
-        this._renderCounter = -4;
+        this._renderCounter = -4 + (counter - 157);
     };
     Ball.prototype.ctrlpf = function (value) {
         this._width = this._widths[(value & 0x30) >>> 4];
@@ -28891,8 +28901,8 @@ var Missile = (function () {
     Missile.prototype.hmm = function (value) {
         this._hmmClocks = (value >>> 4) ^ 0x8;
     };
-    Missile.prototype.resm = function (hblank, extendedHblank) {
-        this._counter = hblank ? (extendedHblank ? 158 : 159) : 157;
+    Missile.prototype.resm = function (counter) {
+        this._counter = counter;
     };
     Missile.prototype.resmp = function (value, player) {
         var resmp = value & 0x02;
@@ -29093,8 +29103,8 @@ var Player = (function () {
             this._updatePattern();
         }
     };
-    Player.prototype.resp = function (hblank, extendedHblank) {
-        this._counter = hblank ? (extendedHblank ? 158 : 159) : 157;
+    Player.prototype.resp = function (counter) {
+        this._counter = counter;
         var renderCounterOffset = this._width > 8 ? -6 : -5;
         if (this._rendering && (this._renderCounter - renderCounterOffset) < 4) {
             this._renderCounter = renderCounterOffset;
@@ -29164,7 +29174,7 @@ var Player = (function () {
             case 16:
                 return (this._counter - 9 + 160) % 160;
             case 32:
-                return (this._counter - 13 + 160) % 160;
+                return (this._counter - 12 + 160) % 160;
             default:
                 throw new Error("cannot happen: invalid width " + this._width);
         }
@@ -29649,11 +29659,11 @@ var Tia = (function () {
                 break;
             case 18:
                 this._linesSinceChange = 0;
-                this._missile0.resm(this._hstate === 0, this._hctr >= 68);
+                this._missile0.resm(this._resxCounter());
                 break;
             case 19:
                 this._linesSinceChange = 0;
-                this._missile1.resm(this._hstate === 0, this._hctr >= 68);
+                this._missile1.resm(this._resxCounter());
                 break;
             case 40:
                 this._linesSinceChange = 0;
@@ -29727,17 +29737,16 @@ var Tia = (function () {
             case 28:
                 this._delayQueue
                     .push(28, value, 1)
-                    .push(240, 0, 1);
-                this._linesSinceChange = 0;
-                this._ball.shuffleStatus();
+                    .push(240, 0, 1)
+                    .push(242, 0, 1);
                 break;
             case 16:
                 this._linesSinceChange = 0;
-                this._player0.resp(this._hstate === 0, this._hctr >= 68);
+                this._player0.resp(this._resxCounter());
                 break;
             case 17:
                 this._linesSinceChange = 0;
-                this._player1.resp(this._hstate === 0, this._hctr >= 68);
+                this._player1.resp(this._resxCounter());
                 break;
             case 11:
                 this._delayQueue.push(11, value, 1);
@@ -29760,15 +29769,14 @@ var Tia = (function () {
                 this._player1.vdelp(value);
                 break;
             case 31:
-                this._linesSinceChange = 0;
-                this._ball.enabl(value);
+                this._delayQueue.push(31, value, 1);
                 break;
             case 36:
                 this._delayQueue.push(36, value, 2);
                 break;
             case 20:
                 this._linesSinceChange = 0;
-                this._ball.resbl(this._hstate === 0, this._hctr >= 68);
+                this._ball.resbl(this._resxCounter());
                 break;
             case 39:
                 this._linesSinceChange = 0;
@@ -29892,6 +29900,14 @@ var Tia = (function () {
                 self._linesSinceChange = 0;
                 self._player1.refp(value);
                 break;
+            case 242:
+                self._linesSinceChange = 0;
+                self._ball.shuffleStatus();
+                break;
+            case 31:
+                self._linesSinceChange = 0;
+                self._ball.enabl(value);
+                break;
         }
     };
     Tia.prototype._getPalette = function (config) {
@@ -29963,6 +29979,11 @@ var Tia = (function () {
                 this._frameManager.surfaceBuffer[offset + i] = 0xFF000000;
             }
         }
+    };
+    Tia.prototype._resxCounter = function () {
+        return this._hstate === 0 ?
+            (this._hctr >= 73 ? 158 : 159) :
+            157;
     };
     return Tia;
 }());
