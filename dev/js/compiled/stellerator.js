@@ -81193,7 +81193,7 @@ var Player = (function () {
         this._counter = counter;
         var renderCounterOffset = this._width > 8 ? -6 : -5;
         if (this._rendering && (this._renderCounter - renderCounterOffset) < 4) {
-            this._renderCounter = renderCounterOffset;
+            this._renderCounter = renderCounterOffset + (counter - 157);
         }
     };
     Player.prototype.refp = function (value) {
