@@ -80989,6 +80989,9 @@ var Missile = (function () {
     };
     Missile.prototype.resm = function (counter) {
         this._counter = counter;
+        if (this._rendering && this._renderCounter < 0) {
+            this._renderCounter = -4 + (counter - 157);
+        }
     };
     Missile.prototype.resmp = function (value, player) {
         var resmp = value & 0x02;
