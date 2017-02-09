@@ -28923,10 +28923,35 @@ var Missile = (function () {
     Missile.prototype.hmm = function (value) {
         this._hmmClocks = (value >>> 4) ^ 0x8;
     };
-    Missile.prototype.resm = function (counter) {
+    Missile.prototype.resm = function (counter, hblank) {
         this._counter = counter;
-        if (this._rendering && this._renderCounter < 0) {
-            this._renderCounter = -4 + (counter - 157);
+        if (this._rendering) {
+            if (this._renderCounter < 0) {
+                this._renderCounter = -4 + (counter - 157);
+            }
+            else {
+                switch (this._width) {
+                    case 8:
+                        this._renderCounter = (counter - 157) + ((this._renderCounter >= 4) ? 4 : 0);
+                        break;
+                    case 4:
+                        this._renderCounter = counter - 157;
+                        break;
+                    case 2:
+                        if (hblank) {
+                            this._rendering = this._renderCounter > 1;
+                        }
+                        else if (this._renderCounter === 0) {
+                            this._renderCounter++;
+                        }
+                        break;
+                    default:
+                        if (hblank) {
+                            this._rendering = this._renderCounter > 0;
+                        }
+                        break;
+                }
+            }
         }
     };
     Missile.prototype.resmp = function (value, player) {
@@ -29613,11 +29638,11 @@ var Tia = (function () {
                 break;
             case 18:
                 this._linesSinceChange = 0;
-                this._missile0.resm(this._resxCounter());
+                this._missile0.resm(this._resxCounter(), this._hstate === 0);
                 break;
             case 19:
                 this._linesSinceChange = 0;
-                this._missile1.resm(this._resxCounter());
+                this._missile1.resm(this._resxCounter(), this._hstate === 0);
                 break;
             case 40:
                 this._linesSinceChange = 0;
