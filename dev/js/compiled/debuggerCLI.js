@@ -3120,7 +3120,7 @@ function hasOwnProperty(obj, prop) {
 
 },{"./support/isBuffer":10,"_process":8,"inherits":9}],12:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
+var microevent_ts_1 = require("microevent.ts");
 var AbstractCLI = (function () {
     function AbstractCLI() {
         this.events = {
@@ -3180,7 +3180,7 @@ exports.default = CommandInterpreter;
 
 },{}],14:[function(require,module,exports){
 "use strict";
-var pathlib = require('path');
+var pathlib = require("path");
 var Completer = (function () {
     function Completer(_availableCommands, _fsProvider) {
         this._availableCommands = _availableCommands;
@@ -3231,7 +3231,6 @@ var Completer = (function () {
     };
     return Completer;
 }());
-var Completer;
 (function (Completer) {
     var CompletionResult = (function () {
         function CompletionResult(candidates, match) {
@@ -3252,24 +3251,25 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var path = require('path');
-var Debugger_1 = require('../machine/Debugger');
-var DebuggerFrontend_1 = require('./DebuggerFrontend');
-var CommandInterpreter_1 = require('./CommandInterpreter');
-var AbstractCLI_1 = require('./AbstractCLI');
-var Board_1 = require('../machine/vanilla/Board');
+var path = require("path");
+var Debugger_1 = require("../machine/Debugger");
+var DebuggerFrontend_1 = require("./DebuggerFrontend");
+var CommandInterpreter_1 = require("./CommandInterpreter");
+var AbstractCLI_1 = require("./AbstractCLI");
+var Board_1 = require("../machine/vanilla/Board");
 var DebuggerCLI = (function (_super) {
     __extends(DebuggerCLI, _super);
     function DebuggerCLI(_fsProvider) {
-        _super.call(this);
-        this._fsProvider = _fsProvider;
-        this._output = '';
-        this._allowQuit = true;
-        var dbg = new Debugger_1.default(), commandInterpreter = new CommandInterpreter_1.default(), debuggerFrontend = new DebuggerFrontend_1.default(dbg, this._fsProvider, commandInterpreter);
-        this._debugger = dbg;
-        this._commandInterpreter = commandInterpreter;
-        this._extendCommandInterpreter();
-        this._debuggerFrontend = debuggerFrontend;
+        var _this = _super.call(this) || this;
+        _this._fsProvider = _fsProvider;
+        _this._output = '';
+        _this._allowQuit = true;
+        var dbg = new Debugger_1.default(), commandInterpreter = new CommandInterpreter_1.default(), debuggerFrontend = new DebuggerFrontend_1.default(dbg, _this._fsProvider, commandInterpreter);
+        _this._debugger = dbg;
+        _this._commandInterpreter = commandInterpreter;
+        _this._extendCommandInterpreter();
+        _this._debuggerFrontend = debuggerFrontend;
+        return _this;
     }
     DebuggerCLI.prototype._initialize = function () {
         this._initializeHardware();
@@ -3366,9 +3366,9 @@ exports.default = DebuggerCLI;
 
 },{"../machine/Debugger":20,"../machine/vanilla/Board":26,"./AbstractCLI":12,"./CommandInterpreter":13,"./DebuggerFrontend":16,"path":7}],16:[function(require,module,exports){
 "use strict";
-var BoardInterface_1 = require('../machine/board/BoardInterface');
-var hex = require('../tools/hex');
-var util = require('util');
+var BoardInterface_1 = require("../machine/board/BoardInterface");
+var hex = require("../tools/hex");
+var util = require("util");
 function decodeNumber(value) {
     try {
         return hex.decode(value);
@@ -3536,20 +3536,18 @@ exports.default = DebuggerFrontend;
 
 },{"../machine/board/BoardInterface":21,"../tools/hex":29,"util":11}],17:[function(require,module,exports){
 "use strict";
-var Completer_1 = require('./Completer');
+var Completer_1 = require("./Completer");
 var JqtermCLIRunner = (function () {
     function JqtermCLIRunner(_cli, terminalElt, options) {
-        var _this = this;
         if (options === void 0) { options = {}; }
+        var _this = this;
         this._cli = _cli;
         this._updateCompleter();
         this._terminal = terminalElt.terminal(function (input, terminal) {
             return _this._cli.pushInput(input);
         }, {
             greetings: 'Ready.',
-            completion: function (terminal, cmd, handler) {
-                return handler(_this._completer.complete(terminal.get_command()).candidates);
-            },
+            completion: function (terminal, cmd, handler) { return handler(_this._completer.complete(terminal.get_command()).candidates); },
             exit: false,
             clear: false
         });
@@ -3581,7 +3579,7 @@ exports.default = JqtermCLIRunner;
 
 },{"./Completer":14}],18:[function(require,module,exports){
 "use strict";
-var pathlib = require('path');
+var pathlib = require("path");
 var AbstractFileSystemProvider = (function () {
     function AbstractFileSystemProvider() {
         this._directoryStack = [];
@@ -3621,14 +3619,15 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var util = require('util');
-var AbstractFileSystemProvider_1 = require('./AbstractFileSystemProvider');
+var util = require("util");
+var AbstractFileSystemProvider_1 = require("./AbstractFileSystemProvider");
 var PrepackagedFilesystemProvider = (function (_super) {
     __extends(PrepackagedFilesystemProvider, _super);
     function PrepackagedFilesystemProvider(_blob) {
-        _super.call(this);
-        this._blob = _blob;
-        this._cwd = '/';
+        var _this = _super.call(this) || this;
+        _this._blob = _blob;
+        _this._cwd = '/';
+        return _this;
     }
     PrepackagedFilesystemProvider.prototype.readBinaryFileSync = function (name) {
         name = this._resolvePath(name);
@@ -3692,13 +3691,13 @@ exports.default = PrepackagedFilesystemProvider;
 
 },{"./AbstractFileSystemProvider":18,"buffer":2,"util":11}],20:[function(require,module,exports){
 "use strict";
-var Instruction_1 = require('./cpu/Instruction');
-var Disassembler_1 = require('./cpu/Disassembler');
-var CpuInterface_1 = require('./cpu/CpuInterface');
-var BoardInterface_1 = require('./board/BoardInterface');
-var hex = require('../tools/hex');
-var binary = require('../tools/binary');
-var util = require('util');
+var Instruction_1 = require("./cpu/Instruction");
+var Disassembler_1 = require("./cpu/Disassembler");
+var CpuInterface_1 = require("./cpu/CpuInterface");
+var BoardInterface_1 = require("./board/BoardInterface");
+var hex = require("../tools/hex");
+var binary = require("../tools/binary");
+var util = require("util");
 var Debugger = (function () {
     function Debugger(_traceSize, _stepMaxCycles) {
         if (_traceSize === void 0) { _traceSize = 1024; }
@@ -3939,8 +3938,8 @@ exports.default = BoardInterface;
 
 },{}],22:[function(require,module,exports){
 "use strict";
-var Instruction_1 = require('./Instruction');
-var CpuInterface_1 = require('./CpuInterface');
+var Instruction_1 = require("./Instruction");
+var CpuInterface_1 = require("./CpuInterface");
 function setFlagsNZ(state, operand) {
     state.flags = (state.flags & ~(128 | 2)) |
         (operand & 0x80) |
@@ -4887,8 +4886,8 @@ exports.default = CpuInterface;
 
 },{}],24:[function(require,module,exports){
 "use strict";
-var Instruction_1 = require('./Instruction');
-var hex = require('../../tools/hex');
+var Instruction_1 = require("./Instruction");
+var hex = require("../../tools/hex");
 var Disassembler = (function () {
     function Disassembler(_bus) {
         this._bus = _bus;
@@ -4981,9 +4980,9 @@ var Instruction = (function () {
     return Instruction;
 }());
 ;
-var Instruction;
 (function (Instruction) {
     ;
+    var OperationMap;
     (function (OperationMap) {
         OperationMap[OperationMap["adc"] = 0] = "adc";
         OperationMap[OperationMap["and"] = 1] = "and";
@@ -5051,8 +5050,7 @@ var Instruction;
         OperationMap[OperationMap["slo"] = 63] = "slo";
         OperationMap[OperationMap["aax"] = 64] = "aax";
         OperationMap[OperationMap["invalid"] = 65] = "invalid";
-    })(Instruction.OperationMap || (Instruction.OperationMap = {}));
-    var OperationMap = Instruction.OperationMap;
+    })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
     ;
     ;
     Instruction.opcodes = new Array(256);
@@ -5060,7 +5058,6 @@ var Instruction;
 ;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Instruction;
-var Instruction;
 (function (Instruction) {
     (function () {
         for (var i = 0; i < 256; i++) {
@@ -5289,11 +5286,11 @@ var Instruction;
 
 },{}],26:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var BoardInterface_1 = require('../board/BoardInterface');
-var CpuInterface_1 = require('../cpu/CpuInterface');
-var Cpu_1 = require('../cpu/Cpu');
-var Memory_1 = require('./Memory');
+var microevent_ts_1 = require("microevent.ts");
+var BoardInterface_1 = require("../board/BoardInterface");
+var CpuInterface_1 = require("../cpu/CpuInterface");
+var Cpu_1 = require("../cpu/Cpu");
+var Memory_1 = require("./Memory");
 var Board = (function () {
     function Board(cpuFactory) {
         var _this = this;
@@ -5481,8 +5478,8 @@ exports.decode = decode;
 },{}],"debuggerCLI":[function(require,module,exports){
 "use strict";
 var DebuggerCLI_1 = require("../cli/DebuggerCLI");
-var JqtermCLIRunner_1 = require('../cli/JqtermCLIRunner');
-var PrepackagedFilesystemProvider_1 = require('../fs/PrepackagedFilesystemProvider');
+var JqtermCLIRunner_1 = require("../cli/JqtermCLIRunner");
+var PrepackagedFilesystemProvider_1 = require("../fs/PrepackagedFilesystemProvider");
 function run(fileBlob, terminalElt, interruptButton, clearButton) {
     var fsProvider = new PrepackagedFilesystemProvider_1.default(fileBlob), cli = new DebuggerCLI_1.default(fsProvider), runner = new JqtermCLIRunner_1.default(cli, terminalElt, {
         interruptButton: interruptButton,

@@ -5295,19 +5295,19 @@ Rand.prototype.generate = function generate(len) {
   return this._rand(len);
 };
 
-if (typeof window === 'object') {
-  if (window.crypto && window.crypto.getRandomValues) {
+if (typeof self === 'object') {
+  if (self.crypto && self.crypto.getRandomValues) {
     // Modern browsers
     Rand.prototype._rand = function _rand(n) {
       var arr = new Uint8Array(n);
-      window.crypto.getRandomValues(arr);
+      self.crypto.getRandomValues(arr);
       return arr;
     };
-  } else if (window.msCrypto && window.msCrypto.getRandomValues) {
+  } else if (self.msCrypto && self.msCrypto.getRandomValues) {
     // IE
     Rand.prototype._rand = function _rand(n) {
       var arr = new Uint8Array(n);
-      window.msCrypto.getRandomValues(arr);
+      self.msCrypto.getRandomValues(arr);
       return arr;
     };
   } else {
@@ -5317,7 +5317,7 @@ if (typeof window === 'object') {
     };
   }
 } else {
-  // Node.js or Web worker
+  // Node.js or Web worker with no crypto support
   try {
     var crypto = require('crypto');
 
@@ -12876,7 +12876,7 @@ defineCurve('curve25519', {
   prime: 'p25519',
   p: '7fffffffffffffff ffffffffffffffff ffffffffffffffff ffffffffffffffed',
   a: '76d06',
-  b: '0',
+  b: '1',
   n: '1000000000000000 0000000000000000 14def9dea2f79cd6 5812631a5cf5d3ed',
   hash: hash.sha256,
   gRed: false,
@@ -13186,6 +13186,9 @@ EC.prototype.getKeyRecoveryParam = function(e, signature, Q, enc) {
 'use strict';
 
 var BN = require('bn.js');
+var elliptic = require('../../elliptic');
+var utils = elliptic.utils;
+var assert = utils.assert;
 
 function KeyPair(ec, options) {
   this.ec = ec;
@@ -13266,6 +13269,15 @@ KeyPair.prototype._importPrivate = function _importPrivate(key, enc) {
 
 KeyPair.prototype._importPublic = function _importPublic(key, enc) {
   if (key.x || key.y) {
+    // Montgomery points only have an `x` coordinate.
+    // Weierstrass/Edwards points on the other hand have both `x` and
+    // `y` coordinates.
+    if (this.ec.curve.type === 'mont') {
+      assert(key.x, 'Need x coordinate');
+    } else if (this.ec.curve.type === 'short' ||
+               this.ec.curve.type === 'edwards') {
+      assert(key.x && key.y, 'Need both x and y coordinate');
+    }
     this.pub = this.ec.curve.point(key.x, key.y);
     return;
   }
@@ -13291,7 +13303,7 @@ KeyPair.prototype.inspect = function inspect() {
          ' pub: ' + (this.pub && this.pub.inspect()) + ' >';
 };
 
-},{"bn.js":16}],73:[function(require,module,exports){
+},{"../../elliptic":64,"bn.js":16}],73:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -14803,19 +14815,19 @@ module.exports={
     ]
   ],
   "_from": "elliptic@>=6.0.0 <7.0.0",
-  "_id": "elliptic@6.3.2",
+  "_id": "elliptic@6.3.3",
   "_inCache": true,
   "_location": "/elliptic",
-  "_nodeVersion": "6.3.0",
+  "_nodeVersion": "7.0.0",
   "_npmOperationalInternal": {
-    "host": "packages-16-east.internal.npmjs.com",
-    "tmp": "tmp/elliptic-6.3.2.tgz_1473938837205_0.3108903462998569"
+    "host": "packages-18-east.internal.npmjs.com",
+    "tmp": "tmp/elliptic-6.3.3.tgz_1486422837740_0.10658654430881143"
   },
   "_npmUser": {
     "name": "indutny",
     "email": "fedor@indutny.com"
   },
-  "_npmVersion": "3.10.3",
+  "_npmVersion": "3.10.8",
   "_phantomChildren": {},
   "_requested": {
     "raw": "elliptic@^6.0.0",
@@ -14830,8 +14842,8 @@ module.exports={
     "/browserify-sign",
     "/create-ecdh"
   ],
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.3.2.tgz",
-  "_shasum": "e4c81e0829cf0a65ab70e998b8232723b5c1bc48",
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.3.3.tgz",
+  "_shasum": "5482d9646d54bcb89fd7d994fc9e2e9568876e3f",
   "_shrinkwrap": null,
   "_spec": "elliptic@^6.0.0",
   "_where": "/home/travis/build/6502ts/6502.ts/node_modules/browserify-sign",
@@ -14854,6 +14866,7 @@ module.exports={
     "coveralls": "^2.11.3",
     "grunt": "^0.4.5",
     "grunt-browserify": "^5.0.0",
+    "grunt-cli": "^1.2.0",
     "grunt-contrib-connect": "^1.0.0",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^1.0.1",
@@ -14866,13 +14879,13 @@ module.exports={
   },
   "directories": {},
   "dist": {
-    "shasum": "e4c81e0829cf0a65ab70e998b8232723b5c1bc48",
-    "tarball": "https://registry.npmjs.org/elliptic/-/elliptic-6.3.2.tgz"
+    "shasum": "5482d9646d54bcb89fd7d994fc9e2e9568876e3f",
+    "tarball": "https://registry.npmjs.org/elliptic/-/elliptic-6.3.3.tgz"
   },
   "files": [
     "lib"
   ],
-  "gitHead": "cbace4683a4a548dc0306ef36756151a20299cd5",
+  "gitHead": "63aee8d697e9b7fac37ece24222029117a890a7e",
   "homepage": "https://github.com/indutny/elliptic",
   "keywords": [
     "EC",
@@ -14903,7 +14916,7 @@ module.exports={
     "unit": "istanbul test _mocha --reporter=spec test/index.js",
     "version": "grunt dist && git add dist/"
   },
-  "version": "6.3.2"
+  "version": "6.3.3"
 }
 
 },{}],81:[function(require,module,exports){
@@ -23479,7 +23492,7 @@ exports.createContext = Script.createContext = function (context) {
 
 },{"indexof":90}],151:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
+var microevent_ts_1 = require("microevent.ts");
 var AbstractCLI = (function () {
     function AbstractCLI() {
         this.events = {
@@ -23539,7 +23552,7 @@ exports.default = CommandInterpreter;
 
 },{}],153:[function(require,module,exports){
 "use strict";
-var pathlib = require('path');
+var pathlib = require("path");
 var Completer = (function () {
     function Completer(_availableCommands, _fsProvider) {
         this._availableCommands = _availableCommands;
@@ -23590,7 +23603,6 @@ var Completer = (function () {
     };
     return Completer;
 }());
-var Completer;
 (function (Completer) {
     var CompletionResult = (function () {
         function CompletionResult(candidates, match) {
@@ -23611,24 +23623,25 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var path = require('path');
-var Debugger_1 = require('../machine/Debugger');
-var DebuggerFrontend_1 = require('./DebuggerFrontend');
-var CommandInterpreter_1 = require('./CommandInterpreter');
-var AbstractCLI_1 = require('./AbstractCLI');
-var Board_1 = require('../machine/vanilla/Board');
+var path = require("path");
+var Debugger_1 = require("../machine/Debugger");
+var DebuggerFrontend_1 = require("./DebuggerFrontend");
+var CommandInterpreter_1 = require("./CommandInterpreter");
+var AbstractCLI_1 = require("./AbstractCLI");
+var Board_1 = require("../machine/vanilla/Board");
 var DebuggerCLI = (function (_super) {
     __extends(DebuggerCLI, _super);
     function DebuggerCLI(_fsProvider) {
-        _super.call(this);
-        this._fsProvider = _fsProvider;
-        this._output = '';
-        this._allowQuit = true;
-        var dbg = new Debugger_1.default(), commandInterpreter = new CommandInterpreter_1.default(), debuggerFrontend = new DebuggerFrontend_1.default(dbg, this._fsProvider, commandInterpreter);
-        this._debugger = dbg;
-        this._commandInterpreter = commandInterpreter;
-        this._extendCommandInterpreter();
-        this._debuggerFrontend = debuggerFrontend;
+        var _this = _super.call(this) || this;
+        _this._fsProvider = _fsProvider;
+        _this._output = '';
+        _this._allowQuit = true;
+        var dbg = new Debugger_1.default(), commandInterpreter = new CommandInterpreter_1.default(), debuggerFrontend = new DebuggerFrontend_1.default(dbg, _this._fsProvider, commandInterpreter);
+        _this._debugger = dbg;
+        _this._commandInterpreter = commandInterpreter;
+        _this._extendCommandInterpreter();
+        _this._debuggerFrontend = debuggerFrontend;
+        return _this;
     }
     DebuggerCLI.prototype._initialize = function () {
         this._initializeHardware();
@@ -23725,9 +23738,9 @@ exports.default = DebuggerCLI;
 
 },{"../machine/Debugger":162,"../machine/vanilla/Board":212,"./AbstractCLI":151,"./CommandInterpreter":152,"./DebuggerFrontend":155,"path":102}],155:[function(require,module,exports){
 "use strict";
-var BoardInterface_1 = require('../machine/board/BoardInterface');
-var hex = require('../tools/hex');
-var util = require('util');
+var BoardInterface_1 = require("../machine/board/BoardInterface");
+var hex = require("../tools/hex");
+var util = require("util");
 function decodeNumber(value) {
     try {
         return hex.decode(value);
@@ -23895,20 +23908,18 @@ exports.default = DebuggerFrontend;
 
 },{"../machine/board/BoardInterface":163,"../tools/hex":217,"util":149}],156:[function(require,module,exports){
 "use strict";
-var Completer_1 = require('./Completer');
+var Completer_1 = require("./Completer");
 var JqtermCLIRunner = (function () {
     function JqtermCLIRunner(_cli, terminalElt, options) {
-        var _this = this;
         if (options === void 0) { options = {}; }
+        var _this = this;
         this._cli = _cli;
         this._updateCompleter();
         this._terminal = terminalElt.terminal(function (input, terminal) {
             return _this._cli.pushInput(input);
         }, {
             greetings: 'Ready.',
-            completion: function (terminal, cmd, handler) {
-                return handler(_this._completer.complete(terminal.get_command()).candidates);
-            },
+            completion: function (terminal, cmd, handler) { return handler(_this._completer.complete(terminal.get_command()).candidates); },
             exit: false,
             clear: false
         });
@@ -24010,51 +24021,51 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var microevent_ts_1 = require('microevent.ts');
-var DebuggerCLI_1 = require('../DebuggerCLI');
-var Board_1 = require('../../machine/stella/Board');
-var Config_1 = require('../../machine/stella/Config');
-var CartridgeFactory_1 = require('../../machine/stella/cartridge/CartridgeFactory');
-var CartridgeInfo_1 = require('../../machine/stella/cartridge/CartridgeInfo');
-var CommandInterpreter_1 = require('../CommandInterpreter');
-var ImmedateScheduler_1 = require('../../tools/scheduler/ImmedateScheduler');
-var LimitingImmediateScheduler_1 = require('../../tools/scheduler/LimitingImmediateScheduler');
-var PeriodicScheduler_1 = require('../../tools/scheduler/PeriodicScheduler');
-var ClockProbe_1 = require('../../tools/ClockProbe');
-var SystemConfigSetupProvider_1 = require('./SystemConfigSetupProvider');
-var ControlPanelManagementProvider_1 = require('./ControlPanelManagementProvider');
+var microevent_ts_1 = require("microevent.ts");
+var DebuggerCLI_1 = require("../DebuggerCLI");
+var Board_1 = require("../../machine/stella/Board");
+var Config_1 = require("../../machine/stella/Config");
+var CartridgeFactory_1 = require("../../machine/stella/cartridge/CartridgeFactory");
+var CartridgeInfo_1 = require("../../machine/stella/cartridge/CartridgeInfo");
+var CommandInterpreter_1 = require("../CommandInterpreter");
+var ImmedateScheduler_1 = require("../../tools/scheduler/ImmedateScheduler");
+var LimitingImmediateScheduler_1 = require("../../tools/scheduler/LimitingImmediateScheduler");
+var PeriodicScheduler_1 = require("../../tools/scheduler/PeriodicScheduler");
+var ClockProbe_1 = require("../../tools/ClockProbe");
+var SystemConfigSetupProvider_1 = require("./SystemConfigSetupProvider");
+var ControlPanelManagementProvider_1 = require("./ControlPanelManagementProvider");
 ;
 var CLOCK_PROBE_INTERVAL = 1000;
 var StellaCLI = (function (_super) {
     __extends(StellaCLI, _super);
     function StellaCLI(fsProvider, _cartridgeFile) {
-        var _this = this;
-        _super.call(this, fsProvider);
-        this._cartridgeFile = _cartridgeFile;
-        this.hardwareInitialized = new microevent_ts_1.Event();
-        this._stellaConfig = new Config_1.default();
-        this._limitingScheduler = new LimitingImmediateScheduler_1.default();
-        this._nonLimitingScheduler = new ImmedateScheduler_1.default();
-        this._state = 0;
-        this._runMode = 0;
-        this.events.stateChanged = new microevent_ts_1.Event();
-        var systemConfigSetupProvider = new SystemConfigSetupProvider_1.default(this._stellaConfig);
-        this._commandInterpreter.registerCommands({
+        var _this = _super.call(this, fsProvider) || this;
+        _this._cartridgeFile = _cartridgeFile;
+        _this.hardwareInitialized = new microevent_ts_1.Event();
+        _this._stellaConfig = new Config_1.default();
+        _this._limitingScheduler = new LimitingImmediateScheduler_1.default();
+        _this._nonLimitingScheduler = new ImmedateScheduler_1.default();
+        _this._state = 0;
+        _this._runMode = 0;
+        _this.events.stateChanged = new microevent_ts_1.Event();
+        var systemConfigSetupProvider = new SystemConfigSetupProvider_1.default(_this._stellaConfig);
+        _this._commandInterpreter.registerCommands({
             run: function () { return (_this._setState(2), 'running...'); }
         });
-        this._runModeCommandInterpreter = new CommandInterpreter_1.default({
+        _this._runModeCommandInterpreter = new CommandInterpreter_1.default({
             stop: function () { return (_this._setState(1), 'stopped, entered debugger'); }
         });
-        this._setupModeCommandInterpreter = new CommandInterpreter_1.default({
-            'load-cartridge': this._executeLoadCartridge.bind(this)
+        _this._setupModeCommandInterpreter = new CommandInterpreter_1.default({
+            'load-cartridge': _this._executeLoadCartridge.bind(_this)
         });
-        this._setupModeCommandInterpreter.registerCommands(systemConfigSetupProvider.getCommands());
+        _this._setupModeCommandInterpreter.registerCommands(systemConfigSetupProvider.getCommands());
         var runModeCommands = {
             'set-speed-limited': function () { return (_this._setRunMode(0), 'speed limiting on'); },
             'set-speed-unlimited': function () { return (_this._setRunMode(1), 'speed limiting off'); }
         };
-        this._commandInterpreter.registerCommands(runModeCommands);
-        this._runModeCommandInterpreter.registerCommands(runModeCommands);
+        _this._commandInterpreter.registerCommands(runModeCommands);
+        _this._runModeCommandInterpreter.registerCommands(runModeCommands);
+        return _this;
     }
     StellaCLI.prototype.getPrompt = function () {
         var frequency = this._clockProbe ? this._clockProbe.getFrequency() : 0, prefix = frequency > 0 ? (frequency / 1000000).toFixed(2) + " MHz " : '';
@@ -24209,7 +24220,6 @@ var StellaCLI = (function (_super) {
     };
     return StellaCLI;
 }(DebuggerCLI_1.default));
-var StellaCLI;
 (function (StellaCLI) {
     ;
 })(StellaCLI || (StellaCLI = {}));
@@ -24218,7 +24228,7 @@ exports.default = StellaCLI;
 
 },{"../../machine/stella/Board":171,"../../machine/stella/Config":173,"../../machine/stella/cartridge/CartridgeFactory":191,"../../machine/stella/cartridge/CartridgeInfo":192,"../../tools/ClockProbe":215,"../../tools/scheduler/ImmedateScheduler":222,"../../tools/scheduler/LimitingImmediateScheduler":223,"../../tools/scheduler/PeriodicScheduler":224,"../CommandInterpreter":152,"../DebuggerCLI":154,"./ControlPanelManagementProvider":157,"./SystemConfigSetupProvider":159,"microevent.ts":95}],159:[function(require,module,exports){
 "use strict";
-var Config_1 = require('../../machine/stella/Config');
+var Config_1 = require("../../machine/stella/Config");
 var SystemConfigSetupProvider = (function () {
     function SystemConfigSetupProvider(_config) {
         this._config = _config;
@@ -24292,7 +24302,7 @@ exports.default = SystemConfigSetupProvider;
 
 },{"../../machine/stella/Config":173}],160:[function(require,module,exports){
 "use strict";
-var pathlib = require('path');
+var pathlib = require("path");
 var AbstractFileSystemProvider = (function () {
     function AbstractFileSystemProvider() {
         this._directoryStack = [];
@@ -24332,14 +24342,15 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var util = require('util');
-var AbstractFileSystemProvider_1 = require('./AbstractFileSystemProvider');
+var util = require("util");
+var AbstractFileSystemProvider_1 = require("./AbstractFileSystemProvider");
 var PrepackagedFilesystemProvider = (function (_super) {
     __extends(PrepackagedFilesystemProvider, _super);
     function PrepackagedFilesystemProvider(_blob) {
-        _super.call(this);
-        this._blob = _blob;
-        this._cwd = '/';
+        var _this = _super.call(this) || this;
+        _this._blob = _blob;
+        _this._cwd = '/';
+        return _this;
     }
     PrepackagedFilesystemProvider.prototype.readBinaryFileSync = function (name) {
         name = this._resolvePath(name);
@@ -24403,13 +24414,13 @@ exports.default = PrepackagedFilesystemProvider;
 
 },{"./AbstractFileSystemProvider":160,"buffer":45,"util":149}],162:[function(require,module,exports){
 "use strict";
-var Instruction_1 = require('./cpu/Instruction');
-var Disassembler_1 = require('./cpu/Disassembler');
-var CpuInterface_1 = require('./cpu/CpuInterface');
-var BoardInterface_1 = require('./board/BoardInterface');
-var hex = require('../tools/hex');
-var binary = require('../tools/binary');
-var util = require('util');
+var Instruction_1 = require("./cpu/Instruction");
+var Disassembler_1 = require("./cpu/Disassembler");
+var CpuInterface_1 = require("./cpu/CpuInterface");
+var BoardInterface_1 = require("./board/BoardInterface");
+var hex = require("../tools/hex");
+var binary = require("../tools/binary");
+var util = require("util");
 var Debugger = (function () {
     function Debugger(_traceSize, _stepMaxCycles) {
         if (_traceSize === void 0) { _traceSize = 1024; }
@@ -24650,8 +24661,8 @@ exports.default = BoardInterface;
 
 },{}],164:[function(require,module,exports){
 "use strict";
-var Instruction_1 = require('./Instruction');
-var CpuInterface_1 = require('./CpuInterface');
+var Instruction_1 = require("./Instruction");
+var CpuInterface_1 = require("./CpuInterface");
 function setFlagsNZ(state, operand) {
     state.flags = (state.flags & ~(128 | 2)) |
         (operand & 0x80) |
@@ -25598,8 +25609,8 @@ exports.default = CpuInterface;
 
 },{}],166:[function(require,module,exports){
 "use strict";
-var Instruction_1 = require('./Instruction');
-var hex = require('../../tools/hex');
+var Instruction_1 = require("./Instruction");
+var hex = require("../../tools/hex");
 var Disassembler = (function () {
     function Disassembler(_bus) {
         this._bus = _bus;
@@ -25692,9 +25703,9 @@ var Instruction = (function () {
     return Instruction;
 }());
 ;
-var Instruction;
 (function (Instruction) {
     ;
+    var OperationMap;
     (function (OperationMap) {
         OperationMap[OperationMap["adc"] = 0] = "adc";
         OperationMap[OperationMap["and"] = 1] = "and";
@@ -25762,8 +25773,7 @@ var Instruction;
         OperationMap[OperationMap["slo"] = 63] = "slo";
         OperationMap[OperationMap["aax"] = 64] = "aax";
         OperationMap[OperationMap["invalid"] = 65] = "invalid";
-    })(Instruction.OperationMap || (Instruction.OperationMap = {}));
-    var OperationMap = Instruction.OperationMap;
+    })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
     ;
     ;
     Instruction.opcodes = new Array(256);
@@ -25771,7 +25781,6 @@ var Instruction;
 ;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Instruction;
-var Instruction;
 (function (Instruction) {
     (function () {
         for (var i = 0; i < 256; i++) {
@@ -26000,7 +26009,7 @@ var Instruction;
 
 },{}],168:[function(require,module,exports){
 "use strict";
-var Switch_1 = require('./Switch');
+var Switch_1 = require("./Switch");
 var DigitalJoystick = (function () {
     function DigitalJoystick() {
         this._left = new Switch_1.default();
@@ -26031,8 +26040,8 @@ exports.default = DigitalJoystick;
 
 },{"./Switch":170}],169:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var Switch_1 = require('./Switch');
+var microevent_ts_1 = require("microevent.ts");
+var Switch_1 = require("./Switch");
 var Paddle = (function () {
     function Paddle() {
         this.valueChanged = new microevent_ts_1.Event();
@@ -26056,7 +26065,7 @@ exports.default = Paddle;
 
 },{"./Switch":170,"microevent.ts":95}],170:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
+var microevent_ts_1 = require("microevent.ts");
 var Switch = (function () {
     function Switch(_state) {
         if (_state === void 0) { _state = false; }
@@ -26085,18 +26094,18 @@ exports.default = Switch;
 
 },{"microevent.ts":95}],171:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var BoardInterface_1 = require('../board/BoardInterface');
-var CpuInterface_1 = require('../cpu/CpuInterface');
-var Cpu_1 = require('../cpu/Cpu');
-var Bus_1 = require('./Bus');
-var Pia_1 = require('./Pia');
-var Tia_1 = require('./tia/Tia');
-var Config_1 = require('./Config');
-var ControlPanel_1 = require('./ControlPanel');
-var DigitalJoystick_1 = require('../io/DigitalJoystick');
-var Paddle_1 = require('../io/Paddle');
-var factory_1 = require('../../tools/rng/factory');
+var microevent_ts_1 = require("microevent.ts");
+var BoardInterface_1 = require("../board/BoardInterface");
+var CpuInterface_1 = require("../cpu/CpuInterface");
+var Cpu_1 = require("../cpu/Cpu");
+var Bus_1 = require("./Bus");
+var Pia_1 = require("./Pia");
+var Tia_1 = require("./tia/Tia");
+var Config_1 = require("./Config");
+var ControlPanel_1 = require("./ControlPanel");
+var DigitalJoystick_1 = require("../io/DigitalJoystick");
+var Paddle_1 = require("../io/Paddle");
+var factory_1 = require("../../tools/rng/factory");
 var Board = (function () {
     function Board(config, cartridge, cpuFactory) {
         var _this = this;
@@ -26318,7 +26327,7 @@ exports.default = Board;
 
 },{"../../tools/rng/factory":221,"../board/BoardInterface":163,"../cpu/Cpu":164,"../cpu/CpuInterface":165,"../io/DigitalJoystick":168,"../io/Paddle":169,"./Bus":172,"./Config":173,"./ControlPanel":174,"./Pia":175,"./tia/Tia":208,"microevent.ts":95}],172:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
+var microevent_ts_1 = require("microevent.ts");
 var Bus = (function () {
     function Bus() {
         this.event = {
@@ -26422,7 +26431,6 @@ var Bus = (function () {
     };
     return Bus;
 }());
-var Bus;
 (function (Bus) {
     var TrapPayload = (function () {
         function TrapPayload(reason, bus, message) {
@@ -26461,7 +26469,6 @@ var Config = (function () {
     };
     return Config;
 }());
-var Config;
 (function (Config) {
     ;
 })(Config || (Config = {}));
@@ -26470,7 +26477,7 @@ exports.default = Config;
 
 },{}],174:[function(require,module,exports){
 "use strict";
-var Switch_1 = require('../io/Switch');
+var Switch_1 = require("../io/Switch");
 var ControlPanel = (function () {
     function ControlPanel() {
         this._selectSwitch = new Switch_1.default();
@@ -26501,7 +26508,7 @@ exports.default = ControlPanel;
 
 },{"../io/Switch":170}],175:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
+var microevent_ts_1 = require("microevent.ts");
 var Pia = (function () {
     function Pia(_controlPanel, _joystick0, _joystick1, _rng) {
         this._controlPanel = _controlPanel;
@@ -26652,7 +26659,6 @@ var Pia = (function () {
     };
     return Pia;
 }());
-var Pia;
 (function (Pia) {
     var TrapPayload = (function () {
         function TrapPayload(reason, pia, message) {
@@ -26669,9 +26675,9 @@ exports.default = Pia;
 
 },{"microevent.ts":95}],176:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var CartridgeInterface_1 = require('./CartridgeInterface');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var microevent_ts_1 = require("microevent.ts");
+var CartridgeInterface_1 = require("./CartridgeInterface");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var AbstractCartridge = (function () {
     function AbstractCartridge() {
         this.trap = new microevent_ts_1.Event();
@@ -26718,18 +26724,19 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var Cartridge2k = (function (_super) {
     __extends(Cartridge2k, _super);
     function Cartridge2k(buffer) {
-        _super.call(this);
-        this._rom = new Uint8Array(0x0800);
+        var _this = _super.call(this) || this;
+        _this._rom = new Uint8Array(0x0800);
         if (buffer.length > 0x0800) {
             throw new Error("buffer is not a 2k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < buffer.length && i < 0x0800; i++)
-            this._rom[0x07FF - i] = buffer[buffer.length - 1 - i];
+            _this._rom[0x07FF - i] = buffer[buffer.length - 1 - i];
+        return _this;
     }
     Cartridge2k.prototype.read = function (address) {
         return this._rom[address & 0x07FF];
@@ -26749,17 +26756,17 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var cartridgeUtil = require('./util');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var cartridgeUtil = require("./util");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var Cartridge3E = (function (_super) {
     __extends(Cartridge3E, _super);
     function Cartridge3E(buffer) {
-        _super.call(this);
-        this._banks = null;
-        this._ramSelect = false;
-        this._ramBanks = new Array(0x0100);
-        this._bus = null;
+        var _this = _super.call(this) || this;
+        _this._banks = null;
+        _this._ramSelect = false;
+        _this._ramBanks = new Array(0x0100);
+        _this._bus = null;
         if ((buffer.length & 0x07FF) !== 0) {
             throw new Error("buffer length " + buffer.length + " is not a multiple of 2k");
         }
@@ -26767,21 +26774,22 @@ var Cartridge3E = (function (_super) {
         if (bankCount < 2) {
             throw new Error('image must have at least 2k');
         }
-        this._banks = new Array(bankCount);
+        _this._banks = new Array(bankCount);
         for (var i = 0; i < bankCount; i++) {
-            this._banks[i] = new Uint8Array(0x0800);
+            _this._banks[i] = new Uint8Array(0x0800);
         }
         for (var i = 0; i <= 0xFF; i++) {
-            this._ramBanks[i] = new Uint8Array(0x0400);
+            _this._ramBanks[i] = new Uint8Array(0x0400);
         }
-        this._ramBank = this._ramBanks[0];
-        this._bank1 = this._banks[bankCount - 1];
-        this._bank0 = this._banks[0];
+        _this._ramBank = _this._ramBanks[0];
+        _this._bank1 = _this._banks[bankCount - 1];
+        _this._bank0 = _this._banks[0];
         for (var i = 0; i < 0x0800; i++) {
             for (var j = 0; j < bankCount; j++) {
-                this._banks[j][i] = buffer[0x0800 * j + i];
+                _this._banks[j][i] = buffer[0x0800 * j + i];
             }
         }
+        return _this;
     }
     Cartridge3E.prototype.reset = function () {
         this._bank0 = this._banks[0];
@@ -26864,28 +26872,29 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var cartridgeUtil = require('./util');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var cartridgeUtil = require("./util");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var Cartridge3F = (function (_super) {
     __extends(Cartridge3F, _super);
     function Cartridge3F(buffer) {
-        _super.call(this);
-        this._banks = new Array(4);
-        this._bus = null;
+        var _this = _super.call(this) || this;
+        _this._banks = new Array(4);
+        _this._bus = null;
         if (buffer.length !== 0x2000) {
             throw new Error("buffer is not an 8k cartridge image: invalid length " + buffer.length);
         }
         for (var i = 0; i < 4; i++) {
-            this._banks[i] = new Uint8Array(0x0800);
+            _this._banks[i] = new Uint8Array(0x0800);
         }
-        this._bank1 = this._banks[3];
-        this._bank0 = this._banks[0];
+        _this._bank1 = _this._banks[3];
+        _this._bank0 = _this._banks[0];
         for (var i = 0; i < 0x0800; i++) {
             for (var j = 0; j < 4; j++) {
-                this._banks[j][i] = buffer[0x0800 * j + i];
+                _this._banks[j][i] = buffer[0x0800 * j + i];
             }
         }
+        return _this;
     }
     Cartridge3F.prototype.reset = function () {
         this._bank0 = this._banks[0];
@@ -26923,18 +26932,20 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var Cartridge4k = (function (_super) {
     __extends(Cartridge4k, _super);
     function Cartridge4k(buffer) {
-        _super.call(this);
-        this._rom = new Uint8Array(0x1000);
+        var _this = _super.call(this) || this;
+        _this._rom = new Uint8Array(0x1000);
         if (buffer.length !== 0x1000) {
-            throw new Error("buffer is not an 4k cartridge image: wrong length " + buffer.length);
+            console.warn("buffer has invalid size for 4K image: " + buffer.length + " bytes");
         }
+        var len = Math.min(0x1000, buffer.length);
         for (var i = 0; i < 0x1000 && i < buffer.length; i++)
-            this._rom[0x0FFF - i] = buffer[buffer.length - 1 - i];
+            _this._rom[0x0FFF - i] = buffer[len - 1 - i];
+        return _this;
     }
     Cartridge4k.prototype.read = function (address) {
         return this._rom[address & 0x0FFF];
@@ -26949,14 +26960,14 @@ exports.default = Cartridge4k;
 
 },{"./AbstractCartridge":176,"./CartridgeInfo":192}],181:[function(require,module,exports){
 "use strict";
-var CartridgeInfo_1 = require('./CartridgeInfo');
-var CartridgeF8_1 = require('./CartridgeF8');
-var CartridgeE0_1 = require('./CartridgeE0');
-var Cartridge3F_1 = require('./Cartridge3F');
-var Cartridge3E_1 = require('./Cartridge3E');
-var CartridgeFE_1 = require('./CartridgeFE');
-var CartridgeUA_1 = require('./CartridgeUA');
-var CartridgeE7_1 = require('./CartridgeE7');
+var CartridgeInfo_1 = require("./CartridgeInfo");
+var CartridgeF8_1 = require("./CartridgeF8");
+var CartridgeE0_1 = require("./CartridgeE0");
+var Cartridge3F_1 = require("./Cartridge3F");
+var Cartridge3E_1 = require("./Cartridge3E");
+var CartridgeFE_1 = require("./CartridgeFE");
+var CartridgeUA_1 = require("./CartridgeUA");
+var CartridgeE7_1 = require("./CartridgeE7");
 var CartridgeDetector = (function () {
     function CartridgeDetector() {
     }
@@ -27027,27 +27038,28 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var cartridgeUtil = require('./util');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var cartridgeUtil = require("./util");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeE0 = (function (_super) {
     __extends(CartridgeE0, _super);
     function CartridgeE0(buffer) {
-        _super.call(this);
-        this._banks = new Array(8);
-        this._activeBanks = new Array(4);
+        var _this = _super.call(this) || this;
+        _this._banks = new Array(8);
+        _this._activeBanks = new Array(4);
         if (buffer.length !== 0x2000) {
             throw new Error("buffer is not an 8k cartridge image: invalid length " + buffer.length);
         }
         for (var i = 0; i < 8; i++) {
-            this._banks[i] = new Uint8Array(0x0400);
+            _this._banks[i] = new Uint8Array(0x0400);
         }
         for (var i = 0; i < 0x0400; i++) {
             for (var j = 0; j < 8; j++) {
-                this._banks[j][i] = buffer[j * 0x0400 + i];
+                _this._banks[j][i] = buffer[j * 0x0400 + i];
             }
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartridgeE0.prototype.reset = function () {
         for (var i = 0; i < 4; i++) {
@@ -27116,32 +27128,33 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var cartridgeUtil = require('./util');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var cartridgeUtil = require("./util");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartrdigeE7 = (function (_super) {
     __extends(CartrdigeE7, _super);
     function CartrdigeE7(buffer) {
-        _super.call(this);
-        this._banks = new Array(8);
-        this._ram0 = new Uint8Array(0x0400);
-        this._ram1Banks = new Array(4);
-        this._ram0Enabled = false;
+        var _this = _super.call(this) || this;
+        _this._banks = new Array(8);
+        _this._ram0 = new Uint8Array(0x0400);
+        _this._ram1Banks = new Array(4);
+        _this._ram0Enabled = false;
         if (buffer.length !== 0x4000) {
             throw new Error("buffer is not a 16k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < 8; i++) {
-            this._banks[i] = new Uint8Array(0x0800);
+            _this._banks[i] = new Uint8Array(0x0800);
         }
         for (var i = 0; i < 4; i++) {
-            this._ram1Banks[i] = new Uint8Array(0x100);
+            _this._ram1Banks[i] = new Uint8Array(0x100);
         }
         for (var i = 0; i < 0x0800; i++) {
             for (var j = 0; j < 8; j++) {
-                this._banks[j][i] = buffer[j * 0x0800 + i];
+                _this._banks[j][i] = buffer[j * 0x0800 + i];
             }
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartrdigeE7.prototype.reset = function () {
         this._bank0 = this._banks[0];
@@ -27245,26 +27258,27 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeF0 = (function (_super) {
     __extends(CartridgeF0, _super);
     function CartridgeF0(buffer) {
-        _super.call(this);
-        this._banks = new Array(16);
-        this._bankIdx = 0;
+        var _this = _super.call(this) || this;
+        _this._banks = new Array(16);
+        _this._bankIdx = 0;
         if (buffer.length !== 0x10000) {
             throw new Error("buffer is not a 64k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < 16; i++) {
-            this._banks[i] = new Uint8Array(0x1000);
+            _this._banks[i] = new Uint8Array(0x1000);
         }
         for (var i = 0; i < 0x1000; i++) {
             for (var j = 0; j < 16; j++) {
-                this._banks[j][i] = buffer[j * 0x1000 + i];
+                _this._banks[j][i] = buffer[j * 0x1000 + i];
             }
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartridgeF0.prototype.reset = function () {
         this._bankIdx = 0;
@@ -27304,30 +27318,31 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeF4 = (function (_super) {
     __extends(CartridgeF4, _super);
     function CartridgeF4(buffer, _supportSC) {
         if (_supportSC === void 0) { _supportSC = true; }
-        _super.call(this);
-        this._supportSC = _supportSC;
-        this._bus = null;
-        this._banks = new Array(8);
-        this._ram = new Uint8Array(0x80);
-        this._hasSC = false;
+        var _this = _super.call(this) || this;
+        _this._supportSC = _supportSC;
+        _this._bus = null;
+        _this._banks = new Array(8);
+        _this._ram = new Uint8Array(0x80);
+        _this._hasSC = false;
         if (buffer.length !== 0x8000) {
             throw new Error("buffer is not a 32k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < 8; i++) {
-            this._banks[i] = new Uint8Array(0x1000);
+            _this._banks[i] = new Uint8Array(0x1000);
         }
         for (var i = 0; i < 0x1000; i++) {
             for (var j = 0; j < 8; j++) {
-                this._banks[j][i] = buffer[j * 0x1000 + i];
+                _this._banks[j][i] = buffer[j * 0x1000 + i];
             }
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartridgeF4.prototype.reset = function () {
         this._bank = this._banks[0];
@@ -27385,32 +27400,33 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeF6 = (function (_super) {
     __extends(CartridgeF6, _super);
     function CartridgeF6(buffer, _supportSC) {
         if (_supportSC === void 0) { _supportSC = true; }
-        _super.call(this);
-        this._supportSC = _supportSC;
-        this._bank = null;
-        this._bank0 = new Uint8Array(0x1000);
-        this._bank1 = new Uint8Array(0x1000);
-        this._bank2 = new Uint8Array(0x1000);
-        this._bank3 = new Uint8Array(0x1000);
-        this._hasSC = false;
-        this._saraRAM = new Uint8Array(0x80);
-        this._bus = null;
+        var _this = _super.call(this) || this;
+        _this._supportSC = _supportSC;
+        _this._bank = null;
+        _this._bank0 = new Uint8Array(0x1000);
+        _this._bank1 = new Uint8Array(0x1000);
+        _this._bank2 = new Uint8Array(0x1000);
+        _this._bank3 = new Uint8Array(0x1000);
+        _this._hasSC = false;
+        _this._saraRAM = new Uint8Array(0x80);
+        _this._bus = null;
         if (buffer.length !== 0x4000) {
             throw new Error("buffer is not a 16k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < 0x1000; i++) {
-            this._bank0[i] = buffer[i];
-            this._bank1[i] = buffer[0x1000 + i];
-            this._bank2[i] = buffer[0x2000 + i];
-            this._bank3[i] = buffer[0x3000 + i];
+            _this._bank0[i] = buffer[i];
+            _this._bank1[i] = buffer[0x1000 + i];
+            _this._bank2[i] = buffer[0x2000 + i];
+            _this._bank3[i] = buffer[0x3000 + i];
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartridgeF6.prototype.reset = function () {
         this._bank = this._bank0;
@@ -27477,24 +27493,25 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
-var cartridgeUtil = require('./util');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
+var cartridgeUtil = require("./util");
 var CartridgeF8 = (function (_super) {
     __extends(CartridgeF8, _super);
     function CartridgeF8(buffer) {
-        _super.call(this);
-        this._bank = null;
-        this._bank0 = new Uint8Array(0x1000);
-        this._bank1 = new Uint8Array(0x1000);
+        var _this = _super.call(this) || this;
+        _this._bank = null;
+        _this._bank0 = new Uint8Array(0x1000);
+        _this._bank1 = new Uint8Array(0x1000);
         if (buffer.length !== 0x2000) {
             throw new Error("buffer is not an 8k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < 0x1000; i++) {
-            this._bank0[i] = buffer[i];
-            this._bank1[i] = buffer[0x1000 + i];
+            _this._bank0[i] = buffer[i];
+            _this._bank1[i] = buffer[0x1000 + i];
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartridgeF8.prototype.reset = function () {
         this._bank = this._bank0;
@@ -27539,25 +27556,26 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeFA = (function (_super) {
     __extends(CartridgeFA, _super);
     function CartridgeFA(buffer) {
-        _super.call(this);
-        this._bank0 = new Uint8Array(0x1000);
-        this._bank1 = new Uint8Array(0x1000);
-        this._bank2 = new Uint8Array(0x1000);
-        this._ram = new Uint8Array(0x0100);
+        var _this = _super.call(this) || this;
+        _this._bank0 = new Uint8Array(0x1000);
+        _this._bank1 = new Uint8Array(0x1000);
+        _this._bank2 = new Uint8Array(0x1000);
+        _this._ram = new Uint8Array(0x0100);
         if (buffer.length !== 0x3000) {
             throw new Error("buffer is not a 12k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < 0x1000; i++) {
-            this._bank0[i] = buffer[i];
-            this._bank1[i] = buffer[0x1000 + i];
-            this._bank2[i] = buffer[0x2000 + i];
+            _this._bank0[i] = buffer[i];
+            _this._bank1[i] = buffer[0x1000 + i];
+            _this._bank2[i] = buffer[0x2000 + i];
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartridgeFA.prototype.reset = function () {
         this._bank = this._bank0;
@@ -27618,31 +27636,32 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
 ;
 var CartridgeFA2 = (function (_super) {
     __extends(CartridgeFA2, _super);
     function CartridgeFA2(buffer) {
-        _super.call(this);
-        this._banks = new Array(7);
-        this._ram = new Uint8Array(0x100);
-        this._savedRam = new Uint8Array(0x100);
-        this._accessCounter = 0;
-        this._accessCounterLimit = 0;
+        var _this = _super.call(this) || this;
+        _this._banks = new Array(7);
+        _this._ram = new Uint8Array(0x100);
+        _this._savedRam = new Uint8Array(0x100);
+        _this._accessCounter = 0;
+        _this._accessCounterLimit = 0;
         if (buffer.length !== 0x7000 && buffer.length !== 0x7400) {
             throw new Error("buffer is not a 28k/29k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < 7; i++) {
-            this._banks[i] = new Uint8Array(0x1000);
+            _this._banks[i] = new Uint8Array(0x1000);
         }
         var offset = buffer.length === 0x7000 ? 0 : 0x0400;
         for (var i = 0; i < 0x1000; i++) {
             for (var j = 0; j < 7; j++) {
-                this._banks[j][i] = buffer[j * 0x1000 + i + offset];
+                _this._banks[j][i] = buffer[j * 0x1000 + i + offset];
             }
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartridgeFA2.prototype.reset = function () {
         this._accessCounter = 0;
@@ -27727,23 +27746,24 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
-var cartridgeUtil = require('./util');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
+var cartridgeUtil = require("./util");
 var CartridgeFE = (function (_super) {
     __extends(CartridgeFE, _super);
     function CartridgeFE(buffer) {
-        _super.call(this);
-        this._bank0 = new Uint8Array(0x1000);
-        this._bank1 = new Uint8Array(0x1000);
+        var _this = _super.call(this) || this;
+        _this._bank0 = new Uint8Array(0x1000);
+        _this._bank1 = new Uint8Array(0x1000);
         if (buffer.length !== 0x2000) {
             throw new Error("buffer is not an 8k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < 0x1000; i++) {
-            this._bank0[i] = buffer[i];
-            this._bank1[i] = buffer[0x1000 + i];
+            _this._bank0[i] = buffer[i];
+            _this._bank1[i] = buffer[0x1000 + i];
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartridgeFE.prototype.reset = function () {
         this._bank = this._bank0;
@@ -27793,23 +27813,23 @@ exports.default = CartridgeFE;
 
 },{"./AbstractCartridge":176,"./CartridgeInfo":192,"./util":198}],191:[function(require,module,exports){
 "use strict";
-var Cartridge2k_1 = require('./Cartridge2k');
-var Cartridge4k_1 = require('./Cartridge4k');
-var CartridgeF8_1 = require('./CartridgeF8');
-var CartridgeF6_1 = require('./CartridgeF6');
-var CartridgeE0_1 = require('./CartridgeE0');
-var CartridgeFE_1 = require('./CartridgeFE');
-var Cartridge3F_1 = require('./Cartridge3F');
-var Cartridge3E_1 = require('./Cartridge3E');
-var CartridgeUA_1 = require('./CartridgeUA');
-var CartridgeFA_1 = require('./CartridgeFA');
-var CartridgeE7_1 = require('./CartridgeE7');
-var CartridgeF0_1 = require('./CartridgeF0');
-var CartridgeF4_1 = require('./CartridgeF4');
-var CartridgeFA2_1 = require('./CartridgeFA2');
-var CartridgeSupercharger_1 = require('./CartridgeSupercharger');
-var CartridgeInfo_1 = require('./CartridgeInfo');
-var CartridgeDetector_1 = require('./CartridgeDetector');
+var Cartridge2k_1 = require("./Cartridge2k");
+var Cartridge4k_1 = require("./Cartridge4k");
+var CartridgeF8_1 = require("./CartridgeF8");
+var CartridgeF6_1 = require("./CartridgeF6");
+var CartridgeE0_1 = require("./CartridgeE0");
+var CartridgeFE_1 = require("./CartridgeFE");
+var Cartridge3F_1 = require("./Cartridge3F");
+var Cartridge3E_1 = require("./Cartridge3E");
+var CartridgeUA_1 = require("./CartridgeUA");
+var CartridgeFA_1 = require("./CartridgeFA");
+var CartridgeE7_1 = require("./CartridgeE7");
+var CartridgeF0_1 = require("./CartridgeF0");
+var CartridgeF4_1 = require("./CartridgeF4");
+var CartridgeFA2_1 = require("./CartridgeFA2");
+var CartridgeSupercharger_1 = require("./CartridgeSupercharger");
+var CartridgeInfo_1 = require("./CartridgeInfo");
+var CartridgeDetector_1 = require("./CartridgeDetector");
 var CartridgeFactory = (function () {
     function CartridgeFactory() {
     }
@@ -27862,6 +27882,7 @@ exports.default = CartridgeFactory;
 "use strict";
 var CartridgeInfo;
 (function (CartridgeInfo) {
+    var CartridgeType;
     (function (CartridgeType) {
         CartridgeType[CartridgeType["vanilla_2k"] = 0] = "vanilla_2k";
         CartridgeType[CartridgeType["vanilla_4k"] = 1] = "vanilla_4k";
@@ -27879,8 +27900,7 @@ var CartridgeInfo;
         CartridgeType[CartridgeType["bankswitch_3E"] = 13] = "bankswitch_3E";
         CartridgeType[CartridgeType["bankswitch_supercharger"] = 14] = "bankswitch_supercharger";
         CartridgeType[CartridgeType["unknown"] = 15] = "unknown";
-    })(CartridgeInfo.CartridgeType || (CartridgeInfo.CartridgeType = {}));
-    var CartridgeType = CartridgeInfo.CartridgeType;
+    })(CartridgeType = CartridgeInfo.CartridgeType || (CartridgeInfo.CartridgeType = {}));
     function getAllTypes() {
         return [
             CartridgeType.vanilla_2k,
@@ -27967,54 +27987,55 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
-var Header_1 = require('./supercharger/Header');
-var blob_1 = require('./supercharger/blob');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
+var Header_1 = require("./supercharger/Header");
+var blob_1 = require("./supercharger/blob");
 var CartridgeSupercharger = (function (_super) {
     __extends(CartridgeSupercharger, _super);
     function CartridgeSupercharger(buffer, _showLoadingBars) {
         if (_showLoadingBars === void 0) { _showLoadingBars = true; }
-        _super.call(this);
-        this._showLoadingBars = _showLoadingBars;
-        this._loadCount = 0;
-        this._loads = null;
-        this._headers = null;
-        this._rom = new Uint8Array(0x0800);
-        this._ramBanks = new Array(3);
-        this._bank0 = null;
-        this._bank1 = null;
-        this._bank1Type = 1;
-        this._transitionCount = 0;
-        this._pendingWriteData = 0;
-        this._pendingWrite = false;
-        this._lastAddressBusValue = -1;
-        this._writeRamEnabled = false;
+        var _this = _super.call(this) || this;
+        _this._showLoadingBars = _showLoadingBars;
+        _this._loadCount = 0;
+        _this._loads = null;
+        _this._headers = null;
+        _this._rom = new Uint8Array(0x0800);
+        _this._ramBanks = new Array(3);
+        _this._bank0 = null;
+        _this._bank1 = null;
+        _this._bank1Type = 1;
+        _this._transitionCount = 0;
+        _this._pendingWriteData = 0;
+        _this._pendingWrite = false;
+        _this._lastAddressBusValue = -1;
+        _this._writeRamEnabled = false;
         if (buffer.length % 8448 !== 0) {
             throw new Error("not a supercharger image --- invalid size");
         }
-        this._loadCount = buffer.length / 8448;
-        this._loads = new Array(this._loadCount);
-        this._headers = new Array(this._loadCount);
-        for (var i = 0; i < this._loadCount; i++) {
-            this._loads[i] = new Uint8Array(8448);
+        _this._loadCount = buffer.length / 8448;
+        _this._loads = new Array(_this._loadCount);
+        _this._headers = new Array(_this._loadCount);
+        for (var i = 0; i < _this._loadCount; i++) {
+            _this._loads[i] = new Uint8Array(8448);
         }
         for (var i = 0; i < 8448; i++) {
-            for (var j = 0; j < this._loadCount; j++) {
-                this._loads[j][i] = buffer[j * 8448 + i];
+            for (var j = 0; j < _this._loadCount; j++) {
+                _this._loads[j][i] = buffer[j * 8448 + i];
             }
         }
-        for (var i = 0; i < this._loadCount; i++) {
-            this._headers[i] = new Header_1.default(this._loads[i]);
-            if (!this._headers[i].verify()) {
+        for (var i = 0; i < _this._loadCount; i++) {
+            _this._headers[i] = new Header_1.default(_this._loads[i]);
+            if (!_this._headers[i].verify()) {
                 console.log("load " + i + " has invalid checksum");
             }
         }
         for (var i = 0; i < 3; i++) {
-            this._ramBanks[i] = new Uint8Array(0x0800);
+            _this._ramBanks[i] = new Uint8Array(0x0800);
         }
-        this._loadBios();
-        this.reset();
+        _this._loadBios();
+        _this.reset();
+        return _this;
     }
     CartridgeSupercharger.prototype.reset = function () {
         this._setBankswitchMode(0);
@@ -28169,25 +28190,26 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var AbstractCartridge_1 = require('./AbstractCartridge');
-var CartridgeInfo_1 = require('./CartridgeInfo');
-var cartridgeUtil = require('./util');
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
+var cartridgeUtil = require("./util");
 var CartridgeUA = (function (_super) {
     __extends(CartridgeUA, _super);
     function CartridgeUA(buffer) {
-        _super.call(this);
-        this._bus = null;
-        this._bank = null;
-        this._bank0 = new Uint8Array(0x1000);
-        this._bank1 = new Uint8Array(0x1000);
+        var _this = _super.call(this) || this;
+        _this._bus = null;
+        _this._bank = null;
+        _this._bank0 = new Uint8Array(0x1000);
+        _this._bank1 = new Uint8Array(0x1000);
         if (buffer.length !== 0x2000) {
             throw new Error("buffer is not an 8k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < 0x1000; i++) {
-            this._bank0[i] = buffer[i];
-            this._bank1[i] = buffer[0x1000 + i];
+            _this._bank0[i] = buffer[i];
+            _this._bank1[i] = buffer[0x1000 + i];
         }
-        this.reset();
+        _this.reset();
+        return _this;
     }
     CartridgeUA.prototype.reset = function () {
         this._bank = this._bank0;
@@ -28385,8 +28407,8 @@ exports.searchForSignatures = searchForSignatures;
 
 },{}],199:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var ToneGenerator_1 = require('./ToneGenerator');
+var microevent_ts_1 = require("microevent.ts");
+var ToneGenerator_1 = require("./ToneGenerator");
 var Audio = (function () {
     function Audio(_config) {
         this._config = _config;
@@ -28538,7 +28560,7 @@ var Ball = (function () {
             var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
             this._rendering = true;
             this._renderCounter = -4;
-            if (starfieldEffect && starfieldDelta === 3) {
+            if (starfieldEffect && starfieldDelta === 3 && this._width < 4) {
                 this._renderCounter++;
             }
             switch (starfieldDelta) {
@@ -28651,8 +28673,8 @@ exports.default = DelayQueue;
 
 },{}],202:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var Config_1 = require('../Config');
+var microevent_ts_1 = require("microevent.ts");
+var Config_1 = require("../Config");
 var FrameManager = (function () {
     function FrameManager(_config) {
         this._config = _config;
@@ -28742,7 +28764,7 @@ var FrameManager = (function () {
         }
     };
     FrameManager.prototype.isRendering = function () {
-        return this._state === 3;
+        return this._state === 3 && !!this._surface;
     };
     FrameManager.prototype.setVblank = function (vblank) {
         if (this._surfaceFactory) {
@@ -28859,7 +28881,7 @@ exports.default = LatchedInput;
 
 },{}],204:[function(require,module,exports){
 "use strict";
-var drawCounterDecodes_1 = require('./drawCounterDecodes');
+var drawCounterDecodes_1 = require("./drawCounterDecodes");
 var Missile = (function () {
     function Missile(_collisionMask) {
         this._collisionMask = _collisionMask;
@@ -28951,7 +28973,7 @@ var Missile = (function () {
             var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
             this._rendering = true;
             this._renderCounter = -4;
-            if (starfieldEffect && starfieldDelta === 3) {
+            if (starfieldEffect && starfieldDelta === 3 && this._width < 4) {
                 this._renderCounter++;
             }
             switch (starfieldDelta) {
@@ -29040,7 +29062,7 @@ exports.default = PaddleReader;
 
 },{}],206:[function(require,module,exports){
 "use strict";
-var drawCounterDecodes_1 = require('./drawCounterDecodes');
+var drawCounterDecodes_1 = require("./drawCounterDecodes");
 var Player = (function () {
     function Player(_collisionMask) {
         this._collisionMask = _collisionMask;
@@ -29377,18 +29399,18 @@ exports.default = Playfield;
 
 },{}],208:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var Config_1 = require('../Config');
-var Audio_1 = require('./Audio');
-var Missile_1 = require('./Missile');
-var Playfield_1 = require('./Playfield');
-var Player_1 = require('./Player');
-var Ball_1 = require('./Ball');
-var LatchedInput_1 = require('./LatchedInput');
-var PaddleReader_1 = require('./PaddleReader');
-var FrameManager_1 = require('./FrameManager');
-var DelayQueue_1 = require('./DelayQueue');
-var palette = require('./palette');
+var microevent_ts_1 = require("microevent.ts");
+var Config_1 = require("../Config");
+var Audio_1 = require("./Audio");
+var Missile_1 = require("./Missile");
+var Playfield_1 = require("./Playfield");
+var Player_1 = require("./Player");
+var Ball_1 = require("./Ball");
+var LatchedInput_1 = require("./LatchedInput");
+var PaddleReader_1 = require("./PaddleReader");
+var FrameManager_1 = require("./FrameManager");
+var DelayQueue_1 = require("./DelayQueue");
+var palette = require("./palette");
 ;
 ;
 var Tia = (function () {
@@ -29396,7 +29418,6 @@ var Tia = (function () {
         var _this = this;
         this._config = _config;
         this._rng = _rng;
-        this.trap = new microevent_ts_1.Event();
         this._cpu = null;
         this._bus = null;
         this._delayQueue = new DelayQueue_1.default(10, 20);
@@ -29408,8 +29429,10 @@ var Tia = (function () {
         this._movementClock = 0;
         this._movementInProgress = false;
         this._extendedHblank = false;
+        this._xDelta = 0;
         this._clock = 0.;
         this._linesSinceChange = 0;
+        this._maxLinesTotal = 0;
         this._colorBk = 0xFF000000;
         this._priority = 0;
         this._collisionMask = 0;
@@ -29419,8 +29442,10 @@ var Tia = (function () {
         this._missile1 = new Missile_1.default(4390);
         this._playfield = new Playfield_1.default(1099);
         this._ball = new Ball_1.default(2197);
+        this.newFrame = new microevent_ts_1.Event();
+        this.trap = new microevent_ts_1.Event();
         this._frameManager = new FrameManager_1.default(this._config);
-        this.newFrame = this._frameManager.newFrame;
+        this._frameManager.newFrame.addHandler(Tia._onNewFrame, this);
         this._palette = this._getPalette(this._config);
         this._input0 = new LatchedInput_1.default(joystick0.getFire());
         this._input1 = new LatchedInput_1.default(joystick1.getFire());
@@ -29447,6 +29472,8 @@ var Tia = (function () {
         this._linesSinceChange = 0;
         this._collisionUpdateRequired = false;
         this._clock = 0.;
+        this._maxLinesTotal = 0;
+        this._xDelta = 0;
         this._delayQueue.reset();
         this._frameManager.reset();
         this._missile0.reset();
@@ -29489,88 +29516,6 @@ var Tia = (function () {
     Tia.prototype.setAudioEnabled = function (state) {
         this._audio0.setActive(state && this._config.enableAudio);
         this._audio1.setActive(state && this._config.enableAudio);
-    };
-    Tia.prototype.cycle = function () {
-        this._delayQueue.execute(Tia._delayedWrite, this);
-        this._collisionUpdateRequired = false;
-        this._tickMovement();
-        if (this._hstate === 0) {
-            this._tickHblank();
-        }
-        else {
-            this._tickHframe();
-        }
-        if (this._collisionUpdateRequired) {
-            this._updateCollision();
-        }
-        this._clock++;
-    };
-    Tia.prototype._tickMovement = function () {
-        if (!this._movementInProgress) {
-            return;
-        }
-        if ((this._hctr & 0x3) === 0) {
-            this._linesSinceChange = 0;
-            var apply = this._hstate === 0;
-            var m = false;
-            var movementCounter = this._movementClock > 15 ? 0 : this._movementClock;
-            m = this._missile0.movementTick(movementCounter, apply) || m;
-            m = this._missile1.movementTick(movementCounter, apply) || m;
-            m = this._player0.movementTick(movementCounter, apply) || m;
-            m = this._player1.movementTick(movementCounter, apply) || m;
-            m = this._ball.movementTick(movementCounter, apply) || m;
-            this._movementInProgress = m;
-            this._collisionUpdateRequired = m;
-            this._movementClock++;
-        }
-    };
-    Tia.prototype._tickHblank = function () {
-        if (this._freshLine) {
-            this._hblankCtr = 0;
-            this._cpu.resume();
-            this._freshLine = false;
-        }
-        if (++this._hblankCtr >= 68) {
-            this._hstate = 1;
-        }
-        this._hctr++;
-    };
-    Tia.prototype._tickHframe = function () {
-        var y = this._frameManager.getCurrentLine(), lineNotCached = this._linesSinceChange < 2 || y === 0, x = this._hctr - 68;
-        this._collisionUpdateRequired = lineNotCached;
-        this._playfield.tick(x);
-        if (lineNotCached) {
-            this._renderSprites();
-        }
-        this._tickSprites();
-        if (this._frameManager.isRendering()) {
-            this._renderPixel(x, y, lineNotCached);
-        }
-        if (++this._hctr >= 228) {
-            this._nextLine();
-        }
-    };
-    Tia.prototype._renderSprites = function () {
-        this._player0.render();
-        this._player1.render();
-        this._missile0.render();
-        this._missile1.render();
-        this._ball.render();
-    };
-    Tia.prototype._tickSprites = function () {
-        this._missile0.tick(true);
-        this._missile1.tick(true);
-        this._player0.tick();
-        this._player1.tick();
-        this._ball.tick(true);
-    };
-    Tia.prototype._nextLine = function () {
-        this._hctr = 0;
-        this._linesSinceChange++;
-        this._hstate = 0;
-        this._freshLine = true;
-        this._extendedHblank = false;
-        this._frameManager.nextLine();
     };
     Tia.prototype.read = function (address) {
         var lastDataBusValue = this._bus.getLastDataBusValue();
@@ -29640,6 +29585,9 @@ var Tia = (function () {
             case 2:
                 this._cpu.halt();
                 break;
+            case 3:
+                this._rsync();
+                break;
             case 0:
                 this._frameManager.setVsync((value & 0x02) > 0);
                 break;
@@ -29652,12 +29600,10 @@ var Tia = (function () {
                 this._delayQueue.push(1, value, 1);
                 break;
             case 29:
-                this._linesSinceChange = 0;
-                this._missile0.enam(value);
+                this._delayQueue.push(29, value, 1);
                 break;
             case 30:
-                this._linesSinceChange = 0;
-                this._missile1.enam(value);
+                this._delayQueue.push(30, value, 1);
                 break;
             case 34:
                 this._delayQueue.push(34, value, 2);
@@ -29823,6 +29769,176 @@ var Tia = (function () {
         this._bus = bus;
         return this;
     };
+    Tia.prototype.cycle = function () {
+        this._delayQueue.execute(Tia._delayedWrite, this);
+        this._collisionUpdateRequired = false;
+        this._tickMovement();
+        if (this._hstate === 0) {
+            this._tickHblank();
+        }
+        else {
+            this._tickHframe();
+        }
+        if (this._collisionUpdateRequired) {
+            this._updateCollision();
+        }
+        this._clock++;
+    };
+    Tia.prototype._tickMovement = function () {
+        if (!this._movementInProgress) {
+            return;
+        }
+        if ((this._hctr & 0x3) === 0) {
+            this._linesSinceChange = 0;
+            var apply = this._hstate === 0;
+            var m = false;
+            var movementCounter = this._movementClock > 15 ? 0 : this._movementClock;
+            m = this._missile0.movementTick(movementCounter, apply) || m;
+            m = this._missile1.movementTick(movementCounter, apply) || m;
+            m = this._player0.movementTick(movementCounter, apply) || m;
+            m = this._player1.movementTick(movementCounter, apply) || m;
+            m = this._ball.movementTick(movementCounter, apply) || m;
+            this._movementInProgress = m;
+            this._collisionUpdateRequired = m;
+            this._movementClock++;
+        }
+    };
+    Tia.prototype._tickHblank = function () {
+        if (this._freshLine) {
+            this._hblankCtr = 0;
+            this._cpu.resume();
+            this._freshLine = false;
+        }
+        if (++this._hblankCtr >= 68) {
+            this._hstate = 1;
+        }
+        this._hctr++;
+    };
+    Tia.prototype._tickHframe = function () {
+        var y = this._frameManager.getCurrentLine(), lineNotCached = this._linesSinceChange < 2 || y === 0, x = this._hctr - 68 + this._xDelta;
+        this._collisionUpdateRequired = lineNotCached;
+        this._playfield.tick(x);
+        if (lineNotCached) {
+            this._renderSprites();
+        }
+        this._tickSprites();
+        if (this._frameManager.isRendering()) {
+            this._renderPixel(x, y, lineNotCached);
+        }
+        if (++this._hctr >= 228) {
+            this._nextLine();
+        }
+    };
+    Tia.prototype._renderSprites = function () {
+        this._player0.render();
+        this._player1.render();
+        this._missile0.render();
+        this._missile1.render();
+        this._ball.render();
+    };
+    Tia.prototype._tickSprites = function () {
+        this._missile0.tick(true);
+        this._missile1.tick(true);
+        this._player0.tick();
+        this._player1.tick();
+        this._ball.tick(true);
+    };
+    Tia.prototype._nextLine = function () {
+        this._hctr = 0;
+        this._linesSinceChange++;
+        this._hstate = 0;
+        this._freshLine = true;
+        this._extendedHblank = false;
+        this._xDelta = 0;
+        this._frameManager.nextLine();
+    };
+    Tia.prototype._getPalette = function (config) {
+        switch (config.tvMode) {
+            case 0:
+                return palette.NTSC;
+            case 1:
+                return palette.PAL;
+            case 2:
+                return palette.SECAM;
+            default:
+                throw new Error('invalid TV mode');
+        }
+    };
+    Tia.prototype._getClockFreq = function (config) {
+        return (config.tvMode === 0) ?
+            60 * 228 * 262 :
+            50 * 228 * 312;
+    };
+    Tia.prototype._renderPixel = function (x, y, lineNotCached) {
+        if (lineNotCached) {
+            var color = this._colorBk;
+            switch (this._priority) {
+                case 0:
+                    color = this._playfield.getPixel(color);
+                    color = this._ball.getPixel(color);
+                    color = this._missile1.getPixel(color);
+                    color = this._player1.getPixel(color);
+                    color = this._missile0.getPixel(color);
+                    color = this._player0.getPixel(color);
+                    break;
+                case 1:
+                    color = this._missile1.getPixel(color);
+                    color = this._player1.getPixel(color);
+                    color = this._missile0.getPixel(color);
+                    color = this._player0.getPixel(color);
+                    color = this._playfield.getPixel(color);
+                    color = this._ball.getPixel(color);
+                    break;
+                case 2:
+                    color = this._ball.getPixel(color);
+                    color = this._missile1.getPixel(color);
+                    color = this._player1.getPixel(color);
+                    color = this._playfield.getPixel(color);
+                    color = this._missile0.getPixel(color);
+                    color = this._player0.getPixel(color);
+                    break;
+                default:
+                    throw new Error('invalid priority');
+            }
+            this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.vblank ? 0xFF000000 : color;
+        }
+        else {
+            this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.surfaceBuffer[(y - 1) * 160 + x];
+        }
+    };
+    Tia.prototype._updateCollision = function () {
+        this._collisionMask |= (~this._player0.collision &
+            ~this._player1.collision &
+            ~this._missile0.collision &
+            ~this._missile1.collision &
+            ~this._ball.collision &
+            ~this._playfield.collision);
+    };
+    Tia.prototype._clearHmoveComb = function () {
+        if (this._frameManager.isRendering() && this._hstate === 0) {
+            var offset = this._frameManager.getCurrentLine() * 160;
+            for (var i = 0; i < 8; i++) {
+                this._frameManager.surfaceBuffer[offset + i] = 0xFF000000;
+            }
+        }
+    };
+    Tia.prototype._resxCounter = function () {
+        return this._hstate === 0 ?
+            (this._hctr >= 73 ? 158 : 159) :
+            157;
+    };
+    Tia.prototype._rsync = function () {
+        if (this._frameManager.isRendering()) {
+            var x = this._hctr > 68 ? this._hctr - 68 : 0, y = this._frameManager.getCurrentLine(), base = y * 160 + x, boundary = base + (y + 1) * 160;
+            this._xDelta = 157 - x;
+            for (var i = base; i < boundary; i++) {
+                this._frameManager.surfaceBuffer[i] = 0xFF000000;
+            }
+        }
+        this._linesSinceChange = 0;
+        this._hctr = 225;
+        this._hstate = 1;
+    };
     Tia._delayedWrite = function (address, value, self) {
         switch (address) {
             case 1:
@@ -29916,86 +30032,31 @@ var Tia = (function () {
                 self._linesSinceChange = 0;
                 self._ball.enabl(value);
                 break;
+            case 29:
+                self._linesSinceChange = 0;
+                self._missile0.enam(value);
+                break;
+            case 30:
+                self._linesSinceChange = 0;
+                self._missile1.enam(value);
+                break;
         }
     };
-    Tia.prototype._getPalette = function (config) {
-        switch (config.tvMode) {
-            case 0:
-                return palette.NTSC;
-            case 1:
-                return palette.PAL;
-            case 2:
-                return palette.SECAM;
-            default:
-                throw new Error('invalid TV mode');
+    Tia._onNewFrame = function (surface, self) {
+        var linesTotal = self._frameManager.getCurrentLine();
+        if (linesTotal > self._maxLinesTotal) {
+            self._maxLinesTotal = linesTotal;
         }
-    };
-    Tia.prototype._getClockFreq = function (config) {
-        return (config.tvMode === 0) ?
-            60 * 228 * 262 :
-            50 * 228 * 312;
-    };
-    Tia.prototype._renderPixel = function (x, y, lineNotCached) {
-        if (lineNotCached) {
-            var color = this._colorBk;
-            switch (this._priority) {
-                case 0:
-                    color = this._playfield.getPixel(color);
-                    color = this._ball.getPixel(color);
-                    color = this._missile1.getPixel(color);
-                    color = this._player1.getPixel(color);
-                    color = this._missile0.getPixel(color);
-                    color = this._player0.getPixel(color);
-                    break;
-                case 1:
-                    color = this._missile1.getPixel(color);
-                    color = this._player1.getPixel(color);
-                    color = this._missile0.getPixel(color);
-                    color = this._player0.getPixel(color);
-                    color = this._playfield.getPixel(color);
-                    color = this._ball.getPixel(color);
-                    break;
-                case 2:
-                    color = this._ball.getPixel(color);
-                    color = this._missile1.getPixel(color);
-                    color = this._player1.getPixel(color);
-                    color = this._playfield.getPixel(color);
-                    color = this._missile0.getPixel(color);
-                    color = this._player0.getPixel(color);
-                    break;
-                default:
-                    throw new Error('invalid priority');
-            }
-            this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.vblank ? 0xFF000000 : color;
-        }
-        else {
-            this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.surfaceBuffer[(y - 1) * 160 + x];
-        }
-    };
-    Tia.prototype._updateCollision = function () {
-        this._collisionMask |= (~this._player0.collision &
-            ~this._player1.collision &
-            ~this._missile0.collision &
-            ~this._missile1.collision &
-            ~this._ball.collision &
-            ~this._playfield.collision);
-    };
-    Tia.prototype._clearHmoveComb = function () {
-        if (this._frameManager.isRendering() && this._hstate === 0) {
-            var offset = this._frameManager.getCurrentLine() * 160;
-            for (var i = 0; i < 8; i++) {
-                this._frameManager.surfaceBuffer[offset + i] = 0xFF000000;
+        if (linesTotal < self._maxLinesTotal) {
+            var buffer = surface.getBuffer(), base = 160 * linesTotal, boundary = self._maxLinesTotal * 160;
+            for (var i = base; i < boundary; i++) {
+                buffer[i] = 0xFF000000;
             }
         }
-    };
-    Tia.prototype._resxCounter = function () {
-        return this._hstate === 0 ?
-            (this._hctr >= 73 ? 158 : 159) :
-            157;
+        self.newFrame.dispatch(surface);
     };
     return Tia;
 }());
-var Tia;
 (function (Tia) {
     var TrapPayload = (function () {
         function TrapPayload(reason, tia, message) {
@@ -30012,8 +30073,8 @@ exports.default = Tia;
 
 },{"../Config":173,"./Audio":199,"./Ball":200,"./DelayQueue":201,"./FrameManager":202,"./LatchedInput":203,"./Missile":204,"./PaddleReader":205,"./Player":206,"./Playfield":207,"./palette":211,"microevent.ts":95}],209:[function(require,module,exports){
 "use strict";
-var Config_1 = require('../Config');
-var AudioOutputBuffer_1 = require('../../../tools/AudioOutputBuffer');
+var Config_1 = require("../Config");
+var AudioOutputBuffer_1 = require("../../../tools/AudioOutputBuffer");
 var FREQUENCY_DIVISIORS = new Int8Array([
     1, 1, 15, 1,
     1, 1, 1, 1,
@@ -30548,11 +30609,11 @@ exports.SECAM = new Uint32Array([
 
 },{}],212:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var BoardInterface_1 = require('../board/BoardInterface');
-var CpuInterface_1 = require('../cpu/CpuInterface');
-var Cpu_1 = require('../cpu/Cpu');
-var Memory_1 = require('./Memory');
+var microevent_ts_1 = require("microevent.ts");
+var BoardInterface_1 = require("../board/BoardInterface");
+var CpuInterface_1 = require("../cpu/CpuInterface");
+var Cpu_1 = require("../cpu/Cpu");
+var Memory_1 = require("./Memory");
 var Board = (function () {
     function Board(cpuFactory) {
         var _this = this;
@@ -30721,7 +30782,7 @@ exports.default = AudioOutputBuffer;
 
 },{}],215:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
+var microevent_ts_1 = require("microevent.ts");
 var ClockProbe = (function () {
     function ClockProbe(_scheduler) {
         this._scheduler = _scheduler;
@@ -30817,8 +30878,8 @@ exports.decode = decode;
 
 },{}],218:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var PoolMember_1 = require('./PoolMember');
+var microevent_ts_1 = require("microevent.ts");
+var PoolMember_1 = require("./PoolMember");
 var Pool = (function () {
     function Pool(_factory) {
         this._factory = _factory;
@@ -30925,8 +30986,8 @@ exports.default = SeedrandomGenerator;
 
 },{}],221:[function(require,module,exports){
 "use strict";
-var seedrandom = require('seedrandom');
-var SeedrandomGenerator_1 = require('./SeedrandomGenerator');
+var seedrandom = require("seedrandom");
+var SeedrandomGenerator_1 = require("./SeedrandomGenerator");
 function createRng(seed) {
     if (seed < 0) {
         seed = Math.random();
@@ -30945,7 +31006,7 @@ exports.restoreRng = restoreRng;
 
 },{"./SeedrandomGenerator":220,"seedrandom":127}],222:[function(require,module,exports){
 "use strict";
-var polyfill = require('setimmediate2');
+var polyfill = require("setimmediate2");
 var ImmediateScheduler = (function () {
     function ImmediateScheduler() {
     }
@@ -30969,7 +31030,7 @@ exports.default = ImmediateScheduler;
 
 },{"setimmediate2":135}],223:[function(require,module,exports){
 "use strict";
-var polyfill = require('setimmediate2');
+var polyfill = require("setimmediate2");
 var CORRECTION_THESHOLD = 3, MAX_ACCUMULATED_DELTA = 100;
 var getTimestamp = (self.performance && self.performance.now) ?
     function () { return self.performance.now(); } :
@@ -31054,7 +31115,7 @@ exports.default = PeriodicScheduler;
 
 },{}],225:[function(require,module,exports){
 "use strict";
-var RGBASurfaceInterface_1 = require('./RGBASurfaceInterface');
+var RGBASurfaceInterface_1 = require("./RGBASurfaceInterface");
 var ArrayBufferSurface = (function () {
     function ArrayBufferSurface(_width, _height, _underlyingBuffer) {
         this._width = _width;
@@ -31102,7 +31163,7 @@ exports.default = RGBASurfaceInterface;
 
 },{}],227:[function(require,module,exports){
 "use strict";
-var screenfull = require('screenfull');
+var screenfull = require("screenfull");
 var FullscreenVideoDriver = (function () {
     function FullscreenVideoDriver(_element) {
         this._element = _element;
@@ -31238,9 +31299,9 @@ exports.default = SimpleCanvasVideo;
 
 },{}],230:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var Pool_1 = require('../../tools/pool/Pool');
-var ArrayBufferSurface_1 = require('../../tools/surface/ArrayBufferSurface');
+var microevent_ts_1 = require("microevent.ts");
+var Pool_1 = require("../../tools/pool/Pool");
+var ArrayBufferSurface_1 = require("../../tools/surface/ArrayBufferSurface");
 var VideoEndpoint = (function () {
     function VideoEndpoint(_video) {
         var _this = this;
@@ -31306,7 +31367,7 @@ var WebAudioDriver = (function () {
     WebAudioDriver.prototype.bind = function () {
         var sources = [];
         for (var _i = 0; _i < arguments.length; _i++) {
-            sources[_i - 0] = arguments[_i];
+            sources[_i] = arguments[_i];
         }
         if (this._sources) {
             return;
@@ -31396,12 +31457,12 @@ var Channel = (function () {
 
 },{}],232:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var Switch_1 = require('../../../machine/io/Switch');
+var microevent_ts_1 = require("microevent.ts");
+var Switch_1 = require("../../../machine/io/Switch");
 var KeyboardIO = (function () {
     function KeyboardIO(_target, mappings) {
-        var _this = this;
         if (mappings === void 0) { mappings = KeyboardIO.defaultMappings; }
+        var _this = this;
         this._target = _target;
         this.toggleFullscreen = new microevent_ts_1.Event();
         this.hardReset = new microevent_ts_1.Event();
@@ -31502,7 +31563,6 @@ var KeyboardIO = (function () {
     };
     return KeyboardIO;
 }());
-var KeyboardIO;
 (function (KeyboardIO) {
     KeyboardIO.defaultMappings = [
         {
@@ -31582,7 +31642,7 @@ exports.default = KeyboardIO;
 
 },{"../../../machine/io/Switch":170,"microevent.ts":95}],233:[function(require,module,exports){
 "use strict";
-var WebAudio_1 = require('../../driver/WebAudio');
+var WebAudio_1 = require("../../driver/WebAudio");
 var WebAudioDriver = (function () {
     function WebAudioDriver() {
         this._driver = new WebAudio_1.default(2);
@@ -31612,15 +31672,15 @@ exports.default = WebAudioDriver;
 
 },{"../../driver/WebAudio":231}],"stellaCLI":[function(require,module,exports){
 "use strict";
-var StellaCLI_1 = require('../cli/stella/StellaCLI');
-var JqtermCLIRunner_1 = require('../cli/JqtermCLIRunner');
-var PrepackagedFilesystemProvider_1 = require('../fs/PrepackagedFilesystemProvider');
-var SimpleCanvasVideo_1 = require('./driver/SimpleCanvasVideo');
-var KeyboardIO_1 = require('./stella/driver/KeyboardIO');
-var WebAudio_1 = require('./stella/driver/WebAudio');
-var FullscreenVideo_1 = require('./driver/FullscreenVideo');
-var MouseAsPaddle_1 = require('./driver/MouseAsPaddle');
-var VideoEndpoint_1 = require('./driver/VideoEndpoint');
+var StellaCLI_1 = require("../cli/stella/StellaCLI");
+var JqtermCLIRunner_1 = require("../cli/JqtermCLIRunner");
+var PrepackagedFilesystemProvider_1 = require("../fs/PrepackagedFilesystemProvider");
+var SimpleCanvasVideo_1 = require("./driver/SimpleCanvasVideo");
+var KeyboardIO_1 = require("./stella/driver/KeyboardIO");
+var WebAudio_1 = require("./stella/driver/WebAudio");
+var FullscreenVideo_1 = require("./driver/FullscreenVideo");
+var MouseAsPaddle_1 = require("./driver/MouseAsPaddle");
+var VideoEndpoint_1 = require("./driver/VideoEndpoint");
 function run(_a) {
     var fileBlob = _a.fileBlob, terminalElt = _a.terminalElt, interruptButton = _a.interruptButton, clearButton = _a.clearButton, canvas = _a.canvas, pageConfig = _a.pageConfig, cartridgeFileInput = _a.cartridgeFileInput, cartridgeFileInputLabel = _a.cartridgeFileInputLabel;
     var fsProvider = new PrepackagedFilesystemProvider_1.default(fileBlob), cli = new StellaCLI_1.default(fsProvider), runner = new JqtermCLIRunner_1.default(cli, terminalElt, {

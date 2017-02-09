@@ -3517,7 +3517,7 @@ function hasOwnProperty(obj, prop) {
 
 },{"./support/isBuffer":11,"_process":8,"inherits":10}],13:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
+var microevent_ts_1 = require("microevent.ts");
 var AbstractCLI = (function () {
     function AbstractCLI() {
         this.events = {
@@ -3577,7 +3577,7 @@ exports.default = CommandInterpreter;
 
 },{}],15:[function(require,module,exports){
 "use strict";
-var pathlib = require('path');
+var pathlib = require("path");
 var Completer = (function () {
     function Completer(_availableCommands, _fsProvider) {
         this._availableCommands = _availableCommands;
@@ -3628,7 +3628,6 @@ var Completer = (function () {
     };
     return Completer;
 }());
-var Completer;
 (function (Completer) {
     var CompletionResult = (function () {
         function CompletionResult(candidates, match) {
@@ -3644,9 +3643,9 @@ exports.default = Completer;
 
 },{"path":7}],16:[function(require,module,exports){
 "use strict";
-var BoardInterface_1 = require('../machine/board/BoardInterface');
-var hex = require('../tools/hex');
-var util = require('util');
+var BoardInterface_1 = require("../machine/board/BoardInterface");
+var hex = require("../tools/hex");
+var util = require("util");
 function decodeNumber(value) {
     try {
         return hex.decode(value);
@@ -3819,33 +3818,32 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var path = require('path');
-var Board_1 = require('../machine/ehbasic/Board');
-var Debugger_1 = require('../machine/Debugger');
-var DebuggerFrontend_1 = require('./DebuggerFrontend');
-var CommandInterpreter_1 = require('./CommandInterpreter');
-var AbstractCLI_1 = require('./AbstractCLI');
-var ImmedateScheduler_1 = require('../tools/scheduler/ImmedateScheduler');
-var PeriodicScheduler_1 = require('../tools/scheduler/PeriodicScheduler');
-var ClockProbe_1 = require('../tools/ClockProbe');
+var path = require("path");
+var Board_1 = require("../machine/ehbasic/Board");
+var Debugger_1 = require("../machine/Debugger");
+var DebuggerFrontend_1 = require("./DebuggerFrontend");
+var CommandInterpreter_1 = require("./CommandInterpreter");
+var AbstractCLI_1 = require("./AbstractCLI");
+var ImmedateScheduler_1 = require("../tools/scheduler/ImmedateScheduler");
+var PeriodicScheduler_1 = require("../tools/scheduler/PeriodicScheduler");
+var ClockProbe_1 = require("../tools/ClockProbe");
 var OUTPUT_FLUSH_INTERVAL = 100;
 var CLOCK_PROBE_INTERVAL = 1000;
 var EhBasicCLI = (function (_super) {
     __extends(EhBasicCLI, _super);
     function EhBasicCLI(_fsProvider) {
-        var _this = this;
-        _super.call(this);
-        this._fsProvider = _fsProvider;
-        this._allowQuit = true;
-        this._outputBuffer = '';
-        this._inputBuffer = [];
-        this._promptForInput = true;
-        this._cliOutputBuffer = '';
-        var board = new Board_1.default(), dbg = new Debugger_1.default(), commandInterpreter = new CommandInterpreter_1.default(), debuggerFrontend = new DebuggerFrontend_1.default(dbg, this._fsProvider, commandInterpreter), clockProbe = new ClockProbe_1.default(new PeriodicScheduler_1.default(CLOCK_PROBE_INTERVAL));
+        var _this = _super.call(this) || this;
+        _this._fsProvider = _fsProvider;
+        _this._allowQuit = true;
+        _this._outputBuffer = '';
+        _this._inputBuffer = [];
+        _this._promptForInput = true;
+        _this._cliOutputBuffer = '';
+        var board = new Board_1.default(), dbg = new Debugger_1.default(), commandInterpreter = new CommandInterpreter_1.default(), debuggerFrontend = new DebuggerFrontend_1.default(dbg, _this._fsProvider, commandInterpreter), clockProbe = new ClockProbe_1.default(new PeriodicScheduler_1.default(CLOCK_PROBE_INTERVAL));
         dbg.attach(board);
         clockProbe.attach(board.cpuClock);
         clockProbe.frequencyUpdate.addHandler(function () { return _this.events.promptChanged.dispatch(undefined); });
-        board.trap.addHandler(this._onTrap, this);
+        board.trap.addHandler(_this._onTrap, _this);
         commandInterpreter.registerCommands({
             quit: function () {
                 if (_this._allowQuit)
@@ -3878,12 +3876,13 @@ var EhBasicCLI = (function (_super) {
         board.getSerialIO()
             .setOutCallback(function (value) { return _this._serialOutHandler(value); })
             .setInCallback(function () { return _this._serialInHandler(); });
-        this._commands = commandInterpreter.getCommands();
-        this._board = board;
-        this._commandInterpreter = commandInterpreter;
-        this._scheduler = new ImmedateScheduler_1.default();
-        this._clockProbe = clockProbe;
-        this._debuggerFrontend = debuggerFrontend;
+        _this._commands = commandInterpreter.getCommands();
+        _this._board = board;
+        _this._commandInterpreter = commandInterpreter;
+        _this._scheduler = new ImmedateScheduler_1.default();
+        _this._clockProbe = clockProbe;
+        _this._debuggerFrontend = debuggerFrontend;
+        return _this;
     }
     EhBasicCLI.prototype.runDebuggerScript = function (filename) {
         var _this = this;
@@ -4067,20 +4066,18 @@ exports.default = EhBasicCLI;
 
 },{"../machine/Debugger":21,"../machine/ehbasic/Board":27,"../tools/ClockProbe":31,"../tools/scheduler/ImmedateScheduler":34,"../tools/scheduler/PeriodicScheduler":35,"./AbstractCLI":13,"./CommandInterpreter":14,"./DebuggerFrontend":16,"path":7}],18:[function(require,module,exports){
 "use strict";
-var Completer_1 = require('./Completer');
+var Completer_1 = require("./Completer");
 var JqtermCLIRunner = (function () {
     function JqtermCLIRunner(_cli, terminalElt, options) {
-        var _this = this;
         if (options === void 0) { options = {}; }
+        var _this = this;
         this._cli = _cli;
         this._updateCompleter();
         this._terminal = terminalElt.terminal(function (input, terminal) {
             return _this._cli.pushInput(input);
         }, {
             greetings: 'Ready.',
-            completion: function (terminal, cmd, handler) {
-                return handler(_this._completer.complete(terminal.get_command()).candidates);
-            },
+            completion: function (terminal, cmd, handler) { return handler(_this._completer.complete(terminal.get_command()).candidates); },
             exit: false,
             clear: false
         });
@@ -4112,7 +4109,7 @@ exports.default = JqtermCLIRunner;
 
 },{"./Completer":15}],19:[function(require,module,exports){
 "use strict";
-var pathlib = require('path');
+var pathlib = require("path");
 var AbstractFileSystemProvider = (function () {
     function AbstractFileSystemProvider() {
         this._directoryStack = [];
@@ -4152,14 +4149,15 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var util = require('util');
-var AbstractFileSystemProvider_1 = require('./AbstractFileSystemProvider');
+var util = require("util");
+var AbstractFileSystemProvider_1 = require("./AbstractFileSystemProvider");
 var PrepackagedFilesystemProvider = (function (_super) {
     __extends(PrepackagedFilesystemProvider, _super);
     function PrepackagedFilesystemProvider(_blob) {
-        _super.call(this);
-        this._blob = _blob;
-        this._cwd = '/';
+        var _this = _super.call(this) || this;
+        _this._blob = _blob;
+        _this._cwd = '/';
+        return _this;
     }
     PrepackagedFilesystemProvider.prototype.readBinaryFileSync = function (name) {
         name = this._resolvePath(name);
@@ -4223,13 +4221,13 @@ exports.default = PrepackagedFilesystemProvider;
 
 },{"./AbstractFileSystemProvider":19,"buffer":2,"util":12}],21:[function(require,module,exports){
 "use strict";
-var Instruction_1 = require('./cpu/Instruction');
-var Disassembler_1 = require('./cpu/Disassembler');
-var CpuInterface_1 = require('./cpu/CpuInterface');
-var BoardInterface_1 = require('./board/BoardInterface');
-var hex = require('../tools/hex');
-var binary = require('../tools/binary');
-var util = require('util');
+var Instruction_1 = require("./cpu/Instruction");
+var Disassembler_1 = require("./cpu/Disassembler");
+var CpuInterface_1 = require("./cpu/CpuInterface");
+var BoardInterface_1 = require("./board/BoardInterface");
+var hex = require("../tools/hex");
+var binary = require("../tools/binary");
+var util = require("util");
 var Debugger = (function () {
     function Debugger(_traceSize, _stepMaxCycles) {
         if (_traceSize === void 0) { _traceSize = 1024; }
@@ -4470,8 +4468,8 @@ exports.default = BoardInterface;
 
 },{}],23:[function(require,module,exports){
 "use strict";
-var Instruction_1 = require('./Instruction');
-var CpuInterface_1 = require('./CpuInterface');
+var Instruction_1 = require("./Instruction");
+var CpuInterface_1 = require("./CpuInterface");
 function setFlagsNZ(state, operand) {
     state.flags = (state.flags & ~(128 | 2)) |
         (operand & 0x80) |
@@ -5418,8 +5416,8 @@ exports.default = CpuInterface;
 
 },{}],25:[function(require,module,exports){
 "use strict";
-var Instruction_1 = require('./Instruction');
-var hex = require('../../tools/hex');
+var Instruction_1 = require("./Instruction");
+var hex = require("../../tools/hex");
 var Disassembler = (function () {
     function Disassembler(_bus) {
         this._bus = _bus;
@@ -5512,9 +5510,9 @@ var Instruction = (function () {
     return Instruction;
 }());
 ;
-var Instruction;
 (function (Instruction) {
     ;
+    var OperationMap;
     (function (OperationMap) {
         OperationMap[OperationMap["adc"] = 0] = "adc";
         OperationMap[OperationMap["and"] = 1] = "and";
@@ -5582,8 +5580,7 @@ var Instruction;
         OperationMap[OperationMap["slo"] = 63] = "slo";
         OperationMap[OperationMap["aax"] = 64] = "aax";
         OperationMap[OperationMap["invalid"] = 65] = "invalid";
-    })(Instruction.OperationMap || (Instruction.OperationMap = {}));
-    var OperationMap = Instruction.OperationMap;
+    })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
     ;
     ;
     Instruction.opcodes = new Array(256);
@@ -5591,7 +5588,6 @@ var Instruction;
 ;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Instruction;
-var Instruction;
 (function (Instruction) {
     (function () {
         for (var i = 0; i < 256; i++) {
@@ -5825,12 +5821,12 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var Board_1 = require('../vanilla/Board');
-var Memory_1 = require('./Memory');
+var Board_1 = require("../vanilla/Board");
+var Memory_1 = require("./Memory");
 var Board = (function (_super) {
     __extends(Board, _super);
     function Board() {
-        _super.apply(this, arguments);
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     Board.prototype.getSerialIO = function () {
         return this._bus;
@@ -5850,13 +5846,14 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var Memory_1 = require('../vanilla/Memory');
+var Memory_1 = require("../vanilla/Memory");
 var Memory = (function (_super) {
     __extends(Memory, _super);
     function Memory() {
-        _super.apply(this, arguments);
-        this._inCallback = function () { return 0x00; };
-        this._outCallback = function () { return undefined; };
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this._inCallback = function () { return 0x00; };
+        _this._outCallback = function () { return undefined; };
+        return _this;
     }
     Memory.prototype.read = function (address) {
         if (address === 0xF004) {
@@ -5901,11 +5898,11 @@ exports.default = Memory;
 
 },{"../vanilla/Memory":30}],29:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
-var BoardInterface_1 = require('../board/BoardInterface');
-var CpuInterface_1 = require('../cpu/CpuInterface');
-var Cpu_1 = require('../cpu/Cpu');
-var Memory_1 = require('./Memory');
+var microevent_ts_1 = require("microevent.ts");
+var BoardInterface_1 = require("../board/BoardInterface");
+var CpuInterface_1 = require("../cpu/CpuInterface");
+var Cpu_1 = require("../cpu/Cpu");
+var Memory_1 = require("./Memory");
 var Board = (function () {
     function Board(cpuFactory) {
         var _this = this;
@@ -6053,7 +6050,7 @@ exports.default = Memory;
 
 },{}],31:[function(require,module,exports){
 "use strict";
-var microevent_ts_1 = require('microevent.ts');
+var microevent_ts_1 = require("microevent.ts");
 var ClockProbe = (function () {
     function ClockProbe(_scheduler) {
         this._scheduler = _scheduler;
@@ -6149,7 +6146,7 @@ exports.decode = decode;
 
 },{}],34:[function(require,module,exports){
 "use strict";
-var polyfill = require('setimmediate2');
+var polyfill = require("setimmediate2");
 var ImmediateScheduler = (function () {
     function ImmediateScheduler() {
     }
@@ -6206,8 +6203,8 @@ exports.default = PeriodicScheduler;
 },{}],"ehBasicCLI":[function(require,module,exports){
 "use strict";
 var EhBasicCLI_1 = require("../cli/EhBasicCLI");
-var JqtermCLIRunner_1 = require('../cli/JqtermCLIRunner');
-var PrepackagedFilesystemProvider_1 = require('../fs/PrepackagedFilesystemProvider');
+var JqtermCLIRunner_1 = require("../cli/JqtermCLIRunner");
+var PrepackagedFilesystemProvider_1 = require("../fs/PrepackagedFilesystemProvider");
 function run(fileBlob, terminalElt, interruptButton, clearButton) {
     var fsProvider = new PrepackagedFilesystemProvider_1.default(fileBlob), cli = new EhBasicCLI_1.default(fsProvider), runner = new JqtermCLIRunner_1.default(cli, terminalElt, {
         interruptButton: interruptButton,
