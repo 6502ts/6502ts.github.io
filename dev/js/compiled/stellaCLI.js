@@ -31301,7 +31301,7 @@ exports.default = SimpleCanvasVideo;
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var Pool_1 = require("../../tools/pool/Pool");
-var ArrayBufferSurface_1 = require("../../tools/surface/ArrayBufferSurface");
+var ArrayBufferSurface_1 = require("../../video/surface/ArrayBufferSurface");
 var VideoEndpoint = (function () {
     function VideoEndpoint(_video) {
         var _this = this;
@@ -31333,7 +31333,7 @@ var VideoEndpoint = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/Pool":218,"../../tools/surface/ArrayBufferSurface":225,"microevent.ts":95}],231:[function(require,module,exports){
+},{"../../tools/pool/Pool":218,"../../video/surface/ArrayBufferSurface":225,"microevent.ts":95}],231:[function(require,module,exports){
 "use strict";
 var WebAudioDriver = (function () {
     function WebAudioDriver(channels) {
