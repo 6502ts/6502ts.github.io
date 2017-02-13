@@ -24226,7 +24226,7 @@ var StellaCLI = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = StellaCLI;
 
-},{"../../machine/stella/Board":171,"../../machine/stella/Config":173,"../../machine/stella/cartridge/CartridgeFactory":191,"../../machine/stella/cartridge/CartridgeInfo":192,"../../tools/ClockProbe":215,"../../tools/scheduler/ImmedateScheduler":222,"../../tools/scheduler/LimitingImmediateScheduler":223,"../../tools/scheduler/PeriodicScheduler":224,"../CommandInterpreter":152,"../DebuggerCLI":154,"./ControlPanelManagementProvider":157,"./SystemConfigSetupProvider":159,"microevent.ts":95}],159:[function(require,module,exports){
+},{"../../machine/stella/Board":171,"../../machine/stella/Config":173,"../../machine/stella/cartridge/CartridgeFactory":191,"../../machine/stella/cartridge/CartridgeInfo":192,"../../tools/ClockProbe":215,"../../tools/scheduler/ImmedateScheduler":224,"../../tools/scheduler/LimitingImmediateScheduler":225,"../../tools/scheduler/PeriodicScheduler":226,"../CommandInterpreter":152,"../DebuggerCLI":154,"./ControlPanelManagementProvider":157,"./SystemConfigSetupProvider":159,"microevent.ts":95}],159:[function(require,module,exports){
 "use strict";
 var Config_1 = require("../../machine/stella/Config");
 var SystemConfigSetupProvider = (function () {
@@ -25072,7 +25072,7 @@ var Cpu = (function () {
         this.state.a = this._rng ? this._rng.int(0xFF) : 0;
         this.state.x = this._rng ? this._rng.int(0xFF) : 0;
         this.state.y = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.s = this._rng ? this._rng.int(0xFF) : 0;
+        this.state.s = 0xFD;
         this.state.p = this._rng ? this._rng.int(0xFFFF) : 0;
         this.state.flags = (this._rng ? this._rng.int(0xFF) : 0) |
             4 | 32 | 16;
@@ -26136,7 +26136,7 @@ var Board = (function () {
         }
         var cpu = cpuFactory(bus, this._rng);
         var pia = new Pia_1.default(controlPanel, joystick0, joystick1, this._rng);
-        var tia = new Tia_1.default(config, joystick0, joystick1, paddles, this._rng);
+        var tia = new Tia_1.default(config, joystick0, joystick1, paddles);
         cpu.setInvalidInstructionCallback(function () { return _this._onInvalidInstruction(); });
         tia
             .setCpu(cpu)
@@ -26325,7 +26325,7 @@ var Board = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Board;
 
-},{"../../tools/rng/factory":221,"../board/BoardInterface":163,"../cpu/Cpu":164,"../cpu/CpuInterface":165,"../io/DigitalJoystick":168,"../io/Paddle":169,"./Bus":172,"./Config":173,"./ControlPanel":174,"./Pia":175,"./tia/Tia":208,"microevent.ts":95}],172:[function(require,module,exports){
+},{"../../tools/rng/factory":223,"../board/BoardInterface":163,"../cpu/Cpu":164,"../cpu/CpuInterface":165,"../io/DigitalJoystick":168,"../io/Paddle":169,"./Bus":172,"./Config":173,"./ControlPanel":174,"./Pia":175,"./tia/Tia":208,"microevent.ts":95}],172:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var Bus = (function () {
@@ -29453,10 +29453,9 @@ var palette = require("./palette");
 ;
 ;
 var Tia = (function () {
-    function Tia(_config, joystick0, joystick1, paddles, _rng) {
+    function Tia(_config, joystick0, joystick1, paddles) {
         var _this = this;
         this._config = _config;
-        this._rng = _rng;
         this._cpu = null;
         this._bus = null;
         this._delayQueue = new DelayQueue_1.default(10, 20);
@@ -30231,27 +30230,24 @@ exports.decodesPlayer = [
     decodes6,
     decodes0
 ];
-var init;
-(function (init) {
-    [
-        decodes0,
-        decodes1,
-        decodes2,
-        decodes3,
-        decodes4,
-        decodes6
-    ].forEach(function (decodes) {
-        for (var i = 0; i < 160; i++) {
-            decodes[i] = 0;
-        }
-        decodes[156] = 1;
-    });
-    decodes1[12] = 1;
-    decodes2[28] = 1;
-    decodes3[12] = decodes3[28] = 1;
-    decodes4[60] = 1;
-    decodes6[28] = decodes6[60] = 1;
-})(init || (init = {}));
+[
+    decodes0,
+    decodes1,
+    decodes2,
+    decodes3,
+    decodes4,
+    decodes6
+].forEach(function (decodes) {
+    for (var i = 0; i < 160; i++) {
+        decodes[i] = 0;
+    }
+    decodes[156] = 1;
+});
+decodes1[12] = 1;
+decodes2[28] = 1;
+decodes3[12] = decodes3[28] = 1;
+decodes4[60] = 1;
+decodes6[28] = decodes6[60] = 1;
 
 },{}],211:[function(require,module,exports){
 "use strict";
@@ -30917,6 +30913,46 @@ exports.decode = decode;
 
 },{}],218:[function(require,module,exports){
 "use strict";
+var InducedMember = (function () {
+    function InducedMember(_value, _mapper) {
+        this._value = _value;
+        this._mapper = _mapper;
+    }
+    InducedMember.prototype.get = function () {
+        return this._mapper(this._value.get());
+    };
+    InducedMember.prototype.release = function () {
+        this._value.release();
+    };
+    InducedMember.prototype.dispose = function () {
+        this._value.dispose();
+    };
+    return InducedMember;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = InducedMember;
+
+},{}],219:[function(require,module,exports){
+"use strict";
+var InducedMember_1 = require("./InducedMember");
+var InducedPool = (function () {
+    function InducedPool(_mapper) {
+        this._mapper = _mapper;
+        this._map = new WeakMap();
+    }
+    InducedPool.prototype.get = function (original) {
+        if (!this._map.has(original)) {
+            this._map.set(original, new InducedMember_1.default(original, this._mapper));
+        }
+        return this._map.get(original);
+    };
+    return InducedPool;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = InducedPool;
+
+},{"./InducedMember":218}],220:[function(require,module,exports){
+"use strict";
 var microevent_ts_1 = require("microevent.ts");
 var PoolMember_1 = require("./PoolMember");
 var Pool = (function () {
@@ -30970,7 +31006,7 @@ var Pool = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Pool;
 
-},{"./PoolMember":219,"microevent.ts":95}],219:[function(require,module,exports){
+},{"./PoolMember":221,"microevent.ts":95}],221:[function(require,module,exports){
 "use strict";
 var PoolMember = (function () {
     function PoolMember(_value, _releaseCB, _disposeCB) {
@@ -30997,7 +31033,7 @@ var PoolMember = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PoolMember;
 
-},{}],220:[function(require,module,exports){
+},{}],222:[function(require,module,exports){
 "use strict";
 var SeedrandomGenerator = (function () {
     function SeedrandomGenerator(_rng) {
@@ -31023,7 +31059,7 @@ var SeedrandomGenerator = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SeedrandomGenerator;
 
-},{}],221:[function(require,module,exports){
+},{}],223:[function(require,module,exports){
 "use strict";
 var seedrandom = require("seedrandom");
 var SeedrandomGenerator_1 = require("./SeedrandomGenerator");
@@ -31043,7 +31079,7 @@ function restoreRng(state) {
 }
 exports.restoreRng = restoreRng;
 
-},{"./SeedrandomGenerator":220,"seedrandom":127}],222:[function(require,module,exports){
+},{"./SeedrandomGenerator":222,"seedrandom":127}],224:[function(require,module,exports){
 "use strict";
 var polyfill = require("setimmediate2");
 var ImmediateScheduler = (function () {
@@ -31067,7 +31103,7 @@ var ImmediateScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ImmediateScheduler;
 
-},{"setimmediate2":135}],223:[function(require,module,exports){
+},{"setimmediate2":135}],225:[function(require,module,exports){
 "use strict";
 var polyfill = require("setimmediate2");
 var CORRECTION_THESHOLD = 3, MAX_ACCUMULATED_DELTA = 100;
@@ -31120,7 +31156,7 @@ var LimitingImmediateScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = LimitingImmediateScheduler;
 
-},{"setimmediate2":135}],224:[function(require,module,exports){
+},{"setimmediate2":135}],226:[function(require,module,exports){
 "use strict";
 var PeriodicScheduler = (function () {
     function PeriodicScheduler(_period) {
@@ -31152,21 +31188,160 @@ var PeriodicScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PeriodicScheduler;
 
-},{}],225:[function(require,module,exports){
+},{}],227:[function(require,module,exports){
+"use strict";
+var microevent_ts_1 = require("microevent.ts");
+var FrameMergeProcessor = (function () {
+    function FrameMergeProcessor() {
+        this.emit = new microevent_ts_1.Event();
+        this._framesOnHold = new Array(2);
+        this._nFramesOnHold = 0;
+        this._width = 0;
+        this._height = 0;
+    }
+    FrameMergeProcessor.prototype.init = function (width, height) {
+        this.flush();
+        this._width = width;
+        this._height = height;
+    };
+    FrameMergeProcessor.prototype.flush = function () {
+        for (var i = 0; i < this._nFramesOnHold; i++) {
+            this._framesOnHold[i].release();
+            this._framesOnHold[i] = null;
+        }
+        this._nFramesOnHold = 0;
+    };
+    FrameMergeProcessor.prototype.processSurface = function (wrappedSurface) {
+        var surface = wrappedSurface.get();
+        if (surface.getHeight() !== this._height || surface.getWidth() !== this._width) {
+            throw new Error('surface dimensions do not match');
+        }
+        this._framesOnHold[this._nFramesOnHold++] = wrappedSurface;
+        if (this._nFramesOnHold === 2) {
+            this._process();
+        }
+    };
+    FrameMergeProcessor.prototype._process = function () {
+        var buffer0 = this._framesOnHold[0].get().getBuffer(), buffer1 = this._framesOnHold[1].get().getBuffer();
+        for (var i = 0; i < this._width * this._height; i++) {
+            buffer0[i] =
+                0xFF000000 |
+                    ((((buffer0[i] & 0xFF0000) + (buffer1[i] & 0xFF0000)) >>> 1) & 0xFF0000) |
+                    ((((buffer0[i] & 0xFF00) + (buffer1[i] & 0xFF00)) >>> 1) & 0xFF00) |
+                    ((((buffer0[i] & 0xFF) + (buffer1[i] & 0xFF)) >>> 1) & 0xFF);
+        }
+        this.emit.dispatch(this._framesOnHold[0]);
+        this._framesOnHold[1].release();
+        this._nFramesOnHold = 0;
+    };
+    return FrameMergeProcessor;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = FrameMergeProcessor;
+
+},{"microevent.ts":95}],228:[function(require,module,exports){
+"use strict";
+var microevent_ts_1 = require("microevent.ts");
+var PassthroughProcessor = (function () {
+    function PassthroughProcessor() {
+        this.emit = new microevent_ts_1.Event();
+    }
+    PassthroughProcessor.prototype.init = function () { };
+    PassthroughProcessor.prototype.flush = function () { };
+    PassthroughProcessor.prototype.processSurface = function (surface) {
+        this.emit.dispatch(surface);
+    };
+    return PassthroughProcessor;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = PassthroughProcessor;
+
+},{"microevent.ts":95}],229:[function(require,module,exports){
+"use strict";
+var Config = require("./config");
+var PassthroughProcessor_1 = require("./PassthroughProcessor");
+var FrameMergeProcessor_1 = require("./FrameMergeProcessor");
+var ProcessorFactory = (function () {
+    function ProcessorFactory() {
+    }
+    ProcessorFactory.prototype.create = function (config) {
+        switch (config.type) {
+            case 0:
+                return new PassthroughProcessor_1.default();
+            case 1:
+                return new FrameMergeProcessor_1.default();
+            default:
+                throw new Error('cannot happen: invalid processor type');
+        }
+    };
+    return ProcessorFactory;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ProcessorFactory;
+
+},{"./FrameMergeProcessor":227,"./PassthroughProcessor":228,"./config":231}],230:[function(require,module,exports){
+"use strict";
+var ProcessorFactory_1 = require("./ProcessorFactory");
+var ProcessorPipeline = (function () {
+    function ProcessorPipeline(config) {
+        var _this = this;
+        if (!config || config.length === 0) {
+            config = [{ type: 0 }];
+        }
+        var factory = new ProcessorFactory_1.default();
+        this._processors = config.map(function (cfg) { return factory.create(cfg); });
+        var _loop_1 = function (i) {
+            this_1._processors[i - 1].emit.addHandler(function (surface) { return _this._processors[i].processSurface(surface); });
+        };
+        var this_1 = this;
+        for (var i = 1; i < this._processors.length; i++) {
+            _loop_1(i);
+        }
+        this.emit = this._processors[this._processors.length - 1].emit;
+    }
+    ProcessorPipeline.prototype.init = function (width, height) {
+        this._processors.forEach(function (prc) { return prc.init(width, height); });
+    };
+    ProcessorPipeline.prototype.flush = function () {
+        this._processors.forEach(function (prc) { return prc.flush(); });
+    };
+    ProcessorPipeline.prototype.processSurface = function (surface) {
+        this._processors[0].processSurface(surface);
+    };
+    return ProcessorPipeline;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ProcessorPipeline;
+
+},{"./ProcessorFactory":229}],231:[function(require,module,exports){
+"use strict";
+
+},{}],232:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface_1 = require("./RGBASurfaceInterface");
 var ArrayBufferSurface = (function () {
-    function ArrayBufferSurface(_width, _height, _underlyingBuffer) {
-        this._width = _width;
-        this._height = _height;
-        this._underlyingBuffer = _underlyingBuffer;
-        if (this._underlyingBuffer.byteLength !== this._width * this._height * 4) {
-            throw new Error('invalid underlying buffer: size mismatch');
-        }
-        this._buffer = new Uint32Array(this._underlyingBuffer);
+    function ArrayBufferSurface() {
+        this._height = 0;
+        this._width = 0;
+        this._buffer = null;
     }
+    ArrayBufferSurface.prototype.replaceUnderlyingBuffer = function (width, height, buffer) {
+        if (width * height * 4 !== buffer.byteLength) {
+            throw new Error('surface size mismatch');
+        }
+        this._width = width;
+        this._height = height;
+        this._underlyingBuffer = buffer;
+        this._buffer = new Uint32Array(this._underlyingBuffer);
+        return this;
+    };
     ArrayBufferSurface.prototype.getUnderlyingBuffer = function () {
         return this._underlyingBuffer;
+    };
+    ArrayBufferSurface.prototype.resetUnderlyingBuffer = function () {
+        this._width = this._height = 0;
+        this._underlyingBuffer = this._buffer = null;
+        return this;
     };
     ArrayBufferSurface.prototype.getWidth = function () {
         return this._width;
@@ -31186,12 +31361,15 @@ var ArrayBufferSurface = (function () {
         }
         return this;
     };
+    ArrayBufferSurface.createFromArrayBuffer = function (width, height, buffer) {
+        return (new ArrayBufferSurface()).replaceUnderlyingBuffer(width, height, buffer);
+    };
     return ArrayBufferSurface;
 }());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ArrayBufferSurface;
 
-},{"./RGBASurfaceInterface":226}],226:[function(require,module,exports){
+},{"./RGBASurfaceInterface":233}],233:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface;
 (function (RGBASurfaceInterface) {
@@ -31200,7 +31378,7 @@ var RGBASurfaceInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = RGBASurfaceInterface;
 
-},{}],227:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 "use strict";
 var screenfull = require("screenfull");
 var FullscreenVideoDriver = (function () {
@@ -31254,7 +31432,7 @@ var FullscreenVideoDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FullscreenVideoDriver;
 
-},{"screenfull":126}],228:[function(require,module,exports){
+},{"screenfull":126}],235:[function(require,module,exports){
 "use strict";
 var MouseAsPaddleDriver = (function () {
     function MouseAsPaddleDriver() {
@@ -31294,7 +31472,7 @@ var MouseAsPaddleDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = MouseAsPaddleDriver;
 
-},{}],229:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 "use strict";
 var SimpleCanvasVideo = (function () {
     function SimpleCanvasVideo(_canvas) {
@@ -31336,30 +31514,36 @@ var SimpleCanvasVideo = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SimpleCanvasVideo;
 
-},{}],230:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var Pool_1 = require("../../tools/pool/Pool");
 var ArrayBufferSurface_1 = require("../../video/surface/ArrayBufferSurface");
+var InducedPool_1 = require("../../tools/pool/InducedPool");
+var ProcessorPipeline_1 = require("../../video/processing/ProcessorPipeline");
 var VideoEndpoint = (function () {
-    function VideoEndpoint(_video) {
+    function VideoEndpoint(_video, videoProcessing) {
         var _this = this;
         this._video = _video;
         this.newFrame = new microevent_ts_1.Event();
         this._poolMembers = new WeakMap();
         this._surfaces = new WeakMap();
+        this._surfacePool = new InducedPool_1.default(function (imageData) { return _this._surfaces.get(imageData); });
+        this._videoProcessor = new ProcessorPipeline_1.default(videoProcessing);
+        this._videoProcessor.init(this._video.getWidth(), this._video.getHeight());
         this._pool = new Pool_1.default(function () { return new ImageData(_this._video.getWidth(), _this._video.getHeight()); });
         this._video.setSurfaceFactory(function () {
             var poolMember = _this._pool.get(), imageData = poolMember.get();
             if (!_this._surfaces.has(imageData)) {
-                var newSurface = new ArrayBufferSurface_1.default(imageData.width, imageData.height, imageData.data.buffer);
+                var newSurface = ArrayBufferSurface_1.default.createFromArrayBuffer(imageData.width, imageData.height, imageData.data.buffer);
                 _this._surfaces.set(imageData, newSurface.fill(0xFF000000));
             }
             var surface = _this._surfaces.get(imageData);
             _this._poolMembers.set(surface, poolMember);
             return surface;
         });
-        this._video.newFrame.addHandler(function (surface) { return _this.newFrame.dispatch(_this._poolMembers.get(surface)); });
+        this._video.newFrame.addHandler(function (imageData) { return _this._videoProcessor.processSurface(_this._surfacePool.get(_this._poolMembers.get(imageData))); });
+        this._videoProcessor.emit.addHandler(function (wrappedSurface) { return _this.newFrame.dispatch(_this._poolMembers.get(wrappedSurface.get())); });
     }
     VideoEndpoint.prototype.getWidth = function () {
         return this._video.getWidth();
@@ -31372,7 +31556,7 @@ var VideoEndpoint = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/Pool":218,"../../video/surface/ArrayBufferSurface":225,"microevent.ts":95}],231:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":219,"../../tools/pool/Pool":220,"../../video/processing/ProcessorPipeline":230,"../../video/surface/ArrayBufferSurface":232,"microevent.ts":95}],238:[function(require,module,exports){
 "use strict";
 var WebAudioDriver = (function () {
     function WebAudioDriver(channels) {
@@ -31494,7 +31678,7 @@ var Channel = (function () {
     return Channel;
 }());
 
-},{}],232:[function(require,module,exports){
+},{}],239:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var Switch_1 = require("../../../machine/io/Switch");
@@ -31679,7 +31863,7 @@ var KeyboardIO = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = KeyboardIO;
 
-},{"../../../machine/io/Switch":170,"microevent.ts":95}],233:[function(require,module,exports){
+},{"../../../machine/io/Switch":170,"microevent.ts":95}],240:[function(require,module,exports){
 "use strict";
 var WebAudio_1 = require("../../driver/WebAudio");
 var WebAudioDriver = (function () {
@@ -31709,7 +31893,7 @@ var WebAudioDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":231}],"stellaCLI":[function(require,module,exports){
+},{"../../driver/WebAudio":238}],"stellaCLI":[function(require,module,exports){
 "use strict";
 var StellaCLI_1 = require("../cli/stella/StellaCLI");
 var JqtermCLIRunner_1 = require("../cli/JqtermCLIRunner");
@@ -31807,5 +31991,5 @@ function setupPaddles(paddle0) {
     paddleDriver.bind(paddle0);
 }
 
-},{"../cli/JqtermCLIRunner":156,"../cli/stella/StellaCLI":158,"../fs/PrepackagedFilesystemProvider":161,"./driver/FullscreenVideo":227,"./driver/MouseAsPaddle":228,"./driver/SimpleCanvasVideo":229,"./driver/VideoEndpoint":230,"./stella/driver/KeyboardIO":232,"./stella/driver/WebAudio":233}]},{},[])
+},{"../cli/JqtermCLIRunner":156,"../cli/stella/StellaCLI":158,"../fs/PrepackagedFilesystemProvider":161,"./driver/FullscreenVideo":234,"./driver/MouseAsPaddle":235,"./driver/SimpleCanvasVideo":236,"./driver/VideoEndpoint":237,"./stella/driver/KeyboardIO":239,"./stella/driver/WebAudio":240}]},{},[])
 //# sourceMappingURL=stellaCLI.js.map
