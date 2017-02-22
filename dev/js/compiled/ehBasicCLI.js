@@ -5279,7 +5279,7 @@ var Cpu = (function () {
                 slowIndexedAccess = true;
                 break;
             case 64:
-                this._opCycles = 0;
+                this._opCycles = 1;
                 this._instructionCallback = opAax;
                 break;
             default:

@@ -25472,7 +25472,7 @@ var Cpu = (function () {
                 slowIndexedAccess = true;
                 break;
             case 64:
-                this._opCycles = 0;
+                this._opCycles = 1;
                 this._instructionCallback = opAax;
                 break;
             default:
@@ -26520,8 +26520,9 @@ var Pia = (function () {
         this._bus = null;
         this._timerValue = 255;
         this._timerSub = 0;
-        this._timerBase = 1024;
+        this._timerShift = 10;
         this._interruptFlag = 0;
+        this._timerWrapped = false;
         this._flagSetDuringThisCycle = false;
         this.reset();
     }
@@ -26530,9 +26531,10 @@ var Pia = (function () {
             this.ram[i] = this._rng ? this._rng.int(0xFF) : 0;
         this._interruptFlag = 0;
         this._flagSetDuringThisCycle = false;
-        this._timerBase = 1024;
-        this._timerValue = 20 + (this._rng ? this._rng.int(0xFF - 20) : 0);
+        this._timerShift = 10;
+        this._timerValue = (20 + (this._rng ? this._rng.int(0xFF - 20) : 0)) << this._timerShift;
         this._timerSub = 0;
+        this._timerWrapped = false;
     };
     Pia.prototype.read = function (address) {
         if (address & 0x0200) {
@@ -26577,7 +26579,7 @@ var Pia = (function () {
         this._cycleTimer();
     };
     Pia.prototype.getDebugState = function () {
-        return "timer base: " + this._timerBase + "   timer sub: " + this._timerSub + "   timer value: " + this._timerValue;
+        return "timer base: " + (1 << this._timerShift) + "   timer sub: " + this._timerSub + "   timer value: " + this._timerValue;
     };
     Pia.prototype.setBus = function (bus) {
         this._bus = bus;
@@ -26589,19 +26591,19 @@ var Pia = (function () {
         this._interruptFlag = 0;
         switch (address & 0x0297) {
             case 663:
-                return this._setTimer(1024, value);
+                return this._setTimer(10, value);
             case 662:
-                return this._setTimer(64, value);
+                return this._setTimer(6, value);
             case 661:
-                return this._setTimer(8, value);
+                return this._setTimer(3, value);
             case 660:
-                return this._setTimer(1, value);
+                return this._setTimer(0, value);
         }
     };
-    Pia.prototype._setTimer = function (base, value) {
-        this._timerBase = base;
-        this._timerSub = 0;
-        this._timerValue = value;
+    Pia.prototype._setTimer = function (shift, value) {
+        this._timerShift = shift;
+        this._timerValue = value << shift;
+        this._timerWrapped = false;
     };
     Pia.prototype._readIo = function (address) {
         switch (address & 0x0283) {
@@ -26635,26 +26637,23 @@ var Pia = (function () {
             if (!this._flagSetDuringThisCycle) {
                 this._interruptFlag = 0;
             }
-            return this._timerValue;
+            return this._timerValue >>> this._timerShift;
         }
     };
     Pia.prototype._peekTimer = function (address) {
-        return (address & 0x01) ? (this._interruptFlag & 0x80) : this._timerValue;
+        return (address & 0x01) ? (this._interruptFlag & 0x80) : (this._timerValue >>> this._timerShift);
     };
     Pia.prototype._cycleTimer = function () {
-        this._timerSub++;
         this._flagSetDuringThisCycle = false;
-        if (this._timerSub === this._timerBase) {
-            if (this._timerValue === 0) {
-                this._timerValue = 0xFF;
-                this._timerBase = 1;
-                this._flagSetDuringThisCycle = true;
-                this._interruptFlag = 0xFF;
-            }
-            else {
-                this._timerValue--;
-            }
-            this._timerSub = 0;
+        if (this._timerWrapped) {
+            this._timerValue = (this._timerValue + 0xFF) & 0xFF;
+        }
+        else if (--this._timerValue < 0) {
+            this._timerValue = 0xFF;
+            this._flagSetDuringThisCycle = true;
+            this._interruptFlag = 0xFF;
+            this._timerWrapped = true;
+            this._timerShift = 0;
         }
     };
     return Pia;
