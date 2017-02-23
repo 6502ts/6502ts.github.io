@@ -4230,7 +4230,7 @@ var binary = require("../tools/binary");
 var util = require("util");
 var Debugger = (function () {
     function Debugger(_traceSize, _stepMaxCycles) {
-        if (_traceSize === void 0) { _traceSize = 1024; }
+        if (_traceSize === void 0) { _traceSize = 2048; }
         if (_stepMaxCycles === void 0) { _stepMaxCycles = 10000000; }
         this._traceSize = _traceSize;
         this._stepMaxCycles = _stepMaxCycles;
@@ -4609,17 +4609,17 @@ function opJsr(state, bus, operand) {
     state.s = (state.s + 0xFF) & 0xFF;
     state.p = operand;
 }
-function opLda(state, bus, operand) {
-    state.a = operand;
-    setFlagsNZ(state, operand);
+function opLda(state, bus, operand, addressingMode) {
+    state.a = addressingMode === 1 ? operand : bus.read(operand);
+    setFlagsNZ(state, state.a);
 }
-function opLdx(state, bus, operand) {
-    state.x = operand;
-    setFlagsNZ(state, operand);
+function opLdx(state, bus, operand, addressingMode) {
+    state.x = addressingMode === 1 ? operand : bus.read(operand);
+    setFlagsNZ(state, state.x);
 }
-function opLdy(state, bus, operand) {
-    state.y = operand;
-    setFlagsNZ(state, operand);
+function opLdy(state, bus, operand, addressingMode) {
+    state.y = addressingMode === 1 ? operand : bus.read(operand);
+    setFlagsNZ(state, state.y);
 }
 function opLsrAcc(state) {
     var old = state.a;
@@ -4837,6 +4837,7 @@ var Cpu = (function () {
         this._halted = false;
         this._operand = 0;
         this._lastInstructionPointer = 0;
+        this._currentAddressingMode = 12;
         this.reset();
     }
     Cpu.prototype.setInterrupt = function () {
@@ -4898,7 +4899,7 @@ var Cpu = (function () {
             case 0:
             case 2:
                 if (--this._opCycles === 0) {
-                    this._instructionCallback(this.state, this._bus, this._operand);
+                    this._instructionCallback(this.state, this._bus, this._operand, this._currentAddressingMode);
                     this.executionState = 1;
                 }
                 break;
@@ -4911,6 +4912,7 @@ var Cpu = (function () {
         var instruction = Instruction_1.default.opcodes[this._bus.read(this.state.p)];
         var addressingMode = instruction.addressingMode, dereference = false, slowIndexedAccess = false;
         this._lastInstructionPointer = this.state.p;
+        this._currentAddressingMode = addressingMode;
         switch (instruction.operation) {
             case 0:
                 this._opCycles = 0;
@@ -5109,19 +5111,16 @@ var Cpu = (function () {
                 this._instructionCallback = opJsr;
                 break;
             case 29:
-                this._opCycles = 0;
+                this._opCycles = addressingMode === 1 ? 0 : 1;
                 this._instructionCallback = opLda;
-                dereference = true;
                 break;
             case 30:
-                this._opCycles = 0;
+                this._opCycles = addressingMode === 1 ? 0 : 1;
                 this._instructionCallback = opLdx;
-                dereference = true;
                 break;
             case 31:
-                this._opCycles = 0;
+                this._opCycles = addressingMode === 1 ? 0 : 1;
                 this._instructionCallback = opLdy;
-                dereference = true;
                 break;
             case 32:
                 if (addressingMode === 0) {
