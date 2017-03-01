@@ -23150,6 +23150,15 @@ function opAax(state, bus, operand) {
     bus.write(operand, value);
     setFlagsNZ(state, value);
 }
+function opLar(state, bus, operand) {
+    state.s = state.a = state.x = state.s & operand;
+    setFlagsNZ(state, state.a);
+}
+function opIsc(state, bus, operand) {
+    var value = bus.read(operand) + 1;
+    bus.write(operand, value);
+    opSbc(state, bus, value);
+}
 var Cpu = (function () {
     function Cpu(_bus, _rng) {
         this._bus = _bus;
@@ -23608,6 +23617,15 @@ var Cpu = (function () {
                 this._opCycles = 1;
                 this._instructionCallback = opAax;
                 break;
+            case 65:
+                this._opCycles = 0;
+                this._instructionCallback = opLar;
+                dereference = true;
+                break;
+            case 66:
+                this._opCycles = 3;
+                this._instructionCallback = opIsc;
+                break;
             default:
                 if (this._invalidInstructionCallback)
                     this._invalidInstructionCallback(this);
@@ -23854,7 +23872,9 @@ var Instruction = (function () {
         Operation[Operation["arr"] = 62] = "arr";
         Operation[Operation["slo"] = 63] = "slo";
         Operation[Operation["aax"] = 64] = "aax";
-        Operation[Operation["invalid"] = 65] = "invalid";
+        Operation[Operation["lar"] = 65] = "lar";
+        Operation[Operation["isc"] = 66] = "isc";
+        Operation[Operation["invalid"] = 67] = "invalid";
     })(Operation = Instruction.Operation || (Instruction.Operation = {}));
     ;
     var OperationMap;
@@ -23924,7 +23944,9 @@ var Instruction = (function () {
         OperationMap[OperationMap["arr"] = 62] = "arr";
         OperationMap[OperationMap["slo"] = 63] = "slo";
         OperationMap[OperationMap["aax"] = 64] = "aax";
-        OperationMap[OperationMap["invalid"] = 65] = "invalid";
+        OperationMap[OperationMap["lar"] = 65] = "lar";
+        OperationMap[OperationMap["isc"] = 66] = "isc";
+        OperationMap[OperationMap["invalid"] = 67] = "invalid";
     })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
     ;
     var AddressingMode;
@@ -23952,7 +23974,7 @@ exports.default = Instruction;
 (function (Instruction) {
     (function () {
         for (var i = 0; i < 256; i++) {
-            Instruction.opcodes[i] = new Instruction(65, 12);
+            Instruction.opcodes[i] = new Instruction(67, 12);
         }
     })();
     (function () {
@@ -24014,7 +24036,7 @@ exports.default = Instruction;
                 }
                 if (operation === 47 && addressingMode === 1)
                     addressingMode = 12;
-                if (operation !== 65 && addressingMode !== 12) {
+                if (operation !== 67 && addressingMode !== 12) {
                     opcode = (i << 5) | (j << 2) | 1;
                     Instruction.opcodes[opcode].operation = operation;
                     Instruction.opcodes[opcode].addressingMode = addressingMode;
@@ -24022,7 +24044,7 @@ exports.default = Instruction;
             }
         }
         function set(opcode, operation, addressingMode) {
-            if (Instruction.opcodes[opcode].operation !== 65) {
+            if (Instruction.opcodes[opcode].operation !== 67) {
                 throw new Error("entry for opcode " + opcode + " already exists");
             }
             Instruction.opcodes[opcode].operation = operation;
@@ -24171,6 +24193,14 @@ exports.default = Instruction;
         set(0x97, 64, 9);
         set(0x83, 64, 8);
         set(0x8F, 64, 3);
+        set(0xBB, 65, 10);
+        set(0xE7, 66, 2);
+        set(0xF7, 66, 6);
+        set(0xEF, 66, 3);
+        set(0xFF, 66, 7);
+        set(0xFB, 66, 10);
+        set(0xE3, 66, 8);
+        set(0xF3, 66, 11);
     })();
 })(Instruction || (Instruction = {}));
 ;
