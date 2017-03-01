@@ -24763,7 +24763,7 @@ var Pia = (function () {
         this._cycleTimer();
     };
     Pia.prototype.getDebugState = function () {
-        return "timer base: " + (1 << this._timerShift) + " raw timer: " + this._timerValue + " INTIM: " + ((this._timerValue >>> this._timerShift) & 0xFF);
+        return "timer base: " + (1 << this._timerShift) + " raw timer: " + this._timerValue + " INTIM: " + (this._timerValue >>> this._timerShift);
     };
     Pia.prototype.setBus = function (bus) {
         this._bus = bus;
@@ -24821,16 +24821,18 @@ var Pia = (function () {
             if (!this._flagSetDuringThisCycle) {
                 this._interruptFlag = 0;
             }
-            return (this._timerValue >>> this._timerShift) & 0xFF;
+            return this._timerValue >>> this._timerShift;
         }
     };
     Pia.prototype._peekTimer = function (address) {
-        return (address & 0x01) ? (this._interruptFlag & 0x80) : ((this._timerValue >>> this._timerShift) & 0xFF);
+        return (address & 0x01) ? (this._interruptFlag & 0x80) : (this._timerValue >>> this._timerShift);
     };
     Pia.prototype._cycleTimer = function () {
         this._flagSetDuringThisCycle = false;
-        this._timerValue--;
-        if (!this._timerWrapped && this._timerValue < 0) {
+        if (this._timerWrapped) {
+            this._timerValue = (this._timerValue + 0xFF) & 0xFF;
+        }
+        else if (--this._timerValue < 0) {
             this._timerValue = 0xFF;
             this._flagSetDuringThisCycle = true;
             this._interruptFlag = 0xFF;
@@ -25545,6 +25547,7 @@ var CartridgeF4 = (function (_super) {
     }
     CartridgeF4.prototype.reset = function () {
         this._bank = this._banks[0];
+        this._hasSC = false;
     };
     CartridgeF4.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_32k_F4;
@@ -25629,6 +25632,7 @@ var CartridgeF6 = (function (_super) {
     }
     CartridgeF6.prototype.reset = function () {
         this._bank = this._bank0;
+        this._hasSC = false;
     };
     CartridgeF6.prototype.read = function (address) {
         this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
@@ -25697,11 +25701,16 @@ var CartridgeInfo_1 = require("./CartridgeInfo");
 var cartridgeUtil = require("./util");
 var CartridgeF8 = (function (_super) {
     __extends(CartridgeF8, _super);
-    function CartridgeF8(buffer) {
+    function CartridgeF8(buffer, _supportSC) {
+        if (_supportSC === void 0) { _supportSC = true; }
         var _this = _super.call(this) || this;
+        _this._supportSC = _supportSC;
         _this._bank = null;
         _this._bank0 = new Uint8Array(0x1000);
         _this._bank1 = new Uint8Array(0x1000);
+        _this._hasSC = false;
+        _this._saraRAM = new Uint8Array(0x80);
+        _this._bus = null;
         if (buffer.length !== 0x2000) {
             throw new Error("buffer is not an 8k cartridge image: wrong length " + buffer.length);
         }
@@ -25714,26 +25723,47 @@ var CartridgeF8 = (function (_super) {
     }
     CartridgeF8.prototype.reset = function () {
         this._bank = this._bank1;
+        this._hasSC = false;
     };
     CartridgeF8.prototype.read = function (address) {
-        address &= 0x0FFF;
-        this._handleBankswitch(address);
-        return this._bank[address];
+        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        return this.peek(address);
     };
     CartridgeF8.prototype.peek = function (address) {
-        return this._bank[address & 0x0FFF];
+        address &= 0x0FFF;
+        if (this._hasSC && address >= 0x0080 && address < 0x0100) {
+            return this._saraRAM[address - 0x80];
+        }
+        return this._bank[address];
     };
     CartridgeF8.prototype.write = function (address, value) {
-        this._handleBankswitch(address & 0x0FFF);
+        address &= 0x0FFF;
+        if (address < 0x80 && this._supportSC) {
+            this._hasSC = true;
+        }
+        this._access(address, value);
     };
     CartridgeF8.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_F8;
+    };
+    CartridgeF8.prototype.randomize = function (rng) {
+        for (var i = 0; i < this._saraRAM.length; i++) {
+            this._saraRAM[i] = rng.int(0xFF);
+        }
+    };
+    CartridgeF8.prototype.setBus = function (bus) {
+        this._bus = bus;
+        return this;
     };
     CartridgeF8.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x8D, 0xF9, 0x1F]]);
         return signatureCounts[0] >= 2;
     };
-    CartridgeF8.prototype._handleBankswitch = function (address) {
+    CartridgeF8.prototype._access = function (address, value) {
+        if (address < 0x80 && this._hasSC) {
+            this._saraRAM[address] = value & 0xFF;
+            return;
+        }
         switch (address) {
             case 0x0FF8:
                 this._bank = this._bank0;
