@@ -24749,6 +24749,7 @@ var Pia = (function () {
         this._bus = null;
         this._timerValue = 255;
         this._timerShift = 10;
+        this._configuredTimerShift = 10;
         this._interruptFlag = 0;
         this._timerWrapped = false;
         this._flagSetDuringThisCycle = false;
@@ -24759,7 +24760,7 @@ var Pia = (function () {
             this.ram[i] = this._rng ? this._rng.int(0xFF) : 0;
         this._interruptFlag = 0;
         this._flagSetDuringThisCycle = false;
-        this._timerShift = 10;
+        this._timerShift = this._configuredTimerShift = 10;
         this._timerValue = (20 + (this._rng ? this._rng.int(0xFF - 20) : 0)) << this._timerShift;
         this._timerWrapped = false;
     };
@@ -24828,7 +24829,7 @@ var Pia = (function () {
         }
     };
     Pia.prototype._setTimer = function (shift, value) {
-        this._timerShift = shift;
+        this._timerShift = this._configuredTimerShift = shift;
         this._timerValue = value << shift;
         this._timerWrapped = false;
     };
@@ -24864,7 +24865,13 @@ var Pia = (function () {
             if (!this._flagSetDuringThisCycle) {
                 this._interruptFlag = 0;
             }
-            return this._timerValue >>> this._timerShift;
+            var value = this._timerValue >>> this._timerShift;
+            if (this._timerWrapped) {
+                this._timerShift = this._configuredTimerShift;
+                this._timerWrapped = false;
+                this._timerValue = this._timerValue << this._timerShift;
+            }
+            return value;
         }
     };
     Pia.prototype._peekTimer = function (address) {
@@ -27458,7 +27465,7 @@ var Player = (function () {
     Player.prototype.hmp = function (value) {
         this._hmmClocks = (value >>> 4) ^ 0x8;
     };
-    Player.prototype.nusiz = function (value) {
+    Player.prototype.nusiz = function (value, hblank) {
         var masked = value & 0x07;
         switch (masked) {
             case 5:
@@ -27485,32 +27492,43 @@ var Player = (function () {
             this._setDivider(this._dividerPending);
             return;
         }
+        var delta = this._renderCounter - -5;
         switch (this._divider << 4 | this._dividerPending) {
             case 0x12:
             case 0x14:
-                if ((this._renderCounter - -5) < 3) {
-                    this._setDivider(this._dividerPending);
+                if (hblank) {
+                    if (delta < 4) {
+                        this._setDivider(this._dividerPending);
+                    }
+                    else {
+                        this._dividerChangeCounter = (delta < 5 ? 1 : 0);
+                    }
                 }
                 else {
-                    this._dividerChangeCounter = 1;
+                    if (delta < 3) {
+                        this._setDivider(this._dividerPending);
+                    }
+                    else {
+                        this._dividerChangeCounter = 1;
+                    }
                 }
                 break;
             case 0x21:
             case 0x41:
-                if ((this._renderCounter - -5) < 3) {
+                if (delta < (hblank ? 4 : 3)) {
                     this._setDivider(this._dividerPending);
                 }
-                else if ((this._renderCounter - -5) < 5) {
+                else if (delta < (hblank ? 6 : 5)) {
                     this._setDivider(this._dividerPending);
                     this._renderCounter--;
                 }
                 else {
-                    this._dividerChangeCounter = 1;
+                    this._dividerChangeCounter = (hblank ? 0 : 1);
                 }
                 break;
             case 0x42:
             case 0x24:
-                if (this._renderCounter < 1) {
+                if (this._renderCounter < 1 || (hblank && (this._renderCounter % this._divider === 1))) {
                     this._setDivider(this._dividerPending);
                 }
                 else {
@@ -28044,12 +28062,12 @@ var Tia = (function () {
             case 4:
                 this._linesSinceChange = 0;
                 this._missile0.nusiz(value);
-                this._player0.nusiz(value);
+                this._player0.nusiz(value, this._hstate === 0);
                 break;
             case 5:
                 this._linesSinceChange = 0;
                 this._missile1.nusiz(value);
-                this._player1.nusiz(value);
+                this._player1.nusiz(value, this._hstate === 0);
                 break;
             case 42:
                 this._delayQueue.push(42, value, 6);
