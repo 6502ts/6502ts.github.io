@@ -14698,21 +14698,14 @@ utils.intFromLE = intFromLE;
 module.exports={
   "_args": [
     [
-      {
-        "raw": "elliptic@^6.0.0",
-        "scope": null,
-        "escapedName": "elliptic",
-        "name": "elliptic",
-        "rawSpec": "^6.0.0",
-        "spec": ">=6.0.0 <7.0.0",
-        "type": "range"
-      },
+      "elliptic@^6.0.0",
       "/home/travis/build/6502ts/6502.ts/node_modules/browserify-sign"
     ]
   ],
   "_from": "elliptic@>=6.0.0 <7.0.0",
   "_id": "elliptic@6.4.0",
   "_inCache": true,
+  "_installable": true,
   "_location": "/elliptic",
   "_nodeVersion": "7.0.0",
   "_npmOperationalInternal": {
@@ -14720,17 +14713,16 @@ module.exports={
     "tmp": "tmp/elliptic-6.4.0.tgz_1487798866428_0.30510620190761983"
   },
   "_npmUser": {
-    "name": "indutny",
-    "email": "fedor@indutny.com"
+    "email": "fedor@indutny.com",
+    "name": "indutny"
   },
   "_npmVersion": "3.10.8",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "elliptic@^6.0.0",
-    "scope": null,
-    "escapedName": "elliptic",
     "name": "elliptic",
+    "raw": "elliptic@^6.0.0",
     "rawSpec": "^6.0.0",
+    "scope": null,
     "spec": ">=6.0.0 <7.0.0",
     "type": "range"
   },
@@ -14744,8 +14736,8 @@ module.exports={
   "_spec": "elliptic@^6.0.0",
   "_where": "/home/travis/build/6502ts/6502.ts/node_modules/browserify-sign",
   "author": {
-    "name": "Fedor Indutny",
-    "email": "fedor@indutny.com"
+    "email": "fedor@indutny.com",
+    "name": "Fedor Indutny"
   },
   "bugs": {
     "url": "https://github.com/indutny/elliptic/issues"
@@ -14796,8 +14788,8 @@ module.exports={
   "main": "lib/elliptic.js",
   "maintainers": [
     {
-      "name": "indutny",
-      "email": "fedor@indutny.com"
+      "email": "fedor@indutny.com",
+      "name": "indutny"
     }
   ],
   "name": "elliptic",
@@ -19111,14 +19103,6 @@ function done(stream, er, data) {
 
 module.exports = Writable;
 
-// It seems a linked list but it is not
-// there will be only 2 of these for each stream
-function CorkedRequest(state) {
-  this.next = null;
-  this.entry = null;
-  this.finish = onCorkedFinish.bind(undefined, this, state);
-}
-
 /*<replacement>*/
 var processNextTick = require('process-nextick-args');
 /*</replacement>*/
@@ -19662,7 +19646,6 @@ function CorkedRequest(state) {
     }
   };
 }
-
 }).call(this,require('_process'))
 
 },{"./_stream_duplex":118,"_process":109,"buffer":47,"buffer-shims":45,"core-util-is":49,"events":82,"inherits":93,"process-nextick-args":108,"util-deprecate":148}],123:[function(require,module,exports){
@@ -24965,9 +24948,6 @@ var Pia = (function () {
     Pia.prototype._readTimer = function (address) {
         if (address & 0x01) {
             var flag = this._interruptFlag;
-            if (!this._flagSetDuringThisCycle) {
-                this._interruptFlag = 0;
-            }
             return flag & 0x80;
         }
         else {
