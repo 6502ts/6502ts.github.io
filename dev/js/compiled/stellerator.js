@@ -81317,8 +81317,9 @@ exports.default = Audio;
 },{"./ToneGenerator":751,"microevent.ts":305}],742:[function(require,module,exports){
 "use strict";
 var Ball = (function () {
-    function Ball(_collisionMask) {
+    function Ball(_collisionMask, _lineCacheViolated) {
         this._collisionMask = _collisionMask;
+        this._lineCacheViolated = _lineCacheViolated;
         this.color = 0xFFFFFFFF;
         this.collision = 0;
         this._enabledOld = false;
@@ -81353,8 +81354,12 @@ var Ball = (function () {
         this._lastMovementTick = 0;
     };
     Ball.prototype.enabl = function (value) {
+        var enabledNewOldValue = this._enabledNew;
         this._enabledNew = (value & 2) > 0;
-        this._updateEnabled();
+        if (enabledNewOldValue !== this._enabledNew && !this._delaying) {
+            this._lineCacheViolated();
+            this._updateEnabled();
+        }
     };
     Ball.prototype.hmbl = function (value) {
         this._hmmClocks = (value >>> 4) ^ 0x8;
@@ -81365,11 +81370,19 @@ var Ball = (function () {
         this._renderCounter = -4 + (counter - 157);
     };
     Ball.prototype.ctrlpf = function (value) {
-        this._width = this._widths[(value & 0x30) >>> 4];
+        var width = this._widths[(value & 0x30) >>> 4];
+        if (width !== this._width) {
+            this._lineCacheViolated();
+        }
+        this._width = width;
     };
     Ball.prototype.vdelbl = function (value) {
+        var oldDelaying = this._delaying;
         this._delaying = (value & 0x01) > 0;
-        this._updateEnabled();
+        if (oldDelaying !== this._delaying) {
+            this._lineCacheViolated();
+            this._updateEnabled();
+        }
     };
     Ball.prototype.startMovement = function () {
         this._moving = true;
@@ -81380,15 +81393,12 @@ var Ball = (function () {
             this._moving = false;
         }
         if (this._moving && apply) {
-            this.render();
             this.tick(false);
         }
         return this._moving;
     };
-    Ball.prototype.render = function () {
-        this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
-    };
     Ball.prototype.tick = function (isReceivingHclock) {
+        this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
         var starfieldEffect = this._moving && isReceivingHclock;
         if (this._counter === 156) {
             var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
@@ -81420,8 +81430,18 @@ var Ball = (function () {
         return this.collision ? colorIn : this.color;
     };
     Ball.prototype.shuffleStatus = function () {
+        var oldEnabledOld = this._enabledOld;
         this._enabledOld = this._enabledNew;
-        this._updateEnabled();
+        if (this._delaying && this._enabledOld !== oldEnabledOld) {
+            this._lineCacheViolated();
+            this._updateEnabled();
+        }
+    };
+    Ball.prototype.setColor = function (color) {
+        if (color !== this.color && this._enabled) {
+            this._lineCacheViolated();
+        }
+        this.color = color;
     };
     Ball.prototype._updateEnabled = function () {
         this._enabled = this._delaying ? this._enabledOld : this._enabledNew;
@@ -81717,8 +81737,9 @@ exports.default = LatchedInput;
 "use strict";
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
 var Missile = (function () {
-    function Missile(_collisionMask) {
+    function Missile(_collisionMask, _lineCacheViolated) {
         this._collisionMask = _collisionMask;
+        this._lineCacheViolated = _lineCacheViolated;
         this.color = 0xFFFFFFFF;
         this.collision = 0;
         this._enabled = false;
@@ -81751,8 +81772,12 @@ var Missile = (function () {
         this._lastMovementTick = 0;
     };
     Missile.prototype.enam = function (value) {
-        this._enam = (value & 2) > 0;
-        this._enabled = this._enam && (this._resmp === 0);
+        var enam = (value & 2) > 0, enabled = enam && (this._resmp === 0);
+        if (enam !== this._enam || enabled !== this._enabled) {
+            this._lineCacheViolated();
+        }
+        this._enam = enam;
+        this._enabled = enabled;
     };
     Missile.prototype.hmm = function (value) {
         this._hmmClocks = (value >>> 4) ^ 0x8;
@@ -81793,6 +81818,7 @@ var Missile = (function () {
         if (resmp === this._resmp) {
             return;
         }
+        this._lineCacheViolated();
         this._resmp = resmp;
         if (resmp) {
             this._enabled = false;
@@ -81818,15 +81844,12 @@ var Missile = (function () {
             this._moving = false;
         }
         if (this._moving && apply) {
-            this.render();
             this.tick(false);
         }
         return this._moving;
     };
-    Missile.prototype.render = function () {
-        this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
-    };
     Missile.prototype.tick = function (isReceivingHclock) {
+        this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
         var starfieldEffect = this._moving && isReceivingHclock;
         if (this._decodes[this._counter]) {
             var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
@@ -81856,6 +81879,12 @@ var Missile = (function () {
     };
     Missile.prototype.getPixel = function (colorIn) {
         return this.collision ? colorIn : this.color;
+    };
+    Missile.prototype.setColor = function (color) {
+        if (color !== this.color && this._enabled) {
+            this._lineCacheViolated();
+        }
+        this.color = color;
     };
     return Missile;
 }());
@@ -81923,8 +81952,9 @@ exports.default = PaddleReader;
 "use strict";
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
 var Player = (function () {
-    function Player(_collisionMask) {
+    function Player(_collisionMask, _lineCacheViolated) {
         this._collisionMask = _collisionMask;
+        this._lineCacheViolated = _lineCacheViolated;
         this.color = 0xFFFFFFFF;
         this.collision = 0;
         this._hmmClocks = 0;
@@ -81964,8 +81994,12 @@ var Player = (function () {
         this._setDivider(1);
     };
     Player.prototype.grp = function (pattern) {
+        if (pattern === this._patternNew) {
+            return;
+        }
         this._patternNew = pattern;
         if (!this._delaying) {
+            this._lineCacheViolated();
             this._updatePattern();
         }
     };
@@ -82056,6 +82090,7 @@ var Player = (function () {
         var oldReflected = this._reflected;
         this._reflected = (value & 0x08) > 0;
         if (this._reflected !== oldReflected) {
+            this._lineCacheViolated();
             this._updatePattern();
         }
     };
@@ -82063,6 +82098,7 @@ var Player = (function () {
         var oldDelaying = this._delaying;
         this._delaying = (value & 0x01) > 0;
         if (this._delaying !== oldDelaying) {
+            this._lineCacheViolated();
             this._updatePattern();
         }
     };
@@ -82074,17 +82110,14 @@ var Player = (function () {
             this._moving = false;
         }
         if (this._moving && apply) {
-            this.render();
             this.tick();
         }
         return this._moving;
     };
-    Player.prototype.render = function () {
+    Player.prototype.tick = function () {
         this.collision = (this._rendering &&
             this._renderCounter >= this._renderCounterTripPoint &&
             (this._pattern & (1 << this._sampleCounter))) ? 0 : this._collisionMask;
-    };
-    Player.prototype.tick = function () {
         if (this._decodes[this._counter]) {
             this._rendering = true;
             this._renderCounter = -5;
@@ -82129,6 +82162,7 @@ var Player = (function () {
         var oldPatternOld = this._patternOld;
         this._patternOld = this._patternNew;
         if (this._delaying && oldPatternOld !== this._patternOld) {
+            this._lineCacheViolated();
             this._updatePattern();
         }
     };
@@ -82143,6 +82177,12 @@ var Player = (function () {
             default:
                 throw new Error("cannot happen: invalid divider " + this._divider);
         }
+    };
+    Player.prototype.setColor = function (color) {
+        if (color !== this.color && this._pattern) {
+            this._lineCacheViolated();
+        }
+        this.color = color;
     };
     Player.prototype._updatePattern = function () {
         this._pattern = this._delaying ? this._patternOld : this._patternNew;
@@ -82171,8 +82211,9 @@ exports.default = Player;
 "use strict";
 ;
 var Playfield = (function () {
-    function Playfield(_collisionMask) {
+    function Playfield(_collisionMask, _lineCacheViolated) {
         this._collisionMask = _collisionMask;
+        this._lineCacheViolated = _lineCacheViolated;
         this.collision = 0;
         this._colorLeft = 0;
         this._colorRight = 0;
@@ -82203,9 +82244,19 @@ var Playfield = (function () {
         this._applyColors();
     };
     Playfield.prototype.pf0 = function (value) {
-        this._pattern = (this._pattern & 0x000FFFF0) | ((value & 0xF0) >>> 4);
+        if (this._pf0 === (value >>> 4)) {
+            return;
+        }
+        this._pf0 = value >>> 4;
+        this._lineCacheViolated();
+        this._pattern = (this._pattern & 0x000FFFF0) | this._pf0;
     };
     Playfield.prototype.pf1 = function (value) {
+        if (this._pf1 === value) {
+            return;
+        }
+        this._pf1 = value;
+        this._lineCacheViolated();
         this._pattern = (this._pattern & 0x000FF00F)
             | ((value & 0x80) >>> 3)
             | ((value & 0x40) >>> 1)
@@ -82217,22 +82268,40 @@ var Playfield = (function () {
             | ((value & 0x01) << 11);
     };
     Playfield.prototype.pf2 = function (value) {
+        if (this._pf2 === value) {
+            return;
+        }
+        this._pf2 = value;
+        this._lineCacheViolated();
         this._pattern = (this._pattern & 0x00000FFF) | ((value & 0xFF) << 12);
     };
     Playfield.prototype.ctrlpf = function (value) {
-        this._reflected = (value & 0x01) > 0;
-        this._colorMode = (value & 0x06) === 0x02 ? 1 : 0;
+        var reflected = (value & 0x01) > 0, colorMode = (value & 0x06) === 0x02 ? 1 : 0;
+        if (reflected !== this._reflected || colorMode !== this._colorMode) {
+            this._lineCacheViolated();
+        }
+        this._reflected = reflected;
+        this._colorMode = colorMode;
         this._applyColors();
     };
     Playfield.prototype.setColor = function (color) {
+        if (color !== this._color && this._colorMode === 0) {
+            this._lineCacheViolated();
+        }
         this._color = color;
         this._applyColors();
     };
     Playfield.prototype.setColorP0 = function (color) {
+        if (color !== this._colorP0 && this._colorMode === 1) {
+            this._lineCacheViolated();
+        }
         this._colorP0 = color;
         this._applyColors();
     };
     Playfield.prototype.setColorP1 = function (color) {
+        if (color !== this._colorP1 && this._colorMode === 1) {
+            this._lineCacheViolated();
+        }
         this._colorP1 = color;
         this._applyColors();
     };
@@ -82305,7 +82374,6 @@ var Tia = (function () {
         this._bus = null;
         this._delayQueue = new DelayQueue_1.default(10, 20);
         this._hstate = 0;
-        this._freshLine = true;
         this._hblankCtr = 0;
         this._hctr = 0;
         this._collisionUpdateRequired = false;
@@ -82319,12 +82387,12 @@ var Tia = (function () {
         this._colorBk = 0xFF000000;
         this._priority = 0;
         this._collisionMask = 0;
-        this._player0 = new Player_1.default(31744);
-        this._player1 = new Player_1.default(17344);
-        this._missile0 = new Missile_1.default(8760);
-        this._missile1 = new Missile_1.default(4390);
-        this._playfield = new Playfield_1.default(1099);
-        this._ball = new Ball_1.default(2197);
+        this._player0 = new Player_1.default(31744, function () { return _this._lineCacheViolated(); });
+        this._player1 = new Player_1.default(17344, function () { return _this._lineCacheViolated(); });
+        this._missile0 = new Missile_1.default(8760, function () { return _this._lineCacheViolated(); });
+        this._missile1 = new Missile_1.default(4390, function () { return _this._lineCacheViolated(); });
+        this._playfield = new Playfield_1.default(1099, function () { return _this._lineCacheViolated(); });
+        this._ball = new Ball_1.default(2197, function () { return _this._lineCacheViolated(); });
         this.newFrame = new microevent_ts_1.Event();
         this.trap = new microevent_ts_1.Event();
         this._frameManager = new FrameManager_1.default(this._config);
@@ -82349,7 +82417,6 @@ var Tia = (function () {
         this._movementClock = 0;
         this._priority = 0;
         this._hstate = 0;
-        this._freshLine = true;
         this._collisionMask = 0;
         this._colorBk = 0xFF000000;
         this._linesSinceChange = 0;
@@ -82469,6 +82536,7 @@ var Tia = (function () {
                 this._cpu.halt();
                 break;
             case 3:
+                this._lineCacheViolated();
                 this._rsync();
                 break;
             case 0:
@@ -82495,31 +82563,29 @@ var Tia = (function () {
                 this._delayQueue.push(35, value, 2);
                 break;
             case 18:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 this._missile0.resm(this._resxCounter(), this._hstate === 0);
                 break;
             case 19:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 this._missile1.resm(this._resxCounter(), this._hstate === 0);
                 break;
             case 40:
-                this._linesSinceChange = 0;
                 this._missile0.resmp(value, this._player0);
                 break;
             case 41:
-                this._linesSinceChange = 0;
                 this._missile1.resmp(value, this._player1);
                 break;
             case 43:
                 this._delayQueue.push(43, value, 2);
                 break;
             case 4:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 this._missile0.nusiz(value);
                 this._player0.nusiz(value, this._hstate === 0);
                 break;
             case 5:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 this._missile1.nusiz(value);
                 this._player1.nusiz(value, this._hstate === 0);
                 break;
@@ -82527,21 +82593,19 @@ var Tia = (function () {
                 this._delayQueue.push(42, value, 6);
                 break;
             case 9:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 this._colorBk = this._palette[(value & 0xFF) >>> 1];
                 break;
             case 6:
-                this._linesSinceChange = 0;
                 v = this._palette[(value & 0xFF) >>> 1];
-                this._missile0.color = v;
-                this._player0.color = v;
+                this._missile0.setColor(v);
+                this._player0.setColor(v);
                 this._playfield.setColorP0(v);
                 break;
             case 7:
-                this._linesSinceChange = 0;
                 v = this._palette[(value & 0xFF) >>> 1];
-                this._missile1.color = v;
-                this._player1.color = v;
+                this._missile1.setColor(v);
+                this._player1.setColor(v);
                 this._playfield.setColorP1(v);
                 break;
             case 13:
@@ -82554,14 +82618,12 @@ var Tia = (function () {
                 this._delayQueue.push(15, value, 2);
                 break;
             case 10:
-                this._linesSinceChange = 0;
-                this._priority = (value & 0x04) ? 1 :
-                    ((value & 0x02) ? 2 : 0);
+                this._setPriority(value);
                 this._playfield.ctrlpf(value);
                 this._ball.ctrlpf(value);
                 break;
             case 8:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 v = this._palette[(value & 0xFF) >>> 1];
                 this._playfield.setColor(v);
                 this._ball.color = v;
@@ -82578,11 +82640,11 @@ var Tia = (function () {
                     .push(242, 0, 1);
                 break;
             case 16:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 this._player0.resp(this._resxCounter());
                 break;
             case 17:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 this._player1.resp(this._resxCounter());
                 break;
             case 11:
@@ -82598,11 +82660,9 @@ var Tia = (function () {
                 this._delayQueue.push(33, value, 2);
                 break;
             case 37:
-                this._linesSinceChange = 0;
                 this._player0.vdelp(value);
                 break;
             case 38:
-                this._linesSinceChange = 0;
                 this._player1.vdelp(value);
                 break;
             case 31:
@@ -82612,15 +82672,14 @@ var Tia = (function () {
                 this._delayQueue.push(36, value, 2);
                 break;
             case 20:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 this._ball.resbl(this._resxCounter());
                 break;
             case 39:
-                this._linesSinceChange = 0;
                 this._ball.vdelbl(value);
                 break;
             case 44:
-                this._linesSinceChange = 0;
+                this._lineCacheViolated();
                 this._collisionMask = 0;
                 break;
             case 21:
@@ -82655,15 +82714,22 @@ var Tia = (function () {
     Tia.prototype.cycle = function () {
         this._delayQueue.execute(Tia._delayedWrite, this);
         this._collisionUpdateRequired = false;
-        this._tickMovement();
-        if (this._hstate === 0) {
-            this._tickHblank();
+        if (this._linesSinceChange < 2) {
+            this._tickMovement();
+            if (this._hstate === 0) {
+                this._tickHblank();
+            }
+            else {
+                this._tickHframe();
+            }
+            if (this._collisionUpdateRequired) {
+                this._updateCollision();
+            }
         }
         else {
-            this._tickHframe();
-        }
-        if (this._collisionUpdateRequired) {
-            this._updateCollision();
+            if (this._hctr === 0) {
+                this._cpu.resume();
+            }
         }
         if (++this._hctr >= 228) {
             this._nextLine();
@@ -82675,7 +82741,6 @@ var Tia = (function () {
             return;
         }
         if ((this._hctr & 0x3) === 0) {
-            this._linesSinceChange = 0;
             var apply = this._hstate === 0;
             var m = false;
             var movementCounter = this._movementClock > 15 ? 0 : this._movementClock;
@@ -82690,33 +82755,22 @@ var Tia = (function () {
         }
     };
     Tia.prototype._tickHblank = function () {
-        if (this._freshLine) {
+        if (this._hctr === 0) {
             this._hblankCtr = 0;
             this._cpu.resume();
-            this._freshLine = false;
         }
         if (++this._hblankCtr >= 68) {
             this._hstate = 1;
         }
     };
     Tia.prototype._tickHframe = function () {
-        var y = this._frameManager.getCurrentLine(), lineNotCached = this._linesSinceChange < 2 || y === 0, x = this._hctr - 68 + this._xDelta;
-        this._collisionUpdateRequired = lineNotCached;
+        var y = this._frameManager.getCurrentLine(), x = this._hctr - 68 + this._xDelta;
+        this._collisionUpdateRequired = true;
         this._playfield.tick(x);
-        if (lineNotCached) {
-            this._renderSprites();
-        }
         this._tickSprites();
         if (this._frameManager.isRendering()) {
-            this._renderPixel(x, y, lineNotCached);
+            this._renderPixel(x, y);
         }
-    };
-    Tia.prototype._renderSprites = function () {
-        this._player0.render();
-        this._player1.render();
-        this._missile0.render();
-        this._missile1.render();
-        this._ball.render();
     };
     Tia.prototype._tickSprites = function () {
         this._missile0.tick(true);
@@ -82726,13 +82780,30 @@ var Tia = (function () {
         this._ball.tick(true);
     };
     Tia.prototype._nextLine = function () {
+        if (this._linesSinceChange >= 2) {
+            this._cloneLastLine();
+        }
         this._hctr = 0;
-        this._linesSinceChange++;
+        if (!this._movementInProgress) {
+            this._linesSinceChange++;
+        }
         this._hstate = 0;
-        this._freshLine = true;
         this._extendedHblank = false;
         this._xDelta = 0;
         this._frameManager.nextLine();
+        if (this._frameManager.isRendering() && this._frameManager.getCurrentLine() === 0) {
+            this._lineCacheViolated();
+        }
+    };
+    Tia.prototype._cloneLastLine = function () {
+        var y = this._frameManager.getCurrentLine();
+        if (!this._frameManager.isRendering() || y === 0) {
+            return;
+        }
+        var delta = y * 160, prevDelta = (y - 1) * 160;
+        for (var x = 0; x < 160; x++) {
+            this._frameManager.surfaceBuffer[delta + x] = this._frameManager.surfaceBuffer[prevDelta + x];
+        }
     };
     Tia.prototype._getPalette = function (config) {
         switch (config.tvMode) {
@@ -82751,42 +82822,37 @@ var Tia = (function () {
             60 * 228 * 262 :
             50 * 228 * 312;
     };
-    Tia.prototype._renderPixel = function (x, y, lineNotCached) {
-        if (lineNotCached) {
-            var color = this._colorBk;
-            switch (this._priority) {
-                case 0:
-                    color = this._playfield.getPixel(color);
-                    color = this._ball.getPixel(color);
-                    color = this._missile1.getPixel(color);
-                    color = this._player1.getPixel(color);
-                    color = this._missile0.getPixel(color);
-                    color = this._player0.getPixel(color);
-                    break;
-                case 1:
-                    color = this._missile1.getPixel(color);
-                    color = this._player1.getPixel(color);
-                    color = this._missile0.getPixel(color);
-                    color = this._player0.getPixel(color);
-                    color = this._playfield.getPixel(color);
-                    color = this._ball.getPixel(color);
-                    break;
-                case 2:
-                    color = this._ball.getPixel(color);
-                    color = this._missile1.getPixel(color);
-                    color = this._player1.getPixel(color);
-                    color = this._playfield.getPixel(color);
-                    color = this._missile0.getPixel(color);
-                    color = this._player0.getPixel(color);
-                    break;
-                default:
-                    throw new Error('invalid priority');
-            }
-            this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.vblank ? 0xFF000000 : color;
+    Tia.prototype._renderPixel = function (x, y) {
+        var color = this._colorBk;
+        switch (this._priority) {
+            case 0:
+                color = this._playfield.getPixel(color);
+                color = this._ball.getPixel(color);
+                color = this._missile1.getPixel(color);
+                color = this._player1.getPixel(color);
+                color = this._missile0.getPixel(color);
+                color = this._player0.getPixel(color);
+                break;
+            case 1:
+                color = this._missile1.getPixel(color);
+                color = this._player1.getPixel(color);
+                color = this._missile0.getPixel(color);
+                color = this._player0.getPixel(color);
+                color = this._playfield.getPixel(color);
+                color = this._ball.getPixel(color);
+                break;
+            case 2:
+                color = this._ball.getPixel(color);
+                color = this._missile1.getPixel(color);
+                color = this._player1.getPixel(color);
+                color = this._playfield.getPixel(color);
+                color = this._missile0.getPixel(color);
+                color = this._player0.getPixel(color);
+                break;
+            default:
+                throw new Error('invalid priority');
         }
-        else {
-            this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.surfaceBuffer[(y - 1) * 160 + x];
-        }
+        this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.vblank ? 0xFF000000 : color;
     };
     Tia.prototype._updateCollision = function () {
         this._collisionMask |= (~this._player0.collision &
@@ -82818,17 +82884,39 @@ var Tia = (function () {
                 this._frameManager.surfaceBuffer[i] = 0xFF000000;
             }
         }
-        this._linesSinceChange = 0;
         this._hctr = 225;
+    };
+    Tia.prototype._setPriority = function (value) {
+        var priority = (value & 0x04) ? 1 :
+            ((value & 0x02) ? 2 : 0);
+        if (priority !== this._priority) {
+            this._lineCacheViolated();
+            this._priority = priority;
+        }
+    };
+    Tia.prototype._lineCacheViolated = function () {
+        var wasCaching = this._linesSinceChange >= 2;
+        this._linesSinceChange = 0;
+        if (wasCaching) {
+            var rewindCycles = this._hctr;
+            this._hctr = 0;
+            for (this._hctr = 0; this._hctr < rewindCycles; this._hctr++) {
+                if (this._hstate === 0) {
+                    this._tickHblank();
+                }
+                else {
+                    this._tickHframe();
+                }
+            }
+        }
     };
     Tia._delayedWrite = function (address, value, self) {
         switch (address) {
             case 1:
-                self._linesSinceChange = 0;
                 self._frameManager.setVblank((value & 0x02) > 0);
                 break;
             case 42:
-                self._linesSinceChange = 0;
+                self._lineCacheViolated();
                 self._movementClock = 0;
                 self._movementInProgress = true;
                 if (!self._extendedHblank) {
@@ -82843,55 +82931,42 @@ var Tia = (function () {
                 self._ball.startMovement();
                 break;
             case 13:
-                self._linesSinceChange = 0;
                 self._playfield.pf0(value);
                 break;
             case 14:
-                self._linesSinceChange = 0;
                 self._playfield.pf1(value);
                 break;
             case 15:
-                self._linesSinceChange = 0;
                 self._playfield.pf2(value);
                 break;
             case 27:
-                self._linesSinceChange = 0;
                 self._player0.grp(value);
                 break;
             case 28:
-                self._linesSinceChange = 0;
                 self._player1.grp(value);
                 break;
             case 240:
-                self._linesSinceChange = 0;
                 self._player0.shufflePatterns();
                 break;
             case 241:
-                self._linesSinceChange = 0;
                 self._player1.shufflePatterns();
                 break;
             case 32:
-                self._linesSinceChange = 0;
                 self._player0.hmp(value);
                 break;
             case 33:
-                self._linesSinceChange = 0;
                 self._player1.hmp(value);
                 break;
             case 34:
-                self._linesSinceChange = 0;
                 self._missile0.hmm(value);
                 break;
             case 35:
-                self._linesSinceChange = 0;
                 self._missile1.hmm(value);
                 break;
             case 36:
-                self._linesSinceChange = 0;
                 self._ball.hmbl(value);
                 break;
             case 43:
-                self._linesSinceChange = 0;
                 self._missile0.hmm(0);
                 self._missile1.hmm(0);
                 self._player0.hmp(0);
@@ -82899,27 +82974,21 @@ var Tia = (function () {
                 self._ball.hmbl(0);
                 break;
             case 11:
-                self._linesSinceChange = 0;
                 self._player0.refp(value);
                 break;
             case 12:
-                self._linesSinceChange = 0;
                 self._player1.refp(value);
                 break;
             case 242:
-                self._linesSinceChange = 0;
                 self._ball.shuffleStatus();
                 break;
             case 31:
-                self._linesSinceChange = 0;
                 self._ball.enabl(value);
                 break;
             case 29:
-                self._linesSinceChange = 0;
                 self._missile0.enam(value);
                 break;
             case 30:
-                self._linesSinceChange = 0;
                 self._missile1.enam(value);
                 break;
         }
