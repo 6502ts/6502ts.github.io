@@ -24084,7 +24084,7 @@ var CartridgeFactory_1 = require("../../machine/stella/cartridge/CartridgeFactor
 var CartridgeInfo_1 = require("../../machine/stella/cartridge/CartridgeInfo");
 var CommandInterpreter_1 = require("../CommandInterpreter");
 var ImmedateScheduler_1 = require("../../tools/scheduler/ImmedateScheduler");
-var LimitingImmediateScheduler_1 = require("../../tools/scheduler/LimitingImmediateScheduler");
+var ConstantCycles_1 = require("../../tools/scheduler/limiting/ConstantCycles");
 var PeriodicScheduler_1 = require("../../tools/scheduler/PeriodicScheduler");
 var ClockProbe_1 = require("../../tools/ClockProbe");
 var SystemConfigSetupProvider_1 = require("./SystemConfigSetupProvider");
@@ -24098,7 +24098,7 @@ var StellaCLI = (function (_super) {
         _this._cartridgeFile = _cartridgeFile;
         _this.hardwareInitialized = new microevent_ts_1.Event();
         _this._stellaConfig = new Config_1.default();
-        _this._limitingScheduler = new LimitingImmediateScheduler_1.default();
+        _this._limitingScheduler = new ConstantCycles_1.default();
         _this._nonLimitingScheduler = new ImmedateScheduler_1.default();
         _this._state = 0;
         _this._runMode = 0;
@@ -24281,7 +24281,7 @@ var StellaCLI = (function (_super) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = StellaCLI;
 
-},{"../../machine/stella/Board":174,"../../machine/stella/Config":176,"../../machine/stella/cartridge/CartridgeFactory":195,"../../machine/stella/cartridge/CartridgeInfo":196,"../../tools/ClockProbe":219,"../../tools/scheduler/ImmedateScheduler":228,"../../tools/scheduler/LimitingImmediateScheduler":229,"../../tools/scheduler/PeriodicScheduler":230,"../CommandInterpreter":155,"../DebuggerCLI":157,"./ControlPanelManagementProvider":160,"./SystemConfigSetupProvider":162,"microevent.ts":95}],162:[function(require,module,exports){
+},{"../../machine/stella/Board":174,"../../machine/stella/Config":176,"../../machine/stella/cartridge/CartridgeFactory":195,"../../machine/stella/cartridge/CartridgeInfo":196,"../../tools/ClockProbe":219,"../../tools/scheduler/ImmedateScheduler":228,"../../tools/scheduler/PeriodicScheduler":229,"../../tools/scheduler/limiting/ConstantCycles":231,"../CommandInterpreter":155,"../DebuggerCLI":157,"./ControlPanelManagementProvider":160,"./SystemConfigSetupProvider":162,"microevent.ts":95}],162:[function(require,module,exports){
 "use strict";
 var Config_1 = require("../../machine/stella/Config");
 var SystemConfigSetupProvider = (function () {
@@ -26201,8 +26201,9 @@ var DigitalJoystick_1 = require("../io/DigitalJoystick");
 var Paddle_1 = require("../io/Paddle");
 var factory_1 = require("../../tools/rng/factory");
 var Board = (function () {
-    function Board(config, cartridge, cpuFactory) {
+    function Board(_config, cartridge, cpuFactory) {
         var _this = this;
+        this._config = _config;
         this.clock = new microevent_ts_1.Event();
         this.cpuClock = new microevent_ts_1.Event();
         this.trap = new microevent_ts_1.Event();
@@ -26219,7 +26220,7 @@ var Board = (function () {
             stop: function () { return _this._stop(); },
             isRunning: function () { return !!_this._runTask; }
         };
-        this._rng = factory_1.createRng(config.randomSeed < 0 ? Math.random() : config.randomSeed);
+        this._rng = factory_1.createRng(_config.randomSeed < 0 ? Math.random() : _config.randomSeed);
         cartridge.randomize(this._rng);
         var bus = new Bus_1.default();
         if (typeof (cpuFactory) === 'undefined')
@@ -26230,7 +26231,7 @@ var Board = (function () {
         }
         var cpu = cpuFactory(bus, this._rng);
         var pia = new Pia_1.default(controlPanel, joystick0, joystick1, this._rng);
-        var tia = new Tia_1.default(config, joystick0, joystick1, paddles);
+        var tia = new Tia_1.default(_config, joystick0, joystick1, paddles);
         cpu.setInvalidInstructionCallback(function () { return _this._onInvalidInstruction(); });
         tia
             .setCpu(cpu)
@@ -26253,8 +26254,8 @@ var Board = (function () {
         this._joystick1 = joystick1;
         this._paddles = paddles;
         this._bus.event.trap.addHandler(function (payload) { return _this.triggerTrap(1, payload.message); });
-        this._clockMhz = Config_1.default.getClockMhz(config);
-        this._sliceSize = 228 * (config.tvMode === 0 ? 262 : 312);
+        this._clockMhz = Config_1.default.getClockMhz(_config);
+        this._sliceSize = 228 * (_config.tvMode === 0 ? 262 : 312);
         this.reset();
     }
     Board.prototype.getCpu = function () {
@@ -26400,10 +26401,11 @@ var Board = (function () {
     Board.prototype._start = function (scheduler) {
         if (this._runTask)
             return;
-        this._runTask = scheduler.start(Board._executeSlice, this);
+        this._runTask = scheduler.start(Board._executeSlice, this, 1000 / (this._config.tvMode === 0 ? 60 : 50));
     };
-    Board._executeSlice = function (board) {
-        return board._tick(board._sliceSize) / board._clockMhz / 1000;
+    Board._executeSlice = function (board, _timeSlice) {
+        var slice = _timeSlice ? Math.round(_timeSlice * board._clockMhz * 1000) : board._sliceSize;
+        return board._tick(slice) / board._clockMhz / 1000;
     };
     Board.prototype._stop = function () {
         if (!this._runTask)
@@ -31507,59 +31509,6 @@ exports.default = ImmediateScheduler;
 
 },{"setimmediate2":138}],229:[function(require,module,exports){
 "use strict";
-var polyfill = require("setimmediate2");
-var CORRECTION_THESHOLD = 3, MAX_ACCUMULATED_DELTA = 100;
-var getTimestamp = (self.performance && self.performance.now) ?
-    function () { return self.performance.now(); } :
-    function () { return Date.now(); };
-var LimitingImmediateScheduler = (function () {
-    function LimitingImmediateScheduler() {
-    }
-    LimitingImmediateScheduler.prototype.start = function (worker, context) {
-        var terminate = false, targetSleepInterval = -1, lastYieldTimestamp = 0, accumulatedDelta = 0;
-        function handler() {
-            if (terminate)
-                return;
-            var timestamp0 = getTimestamp(), targetDuration = worker(context), timestamp1 = getTimestamp();
-            var delay = targetDuration - timestamp1 + timestamp0;
-            if (targetSleepInterval >= 0) {
-                accumulatedDelta += (targetSleepInterval - timestamp0 + lastYieldTimestamp);
-            }
-            if (accumulatedDelta > MAX_ACCUMULATED_DELTA) {
-                accumulatedDelta = MAX_ACCUMULATED_DELTA;
-            }
-            else if (accumulatedDelta < -MAX_ACCUMULATED_DELTA) {
-                accumulatedDelta = -MAX_ACCUMULATED_DELTA;
-            }
-            if (Math.abs(accumulatedDelta) > CORRECTION_THESHOLD) {
-                delay += accumulatedDelta;
-                accumulatedDelta = 0;
-            }
-            if (delay < 0) {
-                delay = 0;
-                accumulatedDelta = delay;
-            }
-            if (delay > 0) {
-                setTimeout(handler, Math.round(delay));
-            }
-            else {
-                polyfill.setImmediate(handler);
-            }
-            targetSleepInterval = delay;
-            lastYieldTimestamp = getTimestamp();
-        }
-        polyfill.setImmediate(handler);
-        return {
-            stop: function () { return terminate = true; }
-        };
-    };
-    return LimitingImmediateScheduler;
-}());
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = LimitingImmediateScheduler;
-
-},{"setimmediate2":138}],230:[function(require,module,exports){
-"use strict";
 var PeriodicScheduler = (function () {
     function PeriodicScheduler(_period) {
         this._period = _period;
@@ -31590,7 +31539,66 @@ var PeriodicScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PeriodicScheduler;
 
+},{}],230:[function(require,module,exports){
+"use strict";
+var getTimestamp = (self.performance && self.performance.now) ?
+    function () { return self.performance.now(); } :
+    function () { return Date.now(); };
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = getTimestamp;
+
 },{}],231:[function(require,module,exports){
+"use strict";
+var polyfill = require("setimmediate2");
+var getTimestamp_1 = require("../getTimestamp");
+var CORRECTION_THESHOLD = 3, MAX_ACCUMULATED_DELTA = 100;
+var ConstantCyclesScheduler = (function () {
+    function ConstantCyclesScheduler() {
+    }
+    ConstantCyclesScheduler.prototype.start = function (worker, context) {
+        var terminate = false, targetSleepInterval = -1, lastYieldTimestamp = 0, accumulatedDelta = 0;
+        function handler() {
+            if (terminate)
+                return;
+            var timestamp0 = getTimestamp_1.default(), targetDuration = worker(context) || 0, timestamp1 = getTimestamp_1.default();
+            var delay = targetDuration - timestamp1 + timestamp0;
+            if (targetSleepInterval >= 0) {
+                accumulatedDelta += (targetSleepInterval - timestamp0 + lastYieldTimestamp);
+            }
+            if (accumulatedDelta > MAX_ACCUMULATED_DELTA) {
+                accumulatedDelta = MAX_ACCUMULATED_DELTA;
+            }
+            else if (accumulatedDelta < -MAX_ACCUMULATED_DELTA) {
+                accumulatedDelta = -MAX_ACCUMULATED_DELTA;
+            }
+            if (Math.abs(accumulatedDelta) > CORRECTION_THESHOLD) {
+                delay += accumulatedDelta;
+                accumulatedDelta = 0;
+            }
+            if (delay < 0) {
+                delay = 0;
+                accumulatedDelta = delay;
+            }
+            if (delay > 0) {
+                setTimeout(handler, Math.round(delay));
+            }
+            else {
+                polyfill.setImmediate(handler);
+            }
+            targetSleepInterval = delay;
+            lastYieldTimestamp = getTimestamp_1.default();
+        }
+        polyfill.setImmediate(handler);
+        return {
+            stop: function () { return terminate = true; }
+        };
+    };
+    return ConstantCyclesScheduler;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ConstantCyclesScheduler;
+
+},{"../getTimestamp":230,"setimmediate2":138}],232:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var FrameMergeProcessor = (function () {
@@ -31641,7 +31649,7 @@ var FrameMergeProcessor = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FrameMergeProcessor;
 
-},{"microevent.ts":95}],232:[function(require,module,exports){
+},{"microevent.ts":95}],233:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var PassthroughProcessor = (function () {
@@ -31658,7 +31666,7 @@ var PassthroughProcessor = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PassthroughProcessor;
 
-},{"microevent.ts":95}],233:[function(require,module,exports){
+},{"microevent.ts":95}],234:[function(require,module,exports){
 "use strict";
 var Config = require("./config");
 var PassthroughProcessor_1 = require("./PassthroughProcessor");
@@ -31681,7 +31689,7 @@ var ProcessorFactory = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":231,"./PassthroughProcessor":232,"./config":235}],234:[function(require,module,exports){
+},{"./FrameMergeProcessor":232,"./PassthroughProcessor":233,"./config":236}],235:[function(require,module,exports){
 "use strict";
 var ProcessorFactory_1 = require("./ProcessorFactory");
 var ProcessorPipeline = (function () {
@@ -31715,10 +31723,10 @@ var ProcessorPipeline = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ProcessorPipeline;
 
-},{"./ProcessorFactory":233}],235:[function(require,module,exports){
+},{"./ProcessorFactory":234}],236:[function(require,module,exports){
 "use strict";
 
-},{}],236:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface_1 = require("./RGBASurfaceInterface");
 var ArrayBufferSurface = (function () {
@@ -31771,7 +31779,7 @@ var ArrayBufferSurface = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ArrayBufferSurface;
 
-},{"./RGBASurfaceInterface":237}],237:[function(require,module,exports){
+},{"./RGBASurfaceInterface":238}],238:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface;
 (function (RGBASurfaceInterface) {
@@ -31780,7 +31788,7 @@ var RGBASurfaceInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = RGBASurfaceInterface;
 
-},{}],238:[function(require,module,exports){
+},{}],239:[function(require,module,exports){
 "use strict";
 var screenfull = require("screenfull");
 var FullscreenVideoDriver = (function () {
@@ -31834,7 +31842,7 @@ var FullscreenVideoDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FullscreenVideoDriver;
 
-},{"screenfull":129}],239:[function(require,module,exports){
+},{"screenfull":129}],240:[function(require,module,exports){
 "use strict";
 var MouseAsPaddleDriver = (function () {
     function MouseAsPaddleDriver() {
@@ -31874,16 +31882,26 @@ var MouseAsPaddleDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = MouseAsPaddleDriver;
 
-},{}],240:[function(require,module,exports){
+},{}],241:[function(require,module,exports){
 "use strict";
 var SimpleCanvasVideo = (function () {
     function SimpleCanvasVideo(_canvas) {
         this._canvas = _canvas;
+        this._throttle = true;
+        this._animationFrameHandle = 0;
+        this._pendingFrame = null;
         this._video = null;
         this._context = this._canvas.getContext('2d');
     }
     SimpleCanvasVideo.prototype.init = function () {
         this._clearCanvas();
+    };
+    SimpleCanvasVideo.prototype.setThrottle = function (throttle) {
+        if (throttle === this._throttle) {
+            return;
+        }
+        this._cancelPendingFrame();
+        this._throttle = throttle;
     };
     SimpleCanvasVideo.prototype.bind = function (video) {
         if (this._video) {
@@ -31901,22 +31919,57 @@ var SimpleCanvasVideo = (function () {
         }
         this._video.newFrame.removeHandler(SimpleCanvasVideo._frameHandler, this);
         this._video = null;
+        this._cancelPendingFrame();
         this._clearCanvas();
     };
     SimpleCanvasVideo._frameHandler = function (imageDataPoolMember, self) {
-        self._context.putImageData(imageDataPoolMember.get(), 0, 0);
-        imageDataPoolMember.release();
+        if (self._pendingFrame) {
+            self._pendingFrame.release();
+        }
+        self._pendingFrame = imageDataPoolMember;
+        if (self._throttle) {
+            if (!self._animationFrameHandle) {
+                self._scheduleDraw();
+            }
+        }
+        else {
+            self._draw();
+        }
     };
     SimpleCanvasVideo.prototype._clearCanvas = function () {
         this._context.fillStyle = 'solid black';
         this._context.fillRect(0, 0, this._canvas.width, this._canvas.height);
+    };
+    SimpleCanvasVideo.prototype._draw = function () {
+        this._context.putImageData(this._pendingFrame.get(), 0, 0);
+        this._pendingFrame.release();
+        this._pendingFrame = null;
+    };
+    SimpleCanvasVideo.prototype._scheduleDraw = function () {
+        var _this = this;
+        if (!this._animationFrameHandle) {
+            this._animationFrameHandle = requestAnimationFrame(function () {
+                _this._draw();
+                _this._animationFrameHandle = 0;
+            });
+        }
+    };
+    SimpleCanvasVideo.prototype._cancelPendingFrame = function () {
+        if (this._animationFrameHandle) {
+            cancelAnimationFrame(this._animationFrameHandle);
+            this._animationFrameHandle = 0;
+        }
+        if (this._pendingFrame) {
+            this._pendingFrame.release();
+            this._pendingFrame = null;
+        }
     };
     return SimpleCanvasVideo;
 }());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SimpleCanvasVideo;
 
-},{}],241:[function(require,module,exports){
+},{}],242:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var Pool_1 = require("../../tools/pool/Pool");
@@ -31958,7 +32011,7 @@ var VideoEndpoint = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":223,"../../tools/pool/Pool":224,"../../video/processing/ProcessorPipeline":234,"../../video/surface/ArrayBufferSurface":236,"microevent.ts":95}],242:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":223,"../../tools/pool/Pool":224,"../../video/processing/ProcessorPipeline":235,"../../video/surface/ArrayBufferSurface":237,"microevent.ts":95}],243:[function(require,module,exports){
 "use strict";
 var WebAudioDriver = (function () {
     function WebAudioDriver(channels) {
@@ -32080,7 +32133,7 @@ var Channel = (function () {
     return Channel;
 }());
 
-},{}],243:[function(require,module,exports){
+},{}],244:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var Switch_1 = require("../../../machine/io/Switch");
@@ -32265,7 +32318,7 @@ var KeyboardIO = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = KeyboardIO;
 
-},{"../../../machine/io/Switch":173,"microevent.ts":95}],244:[function(require,module,exports){
+},{"../../../machine/io/Switch":173,"microevent.ts":95}],245:[function(require,module,exports){
 "use strict";
 var WebAudio_1 = require("../../driver/WebAudio");
 var WebAudioDriver = (function () {
@@ -32295,7 +32348,7 @@ var WebAudioDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":242}],"stellaCLI":[function(require,module,exports){
+},{"../../driver/WebAudio":243}],"stellaCLI":[function(require,module,exports){
 "use strict";
 var StellaCLI_1 = require("../cli/stella/StellaCLI");
 var JqtermCLIRunner_1 = require("../cli/JqtermCLIRunner");
@@ -32393,5 +32446,5 @@ function setupPaddles(paddle0) {
     paddleDriver.bind(paddle0);
 }
 
-},{"../cli/JqtermCLIRunner":159,"../cli/stella/StellaCLI":161,"../fs/PrepackagedFilesystemProvider":164,"./driver/FullscreenVideo":238,"./driver/MouseAsPaddle":239,"./driver/SimpleCanvasVideo":240,"./driver/VideoEndpoint":241,"./stella/driver/KeyboardIO":243,"./stella/driver/WebAudio":244}]},{},[])
+},{"../cli/JqtermCLIRunner":159,"../cli/stella/StellaCLI":161,"../fs/PrepackagedFilesystemProvider":164,"./driver/FullscreenVideo":239,"./driver/MouseAsPaddle":240,"./driver/SimpleCanvasVideo":241,"./driver/VideoEndpoint":242,"./stella/driver/KeyboardIO":244,"./stella/driver/WebAudio":245}]},{},[])
 //# sourceMappingURL=stellaCLI.js.map

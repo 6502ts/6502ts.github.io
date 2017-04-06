@@ -24353,8 +24353,9 @@ var DigitalJoystick_1 = require("../io/DigitalJoystick");
 var Paddle_1 = require("../io/Paddle");
 var factory_1 = require("../../tools/rng/factory");
 var Board = (function () {
-    function Board(config, cartridge, cpuFactory) {
+    function Board(_config, cartridge, cpuFactory) {
         var _this = this;
+        this._config = _config;
         this.clock = new microevent_ts_1.Event();
         this.cpuClock = new microevent_ts_1.Event();
         this.trap = new microevent_ts_1.Event();
@@ -24371,7 +24372,7 @@ var Board = (function () {
             stop: function () { return _this._stop(); },
             isRunning: function () { return !!_this._runTask; }
         };
-        this._rng = factory_1.createRng(config.randomSeed < 0 ? Math.random() : config.randomSeed);
+        this._rng = factory_1.createRng(_config.randomSeed < 0 ? Math.random() : _config.randomSeed);
         cartridge.randomize(this._rng);
         var bus = new Bus_1.default();
         if (typeof (cpuFactory) === 'undefined')
@@ -24382,7 +24383,7 @@ var Board = (function () {
         }
         var cpu = cpuFactory(bus, this._rng);
         var pia = new Pia_1.default(controlPanel, joystick0, joystick1, this._rng);
-        var tia = new Tia_1.default(config, joystick0, joystick1, paddles);
+        var tia = new Tia_1.default(_config, joystick0, joystick1, paddles);
         cpu.setInvalidInstructionCallback(function () { return _this._onInvalidInstruction(); });
         tia
             .setCpu(cpu)
@@ -24405,8 +24406,8 @@ var Board = (function () {
         this._joystick1 = joystick1;
         this._paddles = paddles;
         this._bus.event.trap.addHandler(function (payload) { return _this.triggerTrap(1, payload.message); });
-        this._clockMhz = Config_1.default.getClockMhz(config);
-        this._sliceSize = 228 * (config.tvMode === 0 ? 262 : 312);
+        this._clockMhz = Config_1.default.getClockMhz(_config);
+        this._sliceSize = 228 * (_config.tvMode === 0 ? 262 : 312);
         this.reset();
     }
     Board.prototype.getCpu = function () {
@@ -24552,10 +24553,11 @@ var Board = (function () {
     Board.prototype._start = function (scheduler) {
         if (this._runTask)
             return;
-        this._runTask = scheduler.start(Board._executeSlice, this);
+        this._runTask = scheduler.start(Board._executeSlice, this, 1000 / (this._config.tvMode === 0 ? 60 : 50));
     };
-    Board._executeSlice = function (board) {
-        return board._tick(board._sliceSize) / board._clockMhz / 1000;
+    Board._executeSlice = function (board, _timeSlice) {
+        var slice = _timeSlice ? Math.round(_timeSlice * board._clockMhz * 1000) : board._sliceSize;
+        return board._tick(slice) / board._clockMhz / 1000;
     };
     Board.prototype._stop = function () {
         if (!this._runTask)
@@ -29651,6 +29653,67 @@ exports.restoreRng = restoreRng;
 
 },{"./SeedrandomGenerator":208,"seedrandom":130}],210:[function(require,module,exports){
 "use strict";
+var PeriodicScheduler_1 = require("./PeriodicScheduler");
+var ImmedateScheduler_1 = require("./ImmedateScheduler");
+var BusyWait_1 = require("./limiting/BusyWait");
+var ConstantCycles_1 = require("./limiting/ConstantCycles");
+var ConstantTimeslice_1 = require("./limiting/ConstantTimeslice");
+var Factory = (function () {
+    function Factory() {
+    }
+    Factory.prototype.createPeriodicScheduler = function (period) {
+        return new PeriodicScheduler_1.default(period);
+    };
+    Factory.prototype.createImmediateScheduler = function () {
+        return new ImmedateScheduler_1.default();
+    };
+    Factory.prototype.createLimitingScheduler = function (strategy) {
+        if (strategy === void 0) { strategy = 1; }
+        switch (strategy) {
+            case 0:
+                return new BusyWait_1.default();
+            case 1:
+                return new ConstantCycles_1.default();
+            case 2:
+                return new ConstantTimeslice_1.default();
+            default:
+                throw new Error('invalud limiting scheduling strategy');
+        }
+    };
+    Factory.prototype.getLimitingSchedulingStrategies = function () {
+        return [
+            0,
+            1,
+            2
+        ];
+    };
+    Factory.prototype.describeLimitingSchedulingStrategy = function (strategy) {
+        switch (strategy) {
+            case 0:
+                return 'Busy wait, constant timeslice length';
+            case 1:
+                return 'Constant cycle count';
+            case 2:
+                return 'Constant timeslice length';
+            default:
+                throw new Error('invalid limiting scheduling strategy');
+        }
+    };
+    return Factory;
+}());
+(function (Factory) {
+    var LimitingSchedulingStrategy;
+    (function (LimitingSchedulingStrategy) {
+        LimitingSchedulingStrategy[LimitingSchedulingStrategy["busyWait"] = 0] = "busyWait";
+        LimitingSchedulingStrategy[LimitingSchedulingStrategy["constantCycles"] = 1] = "constantCycles";
+        LimitingSchedulingStrategy[LimitingSchedulingStrategy["constantTimeslice"] = 2] = "constantTimeslice";
+    })(LimitingSchedulingStrategy = Factory.LimitingSchedulingStrategy || (Factory.LimitingSchedulingStrategy = {}));
+})(Factory || (Factory = {}));
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = Factory;
+
+},{"./ImmedateScheduler":211,"./PeriodicScheduler":212,"./limiting/BusyWait":214,"./limiting/ConstantCycles":215,"./limiting/ConstantTimeslice":216}],211:[function(require,module,exports){
+"use strict";
 var polyfill = require("setimmediate2");
 var ImmediateScheduler = (function () {
     function ImmediateScheduler() {
@@ -29672,59 +29735,6 @@ var ImmediateScheduler = (function () {
 }());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ImmediateScheduler;
-
-},{"setimmediate2":138}],211:[function(require,module,exports){
-"use strict";
-var polyfill = require("setimmediate2");
-var CORRECTION_THESHOLD = 3, MAX_ACCUMULATED_DELTA = 100;
-var getTimestamp = (self.performance && self.performance.now) ?
-    function () { return self.performance.now(); } :
-    function () { return Date.now(); };
-var LimitingImmediateScheduler = (function () {
-    function LimitingImmediateScheduler() {
-    }
-    LimitingImmediateScheduler.prototype.start = function (worker, context) {
-        var terminate = false, targetSleepInterval = -1, lastYieldTimestamp = 0, accumulatedDelta = 0;
-        function handler() {
-            if (terminate)
-                return;
-            var timestamp0 = getTimestamp(), targetDuration = worker(context), timestamp1 = getTimestamp();
-            var delay = targetDuration - timestamp1 + timestamp0;
-            if (targetSleepInterval >= 0) {
-                accumulatedDelta += (targetSleepInterval - timestamp0 + lastYieldTimestamp);
-            }
-            if (accumulatedDelta > MAX_ACCUMULATED_DELTA) {
-                accumulatedDelta = MAX_ACCUMULATED_DELTA;
-            }
-            else if (accumulatedDelta < -MAX_ACCUMULATED_DELTA) {
-                accumulatedDelta = -MAX_ACCUMULATED_DELTA;
-            }
-            if (Math.abs(accumulatedDelta) > CORRECTION_THESHOLD) {
-                delay += accumulatedDelta;
-                accumulatedDelta = 0;
-            }
-            if (delay < 0) {
-                delay = 0;
-                accumulatedDelta = delay;
-            }
-            if (delay > 0) {
-                setTimeout(handler, Math.round(delay));
-            }
-            else {
-                polyfill.setImmediate(handler);
-            }
-            targetSleepInterval = delay;
-            lastYieldTimestamp = getTimestamp();
-        }
-        polyfill.setImmediate(handler);
-        return {
-            stop: function () { return terminate = true; }
-        };
-    };
-    return LimitingImmediateScheduler;
-}());
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = LimitingImmediateScheduler;
 
 },{"setimmediate2":138}],212:[function(require,module,exports){
 "use strict";
@@ -29759,6 +29769,142 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PeriodicScheduler;
 
 },{}],213:[function(require,module,exports){
+"use strict";
+var getTimestamp = (self.performance && self.performance.now) ?
+    function () { return self.performance.now(); } :
+    function () { return Date.now(); };
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = getTimestamp;
+
+},{}],214:[function(require,module,exports){
+"use strict";
+var polyfill = require("setimmediate2");
+var getTimestamp_1 = require("../getTimestamp");
+var THRESHOLD = 1;
+var ConstantTimesliceScheduler = (function () {
+    function ConstantTimesliceScheduler() {
+    }
+    ConstantTimesliceScheduler.prototype.start = function (worker, context, _timeSlice) {
+        var timeSlice = _timeSlice || 50;
+        var running = true;
+        function handler() {
+            if (!running) {
+                return;
+            }
+            var timestampStart = getTimestamp_1.default(), emulationTime = 0, delta = 0;
+            while (getTimestamp_1.default() - timestampStart < timeSlice) {
+                do {
+                    delta = getTimestamp_1.default() - timestampStart - emulationTime;
+                } while (delta < THRESHOLD);
+                emulationTime += worker(context, delta);
+            }
+            delta = getTimestamp_1.default() - timestampStart - emulationTime;
+            if (delta > 0) {
+                emulationTime += worker(context, delta);
+            }
+            if (running) {
+                polyfill.setImmediate(handler);
+            }
+        }
+        polyfill.setImmediate(handler);
+        return { stop: function () { return running = false; } };
+    };
+    return ConstantTimesliceScheduler;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ConstantTimesliceScheduler;
+
+},{"../getTimestamp":213,"setimmediate2":138}],215:[function(require,module,exports){
+"use strict";
+var polyfill = require("setimmediate2");
+var getTimestamp_1 = require("../getTimestamp");
+var CORRECTION_THESHOLD = 3, MAX_ACCUMULATED_DELTA = 100;
+var ConstantCyclesScheduler = (function () {
+    function ConstantCyclesScheduler() {
+    }
+    ConstantCyclesScheduler.prototype.start = function (worker, context) {
+        var terminate = false, targetSleepInterval = -1, lastYieldTimestamp = 0, accumulatedDelta = 0;
+        function handler() {
+            if (terminate)
+                return;
+            var timestamp0 = getTimestamp_1.default(), targetDuration = worker(context) || 0, timestamp1 = getTimestamp_1.default();
+            var delay = targetDuration - timestamp1 + timestamp0;
+            if (targetSleepInterval >= 0) {
+                accumulatedDelta += (targetSleepInterval - timestamp0 + lastYieldTimestamp);
+            }
+            if (accumulatedDelta > MAX_ACCUMULATED_DELTA) {
+                accumulatedDelta = MAX_ACCUMULATED_DELTA;
+            }
+            else if (accumulatedDelta < -MAX_ACCUMULATED_DELTA) {
+                accumulatedDelta = -MAX_ACCUMULATED_DELTA;
+            }
+            if (Math.abs(accumulatedDelta) > CORRECTION_THESHOLD) {
+                delay += accumulatedDelta;
+                accumulatedDelta = 0;
+            }
+            if (delay < 0) {
+                delay = 0;
+                accumulatedDelta = delay;
+            }
+            if (delay > 0) {
+                setTimeout(handler, Math.round(delay));
+            }
+            else {
+                polyfill.setImmediate(handler);
+            }
+            targetSleepInterval = delay;
+            lastYieldTimestamp = getTimestamp_1.default();
+        }
+        polyfill.setImmediate(handler);
+        return {
+            stop: function () { return terminate = true; }
+        };
+    };
+    return ConstantCyclesScheduler;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ConstantCyclesScheduler;
+
+},{"../getTimestamp":213,"setimmediate2":138}],216:[function(require,module,exports){
+"use strict";
+var polyfill = require("setimmediate2");
+var getTimestamp_1 = require("../getTimestamp");
+var SAFETY_FACTOR = 3;
+var ConstantTimesliceScheduler = (function () {
+    function ConstantTimesliceScheduler() {
+    }
+    ConstantTimesliceScheduler.prototype.start = function (worker, context, _timeSlice) {
+        var timeSlice = _timeSlice || 100;
+        var timestamp0 = getTimestamp_1.default(), emulationTime = 0, running = true;
+        function handler() {
+            if (!running) {
+                return;
+            }
+            var timestamp = getTimestamp_1.default();
+            var delta = timestamp - timestamp0 - emulationTime;
+            if (delta > SAFETY_FACTOR * timeSlice) {
+                delta = SAFETY_FACTOR * timeSlice;
+                timestamp0 = timestamp - delta;
+                emulationTime = 0;
+            }
+            emulationTime += worker(context, delta);
+            var timeToSleep = timeSlice - getTimestamp_1.default() + timestamp;
+            if (timeToSleep > 0) {
+                setTimeout(handler, timeToSleep);
+            }
+            else {
+                polyfill.setImmediate(handler);
+            }
+        }
+        polyfill.setImmediate(handler);
+        return { stop: function () { return running = false; } };
+    };
+    return ConstantTimesliceScheduler;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ConstantTimesliceScheduler;
+
+},{"../getTimestamp":213,"setimmediate2":138}],217:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var FrameMergeProcessor = (function () {
@@ -29809,7 +29955,7 @@ var FrameMergeProcessor = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FrameMergeProcessor;
 
-},{"microevent.ts":97}],214:[function(require,module,exports){
+},{"microevent.ts":97}],218:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var PassthroughProcessor = (function () {
@@ -29826,7 +29972,7 @@ var PassthroughProcessor = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PassthroughProcessor;
 
-},{"microevent.ts":97}],215:[function(require,module,exports){
+},{"microevent.ts":97}],219:[function(require,module,exports){
 "use strict";
 var Config = require("./config");
 var PassthroughProcessor_1 = require("./PassthroughProcessor");
@@ -29849,7 +29995,7 @@ var ProcessorFactory = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":213,"./PassthroughProcessor":214,"./config":217}],216:[function(require,module,exports){
+},{"./FrameMergeProcessor":217,"./PassthroughProcessor":218,"./config":221}],220:[function(require,module,exports){
 "use strict";
 var ProcessorFactory_1 = require("./ProcessorFactory");
 var ProcessorPipeline = (function () {
@@ -29883,7 +30029,7 @@ var ProcessorPipeline = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ProcessorPipeline;
 
-},{"./ProcessorFactory":215}],217:[function(require,module,exports){
+},{"./ProcessorFactory":219}],221:[function(require,module,exports){
 "use strict";
 var Type;
 (function (Type) {
@@ -29891,7 +30037,7 @@ var Type;
     Type[Type["merge"] = 1] = "merge";
 })(Type = exports.Type || (exports.Type = {}));
 
-},{}],218:[function(require,module,exports){
+},{}],222:[function(require,module,exports){
 "use strict";
 var worker_rpc_1 = require("worker-rpc");
 var microevent_ts_1 = require("microevent.ts");
@@ -29956,7 +30102,7 @@ var PipelineClient = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PipelineClient;
 
-},{"./messages":219,"microevent.ts":97,"worker-rpc":152}],219:[function(require,module,exports){
+},{"./messages":223,"microevent.ts":97,"worker-rpc":152}],223:[function(require,module,exports){
 "use strict";
 exports.messageIds = {
     configure: 'pipeline/configure',
@@ -29967,7 +30113,7 @@ exports.messageIds = {
 };
 Object.freeze(exports.messageIds);
 
-},{}],220:[function(require,module,exports){
+},{}],224:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface_1 = require("./RGBASurfaceInterface");
 var ArrayBufferSurface = (function () {
@@ -30020,7 +30166,7 @@ var ArrayBufferSurface = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ArrayBufferSurface;
 
-},{"./RGBASurfaceInterface":221}],221:[function(require,module,exports){
+},{"./RGBASurfaceInterface":225}],225:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface;
 (function (RGBASurfaceInterface) {
@@ -30033,7 +30179,7 @@ var RGBASurfaceInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = RGBASurfaceInterface;
 
-},{}],222:[function(require,module,exports){
+},{}],226:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var Pool_1 = require("../../tools/pool/Pool");
@@ -30075,7 +30221,7 @@ var VideoEndpoint = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":205,"../../tools/pool/Pool":206,"../../video/processing/ProcessorPipeline":216,"../../video/surface/ArrayBufferSurface":220,"microevent.ts":97}],223:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":205,"../../tools/pool/Pool":206,"../../video/processing/ProcessorPipeline":220,"../../video/surface/ArrayBufferSurface":224,"microevent.ts":97}],227:[function(require,module,exports){
 "use strict";
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
 var DriverManager = (function () {
@@ -30161,7 +30307,7 @@ var DriverManager = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":224}],224:[function(require,module,exports){
+},{"./EmulationServiceInterface":228}],228:[function(require,module,exports){
 "use strict";
 var EmulationServiceInterface;
 (function (EmulationServiceInterface) {
@@ -30176,7 +30322,7 @@ var EmulationServiceInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationServiceInterface;
 
-},{}],225:[function(require,module,exports){
+},{}],229:[function(require,module,exports){
 "use strict";
 var VideoEndpoint_1 = require("../../../driver/VideoEndpoint");
 var EmulationContext = (function () {
@@ -30226,15 +30372,14 @@ var EmulationContext = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationContext;
 
-},{"../../../driver/VideoEndpoint":222}],226:[function(require,module,exports){
+},{"../../../driver/VideoEndpoint":226}],230:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var EmulationServiceInterface_1 = require("../EmulationServiceInterface");
 var EmulationContext_1 = require("./EmulationContext");
 var Board_1 = require("../../../../machine/stella/Board");
 var CartridgeFactory_1 = require("../../../../machine/stella/cartridge/CartridgeFactory");
-var ImmedateScheduler_1 = require("../../../../tools/scheduler/ImmedateScheduler");
-var LimitingImmediateScheduler_1 = require("../../../../tools/scheduler/LimitingImmediateScheduler");
+var Factory_1 = require("../../../../tools/scheduler/Factory");
 var ClockProbe_1 = require("../../../../tools/ClockProbe");
 var PeriodicScheduler_1 = require("../../../../tools/scheduler/PeriodicScheduler");
 var async_mutex_1 = require("async-mutex");
@@ -30249,6 +30394,7 @@ var EmulationService = (function () {
         this._scheduler = null;
         this._clockProbe = new ClockProbe_1.default(new PeriodicScheduler_1.default(CLOCK_UPDATE_INTERVAL));
         this._mutex = new async_mutex_1.Mutex();
+        this._schedulerFactory = new Factory_1.default();
         this.frequencyUpdate = this._clockProbe.frequencyUpdate;
         this._updateScheduler();
     }
@@ -30415,14 +30561,16 @@ var EmulationService = (function () {
         self.emulationError.dispatch(self._lastError);
     };
     EmulationService.prototype._updateScheduler = function () {
-        this._scheduler = this._enforceRateLimit ? new LimitingImmediateScheduler_1.default() : new ImmedateScheduler_1.default();
+        this._scheduler = this._enforceRateLimit ?
+            this._schedulerFactory.createLimitingScheduler() :
+            this._schedulerFactory.createImmediateScheduler();
     };
     return EmulationService;
 }());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":160,"../../../../machine/stella/cartridge/CartridgeFactory":181,"../../../../tools/ClockProbe":203,"../../../../tools/scheduler/ImmedateScheduler":210,"../../../../tools/scheduler/LimitingImmediateScheduler":211,"../../../../tools/scheduler/PeriodicScheduler":212,"../EmulationServiceInterface":224,"./EmulationContext":225,"async-mutex":16,"microevent.ts":97}],227:[function(require,module,exports){
+},{"../../../../machine/stella/Board":160,"../../../../machine/stella/cartridge/CartridgeFactory":181,"../../../../tools/ClockProbe":203,"../../../../tools/scheduler/Factory":210,"../../../../tools/scheduler/PeriodicScheduler":212,"../EmulationServiceInterface":228,"./EmulationContext":229,"async-mutex":16,"microevent.ts":97}],231:[function(require,module,exports){
 "use strict";
 var messages_1 = require("./messages");
 var AudioDriver = (function () {
@@ -30474,7 +30622,7 @@ var AudioDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AudioDriver;
 
-},{"./messages":231}],228:[function(require,module,exports){
+},{"./messages":235}],232:[function(require,module,exports){
 "use strict";
 var messages_1 = require("./messages");
 var ControlDriver = (function () {
@@ -30536,7 +30684,7 @@ var ControlDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ControlDriver;
 
-},{"./messages":231}],229:[function(require,module,exports){
+},{"./messages":235}],233:[function(require,module,exports){
 "use strict";
 var EmulationService_1 = require("../vanilla/EmulationService");
 var DriverManager_1 = require("../DriverManager");
@@ -30627,7 +30775,7 @@ var EmulationBackend = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = EmulationBackend;
 
-},{"../DriverManager":223,"../vanilla/EmulationService":226,"./AudioDriver":227,"./ControlDriver":228,"./VideoDriver":230,"./messages":231}],230:[function(require,module,exports){
+},{"../DriverManager":227,"../vanilla/EmulationService":230,"./AudioDriver":231,"./ControlDriver":232,"./VideoDriver":234,"./messages":235}],234:[function(require,module,exports){
 "use strict";
 var async_mutex_1 = require("async-mutex");
 var worker_rpc_1 = require("worker-rpc");
@@ -30770,7 +30918,7 @@ var VideoDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoDriver;
 
-},{"../../../../tools/pool/Pool":206,"../../../../video/processing/worker/PipelineClient":218,"../../../../video/surface/ArrayBufferSurface":220,"./messages":231,"async-mutex":16,"worker-rpc":152}],231:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":206,"../../../../video/processing/worker/PipelineClient":222,"../../../../video/surface/ArrayBufferSurface":224,"./messages":235,"async-mutex":16,"worker-rpc":152}],235:[function(require,module,exports){
 "use strict";
 exports.RPC_TYPE = {
     emulationPause: 'emulation/pause',
@@ -30798,14 +30946,14 @@ Object.freeze(exports.SIGNAL_TYPE);
 ;
 ;
 
-},{}],232:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 "use strict";
 var rpc_1 = require("../rpc");
 var EmulationBackend_1 = require("../../../src/web/stella/service/worker/EmulationBackend");
 var emulationBackend = new EmulationBackend_1.default(rpc_1.getRpc());
 emulationBackend.startup();
 
-},{"../../../src/web/stella/service/worker/EmulationBackend":229,"../rpc":233}],233:[function(require,module,exports){
+},{"../../../src/web/stella/service/worker/EmulationBackend":233,"../rpc":237}],237:[function(require,module,exports){
 "use strict";
 var worker_rpc_1 = require("worker-rpc");
 var rpcProvider = null, port = null, portPending = null;
@@ -30842,5 +30990,5 @@ function getRpc() {
 }
 exports.getRpc = getRpc;
 
-},{"worker-rpc":152}]},{},[232])
+},{"worker-rpc":152}]},{},[236])
 //# sourceMappingURL=stella.js.map
