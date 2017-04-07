@@ -82249,16 +82249,16 @@ var Playfield = (function () {
         if (this._pf0 === (value >>> 4)) {
             return;
         }
-        this._pf0 = value >>> 4;
         this._lineCacheViolated();
+        this._pf0 = value >>> 4;
         this._pattern = (this._pattern & 0x000FFFF0) | this._pf0;
     };
     Playfield.prototype.pf1 = function (value) {
         if (this._pf1 === value) {
             return;
         }
-        this._pf1 = value;
         this._lineCacheViolated();
+        this._pf1 = value;
         this._pattern = (this._pattern & 0x000FF00F)
             | ((value & 0x80) >>> 3)
             | ((value & 0x40) >>> 1)
@@ -82273,8 +82273,8 @@ var Playfield = (function () {
         if (this._pf2 === value) {
             return;
         }
-        this._pf2 = value;
         this._lineCacheViolated();
+        this._pf2 = value;
         this._pattern = (this._pattern & 0x00000FFF) | ((value & 0xFF) << 12);
     };
     Playfield.prototype.ctrlpf = function (value) {
