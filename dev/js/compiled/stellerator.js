@@ -84923,16 +84923,16 @@ var WebglVideoDriver = (function () {
         }
         var gl = this._gl;
         for (var i = 0; i < FRAME_COMPOSITING_COUNT; i++) {
-            var frameIndex = (this._currentFrameIndex + i) % FRAME_COMPOSITING_COUNT;
-            if (this._textureGeneration[i] !== this._imageDataGeneration[i]) {
+            var frameIndex = (this._currentFrameIndex - i - 1 + FRAME_COMPOSITING_COUNT) % FRAME_COMPOSITING_COUNT;
+            if (this._textureGeneration[frameIndex] !== this._imageDataGeneration[frameIndex]) {
                 gl.activeTexture(gl["TEXTURE" + frameIndex]);
                 gl.bindTexture(gl.TEXTURE_2D, this._textures[frameIndex]);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this._imageData[frameIndex].get());
-                this._textureGeneration[i] = this._imageDataGeneration[i];
+                this._textureGeneration[frameIndex] = this._imageDataGeneration[frameIndex];
             }
         }
         for (var i = 0; i < FRAME_COMPOSITING_COUNT; i++) {
-            gl.uniform1i(this._getUniformLocation("u_Sampler" + i), (this._currentFrameIndex + FRAME_COMPOSITING_COUNT - i) % FRAME_COMPOSITING_COUNT);
+            gl.uniform1i(this._getUniformLocation("u_Sampler" + i), (this._currentFrameIndex + FRAME_COMPOSITING_COUNT - i - 1) % FRAME_COMPOSITING_COUNT);
         }
         gl.uniform1f(this._getUniformLocation('u_Gamma'), this._gamma);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
