@@ -82915,6 +82915,7 @@ var Tia = (function () {
     Tia._delayedWrite = function (address, value, self) {
         switch (address) {
             case 1:
+                self._lineCacheViolated();
                 self._frameManager.setVblank((value & 0x02) > 0);
                 break;
             case 42:
