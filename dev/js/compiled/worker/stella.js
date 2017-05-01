@@ -26002,7 +26002,7 @@ var CartridgeDPCPlus = (function (_super) {
         this._thumbulator.writeRegister(14, 32772 - 1);
         this._thumbulator.writeRegister(15, 0x0C0B);
         this._armMamcr = 0;
-        var trap = this._thumbulator.run(100000);
+        var trap = this._thumbulator.run(500000);
         if (trap !== 255) {
             this.triggerTrap(2, "ARM execution trapped: " + trap);
         }
