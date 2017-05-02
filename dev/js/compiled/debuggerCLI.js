@@ -4242,12 +4242,12 @@ function opTya(state) {
     setFlagsNZ(state, state.a);
 }
 function opAlr(state, bus, operand) {
-    var old = state.a;
-    state.a = (state.a & operand) >>> 1;
+    var i = state.a & operand;
+    state.a = i >>> 1;
     state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
         (state.a ? 0 : 2) |
-        (old & 1);
+        (i & 1);
 }
 function opAxs(state, bus, operand) {
     var value = (state.a & state.x) + (~operand & 0xFF) + 1;
@@ -5489,13 +5489,23 @@ exports.encode = encode;
 
 },{}],29:[function(require,module,exports){
 "use strict";
-function encode(value, width) {
+function encodeWithPrefix(value, width, signed, prefix) {
+    if (signed === void 0) { signed = true; }
+    if (prefix === void 0) { prefix = ''; }
+    if (!signed && value < 0) {
+        return encodeWithPrefix(value >>> 16, (width && width > 8) ? width - 4 : 4, false, prefix) +
+            encodeWithPrefix(value & 0xFFFF, 4);
+    }
     var result = Math.abs(value).toString(16).toUpperCase();
     if (typeof (width) !== 'undefined') {
         while (result.length < width)
             result = '0' + result;
     }
-    return (value < 0 ? '-' : '') + '$' + result;
+    return (value < 0 ? '-' : '') + prefix + result;
+}
+function encode(value, width, signed) {
+    if (signed === void 0) { signed = true; }
+    return encodeWithPrefix(value, width, signed, '$');
 }
 exports.encode = encode;
 function decode(value) {

@@ -25020,12 +25020,12 @@ function opTya(state) {
     setFlagsNZ(state, state.a);
 }
 function opAlr(state, bus, operand) {
-    var old = state.a;
-    state.a = (state.a & operand) >>> 1;
+    var i = state.a & operand;
+    state.a = i >>> 1;
     state.flags = (state.flags & ~(128 | 2 | 1)) |
         (state.a & 0x80) |
         (state.a ? 0 : 2) |
-        (old & 1);
+        (i & 1);
 }
 function opAxs(state, bus, operand) {
     var value = (state.a & state.x) + (~operand & 0xFF) + 1;
@@ -27276,7 +27276,7 @@ var CartridgeDPCPlus = (function (_super) {
         _this._thumbulatorBus = {
             read16: function (address) {
                 if (address & 0x01) {
-                    _this.triggerTrap(2, "unaligned 16 bit ARM read from " + hex_1.encode(address, 8));
+                    _this.triggerTrap(2, "unaligned 16 bit ARM read from " + hex_1.encode(address, 8, false));
                     return;
                 }
                 var region = address >>> 28, addr = address & 0x0FFFFFFF;
@@ -27292,17 +27292,18 @@ var CartridgeDPCPlus = (function (_super) {
                         }
                         break;
                     case 0xE:
-                        if (addr === 0x001FC000) {
-                            return _this._armMamcr;
+                        switch (addr) {
+                            case 0x001FC000:
+                                return _this._armMamcr;
                         }
                         break;
                     default:
                 }
-                _this.triggerTrap(2, "invalid 16 bit ARM read from " + hex_1.encode(address, 8));
+                _this.triggerTrap(2, "invalid 16 bit ARM read from " + hex_1.encode(address, 8, false));
             },
             read32: function (address) {
                 if (address & 0x03) {
-                    _this.triggerTrap(2, "unaligned 32 bit ARM read from " + hex_1.encode(address, 8));
+                    _this.triggerTrap(2, "unaligned 32 bit ARM read from " + hex_1.encode(address, 8, false));
                     return;
                 }
                 var region = address >>> 28, addr = address & 0x0FFFFFFF;
@@ -27317,13 +27318,20 @@ var CartridgeDPCPlus = (function (_super) {
                             return _this._ram32[addr >>> 2];
                         }
                         break;
+                    case 0xE:
+                        switch (addr) {
+                            case 0x8004:
+                            case 0x8008:
+                                return 0;
+                        }
+                        break;
                     default:
                 }
-                _this.triggerTrap(2, "invalid 32 bit ARM read from " + hex_1.encode(address, 8));
+                _this.triggerTrap(2, "invalid 32 bit ARM read from " + hex_1.encode(address, 8, false));
             },
             write16: function (address, value) {
                 if (address & 0x01) {
-                    _this.triggerTrap(2, "unaligned 16 bit ARM write: " + hex_1.encode(value, 4) + " -> " + hex_1.encode(address, 8));
+                    _this.triggerTrap(2, "unaligned 16 bit ARM write: " + hex_1.encode(value, 4) + " -> " + hex_1.encode(address, 8, false));
                     return;
                 }
                 var region = address >>> 28, addr = address & 0x0FFFFFFF;
@@ -27335,25 +27343,36 @@ var CartridgeDPCPlus = (function (_super) {
                         }
                         break;
                     case 0xE:
-                        if (addr === 0x001FC000) {
-                            _this._armMamcr = value;
-                            return;
+                        switch (addr) {
+                            case 0x001FC000:
+                                _this._armMamcr = value;
+                                return;
                         }
                         break;
                 }
-                _this.triggerTrap(2, "invalid 16 bit ARM write: " + hex_1.encode(value, 4) + " -> " + hex_1.encode(address, 8));
+                _this.triggerTrap(2, "invalid 16 bit ARM write: " + hex_1.encode(value, 4) + " -> " + hex_1.encode(address, 8, false));
             },
             write32: function (address, value) {
                 if (address & 0x03) {
-                    _this.triggerTrap(2, "unaligned 32 bit ARM write: " + hex_1.encode(value, 8) + " -> " + hex_1.encode(address, 8));
+                    _this.triggerTrap(2, "unaligned 32 bit ARM write: " + hex_1.encode(value, 8, false) + " -> " + hex_1.encode(address, 8, false));
                     return;
                 }
                 var region = address >>> 28, addr = address & 0x0FFFFFFF;
-                if (region === 0x4 && addr < 0x2000) {
-                    _this._ram32[addr >>> 2] = value;
-                    return;
+                switch (region) {
+                    case 0x4:
+                        if (addr < 0x2000) {
+                            _this._ram32[addr >>> 2] = value;
+                            return;
+                        }
+                    case 0xE:
+                        switch (addr) {
+                            case 0x8004:
+                            case 0x8008:
+                                return;
+                        }
+                        break;
                 }
-                _this.triggerTrap(2, "invalid 32 bit ARM write: " + hex_1.encode(value, 8) + " -> " + hex_1.encode(address, 8));
+                _this.triggerTrap(2, "invalid 32 bit ARM write: " + hex_1.encode(value, 8, false) + " -> " + hex_1.encode(address, 8, false));
             }
         };
         _this._armMamcr = 0;
@@ -39378,13 +39397,23 @@ exports.encode = encode;
 
 },{}],224:[function(require,module,exports){
 "use strict";
-function encode(value, width) {
+function encodeWithPrefix(value, width, signed, prefix) {
+    if (signed === void 0) { signed = true; }
+    if (prefix === void 0) { prefix = ''; }
+    if (!signed && value < 0) {
+        return encodeWithPrefix(value >>> 16, (width && width > 8) ? width - 4 : 4, false, prefix) +
+            encodeWithPrefix(value & 0xFFFF, 4);
+    }
     var result = Math.abs(value).toString(16).toUpperCase();
     if (typeof (width) !== 'undefined') {
         while (result.length < width)
             result = '0' + result;
     }
-    return (value < 0 ? '-' : '') + '$' + result;
+    return (value < 0 ? '-' : '') + prefix + result;
+}
+function encode(value, width, signed) {
+    if (signed === void 0) { signed = true; }
+    return encodeWithPrefix(value, width, signed, '$');
 }
 exports.encode = encode;
 function decode(value) {
@@ -39573,7 +39602,7 @@ exports.restoreRng = restoreRng;
 
 },{"./SeedrandomGenerator":229,"seedrandom":130}],231:[function(require,module,exports){
 "use strict";
-var polyfill = require("setimmediate2");
+var setImmediate_1 = require("./setImmediate");
 var ImmediateScheduler = (function () {
     function ImmediateScheduler() {
     }
@@ -39583,9 +39612,9 @@ var ImmediateScheduler = (function () {
             if (terminate)
                 return;
             worker(context);
-            polyfill.setImmediate(handler);
+            setImmediate_1.setImmediate(handler);
         }
-        polyfill.setImmediate(handler);
+        setImmediate_1.setImmediate(handler);
         return {
             stop: function () { return terminate = true; }
         };
@@ -39595,7 +39624,7 @@ var ImmediateScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ImmediateScheduler;
 
-},{"setimmediate2":138}],232:[function(require,module,exports){
+},{"./setImmediate":235}],232:[function(require,module,exports){
 "use strict";
 var PeriodicScheduler = (function () {
     function PeriodicScheduler(_period) {
@@ -39637,8 +39666,8 @@ exports.default = getTimestamp;
 
 },{}],234:[function(require,module,exports){
 "use strict";
-var polyfill = require("setimmediate2");
 var getTimestamp_1 = require("../getTimestamp");
+var setImmediate_1 = require("../setImmediate");
 var CORRECTION_THESHOLD = 3, MAX_ACCUMULATED_DELTA = 100;
 var ConstantCyclesScheduler = (function () {
     function ConstantCyclesScheduler() {
@@ -39671,12 +39700,12 @@ var ConstantCyclesScheduler = (function () {
                 setTimeout(handler, Math.round(delay));
             }
             else {
-                polyfill.setImmediate(handler);
+                setImmediate_1.setImmediate(handler);
             }
             targetSleepInterval = delay;
             lastYieldTimestamp = getTimestamp_1.default();
         }
-        polyfill.setImmediate(handler);
+        setImmediate_1.setImmediate(handler);
         return {
             stop: function () { return terminate = true; }
         };
@@ -39686,7 +39715,22 @@ var ConstantCyclesScheduler = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ConstantCyclesScheduler;
 
-},{"../getTimestamp":233,"setimmediate2":138}],235:[function(require,module,exports){
+},{"../getTimestamp":233,"../setImmediate":235}],235:[function(require,module,exports){
+"use strict";
+var polyfill = require("setimmediate2");
+var index = 0;
+function setImmediate(callback) {
+    if (index === 0) {
+        setTimeout(callback, 0);
+    }
+    else {
+        polyfill.setImmediate(callback);
+    }
+    index = (index + 1) % 10;
+}
+exports.setImmediate = setImmediate;
+
+},{"setimmediate2":138}],236:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var FrameMergeProcessor = (function () {
@@ -39737,7 +39781,7 @@ var FrameMergeProcessor = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FrameMergeProcessor;
 
-},{"microevent.ts":95}],236:[function(require,module,exports){
+},{"microevent.ts":95}],237:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var PassthroughProcessor = (function () {
@@ -39754,7 +39798,7 @@ var PassthroughProcessor = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PassthroughProcessor;
 
-},{"microevent.ts":95}],237:[function(require,module,exports){
+},{"microevent.ts":95}],238:[function(require,module,exports){
 "use strict";
 var Config = require("./config");
 var PassthroughProcessor_1 = require("./PassthroughProcessor");
@@ -39777,7 +39821,7 @@ var ProcessorFactory = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":235,"./PassthroughProcessor":236,"./config":239}],238:[function(require,module,exports){
+},{"./FrameMergeProcessor":236,"./PassthroughProcessor":237,"./config":240}],239:[function(require,module,exports){
 "use strict";
 var ProcessorFactory_1 = require("./ProcessorFactory");
 var ProcessorPipeline = (function () {
@@ -39811,10 +39855,10 @@ var ProcessorPipeline = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ProcessorPipeline;
 
-},{"./ProcessorFactory":237}],239:[function(require,module,exports){
+},{"./ProcessorFactory":238}],240:[function(require,module,exports){
 "use strict";
 
-},{}],240:[function(require,module,exports){
+},{}],241:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface_1 = require("./RGBASurfaceInterface");
 var ArrayBufferSurface = (function () {
@@ -39867,7 +39911,7 @@ var ArrayBufferSurface = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ArrayBufferSurface;
 
-},{"./RGBASurfaceInterface":241}],241:[function(require,module,exports){
+},{"./RGBASurfaceInterface":242}],242:[function(require,module,exports){
 "use strict";
 var RGBASurfaceInterface;
 (function (RGBASurfaceInterface) {
@@ -39876,7 +39920,7 @@ var RGBASurfaceInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = RGBASurfaceInterface;
 
-},{}],242:[function(require,module,exports){
+},{}],243:[function(require,module,exports){
 "use strict";
 var screenfull = require("screenfull");
 var FullscreenVideoDriver = (function () {
@@ -39930,7 +39974,7 @@ var FullscreenVideoDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FullscreenVideoDriver;
 
-},{"screenfull":129}],243:[function(require,module,exports){
+},{"screenfull":129}],244:[function(require,module,exports){
 "use strict";
 var MouseAsPaddleDriver = (function () {
     function MouseAsPaddleDriver() {
@@ -39970,7 +40014,7 @@ var MouseAsPaddleDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = MouseAsPaddleDriver;
 
-},{}],244:[function(require,module,exports){
+},{}],245:[function(require,module,exports){
 "use strict";
 var SimpleCanvasVideo = (function () {
     function SimpleCanvasVideo(_canvas) {
@@ -40057,7 +40101,7 @@ var SimpleCanvasVideo = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SimpleCanvasVideo;
 
-},{}],245:[function(require,module,exports){
+},{}],246:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var Pool_1 = require("../../tools/pool/Pool");
@@ -40099,7 +40143,7 @@ var VideoEndpoint = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":226,"../../tools/pool/Pool":227,"../../video/processing/ProcessorPipeline":238,"../../video/surface/ArrayBufferSurface":240,"microevent.ts":95}],246:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":226,"../../tools/pool/Pool":227,"../../video/processing/ProcessorPipeline":239,"../../video/surface/ArrayBufferSurface":241,"microevent.ts":95}],247:[function(require,module,exports){
 "use strict";
 var WebAudioDriver = (function () {
     function WebAudioDriver(channels) {
@@ -40221,7 +40265,7 @@ var Channel = (function () {
     return Channel;
 }());
 
-},{}],247:[function(require,module,exports){
+},{}],248:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require("microevent.ts");
 var Switch_1 = require("../../../machine/io/Switch");
@@ -40406,7 +40450,7 @@ var KeyboardIO = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = KeyboardIO;
 
-},{"../../../machine/io/Switch":173,"microevent.ts":95}],248:[function(require,module,exports){
+},{"../../../machine/io/Switch":173,"microevent.ts":95}],249:[function(require,module,exports){
 "use strict";
 var WebAudio_1 = require("../../driver/WebAudio");
 var WebAudioDriver = (function () {
@@ -40436,7 +40480,7 @@ var WebAudioDriver = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":246}],"stellaCLI":[function(require,module,exports){
+},{"../../driver/WebAudio":247}],"stellaCLI":[function(require,module,exports){
 "use strict";
 var StellaCLI_1 = require("../cli/stella/StellaCLI");
 var JqtermCLIRunner_1 = require("../cli/JqtermCLIRunner");
@@ -40534,5 +40578,5 @@ function setupPaddles(paddle0) {
     paddleDriver.bind(paddle0);
 }
 
-},{"../cli/JqtermCLIRunner":159,"../cli/stella/StellaCLI":161,"../fs/PrepackagedFilesystemProvider":164,"./driver/FullscreenVideo":242,"./driver/MouseAsPaddle":243,"./driver/SimpleCanvasVideo":244,"./driver/VideoEndpoint":245,"./stella/driver/KeyboardIO":247,"./stella/driver/WebAudio":248}]},{},[])
+},{"../cli/JqtermCLIRunner":159,"../cli/stella/StellaCLI":161,"../fs/PrepackagedFilesystemProvider":164,"./driver/FullscreenVideo":243,"./driver/MouseAsPaddle":244,"./driver/SimpleCanvasVideo":245,"./driver/VideoEndpoint":246,"./stella/driver/KeyboardIO":248,"./stella/driver/WebAudio":249}]},{},[])
 //# sourceMappingURL=stellaCLI.js.map
