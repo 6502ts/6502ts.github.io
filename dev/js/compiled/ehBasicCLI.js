@@ -4479,6 +4479,27 @@ function setFlagsNZ(state, operand) {
         (operand & 0x80) |
         (operand ? 0 : 2);
 }
+function dispatchInterrupt(state, bus, vector) {
+    var nextOpAddr = state.p;
+    if (state.nmi) {
+        vector = 0xFFFA;
+    }
+    state.nmi = state.irq = false;
+    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xFF);
+    state.s = (state.s + 0xFF) & 0xFF;
+    bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
+    state.s = (state.s + 0xFF) & 0xFF;
+    bus.write(state.s + 0x0100, state.flags & (~16));
+    state.s = (state.s + 0xFF) & 0xFF;
+    state.flags |= 4;
+    state.p = (bus.readWord(vector));
+}
+function opIrq(state, bus) {
+    dispatchInterrupt(state, bus, 0xFFFE);
+}
+function opNmi(state, bus) {
+    dispatchInterrupt(state, bus, 0xFFFA);
+}
 function opBoot(state, bus) {
     state.p = bus.readWord(0xFFFC);
 }
@@ -4530,6 +4551,12 @@ function opBit(state, bus, operand) {
 }
 function opBrk(state, bus) {
     var nextOpAddr = (state.p + 1) & 0xFFFF;
+    var vector = 0xFFFE;
+    if (state.nmi) {
+        vector = 0xFFFA;
+        state.nmi = false;
+    }
+    state.nmi = state.irq = false;
     bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xFF);
     state.s = (state.s + 0xFF) & 0xFF;
     bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
@@ -4537,7 +4564,7 @@ function opBrk(state, bus) {
     bus.write(state.s + 0x0100, state.flags | 16);
     state.s = (state.s + 0xFF) & 0xFF;
     state.flags |= 4;
-    state.p = (bus.readWord(0xFFFE));
+    state.p = (bus.readWord(vector));
 }
 function opClc(state) {
     state.flags &= ~1;
@@ -4849,18 +4876,15 @@ var Cpu = (function () {
         this._invalidInstructionCallback = null;
         this._interruptPending = false;
         this._nmiPending = false;
+        this._interuptCheck = 0;
         this._halted = false;
         this._operand = 0;
         this._lastInstructionPointer = 0;
         this._currentAddressingMode = 12;
         this.reset();
     }
-    Cpu.prototype.setInterrupt = function () {
-        this._interruptPending = true;
-        return this;
-    };
-    Cpu.prototype.clearInterrupt = function () {
-        this._interruptPending = false;
+    Cpu.prototype.setInterrupt = function (irq) {
+        this._interruptPending = irq;
         return this;
     };
     Cpu.prototype.isInterrupt = function () {
@@ -4899,6 +4923,8 @@ var Cpu = (function () {
         this.state.p = this._rng ? this._rng.int(0xFFFF) : 0;
         this.state.flags = (this._rng ? this._rng.int(0xFF) : 0) |
             4 | 32 | 16;
+        this.state.irq = false;
+        this.state.nmi = false;
         this.executionState = 0;
         this._opCycles = 7;
         this._interruptPending = false;
@@ -4914,12 +4940,35 @@ var Cpu = (function () {
             case 0:
             case 2:
                 if (--this._opCycles === 0) {
+                    if (this._interuptCheck === 1) {
+                        this._checkForInterrupts();
+                    }
                     this._instructionCallback(this.state, this._bus, this._operand, this._currentAddressingMode);
                     this.executionState = 1;
+                    if (this._interuptCheck === 0) {
+                        this._checkForInterrupts();
+                    }
                 }
                 break;
             case 1:
+                if (this.state.nmi) {
+                    this._instructionCallback = opNmi;
+                    this._opCycles = 6;
+                    this.state.nmi = this.state.irq = false;
+                    this._interuptCheck = 1;
+                    this.executionState = 2;
+                    return this;
+                }
+                if (this.state.irq) {
+                    this._instructionCallback = opIrq;
+                    this._opCycles = 6;
+                    this.state.nmi = this.state.irq = false;
+                    this._interuptCheck = 1;
+                    this.executionState = 2;
+                    return this;
+                }
                 this._fetch();
+                break;
         }
         return this;
     };
@@ -4928,6 +4977,7 @@ var Cpu = (function () {
         var addressingMode = instruction.addressingMode, dereference = false, slowIndexedAccess = false;
         this._lastInstructionPointer = this.state.p;
         this._currentAddressingMode = addressingMode;
+        this._interuptCheck = 0;
         switch (instruction.operation) {
             case 0:
                 this._opCycles = 0;
@@ -5066,6 +5116,7 @@ var Cpu = (function () {
             case 15:
                 this._opCycles = 1;
                 this._instructionCallback = opCli;
+                this._interuptCheck = 1;
                 break;
             case 16:
                 this._opCycles = 1;
@@ -5178,6 +5229,7 @@ var Cpu = (function () {
             case 38:
                 this._opCycles = 3;
                 this._instructionCallback = opPlp;
+                this._interuptCheck = 1;
                 break;
             case 39:
                 if (addressingMode === 0) {
@@ -5225,6 +5277,7 @@ var Cpu = (function () {
             case 46:
                 this._opCycles = 1;
                 this._instructionCallback = opSei;
+                this._interuptCheck = 1;
                 break;
             case 47:
                 this._opCycles = 1;
@@ -5416,6 +5469,16 @@ var Cpu = (function () {
         }
         this.executionState = 2;
     };
+    Cpu.prototype._checkForInterrupts = function () {
+        if (this.state.nmi) {
+            this.state.irq = false;
+            this.state.nmi = true;
+            this._nmiPending = false;
+        }
+        if (this._interruptPending && !this.state.nmi && !(this.state.flags & 4)) {
+            this.state.irq = true;
+        }
+    };
     return Cpu;
 }());
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -5433,6 +5496,8 @@ var CpuInterface;
             this.s = 0;
             this.p = 0;
             this.flags = 0;
+            this.irq = false;
+            this.nmi = false;
         }
         return State;
     }());
