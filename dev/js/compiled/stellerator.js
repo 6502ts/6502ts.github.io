@@ -77525,6 +77525,10 @@ exports.default = BoardInterface;
 "use strict";
 var Instruction_1 = require("./Instruction");
 var CpuInterface_1 = require("./CpuInterface");
+function restoreFlagsFromStack(state, bus) {
+    state.s = (state.s + 0x01) & 0xFF;
+    state.flags = (bus.read(0x0100 + state.s) | 32) & (~16);
+}
 function setFlagsNZ(state, operand) {
     state.flags = (state.flags & ~(128 | 2)) |
         (operand & 0x80) |
@@ -77698,13 +77702,11 @@ function opOra(state, bus, operand) {
     setFlagsNZ(state, state.a);
 }
 function opPhp(state, bus) {
-    bus.write(0x0100 + state.s, state.flags);
+    bus.write(0x0100 + state.s, state.flags | 16);
     state.s = (state.s + 0xFF) & 0xFF;
 }
 function opPlp(state, bus) {
-    var mask = 16 | 32;
-    state.s = (state.s + 0x01) & 0xFF;
-    state.flags = (state.flags & mask) | (bus.read(0x0100 + state.s) & ~mask);
+    restoreFlagsFromStack(state, bus);
 }
 function opPha(state, bus) {
     bus.write(0x0100 + state.s, state.a);
@@ -77749,8 +77751,7 @@ function opRorMem(state, bus, operand) {
 }
 function opRti(state, bus) {
     var returnPtr;
-    state.s = (state.s + 1) & 0xFF;
-    state.flags = bus.read(0x0100 + state.s);
+    restoreFlagsFromStack(state, bus);
     state.s = (state.s + 1) & 0xFF;
     returnPtr = bus.read(0x0100 + state.s);
     state.s = (state.s + 1) & 0xFF;
