@@ -23700,6 +23700,7 @@ var Cpu = (function () {
             case 10:
                 this._opCycles = 6;
                 this._instructionCallback = opBrk;
+                this._interuptCheck = 1;
                 break;
             case 13:
                 this._opCycles = 1;
@@ -24066,7 +24067,7 @@ var Cpu = (function () {
         this.executionState = 2;
     };
     Cpu.prototype._checkForInterrupts = function () {
-        if (this.state.nmi) {
+        if (this._nmiPending) {
             this.state.irq = false;
             this.state.nmi = true;
             this._nmiPending = false;
