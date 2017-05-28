@@ -257,6 +257,7 @@ exports.RpcProvider = RpcProvider_1.default;
 
 },{"./RpcProvider":3}],5:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var PoolMember_1 = require("./PoolMember");
 var Pool = (function () {
@@ -283,10 +284,12 @@ var Pool = (function () {
         return member;
     };
     Pool.prototype._releaseMember = function (victim) {
-        if (victim._isAvailable)
+        if (victim._isAvailable) {
             throw new Error('Trying to release an already released pool member');
-        if (victim._isDisposed)
+        }
+        if (victim._isDisposed) {
             throw new Error('Trying to release an already disposed pool member');
+        }
         var position = this._poolSize++;
         this._pool[position] = victim;
         victim._isAvailable = true;
@@ -294,8 +297,9 @@ var Pool = (function () {
         this.event.release.dispatch(victim.get());
     };
     Pool.prototype._disposeMember = function (victim) {
-        if (victim._isDisposed)
+        if (victim._isDisposed) {
             throw new Error('Trying to dispose of an already disposed pool member');
+        }
         if (victim._isAvailable) {
             if (this._poolSize > 1) {
                 this._pool[victim._poolPosition] = this._pool[this._poolSize - 1];
@@ -307,11 +311,11 @@ var Pool = (function () {
     };
     return Pool;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Pool;
 
 },{"./PoolMember":6,"microevent.ts":2}],6:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var PoolMember = (function () {
     function PoolMember(_value, _releaseCB, _disposeCB) {
         this._value = _value;
@@ -334,11 +338,11 @@ var PoolMember = (function () {
     };
     return PoolMember;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PoolMember;
 
 },{}],7:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var FrameMergeProcessor = (function () {
     function FrameMergeProcessor() {
@@ -385,11 +389,11 @@ var FrameMergeProcessor = (function () {
     };
     return FrameMergeProcessor;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FrameMergeProcessor;
 
 },{"microevent.ts":2}],8:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var PassthroughProcessor = (function () {
     function PassthroughProcessor() {
@@ -402,11 +406,11 @@ var PassthroughProcessor = (function () {
     };
     return PassthroughProcessor;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PassthroughProcessor;
 
 },{"microevent.ts":2}],9:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Config = require("./config");
 var PassthroughProcessor_1 = require("./PassthroughProcessor");
 var FrameMergeProcessor_1 = require("./FrameMergeProcessor");
@@ -425,11 +429,11 @@ var ProcessorFactory = (function () {
     };
     return ProcessorFactory;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ProcessorFactory;
 
 },{"./FrameMergeProcessor":7,"./PassthroughProcessor":8,"./config":11}],10:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var ProcessorFactory_1 = require("./ProcessorFactory");
 var ProcessorPipeline = (function () {
     function ProcessorPipeline(config) {
@@ -459,11 +463,11 @@ var ProcessorPipeline = (function () {
     };
     return ProcessorPipeline;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ProcessorPipeline;
 
 },{"./ProcessorFactory":9}],11:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Type;
 (function (Type) {
     Type[Type["passthrough"] = 0] = "passthrough";
@@ -472,6 +476,7 @@ var Type;
 
 },{}],12:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface_1 = require("../../surface/ArrayBufferSurface");
 var Pool_1 = require("../../../tools/pool/Pool");
 var messages = require("./messages");
@@ -488,29 +493,6 @@ var PipelineHost = (function () {
             .registerSignalHandler(messages.messageIds.process, this._onProcess.bind(this));
         this._surfacePool.event.release.addHandler(PipelineHost._onReleaseSurface, this);
     }
-    PipelineHost.prototype._onConfigure = function (msg) {
-        if (this._pipeline) {
-            this._pipeline.flush();
-            this._pipeline.emit.removeHandler(PipelineHost._onEmitSurface, this);
-        }
-        this._pipeline = new ProcessorPipeline_1.default(msg.config);
-        this._pipeline.init(msg.width, msg.height);
-        this._pipeline.emit.addHandler(PipelineHost._onEmitSurface, this);
-    };
-    PipelineHost.prototype._onFlush = function (msg) {
-        if (this._pipeline) {
-            this._pipeline.flush();
-        }
-    };
-    PipelineHost.prototype._onProcess = function (msg) {
-        if (!this._pipeline) {
-            return;
-        }
-        this._bufferIds.set(msg.buffer, msg.id);
-        var managedSurface = this._surfacePool.get();
-        managedSurface.get().replaceUnderlyingBuffer(msg.width, msg.height, msg.buffer);
-        this._pipeline.processSurface(managedSurface);
-    };
     PipelineHost._onReleaseSurface = function (surface, self) {
         var buffer = surface.getUnderlyingBuffer();
         if (!buffer) {
@@ -540,13 +522,36 @@ var PipelineHost = (function () {
         managedSurface.get().resetUnderlyingBuffer();
         managedSurface.release();
     };
+    PipelineHost.prototype._onConfigure = function (msg) {
+        if (this._pipeline) {
+            this._pipeline.flush();
+            this._pipeline.emit.removeHandler(PipelineHost._onEmitSurface, this);
+        }
+        this._pipeline = new ProcessorPipeline_1.default(msg.config);
+        this._pipeline.init(msg.width, msg.height);
+        this._pipeline.emit.addHandler(PipelineHost._onEmitSurface, this);
+    };
+    PipelineHost.prototype._onFlush = function (msg) {
+        if (this._pipeline) {
+            this._pipeline.flush();
+        }
+    };
+    PipelineHost.prototype._onProcess = function (msg) {
+        if (!this._pipeline) {
+            return;
+        }
+        this._bufferIds.set(msg.buffer, msg.id);
+        var managedSurface = this._surfacePool.get();
+        managedSurface.get().replaceUnderlyingBuffer(msg.width, msg.height, msg.buffer);
+        this._pipeline.processSurface(managedSurface);
+    };
     return PipelineHost;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PipelineHost;
 
 },{"../../../tools/pool/Pool":5,"../../surface/ArrayBufferSurface":14,"../ProcessorPipeline":10,"./messages":13}],13:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.messageIds = {
     configure: 'pipeline/configure',
     flush: 'pipeline/flush',
@@ -558,13 +563,16 @@ Object.freeze(exports.messageIds);
 
 },{}],14:[function(require,module,exports){
 "use strict";
-var RGBASurfaceInterface_1 = require("./RGBASurfaceInterface");
+Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface = (function () {
     function ArrayBufferSurface() {
         this._height = 0;
         this._width = 0;
         this._buffer = null;
     }
+    ArrayBufferSurface.createFromArrayBuffer = function (width, height, buffer) {
+        return (new ArrayBufferSurface()).replaceUnderlyingBuffer(width, height, buffer);
+    };
     ArrayBufferSurface.prototype.replaceUnderlyingBuffer = function (width, height, buffer) {
         if (width * height * 4 !== buffer.byteLength) {
             throw new Error('surface size mismatch');
@@ -601,35 +609,20 @@ var ArrayBufferSurface = (function () {
         }
         return this;
     };
-    ArrayBufferSurface.createFromArrayBuffer = function (width, height, buffer) {
-        return (new ArrayBufferSurface()).replaceUnderlyingBuffer(width, height, buffer);
-    };
     return ArrayBufferSurface;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ArrayBufferSurface;
 
-},{"./RGBASurfaceInterface":15}],15:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
-var RGBASurfaceInterface;
-(function (RGBASurfaceInterface) {
-    var ByteOrder;
-    (function (ByteOrder) {
-        ByteOrder[ByteOrder["rgba"] = 0] = "rgba";
-    })(ByteOrder = RGBASurfaceInterface.ByteOrder || (RGBASurfaceInterface.ByteOrder = {}));
-    ;
-})(RGBASurfaceInterface || (RGBASurfaceInterface = {}));
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = RGBASurfaceInterface;
-
-},{}],16:[function(require,module,exports){
-"use strict";
 var rpc_1 = require("../rpc");
 var PipelineHost_1 = require("../../../src/video/processing/worker/PipelineHost");
 exports.pipelineHost = new PipelineHost_1.default(rpc_1.getRpc());
 
-},{"../../../src/video/processing/worker/PipelineHost":12,"../rpc":17}],17:[function(require,module,exports){
+},{"../../../src/video/processing/worker/PipelineHost":12,"../rpc":16}],16:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
 var rpcProvider = null, port = null, portPending = null;
 function send(message, transfer) {
@@ -647,7 +640,6 @@ function send(message, transfer) {
 }
 rpcProvider = new worker_rpc_1.RpcProvider(send);
 rpcProvider.error.addHandler(function (e) {
-    debugger;
     console.log(e ? e.message : 'unknown rpc error');
 });
 onmessage = function (e) { return port || rpcProvider.dispatch(e.data); };
@@ -665,5 +657,5 @@ function getRpc() {
 }
 exports.getRpc = getRpc;
 
-},{"worker-rpc":4}]},{},[16])
+},{"worker-rpc":4}]},{},[15])
 //# sourceMappingURL=video-pipeline.js.map

@@ -2484,6 +2484,10 @@ process.off = noop;
 process.removeListener = noop;
 process.removeAllListeners = noop;
 process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
@@ -2496,6 +2500,220 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],9:[function(require,module,exports){
+(function (global){
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+/* global global, define, System, Reflect, Promise */
+var __extends;
+var __assign;
+var __rest;
+var __decorate;
+var __param;
+var __metadata;
+var __awaiter;
+var __generator;
+var __exportStar;
+var __values;
+var __read;
+var __spread;
+var __await;
+var __asyncGenerator;
+var __asyncDelegator;
+var __asyncValues;
+(function (factory) {
+    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
+    if (typeof define === "function" && define.amd) {
+        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
+    }
+    else if (typeof module === "object" && typeof module.exports === "object") {
+        factory(createExporter(root, createExporter(module.exports)));
+    }
+    else {
+        factory(createExporter(root));
+    }
+    function createExporter(exports, previous) {
+        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
+    }
+})
+(function (exporter) {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+
+    __extends = function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+
+    __assign = Object.assign || function (t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+
+    __rest = function (s, e) {
+        var t = {};
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+        if (s != null && typeof Object.getOwnPropertySymbols === "function")
+            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) if (e.indexOf(p[i]) < 0)
+                t[p[i]] = s[p[i]];
+        return t;
+    };
+
+    __decorate = function (decorators, target, key, desc) {
+        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+        return c > 3 && r && Object.defineProperty(target, key, r), r;
+    };
+
+    __param = function (paramIndex, decorator) {
+        return function (target, key) { decorator(target, key, paramIndex); }
+    };
+
+    __metadata = function (metadataKey, metadataValue) {
+        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+    };
+
+    __awaiter = function (thisArg, _arguments, P, generator) {
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
+
+    __generator = function (thisArg, body) {
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        function verb(n) { return function (v) { return step([n, v]); }; }
+        function step(op) {
+            if (f) throw new TypeError("Generator is already executing.");
+            while (_) try {
+                if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [0, t.value];
+                switch (op[0]) {
+                    case 0: case 1: t = op; break;
+                    case 4: _.label++; return { value: op[1], done: false };
+                    case 5: _.label++; y = op[1]; op = [0]; continue;
+                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                    default:
+                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                        if (t[2]) _.ops.pop();
+                        _.trys.pop(); continue;
+                }
+                op = body.call(thisArg, _);
+            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+        }
+    };
+
+    __exportStar = function (m, exports) {
+        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+    };
+
+    __values = function (o) {
+        var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+        if (m) return m.call(o);
+        return {
+            next: function () {
+                if (o && i >= o.length) o = void 0;
+                return { value: o && o[i++], done: !o };
+            }
+        };
+    };
+
+    __read = function (o, n) {
+        var m = typeof Symbol === "function" && o[Symbol.iterator];
+        if (!m) return o;
+        var i = m.call(o), r, ar = [], e;
+        try {
+            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+        }
+        catch (error) { e = { error: error }; }
+        finally {
+            try {
+                if (r && !r.done && (m = i["return"])) m.call(i);
+            }
+            finally { if (e) throw e.error; }
+        }
+        return ar;
+    };
+
+    __spread = function () {
+        for (var ar = [], i = 0; i < arguments.length; i++)
+            ar = ar.concat(__read(arguments[i]));
+        return ar;
+    };
+
+    __await = function (v) {
+        return this instanceof __await ? (this.v = v, this) : new __await(v);
+    };
+
+    __asyncGenerator = function (thisArg, _arguments, generator) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var g = generator.apply(thisArg, _arguments || []), i, q = [];
+        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
+        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
+        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
+        function fulfill(value) { resume("next", value); }
+        function reject(value) { resume("throw", value); }
+        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+    };
+
+    __asyncDelegator = function (o) {
+        var i, p;
+        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+        function verb(n, f) { if (o[n]) i[n] = function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; }; }
+    };
+
+    __asyncValues = function (o) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var m = o[Symbol.asyncIterator];
+        return m ? m.call(o) : typeof __values === "function" ? __values(o) : o[Symbol.iterator]();
+    };
+
+    exporter("__extends", __extends);
+    exporter("__assign", __assign);
+    exporter("__rest", __rest);
+    exporter("__decorate", __decorate);
+    exporter("__param", __param);
+    exporter("__metadata", __metadata);
+    exporter("__awaiter", __awaiter);
+    exporter("__generator", __generator);
+    exporter("__exportStar", __exportStar);
+    exporter("__values", __values);
+    exporter("__read", __read);
+    exporter("__spread", __spread);
+    exporter("__await", __await);
+    exporter("__asyncGenerator", __asyncGenerator);
+    exporter("__asyncDelegator", __asyncDelegator);
+    exporter("__asyncValues", __asyncValues);
+});
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{}],10:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -2520,14 +2738,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -3118,8 +3336,9 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./support/isBuffer":10,"_process":8,"inherits":9}],12:[function(require,module,exports){
+},{"./support/isBuffer":11,"_process":8,"inherits":10}],13:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var AbstractCLI = (function () {
     function AbstractCLI() {
@@ -3133,17 +3352,18 @@ var AbstractCLI = (function () {
     }
     return AbstractCLI;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractCLI;
 
-},{"microevent.ts":6}],13:[function(require,module,exports){
+},{"microevent.ts":6}],14:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var CommandInterpreter = (function () {
     function CommandInterpreter(commandTable) {
         this._commandTable = {};
         this._aliasTable = {};
-        if (typeof (commandTable) !== 'undefined')
+        if (typeof (commandTable) !== 'undefined') {
             this.registerCommands(commandTable);
+        }
     }
     CommandInterpreter.prototype.registerCommands = function (commandTable) {
         var _this = this;
@@ -3151,8 +3371,9 @@ var CommandInterpreter = (function () {
     };
     CommandInterpreter.prototype.execute = function (cmd) {
         cmd = cmd.replace(/;.*/, '');
-        if (cmd.match(/^\s*$/))
+        if (cmd.match(/^\s*$/)) {
             return '';
+        }
         var components = cmd.split(/\s+/).filter(function (value) { return !!value; }), commandName = components.shift();
         return this._locateCommand(commandName).call(this, components, cmd);
     };
@@ -3160,26 +3381,30 @@ var CommandInterpreter = (function () {
         return Object.keys(this._commandTable);
     };
     CommandInterpreter.prototype._locateCommand = function (name) {
-        if (this._commandTable[name])
+        if (this._commandTable[name]) {
             return this._commandTable[name];
-        if (this._aliasTable[name])
+        }
+        if (this._aliasTable[name]) {
             return this._aliasTable[name];
+        }
         var candidates = Object.keys(this._commandTable).filter(function (candidate) { return candidate.indexOf(name) === 0; });
         var nCandidates = candidates.length;
-        if (nCandidates > 1)
+        if (nCandidates > 1) {
             throw new Error('ambiguous command ' + name + ', candidates are ' +
                 candidates.join(', ').replace(/, $/, ''));
-        if (nCandidates === 0)
+        }
+        if (nCandidates === 0) {
             throw new Error('invalid command ' + name);
+        }
         return this._aliasTable[name] = this._commandTable[candidates[0]];
     };
     return CommandInterpreter;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CommandInterpreter;
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var pathlib = require("path");
 var Completer = (function () {
     function Completer(_availableCommands, _fsProvider) {
@@ -3188,8 +3413,9 @@ var Completer = (function () {
     }
     Completer.prototype.complete = function (cmd) {
         var chunks = cmd.split(/\s+/);
-        if (chunks.length > 0 && chunks[0] === '')
+        if (chunks.length > 0 && chunks[0] === '') {
             chunks.shift();
+        }
         switch (chunks.length) {
             case 0:
                 return new Completer.CompletionResult(this._availableCommands, cmd);
@@ -3202,8 +3428,9 @@ var Completer = (function () {
     };
     Completer.prototype._completePath = function (path) {
         var dirname = pathlib.dirname(path), basename = pathlib.basename(path), directory;
-        if (!this._fsProvider)
+        if (!this._fsProvider) {
             return [];
+        }
         if (path && path[path.length - 1] === pathlib.sep || path[path.length - 1] === '/') {
             dirname = path;
             basename = '';
@@ -3241,16 +3468,12 @@ var Completer = (function () {
     }());
     Completer.CompletionResult = CompletionResult;
 })(Completer || (Completer = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Completer;
 
-},{"path":7}],15:[function(require,module,exports){
+},{"path":7}],16:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var path = require("path");
 var Debugger_1 = require("../machine/Debugger");
 var DebuggerFrontend_1 = require("./DebuggerFrontend");
@@ -3258,7 +3481,7 @@ var CommandInterpreter_1 = require("./CommandInterpreter");
 var AbstractCLI_1 = require("./AbstractCLI");
 var Board_1 = require("../machine/vanilla/Board");
 var DebuggerCLI = (function (_super) {
-    __extends(DebuggerCLI, _super);
+    tslib_1.__extends(DebuggerCLI, _super);
     function DebuggerCLI(_fsProvider) {
         var _this = _super.call(this) || this;
         _this._fsProvider = _fsProvider;
@@ -3271,28 +3494,6 @@ var DebuggerCLI = (function (_super) {
         _this._debuggerFrontend = debuggerFrontend;
         return _this;
     }
-    DebuggerCLI.prototype._initialize = function () {
-        this._initializeHardware();
-        this._debugger.attach(this._board);
-    };
-    DebuggerCLI.prototype._initializeHardware = function () {
-        this._board = new Board_1.default();
-    };
-    DebuggerCLI.prototype._extendCommandInterpreter = function () {
-        var _this = this;
-        this._commandInterpreter.registerCommands({
-            quit: function () {
-                _this._quit();
-                return 'bye';
-            },
-            'run-script': function (args) {
-                if (!args.length)
-                    throw new Error('filename required');
-                _this.runDebuggerScript(args[0]);
-                return 'script executed';
-            }
-        });
-    };
     DebuggerCLI.prototype.runDebuggerScript = function (filename) {
         var _this = this;
         this._fsProvider.pushd(path.dirname(filename));
@@ -3345,12 +3546,36 @@ var DebuggerCLI = (function (_super) {
     DebuggerCLI.prototype.allowQuit = function (allowQuit) {
         this._allowQuit = allowQuit;
     };
+    DebuggerCLI.prototype._initialize = function () {
+        this._initializeHardware();
+        this._debugger.attach(this._board);
+    };
+    DebuggerCLI.prototype._initializeHardware = function () {
+        this._board = new Board_1.default();
+    };
+    DebuggerCLI.prototype._extendCommandInterpreter = function () {
+        var _this = this;
+        this._commandInterpreter.registerCommands({
+            'quit': function () {
+                _this._quit();
+                return 'bye';
+            },
+            'run-script': function (args) {
+                if (!args.length) {
+                    throw new Error('filename required');
+                }
+                _this.runDebuggerScript(args[0]);
+                return 'script executed';
+            }
+        });
+    };
     DebuggerCLI.prototype._prompt = function () {
         this.events.prompt.dispatch(undefined);
     };
     DebuggerCLI.prototype._quit = function () {
-        if (this._allowQuit)
+        if (this._allowQuit) {
             this.events.quit.dispatch(undefined);
+        }
     };
     DebuggerCLI.prototype._outputLine = function (line) {
         this._output += (line + '\n');
@@ -3361,11 +3586,11 @@ var DebuggerCLI = (function (_super) {
     };
     return DebuggerCLI;
 }(AbstractCLI_1.default));
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DebuggerCLI;
 
-},{"../machine/Debugger":20,"../machine/vanilla/Board":26,"./AbstractCLI":12,"./CommandInterpreter":13,"./DebuggerFrontend":16,"path":7}],16:[function(require,module,exports){
+},{"../machine/Debugger":21,"../machine/vanilla/Board":27,"./AbstractCLI":13,"./CommandInterpreter":14,"./DebuggerFrontend":17,"path":7,"tslib":9}],17:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface_1 = require("../machine/board/BoardInterface");
 var hex = require("../tools/hex");
 var util = require("util");
@@ -3374,8 +3599,9 @@ function decodeNumber(value) {
         return hex.decode(value);
     }
     catch (e) {
-        if (!value.match(/^-?\d+$/))
+        if (!value.match(/^-?\d+$/)) {
             throw new TypeError('number expected, got ' + value);
+        }
         return Number(value);
     }
 }
@@ -3386,18 +3612,18 @@ var DebuggerFrontend = (function () {
         this._fileSystemProvider = _fileSystemProvider;
         this._commandInterpreter = _commandInterpreter;
         this._commandInterpreter.registerCommands({
-            disassemble: this._disassemble.bind(this),
-            dump: this._dump.bind(this),
-            load: this._load.bind(this),
-            hex2dec: this._hex2dec.bind(this),
-            dec2hex: this._dec2hex.bind(this),
-            state: this._state.bind(this),
-            boot: this._boot.bind(this),
-            stack: this._stack.bind(this),
+            'disassemble': this._disassemble.bind(this),
+            'dump': this._dump.bind(this),
+            'load': this._load.bind(this),
+            'hex2dec': this._hex2dec.bind(this),
+            'dec2hex': this._dec2hex.bind(this),
+            'state': this._state.bind(this),
+            'boot': this._boot.bind(this),
+            'stack': this._stack.bind(this),
             'step': this._step.bind(this),
             'step-clock': this._stepClock.bind(this),
-            "reset": function () { return _this._reset(false); },
-            "reset-hard": function () { return _this._reset(true); },
+            'reset': function () { return _this._reset(false); },
+            'reset-hard': function () { return _this._reset(true); },
             'break-on': this._enableBreakpoints.bind(this),
             'break-off': this._disableBreakpoints.bind(this),
             'break': this._setBreakpoint.bind(this),
@@ -3410,10 +3636,12 @@ var DebuggerFrontend = (function () {
         });
     }
     DebuggerFrontend.prototype.describeTrap = function (trap) {
-        if (typeof (trap) === 'undefined')
+        if (typeof (trap) === 'undefined') {
             trap = this._debugger.getLastTrap();
-        if (!trap)
+        }
+        if (!trap) {
             return '';
+        }
         var message = trap.message ? trap.message : 'unknown';
         switch (trap.reason) {
             case 0:
@@ -3435,13 +3663,15 @@ var DebuggerFrontend = (function () {
         }
     };
     DebuggerFrontend.prototype._dump = function (args) {
-        if (args.length < 1)
+        if (args.length < 1) {
             throw new Error('at least one argument expected');
+        }
         return this._debugger.dumpAt(Math.abs(decodeNumber(args[0])), Math.abs(args.length > 1 ? decodeNumber(args[1]) : 1));
     };
     DebuggerFrontend.prototype._load = function (args) {
-        if (args.length < 2)
+        if (args.length < 2) {
             throw new Error('at least two arguments. expected');
+        }
         var file = args[0], base = Math.abs(decodeNumber(args[1])) % 0x10000, buffer = this._fileSystemProvider.readBinaryFileSync(file), offset = args.length > 2 ? Math.min(Math.abs(decodeNumber(args[2])), buffer.length - 1) : 0, count = args.length > 3 ? Math.min(Math.abs(decodeNumber(args[3])), buffer.length) : buffer.length;
         this._debugger.loadBlock(buffer, base, offset, offset + count - 1);
         return 'successfully loaded ' + count + ' bytes at ' + hex.encode(base, 4);
@@ -3468,8 +3698,9 @@ var DebuggerFrontend = (function () {
             exception = e || new Error('unknown exception during boot');
         }
         board.cpuClock.removeHandler(clockHandler);
-        if (exception)
+        if (exception) {
             throw (exception);
+        }
         return util.format('Boot successful in %s cycles', cycles);
     };
     DebuggerFrontend.prototype._reset = function (hard) {
@@ -3492,15 +3723,17 @@ var DebuggerFrontend = (function () {
         return 'Breakpoints disabled';
     };
     DebuggerFrontend.prototype._setBreakpoint = function (args) {
-        if (args.length < 1)
+        if (args.length < 1) {
             throw new Error('at least one argument expected');
+        }
         var name = args.length > 1 ? args[1] : '-', address = decodeNumber(args[0]);
         this._debugger.setBreakpoint(address, name);
         return 'Breakpoint "' + name + '" at ' + hex.encode(address, 4);
     };
     DebuggerFrontend.prototype._clearBreakpoint = function (args) {
-        if (args.length < 1)
+        if (args.length < 1) {
             throw new Error('argument expected');
+        }
         var address = decodeNumber(args[0]);
         this._debugger.clearBreakpoint(address);
         return 'Cleared breakpoint at ' + hex.encode(address, 4);
@@ -3527,15 +3760,16 @@ var DebuggerFrontend = (function () {
         var requestedCycles = args.length > 0 ? decodeNumber(args[0]) : 1, timestamp = Date.now();
         var cycles = this._debugger.stepClock(requestedCycles);
         var time = Date.now() - timestamp, trap = this._debugger.getLastTrap();
-        return "clock stepped " + cycles + " cycles in " + time + " msec; now at " + this._debugger.disassemble(1) + "\n" + (trap ? this.describeTrap(trap) : '');
+        return "clock stepped " + cycles + " cycles in " + time + " msec; " +
+            ("now at " + this._debugger.disassemble(1) + "\n" + (trap ? this.describeTrap(trap) : ''));
     };
     return DebuggerFrontend;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = DebuggerFrontend;
 
-},{"../machine/board/BoardInterface":21,"../tools/hex":29,"util":11}],17:[function(require,module,exports){
+},{"../machine/board/BoardInterface":22,"../tools/hex":30,"util":12}],18:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Completer_1 = require("./Completer");
 var JqtermCLIRunner = (function () {
     function JqtermCLIRunner(_cli, terminalElt, options) {
@@ -3547,17 +3781,19 @@ var JqtermCLIRunner = (function () {
             return _this._cli.pushInput(input);
         }, {
             greetings: 'Ready.',
-            completion: function (terminal, cmd, handler) { return handler(_this._completer.complete(terminal.get_command()).candidates); },
+            completion: this._getCompletionHandler(),
             exit: false,
             clear: false
         });
         this._cli.events.outputAvailable.addHandler(this._onCLIOutputAvailable, this);
         this._cli.events.promptChanged.addHandler(this._onCLIPromptChanged, this);
         this._cli.events.availableCommandsChanged.addHandler(this._updateCompleter.bind(this));
-        if (options.interruptButton)
+        if (options.interruptButton) {
             options.interruptButton.mousedown(function () { return _this._cli.interrupt(); });
-        if (options.clearButton)
+        }
+        if (options.clearButton) {
             options.clearButton.mousedown(function () { return _this._terminal.clear(); });
+        }
     }
     JqtermCLIRunner.prototype.startup = function () {
         this._cli.startup();
@@ -3572,13 +3808,19 @@ var JqtermCLIRunner = (function () {
     JqtermCLIRunner.prototype._onCLIPromptChanged = function (payload, ctx) {
         ctx._terminal.set_prompt(ctx._cli.getPrompt());
     };
+    JqtermCLIRunner.prototype._getCompletionHandler = function () {
+        var me = this;
+        return function (cmd, handler) {
+            handler(me._completer.complete(this.get_command()).candidates);
+        };
+    };
     return JqtermCLIRunner;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = JqtermCLIRunner;
 
-},{"./Completer":14}],18:[function(require,module,exports){
+},{"./Completer":15}],19:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var pathlib = require("path");
 var AbstractFileSystemProvider = (function () {
     function AbstractFileSystemProvider() {
@@ -3587,12 +3829,14 @@ var AbstractFileSystemProvider = (function () {
     }
     AbstractFileSystemProvider.prototype.pushd = function (path) {
         this._directoryStack.unshift(this._cwd);
-        if (typeof (path) !== 'undefined')
+        if (typeof (path) !== 'undefined') {
             this.chdir(path);
+        }
     };
     AbstractFileSystemProvider.prototype.popd = function () {
-        if (this._directoryStack.length === 0)
+        if (this._directoryStack.length === 0) {
             return;
+        }
         var targetDir = this._directoryStack.shift();
         this.chdir(targetDir);
         return targetDir;
@@ -3608,21 +3852,17 @@ var AbstractFileSystemProvider = (function () {
     };
     return AbstractFileSystemProvider;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = AbstractFileSystemProvider;
 
-},{"path":7}],19:[function(require,module,exports){
+},{"path":7}],20:[function(require,module,exports){
 (function (Buffer){
 "use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var util = require("util");
 var AbstractFileSystemProvider_1 = require("./AbstractFileSystemProvider");
 var PrepackagedFilesystemProvider = (function (_super) {
-    __extends(PrepackagedFilesystemProvider, _super);
+    tslib_1.__extends(PrepackagedFilesystemProvider, _super);
     function PrepackagedFilesystemProvider(_blob) {
         var _this = _super.call(this) || this;
         _this._blob = _blob;
@@ -3632,10 +3872,12 @@ var PrepackagedFilesystemProvider = (function (_super) {
     PrepackagedFilesystemProvider.prototype.readBinaryFileSync = function (name) {
         name = this._resolvePath(name);
         var content = this._lookup(name);
-        if (typeof (content) === 'undefined')
+        if (typeof (content) === 'undefined') {
             throw new Error(util.format('%s not part of file bundle', name));
-        if (!Buffer.isBuffer(content))
+        }
+        if (!Buffer.isBuffer(content)) {
             throw new Error(util.format('%s is a directory, not a file', name));
+        }
         return content;
     };
     PrepackagedFilesystemProvider.prototype.readTextFileSync = function (name) {
@@ -3645,17 +3887,20 @@ var PrepackagedFilesystemProvider = (function (_super) {
     PrepackagedFilesystemProvider.prototype.readDirSync = function (name) {
         name = this._resolvePath(name);
         var content = this._lookup(name);
-        if (typeof (content) === 'undefined')
+        if (typeof (content) === 'undefined') {
             throw new Error(util.format('%s not part of file bundle', name));
-        if (typeof (content) === 'string' || Buffer.isBuffer(content))
+        }
+        if (typeof (content) === 'string' || Buffer.isBuffer(content)) {
             throw new Error(util.format('%s is a file, not a directory', name));
+        }
         return Object.keys(content);
     };
     PrepackagedFilesystemProvider.prototype.getTypeSync = function (name) {
         name = this._resolvePath(name);
         var content = this._lookup(name);
-        if (typeof (content) === 'undefined')
+        if (typeof (content) === 'undefined') {
             throw new Error(util.format('%s not part of file bundle', name));
+        }
         if (Buffer.isBuffer(content)) {
             return 1;
         }
@@ -3678,19 +3923,20 @@ var PrepackagedFilesystemProvider = (function (_super) {
                 return undefined;
             }
         }
-        if (name && typeof (scope[name]) === 'string')
+        if (name && typeof (scope[name]) === 'string') {
             scope[name] = new Buffer(scope[name], 'base64');
+        }
         return name ? scope[name] : scope;
     };
     return PrepackagedFilesystemProvider;
 }(AbstractFileSystemProvider_1.default));
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PrepackagedFilesystemProvider;
 
 }).call(this,require("buffer").Buffer)
 
-},{"./AbstractFileSystemProvider":18,"buffer":2,"util":11}],20:[function(require,module,exports){
+},{"./AbstractFileSystemProvider":19,"buffer":2,"tslib":9,"util":12}],21:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./cpu/Instruction");
 var Disassembler_1 = require("./cpu/Disassembler");
 var CpuInterface_1 = require("./cpu/CpuInterface");
@@ -3723,15 +3969,17 @@ var Debugger = (function () {
         return this;
     };
     Debugger.prototype.detach = function () {
-        if (!this._board)
+        if (!this._board) {
             return;
+        }
         this._board.cpuClock.removeHandler(this._cpuClockHandler);
         this._board.trap.removeHandler(this._trapHandler);
         return this;
     };
     Debugger.prototype.clearAllBreakpoints = function () {
-        for (var i = 0; i < 0x10000; i++)
+        for (var i = 0; i < 0x10000; i++) {
             this._breakpoints[i] = 0;
+        }
         return this;
     };
     Debugger.prototype.setBreakpoint = function (address, description) {
@@ -3748,17 +3996,19 @@ var Debugger = (function () {
     Debugger.prototype.dumpBreakpoints = function () {
         var result = '';
         for (var address = 0; address < 0x10000; address++) {
-            if (this._breakpoints[address])
+            if (this._breakpoints[address]) {
                 result += (hex.encode(address, 4) + ': ' +
                     this._breakpointDescriptions[address] + '\n');
+            }
         }
         return result.replace(/\n$/, '');
     };
     Debugger.prototype.loadBlock = function (block, at, from, to) {
         if (from === void 0) { from = 0; }
         if (to === void 0) { to = block.length - 1; }
-        for (var i = 0; i <= to - from; i++)
+        for (var i = 0; i <= to - from; i++) {
             this._poke(at + i, block[i]);
+        }
     };
     Debugger.prototype.disassembleAt = function (start, length) {
         var i = 0, result = '', instruction, address;
@@ -3818,7 +4068,8 @@ var Debugger = (function () {
         return this.dumpAt(0x0100 + this._cpu.state.s, 0x100 - this._cpu.state.s);
     };
     Debugger.prototype.step = function (instructions) {
-        var instruction = 0, cycles = 0, lastExecutionState = this._cpu.executionState, cpuCycles = 0, timer = this._board.getTimer();
+        var instruction = 0, cycles = 0, lastExecutionState = this._cpu.executionState, cpuCycles = 0;
+        var timer = this._board.getTimer();
         var cpuClockHandler = function (c) { return cpuCycles += c; };
         this._board.cpuClock.addHandler(cpuClockHandler);
         this._lastTrap = undefined;
@@ -3894,8 +4145,9 @@ var Debugger = (function () {
         if (ctx._traceEnabled) {
             ctx._trace[ctx._traceIndex] = lastInstructionPointer;
             ctx._traceIndex = (ctx._traceIndex + 1) % ctx._traceSize;
-            if (ctx._traceLength < ctx._traceSize)
+            if (ctx._traceLength < ctx._traceSize) {
                 ctx._traceLength++;
+            }
         }
         if (ctx._breakpointsEnabled && ctx._breakpoints[ctx._cpu.state.p]) {
             ctx._board.triggerTrap(2, util.format('breakpoint "%s" at %s', ctx._breakpointDescriptions[ctx._cpu.state.p] || '', hex.encode(ctx._cpu.state.p)));
@@ -3912,17 +4164,13 @@ var Debugger = (function () {
     };
     return Debugger;
 }());
-;
-;
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Debugger;
 
-},{"../tools/binary":28,"../tools/hex":29,"./board/BoardInterface":21,"./cpu/CpuInterface":23,"./cpu/Disassembler":24,"./cpu/Instruction":25,"util":11}],21:[function(require,module,exports){
+},{"../tools/binary":29,"../tools/hex":30,"./board/BoardInterface":22,"./cpu/CpuInterface":24,"./cpu/Disassembler":25,"./cpu/Instruction":26,"util":12}],22:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface;
 (function (BoardInterface) {
-    ;
-    ;
     var TrapPayload = (function () {
         function TrapPayload(reason, board, message) {
             this.reason = reason;
@@ -3933,11 +4181,11 @@ var BoardInterface;
     }());
     BoardInterface.TrapPayload = TrapPayload;
 })(BoardInterface || (BoardInterface = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = BoardInterface;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./Instruction");
 var CpuInterface_1 = require("./CpuInterface");
 function restoreFlagsFromStack(state, bus) {
@@ -3985,7 +4233,8 @@ function opAdc(state, bus, operand) {
     else {
         var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
         state.flags =
-            (state.flags & ~(128 | 2 | 1 | 64)) |
+            (state.flags &
+                ~(128 | 2 | 1 | 64)) |
                 (result & 0x80) |
                 (result ? 0 : 2) |
                 (sum >>> 8) |
@@ -4220,7 +4469,8 @@ function opSbc(state, bus, operand) {
     else {
         operand = (~operand & 0xFF);
         var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
-        state.flags = (state.flags & ~(128 | 2 | 1 | 64)) |
+        state.flags = (state.flags &
+            ~(128 | 2 | 1 | 64)) |
             (result & 0x80) |
             (result ? 0 : 2) |
             (sum >>> 8) |
@@ -4834,8 +5084,9 @@ var Cpu = (function () {
                 this._instructionCallback = opAac;
                 break;
             default:
-                if (this._invalidInstructionCallback)
+                if (this._invalidInstructionCallback) {
                     this._invalidInstructionCallback(this);
+                }
                 return;
         }
         this.state.p = (this.state.p + 1) & 0xFFFF;
@@ -4859,10 +5110,12 @@ var Cpu = (function () {
                 break;
             case 4:
                 value = this._bus.readWord(this.state.p);
-                if ((value & 0xFF) === 0xFF)
+                if ((value & 0xFF) === 0xFF) {
                     this._operand = this._bus.read(value) + (this._bus.read(value & 0xFF00) << 8);
-                else
+                }
+                else {
                     this._operand = this._bus.readWord(value);
+                }
                 this.state.p = (this.state.p + 2) & 0xFFFF;
                 this._opCycles += 4;
                 break;
@@ -4952,11 +5205,11 @@ var Cpu = (function () {
     };
     return Cpu;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Cpu;
 
-},{"./CpuInterface":23,"./Instruction":25}],23:[function(require,module,exports){
+},{"./CpuInterface":24,"./Instruction":26}],24:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var CpuInterface;
 (function (CpuInterface) {
     var State = (function () {
@@ -4974,17 +5227,24 @@ var CpuInterface;
     }());
     CpuInterface.State = State;
 })(CpuInterface || (CpuInterface = {}));
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CpuInterface;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./Instruction");
 var hex = require("../../tools/hex");
 var Disassembler = (function () {
     function Disassembler(_bus) {
         this._bus = _bus;
     }
+    Disassembler.prototype.setBus = function (bus) {
+        this._bus = bus;
+        return this;
+    };
+    Disassembler.prototype.getBus = function () {
+        return this._bus;
+    };
     Disassembler.prototype.disassembleAt = function (address) {
         var _this = this;
         var instruction = Instruction_1.default.opcodes[this._peek(address)], operation = Instruction_1.default.OperationMap[instruction.operation].toUpperCase();
@@ -5032,20 +5292,13 @@ var Disassembler = (function () {
     Disassembler.prototype._peek = function (address) {
         return this._bus.peek(address % 0x10000);
     };
-    Disassembler.prototype.setBus = function (bus) {
-        this._bus = bus;
-        return this;
-    };
-    Disassembler.prototype.getBus = function () {
-        return this._bus;
-    };
     return Disassembler;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Disassembler;
 
-},{"../../tools/hex":29,"./Instruction":25}],25:[function(require,module,exports){
+},{"../../tools/hex":30,"./Instruction":26}],26:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction = (function () {
     function Instruction(operation, addressingMode) {
         this.operation = operation;
@@ -5072,9 +5325,7 @@ var Instruction = (function () {
     };
     return Instruction;
 }());
-;
 (function (Instruction) {
-    ;
     var OperationMap;
     (function (OperationMap) {
         OperationMap[OperationMap["adc"] = 0] = "adc";
@@ -5147,20 +5398,15 @@ var Instruction = (function () {
         OperationMap[OperationMap["aac"] = 67] = "aac";
         OperationMap[OperationMap["invalid"] = 68] = "invalid";
     })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
-    ;
-    ;
     Instruction.opcodes = new Array(256);
 })(Instruction || (Instruction = {}));
-;
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Instruction;
 (function (Instruction) {
-    (function () {
+    var __init;
+    (function (__init) {
         for (var i = 0; i < 256; i++) {
             Instruction.opcodes[i] = new Instruction(68, 12);
         }
-    })();
-    (function () {
         var operation, addressingMode, opcode;
         for (var i = 0; i < 8; i++) {
             switch (i) {
@@ -5189,7 +5435,6 @@ exports.default = Instruction;
                     operation = 43;
                     break;
             }
-            ;
             for (var j = 0; j < 8; j++) {
                 switch (j) {
                     case 0:
@@ -5217,8 +5462,9 @@ exports.default = Instruction;
                         addressingMode = 7;
                         break;
                 }
-                if (operation === 47 && addressingMode === 1)
+                if (operation === 47 && addressingMode === 1) {
                     addressingMode = 12;
+                }
                 if (operation !== 68 && addressingMode !== 12) {
                     opcode = (i << 5) | (j << 2) | 1;
                     Instruction.opcodes[opcode].operation = operation;
@@ -5226,12 +5472,12 @@ exports.default = Instruction;
                 }
             }
         }
-        function set(opcode, operation, addressingMode) {
-            if (Instruction.opcodes[opcode].operation !== 68) {
-                throw new Error("entry for opcode " + opcode + " already exists");
+        function set(_opcode, _operation, _addressingMode) {
+            if (Instruction.opcodes[_opcode].operation !== 68) {
+                throw new Error('entry for opcode ' + _opcode + ' already exists');
             }
-            Instruction.opcodes[opcode].operation = operation;
-            Instruction.opcodes[opcode].addressingMode = addressingMode;
+            Instruction.opcodes[_opcode].operation = _operation;
+            Instruction.opcodes[_opcode].addressingMode = _addressingMode;
         }
         set(0x06, 2, 2);
         set(0x0A, 2, 0);
@@ -5386,12 +5632,12 @@ exports.default = Instruction;
         set(0xF3, 66, 11);
         set(0x0B, 67, 1);
         set(0x2B, 67, 1);
-    })();
+    })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
-;
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var BoardInterface_1 = require("../board/BoardInterface");
 var CpuInterface_1 = require("../cpu/CpuInterface");
@@ -5412,8 +5658,9 @@ var Board = (function () {
         };
         this.cpuClock = this.clock;
         this._bus = this._createBus();
-        if (typeof (cpuFactory) === 'undefined')
+        if (typeof (cpuFactory) === 'undefined') {
             cpuFactory = function (bus) { return new Cpu_1.default(bus); };
+        }
         this._cpu = cpuFactory(this._bus);
         this._cpu.setInvalidInstructionCallback(function () { return _this._onInvalidInstruction(); });
     }
@@ -5428,6 +5675,7 @@ var Board = (function () {
     };
     Board.prototype.reset = function (hard) {
         this._cpu.reset();
+        this._bus.reset();
         if (hard) {
             this._bus.clear();
         }
@@ -5435,8 +5683,9 @@ var Board = (function () {
     };
     Board.prototype.boot = function () {
         var clock = 0;
-        if (this._cpu.executionState !== 0)
-            throw new Error("Already booted!");
+        if (this._cpu.executionState !== 0) {
+            throw new Error('Already booted!');
+        }
         while (this._cpu.executionState !== 1) {
             this._cpu.cycle();
             clock++;
@@ -5483,14 +5732,16 @@ var Board = (function () {
                 clock = 0;
             }
         }
-        if (clock > 0 && this.clock.hasHandlers)
+        if (clock > 0 && this.clock.hasHandlers) {
             this.clock.dispatch(clock);
+        }
         return clock;
     };
     Board.prototype._start = function (scheduler, sliceHint) {
         if (sliceHint === void 0) { sliceHint = 100000; }
-        if (this._runTask)
+        if (this._runTask) {
             return;
+        }
         this._sliceHint = sliceHint;
         this._runTask = scheduler.start(this._executeSlice, this);
     };
@@ -5498,8 +5749,9 @@ var Board = (function () {
         board._tick(board._sliceHint);
     };
     Board.prototype._stop = function () {
-        if (!this._runTask)
+        if (!this._runTask) {
             return;
+        }
         this._runTask.stop();
         this._runTask = undefined;
     };
@@ -5508,19 +5760,21 @@ var Board = (function () {
     };
     return Board;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Board;
 
-},{"../board/BoardInterface":21,"../cpu/Cpu":22,"../cpu/CpuInterface":23,"./Memory":27,"microevent.ts":6}],27:[function(require,module,exports){
+},{"../board/BoardInterface":22,"../cpu/Cpu":23,"../cpu/CpuInterface":24,"./Memory":28,"microevent.ts":6}],28:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Memory = (function () {
     function Memory() {
         this._data = new Uint8Array(0x10000);
         this.clear();
     }
+    Memory.prototype.reset = function () { };
     Memory.prototype.clear = function () {
-        for (var i = 0; i < 0x10000; i++)
+        for (var i = 0; i < 0x10000; i++) {
             this._data[i] = 0;
+        }
     };
     Memory.prototype.read = function (address) {
         return this._data[address];
@@ -5539,23 +5793,25 @@ var Memory = (function () {
     };
     return Memory;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Memory;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function encode(value, width) {
     var result = Math.abs(value).toString(2);
     if (typeof (width) !== 'undefined') {
-        while (result.length < width)
+        while (result.length < width) {
             result = '0' + result;
+        }
     }
     return (value < 0 ? '-' : '') + '0b' + result;
 }
 exports.encode = encode;
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function encodeWithPrefix(value, width, signed, prefix) {
     if (signed === void 0) { signed = true; }
     if (prefix === void 0) { prefix = ''; }
@@ -5565,8 +5821,9 @@ function encodeWithPrefix(value, width, signed, prefix) {
     }
     var result = Math.abs(value).toString(16).toUpperCase();
     if (typeof (width) !== 'undefined') {
-        while (result.length < width)
+        while (result.length < width) {
             result = '0' + result;
+        }
     }
     return (value < 0 ? '-' : '') + prefix + result;
 }
@@ -5593,6 +5850,7 @@ exports.decode = decode;
 
 },{}],"debuggerCLI":[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var DebuggerCLI_1 = require("../cli/DebuggerCLI");
 var JqtermCLIRunner_1 = require("../cli/JqtermCLIRunner");
 var PrepackagedFilesystemProvider_1 = require("../fs/PrepackagedFilesystemProvider");
@@ -5606,5 +5864,5 @@ function run(fileBlob, terminalElt, interruptButton, clearButton) {
 }
 exports.run = run;
 
-},{"../cli/DebuggerCLI":15,"../cli/JqtermCLIRunner":17,"../fs/PrepackagedFilesystemProvider":19}]},{},[])
+},{"../cli/DebuggerCLI":16,"../cli/JqtermCLIRunner":18,"../fs/PrepackagedFilesystemProvider":20}]},{},[])
 //# sourceMappingURL=debuggerCLI.js.map
