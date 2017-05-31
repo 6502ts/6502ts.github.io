@@ -3,8 +3,8 @@
   "sources": [
     "node_modules/browser-pack/_prelude.js",
     "node_modules/base64-js/index.js",
-    "node_modules/buffer/index.js",
-    "node_modules/buffer/node_modules/isarray/index.js",
+    "node_modules/browserify/node_modules/buffer/index.js",
+    "node_modules/browserify/node_modules/isarray/index.js",
     "node_modules/ieee754/index.js",
     "node_modules/microevent.ts/lib/Event.js",
     "node_modules/microevent.ts/lib/index.js",
