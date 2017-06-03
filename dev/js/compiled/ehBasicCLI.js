@@ -4754,12 +4754,13 @@ function opJmp(state, bus, operand) {
     state.p = operand;
 }
 function opJsr(state, bus, operand) {
-    var returnPtr = (state.p + 0xFFFF) & 0xFFFF;
+    var returnPtr = (state.p + 1) & 0xFFFF, addrLo = bus.read(state.p);
+    bus.read(0x0100 + state.s);
     bus.write(0x0100 + state.s, returnPtr >>> 8);
     state.s = (state.s + 0xFF) & 0xFF;
     bus.write(0x0100 + state.s, returnPtr & 0xFF);
     state.s = (state.s + 0xFF) & 0xFF;
-    state.p = operand;
+    state.p = addrLo | (bus.read((state.p + 1) & 0xFFFF) << 8);
 }
 function opLda(state, bus, operand, addressingMode) {
     state.a = addressingMode === 1 ? operand : bus.read(operand);
@@ -4853,6 +4854,7 @@ function opRti(state, bus) {
 }
 function opRts(state, bus) {
     var returnPtr;
+    bus.read(0x0100 + state.s);
     state.s = (state.s + 1) & 0xFF;
     returnPtr = bus.read(0x0100 + state.s);
     state.s = (state.s + 1) & 0xFF;
@@ -5296,7 +5298,7 @@ var Cpu = (function () {
                 this._instructionCallback = opJmp;
                 break;
             case 28:
-                this._opCycles = 3;
+                this._opCycles = 5;
                 this._instructionCallback = opJsr;
                 break;
             case 29:
@@ -5944,7 +5946,7 @@ exports.default = Instruction;
         set(0xD0, 8, 5);
         set(0xF0, 5, 5);
         set(0x00, 10, 0);
-        set(0x20, 28, 3);
+        set(0x20, 28, 0);
         set(0x40, 41, 0);
         set(0x60, 42, 0);
         set(0x08, 36, 0);

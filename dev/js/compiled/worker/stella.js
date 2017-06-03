@@ -2141,12 +2141,13 @@ function opJmp(state, bus, operand) {
     state.p = operand;
 }
 function opJsr(state, bus, operand) {
-    var returnPtr = (state.p + 0xFFFF) & 0xFFFF;
+    var returnPtr = (state.p + 1) & 0xFFFF, addrLo = bus.read(state.p);
+    bus.read(0x0100 + state.s);
     bus.write(0x0100 + state.s, returnPtr >>> 8);
     state.s = (state.s + 0xFF) & 0xFF;
     bus.write(0x0100 + state.s, returnPtr & 0xFF);
     state.s = (state.s + 0xFF) & 0xFF;
-    state.p = operand;
+    state.p = addrLo | (bus.read((state.p + 1) & 0xFFFF) << 8);
 }
 function opLda(state, bus, operand, addressingMode) {
     state.a = addressingMode === 1 ? operand : bus.read(operand);
@@ -2240,6 +2241,7 @@ function opRti(state, bus) {
 }
 function opRts(state, bus) {
     var returnPtr;
+    bus.read(0x0100 + state.s);
     state.s = (state.s + 1) & 0xFF;
     returnPtr = bus.read(0x0100 + state.s);
     state.s = (state.s + 1) & 0xFF;
@@ -2683,7 +2685,7 @@ var Cpu = (function () {
                 this._instructionCallback = opJmp;
                 break;
             case 28:
-                this._opCycles = 3;
+                this._opCycles = 5;
                 this._instructionCallback = opJsr;
                 break;
             case 29:
@@ -3369,7 +3371,7 @@ exports.default = Instruction;
         set(0xD0, 8, 5);
         set(0xF0, 5, 5);
         set(0x00, 10, 0);
-        set(0x20, 28, 3);
+        set(0x20, 28, 0);
         set(0x40, 41, 0);
         set(0x60, 42, 0);
         set(0x08, 36, 0);
@@ -6010,6 +6012,8 @@ var CartridgeFE = (function (_super) {
         var _this = _super.call(this) || this;
         _this._bank0 = new Uint8Array(0x1000);
         _this._bank1 = new Uint8Array(0x1000);
+        _this._lastAccessWasFE = false;
+        _this._lastAddressBusValue = -1;
         if (buffer.length !== 0x2000) {
             throw new Error("buffer is not an 8k cartridge image: wrong length " + buffer.length);
         }
@@ -6036,6 +6040,8 @@ var CartridgeFE = (function (_super) {
     };
     CartridgeFE.prototype.reset = function () {
         this._bank = this._bank0;
+        this._lastAccessWasFE = false;
+        this._lastAddressBusValue = -1;
     };
     CartridgeFE.prototype.read = function (address) {
         return this._bank[address & 0x0FFF];
@@ -6049,17 +6055,23 @@ var CartridgeFE = (function (_super) {
     };
     CartridgeFE.prototype.setBus = function (bus) {
         this._bus = bus;
+        this._bus.event.read.addHandler(CartridgeFE._onBusAccess, this);
+        this._bus.event.write.addHandler(CartridgeFE._onBusAccess, this);
         return this;
-    };
-    CartridgeFE.prototype.notifyCpuCycleComplete = function () {
-        var lastInstruction = this._bus.peek(this._cpu.getLastInstructionPointer());
-        if (lastInstruction === 0x20 ||
-            lastInstruction === 0x60) {
-            this._bank = (this._cpu.state.p & 0x2000) > 0 ? this._bank0 : this._bank1;
-        }
     };
     CartridgeFE.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_FE;
+    };
+    CartridgeFE._onBusAccess = function (accessType, self) {
+        var lastAddressBusValue = self._lastAddressBusValue;
+        self._lastAddressBusValue = self._bus.getLastAddresBusValue();
+        if (self._lastAddressBusValue === lastAddressBusValue) {
+            return;
+        }
+        if (self._lastAccessWasFE) {
+            self._bank = (self._bus.getLastDataBusValue() & 0x20) > 0 ? self._bank0 : self._bank1;
+        }
+        self._lastAccessWasFE = self._bus.getLastAddresBusValue() === 0x01FE;
     };
     return CartridgeFE;
 }(AbstractCartridge_1.default));
