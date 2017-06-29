@@ -5437,7 +5437,7 @@ function InlineParser(options){
 
 module.exports = InlineParser;
 
-},{"./common":110,"./from-code-point.js":111,"./node":114,"./normalize-reference":115,"entities":153,"string.prototype.repeat":578}],114:[function(require,module,exports){
+},{"./common":110,"./from-code-point.js":111,"./node":114,"./normalize-reference":115,"entities":153,"string.prototype.repeat":577}],114:[function(require,module,exports){
 "use strict";
 
 function isContainer(node) {
@@ -14247,7 +14247,7 @@ var readState = exports.readState = function readState(key) {
 };
 }).call(this,require('_process'))
 
-},{"_process":226,"warning":616}],188:[function(require,module,exports){
+},{"_process":226,"warning":615}],188:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -14442,7 +14442,7 @@ var replaceLocation = exports.replaceLocation = function replaceLocation(locatio
 };
 }).call(this,require('_process'))
 
-},{"./BrowserProtocol":186,"./DOMStateStorage":187,"./DOMUtils":188,"./LocationUtils":191,"./PathUtils":192,"_process":226,"warning":616}],191:[function(require,module,exports){
+},{"./BrowserProtocol":186,"./DOMStateStorage":187,"./DOMUtils":188,"./LocationUtils":191,"./PathUtils":192,"_process":226,"warning":615}],191:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -14538,7 +14538,7 @@ var locationsAreEqual = exports.locationsAreEqual = function locationsAreEqual(a
 };
 }).call(this,require('_process'))
 
-},{"./Actions":184,"./PathUtils":192,"_process":226,"invariant":203,"warning":616}],192:[function(require,module,exports){
+},{"./Actions":184,"./PathUtils":192,"_process":226,"invariant":203,"warning":615}],192:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -14638,7 +14638,7 @@ var createPath = exports.createPath = function createPath(location) {
 };
 }).call(this,require('_process'))
 
-},{"_process":226,"warning":616}],193:[function(require,module,exports){
+},{"_process":226,"warning":615}],193:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -14924,7 +14924,7 @@ var createHashHistory = function createHashHistory() {
 exports.default = createHashHistory;
 }).call(this,require('_process'))
 
-},{"./DOMUtils":188,"./ExecutionEnvironment":189,"./HashProtocol":190,"./createHistory":196,"_process":226,"invariant":203,"warning":616}],196:[function(require,module,exports){
+},{"./DOMUtils":188,"./ExecutionEnvironment":189,"./HashProtocol":190,"./createHistory":196,"_process":226,"invariant":203,"warning":615}],196:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -15245,7 +15245,7 @@ var createMemoryHistory = function createMemoryHistory() {
 exports.default = createMemoryHistory;
 }).call(this,require('_process'))
 
-},{"./Actions":184,"./LocationUtils":191,"./PathUtils":192,"./createHistory":196,"_process":226,"invariant":203,"warning":616}],198:[function(require,module,exports){
+},{"./Actions":184,"./LocationUtils":191,"./PathUtils":192,"./createHistory":196,"_process":226,"invariant":203,"warning":615}],198:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -15272,7 +15272,7 @@ var runTransitionHook = function runTransitionHook(hook, location, callback) {
 exports.default = runTransitionHook;
 }).call(this,require('_process'))
 
-},{"_process":226,"warning":616}],199:[function(require,module,exports){
+},{"_process":226,"warning":615}],199:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -18090,7 +18090,7 @@ exports.stringify = function (obj, opts) {
 	}).join('&') : '';
 };
 
-},{"object-assign":224,"strict-uri-encode":577}],234:[function(require,module,exports){
+},{"object-assign":224,"strict-uri-encode":576}],234:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -19698,7 +19698,7 @@ exports['default'] = (0, _bootstrapUtils.bsClass)('checkbox', Checkbox);
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"warning":616}],246:[function(require,module,exports){
+},{"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"warning":615}],246:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -20555,7 +20555,7 @@ exports['default'] = (0, _bootstrapUtils.bsClass)('control-label', ControlLabel)
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"warning":616}],251:[function(require,module,exports){
+},{"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"warning":615}],251:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -20979,7 +20979,7 @@ exports['default'] = UncontrolledDropdown;
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"./ButtonGroup":240,"./DropdownMenu":253,"./DropdownToggle":254,"./utils/PropTypes":322,"./utils/ValidComponentChildren":325,"./utils/bootstrapUtils":326,"./utils/createChainedFunction":328,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"dom-helpers/activeElement":123,"dom-helpers/query/contains":134,"keycode":208,"prop-types":231,"react":558,"react-dom":332,"react-prop-types/lib/all":472,"react-prop-types/lib/elementType":474,"react-prop-types/lib/isRequiredForA11y":475,"uncontrollable":614,"warning":616}],252:[function(require,module,exports){
+},{"./ButtonGroup":240,"./DropdownMenu":253,"./DropdownToggle":254,"./utils/PropTypes":322,"./utils/ValidComponentChildren":325,"./utils/bootstrapUtils":326,"./utils/createChainedFunction":328,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"dom-helpers/activeElement":123,"dom-helpers/query/contains":134,"keycode":208,"prop-types":231,"react":558,"react-dom":332,"react-prop-types/lib/all":472,"react-prop-types/lib/elementType":474,"react-prop-types/lib/isRequiredForA11y":475,"uncontrollable":613,"warning":615}],252:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -21782,7 +21782,7 @@ exports['default'] = (0, _bootstrapUtils.bsClass)('form-control', (0, _bootstrap
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"./FormControlFeedback":258,"./FormControlStatic":259,"./utils/StyleConfig":323,"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"react-prop-types/lib/elementType":474,"warning":616}],258:[function(require,module,exports){
+},{"./FormControlFeedback":258,"./FormControlStatic":259,"./utils/StyleConfig":323,"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"react-prop-types/lib/elementType":474,"warning":615}],258:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -25140,7 +25140,7 @@ exports['default'] = (0, _bootstrapUtils.bsClass)('nav', (0, _bootstrapUtils.bsS
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"./utils/ValidComponentChildren":325,"./utils/bootstrapUtils":326,"./utils/createChainedFunction":328,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"keycode":208,"prop-types":231,"react":558,"react-dom":332,"react-prop-types/lib/all":472,"warning":616}],287:[function(require,module,exports){
+},{"./utils/ValidComponentChildren":325,"./utils/bootstrapUtils":326,"./utils/createChainedFunction":328,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"keycode":208,"prop-types":231,"react":558,"react-dom":332,"react-prop-types/lib/all":472,"warning":615}],287:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -25746,7 +25746,7 @@ UncontrollableNavbar.Link = createSimpleWrapper('a', 'link', 'NavbarLink');
 // Set bsStyles here so they can be overridden.
 exports['default'] = (0, _bootstrapUtils.bsStyles)([_StyleConfig.Style.DEFAULT, _StyleConfig.Style.INVERSE], _StyleConfig.Style.DEFAULT, UncontrollableNavbar);
 module.exports = exports['default'];
-},{"./Grid":262,"./NavbarBrand":290,"./NavbarCollapse":291,"./NavbarHeader":292,"./NavbarToggle":293,"./utils/StyleConfig":323,"./utils/bootstrapUtils":326,"./utils/createChainedFunction":328,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"react-prop-types/lib/elementType":474,"uncontrollable":614}],290:[function(require,module,exports){
+},{"./Grid":262,"./NavbarBrand":290,"./NavbarCollapse":291,"./NavbarHeader":292,"./NavbarToggle":293,"./utils/StyleConfig":323,"./utils/bootstrapUtils":326,"./utils/createChainedFunction":328,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"react-prop-types/lib/elementType":474,"uncontrollable":613}],290:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -26617,7 +26617,7 @@ exports['default'] = OverlayTrigger;
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"./Overlay":294,"./utils/createChainedFunction":328,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"dom-helpers/query/contains":134,"prop-types":231,"react":558,"react-dom":332,"warning":616}],296:[function(require,module,exports){
+},{"./Overlay":294,"./utils/createChainedFunction":328,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"dom-helpers/query/contains":134,"prop-types":231,"react":558,"react-dom":332,"warning":615}],296:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -28292,7 +28292,7 @@ exports['default'] = (0, _bootstrapUtils.bsClass)('radio', Radio);
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"warning":616}],307:[function(require,module,exports){
+},{"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"warning":615}],307:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -28406,7 +28406,7 @@ exports['default'] = (0, _bootstrapUtils.bsClass)('embed-responsive', Responsive
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"warning":616}],308:[function(require,module,exports){
+},{"./utils/bootstrapUtils":326,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"warning":615}],308:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -29046,7 +29046,7 @@ TabContainer.childContextTypes = childContextTypes;
 
 exports['default'] = (0, _uncontrollable2['default'])(TabContainer, { activeKey: 'onSelect' });
 module.exports = exports['default'];
-},{"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"prop-types":231,"react":558,"uncontrollable":614}],314:[function(require,module,exports){
+},{"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"prop-types":231,"react":558,"uncontrollable":613}],314:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -29589,7 +29589,7 @@ exports['default'] = (0, _bootstrapUtils.bsClass)('tab-pane', TabPane);
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"./Fade":255,"./utils/bootstrapUtils":326,"./utils/createChainedFunction":328,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"react-prop-types/lib/elementType":474,"warning":616}],316:[function(require,module,exports){
+},{"./Fade":255,"./utils/bootstrapUtils":326,"./utils/createChainedFunction":328,"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":108,"prop-types":231,"react":558,"react-prop-types/lib/elementType":474,"warning":615}],316:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -29911,7 +29911,7 @@ Tabs.defaultProps = defaultProps;
 
 exports['default'] = (0, _uncontrollable2['default'])(Tabs, { activeKey: 'onSelect' });
 module.exports = exports['default'];
-},{"./Nav":286,"./NavItem":288,"./TabContainer":313,"./TabContent":314,"./utils/ValidComponentChildren":325,"./utils/bootstrapUtils":326,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"prop-types":231,"react":558,"react-prop-types/lib/isRequiredForA11y":475,"uncontrollable":614}],318:[function(require,module,exports){
+},{"./Nav":286,"./NavItem":288,"./TabContainer":313,"./TabContent":314,"./utils/ValidComponentChildren":325,"./utils/bootstrapUtils":326,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"prop-types":231,"react":558,"react-prop-types/lib/isRequiredForA11y":475,"uncontrollable":613}],318:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -31342,7 +31342,7 @@ function _resetWarned() {
 }
 }).call(this,require('_process'))
 
-},{"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/possibleConstructorReturn":15,"babel-runtime/helpers/typeof":16,"warning":616}],330:[function(require,module,exports){
+},{"_process":226,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/possibleConstructorReturn":15,"babel-runtime/helpers/typeof":16,"warning":615}],330:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -48038,7 +48038,7 @@ Modal.Manager = _ModalManager2.default;
 
 exports.default = Modal;
 module.exports = exports['default'];
-},{"./ModalManager":459,"./Portal":461,"./utils/addEventListener":465,"./utils/addFocusListener":466,"./utils/getContainer":468,"./utils/ownerDocument":471,"dom-helpers/activeElement":123,"dom-helpers/query/contains":134,"dom-helpers/util/inDOM":151,"prop-types":231,"react":558,"react-prop-types/lib/componentOrElement":473,"react-prop-types/lib/elementType":474,"warning":616}],459:[function(require,module,exports){
+},{"./ModalManager":459,"./Portal":461,"./utils/addEventListener":465,"./utils/addFocusListener":466,"./utils/getContainer":468,"./utils/ownerDocument":471,"dom-helpers/activeElement":123,"dom-helpers/query/contains":134,"dom-helpers/util/inDOM":151,"prop-types":231,"react":558,"react-prop-types/lib/componentOrElement":473,"react-prop-types/lib/elementType":474,"warning":615}],459:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -50373,7 +50373,7 @@ function whenMapDispatchToPropsIsObject(mapDispatchToProps) {
 }
 
 exports.default = [whenMapDispatchToPropsIsFunction, whenMapDispatchToPropsIsMissing, whenMapDispatchToPropsIsObject];
-},{"./wrapMapToProps":485,"redux":565}],481:[function(require,module,exports){
+},{"./wrapMapToProps":485,"redux":564}],481:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -54288,7 +54288,7 @@ function routerWarning(falseToWarn, message) {
 function _resetWarned() {
   warned = {};
 }
-},{"warning":616}],531:[function(require,module,exports){
+},{"warning":615}],531:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -57365,30 +57365,6 @@ module.exports = require('./lib/React');
 'use strict';
 
 exports.__esModule = true;
-function createThunkMiddleware(extraArgument) {
-  return function (_ref) {
-    var dispatch = _ref.dispatch,
-        getState = _ref.getState;
-    return function (next) {
-      return function (action) {
-        if (typeof action === 'function') {
-          return action(dispatch, getState, extraArgument);
-        }
-
-        return next(action);
-      };
-    };
-  };
-}
-
-var thunk = createThunkMiddleware();
-thunk.withExtraArgument = createThunkMiddleware;
-
-exports['default'] = thunk;
-},{}],560:[function(require,module,exports){
-'use strict';
-
-exports.__esModule = true;
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
@@ -57444,7 +57420,7 @@ function applyMiddleware() {
     };
   };
 }
-},{"./compose":563}],561:[function(require,module,exports){
+},{"./compose":562}],560:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -57496,7 +57472,7 @@ function bindActionCreators(actionCreators, dispatch) {
   }
   return boundActionCreators;
 }
-},{}],562:[function(require,module,exports){
+},{}],561:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -57642,7 +57618,7 @@ function combineReducers(reducers) {
 }
 }).call(this,require('_process'))
 
-},{"./createStore":564,"./utils/warning":566,"_process":226,"lodash/isPlainObject":218}],563:[function(require,module,exports){
+},{"./createStore":563,"./utils/warning":565,"_process":226,"lodash/isPlainObject":218}],562:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -57681,7 +57657,7 @@ function compose() {
     }, last.apply(undefined, arguments));
   };
 }
-},{}],564:[function(require,module,exports){
+},{}],563:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -57943,7 +57919,7 @@ function createStore(reducer, preloadedState, enhancer) {
     replaceReducer: replaceReducer
   }, _ref2[_symbolObservable2['default']] = observable, _ref2;
 }
-},{"lodash/isPlainObject":218,"symbol-observable":609}],565:[function(require,module,exports){
+},{"lodash/isPlainObject":218,"symbol-observable":608}],564:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -57993,7 +57969,7 @@ exports.applyMiddleware = _applyMiddleware2['default'];
 exports.compose = _compose2['default'];
 }).call(this,require('_process'))
 
-},{"./applyMiddleware":560,"./bindActionCreators":561,"./combineReducers":562,"./compose":563,"./createStore":564,"./utils/warning":566,"_process":226}],566:[function(require,module,exports){
+},{"./applyMiddleware":559,"./bindActionCreators":560,"./combineReducers":561,"./compose":562,"./createStore":563,"./utils/warning":565,"_process":226}],565:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -58019,7 +57995,7 @@ function warning(message) {
   } catch (e) {}
   /* eslint-enable no-empty */
 }
-},{}],567:[function(require,module,exports){
+},{}],566:[function(require,module,exports){
 /*!
 * screenfull
 * v3.2.0 - 2017-04-16
@@ -58172,7 +58148,7 @@ function warning(message) {
 	}
 })();
 
-},{}],568:[function(require,module,exports){
+},{}],567:[function(require,module,exports){
 // A library of seedable RNGs implemented in Javascript.
 //
 // Usage:
@@ -58234,7 +58210,7 @@ sr.tychei = tychei;
 
 module.exports = sr;
 
-},{"./lib/alea":569,"./lib/tychei":570,"./lib/xor128":571,"./lib/xor4096":572,"./lib/xorshift7":573,"./lib/xorwow":574,"./seedrandom":575}],569:[function(require,module,exports){
+},{"./lib/alea":568,"./lib/tychei":569,"./lib/xor128":570,"./lib/xor4096":571,"./lib/xorshift7":572,"./lib/xorwow":573,"./seedrandom":574}],568:[function(require,module,exports){
 // A port of an algorithm by Johannes Baagøe <baagoe@baagoe.com>, 2010
 // http://baagoe.com/en/RandomMusings/javascript/
 // https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
@@ -58350,7 +58326,7 @@ if (module && module.exports) {
 
 
 
-},{}],570:[function(require,module,exports){
+},{}],569:[function(require,module,exports){
 // A Javascript implementaion of the "Tyche-i" prng algorithm by
 // Samuel Neves and Filipe Araujo.
 // See https://eden.dei.uc.pt/~sneves/pubs/2011-snfa2.pdf
@@ -58455,7 +58431,7 @@ if (module && module.exports) {
 
 
 
-},{}],571:[function(require,module,exports){
+},{}],570:[function(require,module,exports){
 // A Javascript implementaion of the "xor128" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -58538,7 +58514,7 @@ if (module && module.exports) {
 
 
 
-},{}],572:[function(require,module,exports){
+},{}],571:[function(require,module,exports){
 // A Javascript implementaion of Richard Brent's Xorgens xor4096 algorithm.
 //
 // This fast non-cryptographic random number generator is designed for
@@ -58686,7 +58662,7 @@ if (module && module.exports) {
   (typeof define) == 'function' && define   // present with an AMD loader
 );
 
-},{}],573:[function(require,module,exports){
+},{}],572:[function(require,module,exports){
 // A Javascript implementaion of the "xorshift7" algorithm by
 // François Panneton and Pierre L'ecuyer:
 // "On the Xorgshift Random Number Generators"
@@ -58785,7 +58761,7 @@ if (module && module.exports) {
 );
 
 
-},{}],574:[function(require,module,exports){
+},{}],573:[function(require,module,exports){
 // A Javascript implementaion of the "xorwow" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -58873,7 +58849,7 @@ if (module && module.exports) {
 
 
 
-},{}],575:[function(require,module,exports){
+},{}],574:[function(require,module,exports){
 /*
 Copyright 2014 David Bau.
 
@@ -59122,7 +59098,7 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":104}],576:[function(require,module,exports){
+},{"crypto":104}],575:[function(require,module,exports){
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
@@ -59384,7 +59360,7 @@ return index;
 })));
 
 
-},{}],577:[function(require,module,exports){
+},{}],576:[function(require,module,exports){
 'use strict';
 module.exports = function (str) {
 	return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
@@ -59392,7 +59368,7 @@ module.exports = function (str) {
 	});
 };
 
-},{}],578:[function(require,module,exports){
+},{}],577:[function(require,module,exports){
 /*! http://mths.be/repeat v0.2.0 by @mathias */
 if (!String.prototype.repeat) {
 	(function() {
@@ -59444,7 +59420,7 @@ if (!String.prototype.repeat) {
 	}());
 }
 
-},{}],579:[function(require,module,exports){
+},{}],578:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -59489,7 +59465,7 @@ exports.default = function (css) {
 };
 
 module.exports = exports['default'];
-},{"../types":594,"prop-types":231}],580:[function(require,module,exports){
+},{"../types":593,"prop-types":231}],579:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -59517,7 +59493,7 @@ exports.default = function (strings) {
 };
 
 module.exports = exports['default'];
-},{"../types":594,"../utils/flatten":599,"../utils/interleave":602,"prop-types":231}],581:[function(require,module,exports){
+},{"../types":593,"../utils/flatten":598,"../utils/interleave":601,"prop-types":231}],580:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -59555,7 +59531,7 @@ exports.default = function (stringifyRules, css) {
 };
 
 module.exports = exports['default'];
-},{"../models/StyleSheet":590,"../types":594,"../vendor/glamor/hash":607,"prop-types":231}],582:[function(require,module,exports){
+},{"../models/StyleSheet":589,"../types":593,"../vendor/glamor/hash":606,"prop-types":231}],581:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -59602,7 +59578,7 @@ exports.default = function (nameGenerator, stringifyRules, css) {
 };
 
 module.exports = exports['default'];
-},{"../models/StyleSheet":590,"../types":594,"../vendor/glamor/hash":607,"prop-types":231}],583:[function(require,module,exports){
+},{"../models/StyleSheet":589,"../types":593,"../vendor/glamor/hash":606,"prop-types":231}],582:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -59629,7 +59605,7 @@ exports.default = function (styledComponent, constructWithOptions) {
 };
 
 module.exports = exports['default'];
-},{"../types":594,"../utils/domElements":597,"prop-types":231}],584:[function(require,module,exports){
+},{"../types":593,"../utils/domElements":596,"prop-types":231}],583:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -59732,7 +59708,7 @@ var wrapWithTheme = function wrapWithTheme(Component) {
 
 exports.default = wrapWithTheme;
 module.exports = exports['default'];
-},{"../models/ThemeProvider":593,"../utils/isStyledComponent":603,"hoist-non-react-statics":201,"prop-types":231,"react":558}],585:[function(require,module,exports){
+},{"../models/ThemeProvider":592,"../utils/isStyledComponent":602,"hoist-non-react-statics":201,"prop-types":231,"react":558}],584:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -59827,7 +59803,7 @@ exports.ThemeProvider = _ThemeProvider2.default;
 exports.withTheme = _withTheme2.default;
 exports.ServerStyleSheet = _ServerStyleSheet2.default;
 exports.StyleSheetManager = _StyleSheetManager2.default;
-},{"./constructors/constructWithOptions":579,"./constructors/css":580,"./constructors/injectGlobal":581,"./constructors/keyframes":582,"./constructors/styled":583,"./hoc/withTheme":584,"./models/ComponentStyle":588,"./models/ServerStyleSheet":589,"./models/StyleSheetManager":591,"./models/StyledComponent":592,"./models/ThemeProvider":593,"./utils/flatten":599,"./utils/generateAlphabeticName":600,"./utils/stringifyRules":605}],586:[function(require,module,exports){
+},{"./constructors/constructWithOptions":578,"./constructors/css":579,"./constructors/injectGlobal":580,"./constructors/keyframes":581,"./constructors/styled":582,"./hoc/withTheme":583,"./models/ComponentStyle":587,"./models/ServerStyleSheet":588,"./models/StyleSheetManager":590,"./models/StyledComponent":591,"./models/ThemeProvider":592,"./utils/flatten":598,"./utils/generateAlphabeticName":599,"./utils/stringifyRules":604}],585:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -59871,7 +59847,7 @@ exports.default = AbstractStyledComponent;
 
 AbstractStyledComponent.contextTypes = (_AbstractStyledCompon = {}, _AbstractStyledCompon[_ThemeProvider.CHANNEL] = _propTypes2.default.func, _AbstractStyledCompon[_StyleSheet.CONTEXT_KEY] = _propTypes2.default.instanceOf(_StyleSheet2.default), _AbstractStyledCompon);
 module.exports = exports['default'];
-},{"./StyleSheet":590,"./ThemeProvider":593,"prop-types":231,"react":558}],587:[function(require,module,exports){
+},{"./StyleSheet":589,"./ThemeProvider":592,"prop-types":231,"react":558}],586:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -60042,7 +60018,7 @@ exports.default = {
     return new _StyleSheet2.default(tagConstructor, tags, names);
   }
 };
-},{"../utils/extractCompsFromCSS":598,"./StyleSheet":590,"prop-types":231}],588:[function(require,module,exports){
+},{"../utils/extractCompsFromCSS":597,"./StyleSheet":589,"prop-types":231}],587:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -60120,7 +60096,7 @@ exports.default = function (nameGenerator, flatten, stringifyRules) {
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"../types":594,"../vendor/glamor/hash":607,"./StyleSheet":590,"_process":226,"prop-types":231}],589:[function(require,module,exports){
+},{"../types":593,"../vendor/glamor/hash":606,"./StyleSheet":589,"_process":226,"prop-types":231}],588:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -60265,7 +60241,7 @@ var ServerStyleSheet = function () {
 
 exports.default = ServerStyleSheet;
 module.exports = exports['default'];
-},{"./StyleSheet":590,"./StyleSheetManager":591,"prop-types":231,"react":558}],590:[function(require,module,exports){
+},{"./StyleSheet":589,"./StyleSheetManager":590,"prop-types":231,"react":558}],589:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -60453,7 +60429,7 @@ var StyleSheet = function () {
 }();
 
 exports.default = StyleSheet;
-},{"./BrowserStyleSheet":587,"./ServerStyleSheet":589,"react":558}],591:[function(require,module,exports){
+},{"./BrowserStyleSheet":586,"./ServerStyleSheet":588,"react":558}],590:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -60512,7 +60488,7 @@ StyleSheetManager.propTypes = {
 
 exports.default = StyleSheetManager;
 module.exports = exports['default'];
-},{"./StyleSheet":590,"prop-types":231,"react":558}],592:[function(require,module,exports){
+},{"./StyleSheet":589,"prop-types":231,"react":558}],591:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -60804,7 +60780,7 @@ exports.default = function (ComponentStyle, constructWithOptions) {
 module.exports = exports['default'];
 }).call(this,require('_process'))
 
-},{"../types":594,"../utils/createWarnTooManyClasses":596,"../utils/getComponentName":601,"../utils/isStyledComponent":603,"../utils/isTag":604,"../utils/validAttr":606,"./AbstractStyledComponent":586,"./StyleSheet":590,"./ThemeProvider":593,"_process":226,"prop-types":231,"react":558}],593:[function(require,module,exports){
+},{"../types":593,"../utils/createWarnTooManyClasses":595,"../utils/getComponentName":600,"../utils/isStyledComponent":602,"../utils/isTag":603,"../utils/validAttr":605,"./AbstractStyledComponent":585,"./StyleSheet":589,"./ThemeProvider":592,"_process":226,"prop-types":231,"react":558}],592:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -60937,9 +60913,9 @@ ThemeProvider.childContextTypes = (_ThemeProvider$childC = {}, _ThemeProvider$ch
 ThemeProvider.contextTypes = (_ThemeProvider$contex = {}, _ThemeProvider$contex[CHANNEL] = _propTypes2.default.func, _ThemeProvider$contex);
 
 exports.default = ThemeProvider;
-},{"../utils/create-broadcast":595,"is-function":205,"is-plain-object":206,"prop-types":231,"react":558}],594:[function(require,module,exports){
+},{"../utils/create-broadcast":594,"is-function":205,"is-plain-object":206,"prop-types":231,"react":558}],593:[function(require,module,exports){
 "use strict";
-},{}],595:[function(require,module,exports){
+},{}],594:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -60983,7 +60959,7 @@ var createBroadcast = function createBroadcast(initialValue) {
 
 exports.default = createBroadcast;
 module.exports = exports["default"];
-},{"prop-types":231}],596:[function(require,module,exports){
+},{"prop-types":231}],595:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61008,7 +60984,7 @@ exports.default = function (displayName) {
 };
 
 module.exports = exports['default'];
-},{}],597:[function(require,module,exports){
+},{}],596:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61020,7 +60996,7 @@ exports.default = ['a', 'abbr', 'address', 'area', 'article', 'aside', 'audio', 
 // SVG
 'circle', 'clipPath', 'defs', 'ellipse', 'g', 'image', 'line', 'linearGradient', 'mask', 'path', 'pattern', 'polygon', 'polyline', 'radialGradient', 'rect', 'stop', 'svg', 'text', 'tspan'];
 module.exports = exports['default'];
-},{}],598:[function(require,module,exports){
+},{}],597:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61044,7 +61020,7 @@ exports.default = function (maybeCSS) {
 };
 
 module.exports = exports['default'];
-},{}],599:[function(require,module,exports){
+},{}],598:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61093,7 +61069,7 @@ var flatten = function flatten(chunks, executionContext) {
 };
 
 exports.default = flatten;
-},{"../types":594,"fbjs/lib/hyphenateStyleName":175,"is-plain-object":206,"prop-types":231}],600:[function(require,module,exports){
+},{"../types":593,"fbjs/lib/hyphenateStyleName":175,"is-plain-object":206,"prop-types":231}],599:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61114,7 +61090,7 @@ var generateAlphabeticName = function generateAlphabeticName(code) {
 
 exports.default = generateAlphabeticName;
 module.exports = exports['default'];
-},{}],601:[function(require,module,exports){
+},{}],600:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61126,7 +61102,7 @@ function getComponentName(target) {
   return target.displayName || target.name || 'Component';
 }
 module.exports = exports['default'];
-},{}],602:[function(require,module,exports){
+},{}],601:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61140,7 +61116,7 @@ exports.default = function (strings, interpolations) {
 };
 
 module.exports = exports['default'];
-},{"../types":594,"prop-types":231}],603:[function(require,module,exports){
+},{"../types":593,"prop-types":231}],602:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61152,7 +61128,7 @@ function isStyledComponent(target) /* : %checks */{
   return typeof target === 'function' && typeof target.styledComponentId === 'string';
 }
 module.exports = exports['default'];
-},{"../types":594,"prop-types":231}],604:[function(require,module,exports){
+},{"../types":593,"prop-types":231}],603:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61164,7 +61140,7 @@ function isTag(target) /* : %checks */{
   return typeof target === 'string';
 }
 module.exports = exports['default'];
-},{"../types":594,"prop-types":231}],605:[function(require,module,exports){
+},{"../types":593,"prop-types":231}],604:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61189,7 +61165,7 @@ var stringifyRules = function stringifyRules(rules, selector, prefix) {
 
 exports.default = stringifyRules;
 module.exports = exports['default'];
-},{"../types":594,"prop-types":231,"stylis":608}],606:[function(require,module,exports){
+},{"../types":593,"prop-types":231,"stylis":607}],605:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61788,7 +61764,7 @@ exports.default = function (name) {
 };
 
 module.exports = exports['default'];
-},{}],607:[function(require,module,exports){
+},{}],606:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -61858,7 +61834,7 @@ function Umul32(n, m) {
   return res;
 }
 module.exports = exports["default"];
-},{}],608:[function(require,module,exports){
+},{}],607:[function(require,module,exports){
 (function (global){
 /*
  *          __        ___
@@ -63134,10 +63110,10 @@ module.exports = exports["default"];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],609:[function(require,module,exports){
+},{}],608:[function(require,module,exports){
 module.exports = require('./lib/index');
 
-},{"./lib/index":610}],610:[function(require,module,exports){
+},{"./lib/index":609}],609:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -63170,7 +63146,7 @@ var result = (0, _ponyfill2['default'])(root);
 exports['default'] = result;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./ponyfill":611}],611:[function(require,module,exports){
+},{"./ponyfill":610}],610:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -63194,7 +63170,7 @@ function symbolObservablePonyfill(root) {
 
 	return result;
 };
-},{}],612:[function(require,module,exports){
+},{}],611:[function(require,module,exports){
 (function (global){
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -63408,7 +63384,7 @@ var __asyncValues;
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],613:[function(require,module,exports){
+},{}],612:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -63604,7 +63580,7 @@ function createUncontrollable(mixin, set) {
   }
 }
 module.exports = exports['default'];
-},{"./utils":615,"invariant":203,"react":558}],614:[function(require,module,exports){
+},{"./utils":614,"invariant":203,"react":558}],613:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -63636,7 +63612,7 @@ function set(component, propName, handler, value, args) {
 
 exports.default = (0, _createUncontrollable2.default)(mixin, set);
 module.exports = exports['default'];
-},{"./createUncontrollable":613}],615:[function(require,module,exports){
+},{"./createUncontrollable":612}],614:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -63756,7 +63732,7 @@ function isReactComponent(component) {
 }
 }).call(this,require('_process'))
 
-},{"_process":226,"invariant":203,"react":558}],616:[function(require,module,exports){
+},{"_process":226,"invariant":203,"react":558}],615:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -63821,7 +63797,7 @@ module.exports = warning;
 
 }).call(this,require('_process'))
 
-},{"_process":226}],617:[function(require,module,exports){
+},{"_process":226}],616:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var MSG_RESOLVE_TRANSACTION = "resolve_transaction", MSG_REJECT_TRANSACTION = "reject_transaction", MSG_ERROR = "error";
@@ -63990,12 +63966,12 @@ var RpcProvider;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = RpcProvider;
 
-},{"microevent.ts":223}],618:[function(require,module,exports){
+},{"microevent.ts":223}],617:[function(require,module,exports){
 "use strict";
 var RpcProvider_1 = require('./RpcProvider');
 exports.RpcProvider = RpcProvider_1.default;
 
-},{"./RpcProvider":617}],619:[function(require,module,exports){
+},{"./RpcProvider":616}],618:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface;
@@ -64012,7 +63988,7 @@ var BoardInterface;
 })(BoardInterface || (BoardInterface = {}));
 exports.default = BoardInterface;
 
-},{}],620:[function(require,module,exports){
+},{}],619:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./Instruction");
@@ -65038,7 +65014,7 @@ var Cpu = (function () {
 }());
 exports.default = Cpu;
 
-},{"./CpuInterface":621,"./Instruction":622}],621:[function(require,module,exports){
+},{"./CpuInterface":620,"./Instruction":621}],620:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CpuInterface;
@@ -65060,7 +65036,7 @@ var CpuInterface;
 })(CpuInterface || (CpuInterface = {}));
 exports.default = CpuInterface;
 
-},{}],622:[function(require,module,exports){
+},{}],621:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction = (function () {
@@ -65399,7 +65375,7 @@ exports.default = Instruction;
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
 
-},{}],623:[function(require,module,exports){
+},{}],622:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Switch_1 = require("./Switch");
@@ -65430,7 +65406,7 @@ var DigitalJoystick = (function () {
 }());
 exports.default = DigitalJoystick;
 
-},{"./Switch":625}],624:[function(require,module,exports){
+},{"./Switch":624}],623:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -65455,7 +65431,7 @@ var Paddle = (function () {
 }());
 exports.default = Paddle;
 
-},{"./Switch":625,"microevent.ts":223}],625:[function(require,module,exports){
+},{"./Switch":624,"microevent.ts":223}],624:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -65484,7 +65460,7 @@ var Switch = (function () {
 }());
 exports.default = Switch;
 
-},{"microevent.ts":223}],626:[function(require,module,exports){
+},{"microevent.ts":223}],625:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -65723,7 +65699,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../../tools/rng/factory":680,"../board/BoardInterface":619,"../cpu/Cpu":620,"../cpu/CpuInterface":621,"../io/DigitalJoystick":623,"../io/Paddle":624,"./Bus":627,"./Config":628,"./ControlPanel":629,"./Pia":630,"./tia/Tia":667,"microevent.ts":223}],627:[function(require,module,exports){
+},{"../../tools/rng/factory":679,"../board/BoardInterface":618,"../cpu/Cpu":619,"../cpu/CpuInterface":620,"../io/DigitalJoystick":622,"../io/Paddle":623,"./Bus":626,"./Config":627,"./ControlPanel":628,"./Pia":629,"./tia/Tia":666,"microevent.ts":223}],626:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -65843,7 +65819,7 @@ var Bus = (function () {
 })(Bus || (Bus = {}));
 exports.default = Bus;
 
-},{"microevent.ts":223}],628:[function(require,module,exports){
+},{"microevent.ts":223}],627:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config = (function () {
@@ -65870,7 +65846,7 @@ var Config = (function () {
 }());
 exports.default = Config;
 
-},{}],629:[function(require,module,exports){
+},{}],628:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Switch_1 = require("../io/Switch");
@@ -65901,7 +65877,7 @@ var ControlPanel = (function () {
 }());
 exports.default = ControlPanel;
 
-},{"../io/Switch":625}],630:[function(require,module,exports){
+},{"../io/Switch":624}],629:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -66070,7 +66046,7 @@ var Pia = (function () {
 })(Pia || (Pia = {}));
 exports.default = Pia;
 
-},{"microevent.ts":223}],631:[function(require,module,exports){
+},{"microevent.ts":223}],630:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -66114,7 +66090,7 @@ var AbstractCartridge = (function () {
 }());
 exports.default = AbstractCartridge;
 
-},{"./CartridgeInfo":649,"./CartridgeInterface":650,"microevent.ts":223}],632:[function(require,module,exports){
+},{"./CartridgeInfo":648,"./CartridgeInterface":649,"microevent.ts":223}],631:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -66143,7 +66119,7 @@ var Cartridge2k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge2k;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"tslib":612}],633:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"tslib":611}],632:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -66255,7 +66231,7 @@ var Cartridge3E = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3E;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"./util":657,"tslib":612}],634:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"./util":656,"tslib":611}],633:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -66292,6 +66268,7 @@ var Cartridge3F = (function (_super) {
     };
     Cartridge3F.prototype.setBus = function (bus) {
         this._bus = bus;
+        this._bus.event.read.addHandler(Cartridge3F._onBusAccess, this);
         this._bus.event.write.addHandler(Cartridge3F._onBusAccess, this);
         return this;
     };
@@ -66303,7 +66280,7 @@ var Cartridge3F = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_3F;
     };
     Cartridge3F._onBusAccess = function (accessType, self) {
-        if (self._bus.getLastAddresBusValue() <= 0x003F) {
+        if (self._bus.getLastAddresBusValue() === 0x003F) {
             self._bank0 = self._banks[self._bus.getLastDataBusValue() & 0x03];
         }
     };
@@ -66311,7 +66288,7 @@ var Cartridge3F = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3F;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"./util":657,"tslib":612}],635:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"./util":656,"tslib":611}],634:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -66341,7 +66318,7 @@ var Cartridge4k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge4k;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"tslib":612}],636:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"tslib":611}],635:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -66529,7 +66506,7 @@ var Fetcher = (function () {
 }());
 exports.default = CartridgeDPC;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"tslib":612}],637:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"tslib":611}],636:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -66952,7 +66929,7 @@ var FractionalFetcher = (function () {
 }());
 exports.default = CartridgeDPCPlus;
 
-},{"../../../tools/hex":674,"./AbstractCartridge":631,"./CartridgeInfo":649,"./CartridgeInterface":650,"./thumbulator/Thumbulator":655,"./util":657,"tslib":612}],638:[function(require,module,exports){
+},{"../../../tools/hex":673,"./AbstractCartridge":630,"./CartridgeInfo":648,"./CartridgeInterface":649,"./thumbulator/Thumbulator":654,"./util":656,"tslib":611}],637:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo_1 = require("./CartridgeInfo");
@@ -67040,7 +67017,7 @@ var CartridgeDetector = (function () {
 }());
 exports.default = CartridgeDetector;
 
-},{"./Cartridge3E":633,"./Cartridge3F":634,"./CartridgeDPCPlus":637,"./CartridgeE0":639,"./CartridgeE7":640,"./CartridgeF8":644,"./CartridgeFA2":646,"./CartridgeFE":647,"./CartridgeInfo":649,"./CartridgeUA":652}],639:[function(require,module,exports){
+},{"./Cartridge3E":632,"./Cartridge3F":633,"./CartridgeDPCPlus":636,"./CartridgeE0":638,"./CartridgeE7":639,"./CartridgeF8":643,"./CartridgeFA2":645,"./CartridgeFE":646,"./CartridgeInfo":648,"./CartridgeUA":651}],638:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -67126,7 +67103,7 @@ var CartridgeE0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeE0;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"./util":657,"tslib":612}],640:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"./util":656,"tslib":611}],639:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -67252,7 +67229,7 @@ var CartrdigeE7 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartrdigeE7;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"./util":657,"tslib":612}],641:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"./util":656,"tslib":611}],640:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -67308,7 +67285,7 @@ var CartridgeF0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF0;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"tslib":612}],642:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"tslib":611}],641:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -67387,7 +67364,7 @@ var CartridgeF4 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF4;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"tslib":612}],643:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"tslib":611}],642:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -67477,7 +67454,7 @@ var CartridgeF6 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF6;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"tslib":612}],644:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"tslib":611}],643:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -67562,7 +67539,7 @@ var CartridgeF8 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF8;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"./util":657,"tslib":612}],645:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"./util":656,"tslib":611}],644:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -67638,7 +67615,7 @@ var CartridgeFA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"tslib":612}],646:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"tslib":611}],645:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -67751,7 +67728,7 @@ var CartridgeFA2 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA2;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"./util":657,"tslib":612}],647:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"./util":656,"tslib":611}],646:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -67829,7 +67806,7 @@ var CartridgeFE = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFE;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"./util":657,"tslib":612}],648:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"./util":656,"tslib":611}],647:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Cartridge2k_1 = require("./Cartridge2k");
@@ -67902,7 +67879,7 @@ var CartridgeFactory = (function () {
 }());
 exports.default = CartridgeFactory;
 
-},{"./Cartridge2k":632,"./Cartridge3E":633,"./Cartridge3F":634,"./Cartridge4k":635,"./CartridgeDPC":636,"./CartridgeDPCPlus":637,"./CartridgeDetector":638,"./CartridgeE0":639,"./CartridgeE7":640,"./CartridgeF0":641,"./CartridgeF4":642,"./CartridgeF6":643,"./CartridgeF8":644,"./CartridgeFA":645,"./CartridgeFA2":646,"./CartridgeFE":647,"./CartridgeInfo":649,"./CartridgeSupercharger":651,"./CartridgeUA":652}],649:[function(require,module,exports){
+},{"./Cartridge2k":631,"./Cartridge3E":632,"./Cartridge3F":633,"./Cartridge4k":634,"./CartridgeDPC":635,"./CartridgeDPCPlus":636,"./CartridgeDetector":637,"./CartridgeE0":638,"./CartridgeE7":639,"./CartridgeF0":640,"./CartridgeF4":641,"./CartridgeF6":642,"./CartridgeF8":643,"./CartridgeFA":644,"./CartridgeFA2":645,"./CartridgeFE":646,"./CartridgeInfo":648,"./CartridgeSupercharger":650,"./CartridgeUA":651}],648:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo;
@@ -67995,7 +67972,7 @@ var CartridgeInfo;
 })(CartridgeInfo || (CartridgeInfo = {}));
 exports.default = CartridgeInfo;
 
-},{}],650:[function(require,module,exports){
+},{}],649:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInterface;
@@ -68012,7 +67989,7 @@ var CartridgeInterface;
 })(CartridgeInterface || (CartridgeInterface = {}));
 exports.default = CartridgeInterface;
 
-},{}],651:[function(require,module,exports){
+},{}],650:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -68211,7 +68188,7 @@ var CartridgeSupercharger = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeSupercharger;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"./supercharger/Header":653,"./supercharger/blob":654,"tslib":612}],652:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"./supercharger/Header":652,"./supercharger/blob":653,"tslib":611}],651:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -68278,7 +68255,7 @@ var CartridgeUA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeUA;
 
-},{"./AbstractCartridge":631,"./CartridgeInfo":649,"./util":657,"tslib":612}],653:[function(require,module,exports){
+},{"./AbstractCartridge":630,"./CartridgeInfo":648,"./util":656,"tslib":611}],652:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Header = (function () {
@@ -68315,7 +68292,7 @@ var Header = (function () {
 }());
 exports.default = Header;
 
-},{}],654:[function(require,module,exports){
+},{}],653:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bios = new Uint8Array([
@@ -68392,7 +68369,7 @@ exports.defaultHeader = new Uint8Array([
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00
 ]);
 
-},{}],655:[function(require,module,exports){
+},{}],654:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var nativeThumbulator = require("./native/thumbulator");
@@ -68440,7 +68417,7 @@ var Thumbulator = (function () {
 }());
 exports.default = Thumbulator;
 
-},{"./native/thumbulator":656}],656:[function(require,module,exports){
+},{"./native/thumbulator":655}],655:[function(require,module,exports){
 (function (process){
 var Module = function (Module) {
     Module = Module || {};
@@ -76043,7 +76020,7 @@ module.exports = Module;
 
 }).call(this,require('_process'))
 
-},{"_process":226,"path":225}],657:[function(require,module,exports){
+},{"_process":226,"path":225}],656:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function searchForSignatures(buffer, signatures) {
@@ -76082,7 +76059,7 @@ function searchForSignatures(buffer, signatures) {
 }
 exports.searchForSignatures = searchForSignatures;
 
-},{}],658:[function(require,module,exports){
+},{}],657:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -76157,7 +76134,7 @@ var Audio = (function () {
 }());
 exports.default = Audio;
 
-},{"./ToneGenerator":668,"microevent.ts":223}],659:[function(require,module,exports){
+},{"./ToneGenerator":667,"microevent.ts":223}],658:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Ball = (function () {
@@ -76294,7 +76271,7 @@ var Ball = (function () {
 }());
 exports.default = Ball;
 
-},{}],660:[function(require,module,exports){
+},{}],659:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DelayQueue = (function () {
@@ -76368,7 +76345,7 @@ var QueueEntry = (function () {
 }());
 exports.default = DelayQueue;
 
-},{}],661:[function(require,module,exports){
+},{}],660:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -76542,7 +76519,7 @@ var FrameManager = (function () {
 }());
 exports.default = FrameManager;
 
-},{"../Config":628,"microevent.ts":223}],662:[function(require,module,exports){
+},{"../Config":627,"microevent.ts":223}],661:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var LatchedInput = (function () {
@@ -76577,7 +76554,7 @@ var LatchedInput = (function () {
 }());
 exports.default = LatchedInput;
 
-},{}],663:[function(require,module,exports){
+},{}],662:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -76735,7 +76712,7 @@ var Missile = (function () {
 }());
 exports.default = Missile;
 
-},{"./drawCounterDecodes":669}],664:[function(require,module,exports){
+},{"./drawCounterDecodes":668}],663:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var C = 68e-9, RPOT = 1e6, R0 = 1.8e3, U = 5, LINES_FULL = 380;
@@ -76792,7 +76769,7 @@ var PaddleReader = (function () {
 }());
 exports.default = PaddleReader;
 
-},{}],665:[function(require,module,exports){
+},{}],664:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -77051,7 +77028,7 @@ var Player = (function () {
 }());
 exports.default = Player;
 
-},{"./drawCounterDecodes":669}],666:[function(require,module,exports){
+},{"./drawCounterDecodes":668}],665:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Playfield = (function () {
@@ -77194,7 +77171,7 @@ var Playfield = (function () {
 }());
 exports.default = Playfield;
 
-},{}],667:[function(require,module,exports){
+},{}],666:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -77864,7 +77841,7 @@ var Tia = (function () {
 })(Tia || (Tia = {}));
 exports.default = Tia;
 
-},{"../Config":628,"./Audio":658,"./Ball":659,"./DelayQueue":660,"./FrameManager":661,"./LatchedInput":662,"./Missile":663,"./PaddleReader":664,"./Player":665,"./Playfield":666,"./palette":670,"microevent.ts":223}],668:[function(require,module,exports){
+},{"../Config":627,"./Audio":657,"./Ball":658,"./DelayQueue":659,"./FrameManager":660,"./LatchedInput":661,"./Missile":662,"./PaddleReader":663,"./Player":664,"./Playfield":665,"./palette":669,"microevent.ts":223}],667:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../Config");
@@ -77962,7 +77939,7 @@ var ToneGenerator = (function () {
 }());
 exports.default = ToneGenerator;
 
-},{"../../../tools/AudioOutputBuffer":671,"../Config":628}],669:[function(require,module,exports){
+},{"../../../tools/AudioOutputBuffer":670,"../Config":627}],668:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160);
@@ -78005,7 +77982,7 @@ decodes3[12] = decodes3[28] = 1;
 decodes4[60] = 1;
 decodes6[28] = decodes6[60] = 1;
 
-},{}],670:[function(require,module,exports){
+},{}],669:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NTSC = new Uint32Array([
@@ -78399,7 +78376,7 @@ exports.SECAM = new Uint32Array([
     0xffffffff,
 ]);
 
-},{}],671:[function(require,module,exports){
+},{}],670:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var AudioOutputBuffer = (function () {
@@ -78420,7 +78397,7 @@ var AudioOutputBuffer = (function () {
 }());
 exports.default = AudioOutputBuffer;
 
-},{}],672:[function(require,module,exports){
+},{}],671:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -78481,7 +78458,7 @@ var ClockProbe = (function () {
 }());
 exports.default = ClockProbe;
 
-},{"microevent.ts":223}],673:[function(require,module,exports){
+},{"microevent.ts":223}],672:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78493,7 +78470,7 @@ exports.calculateFromUint8Array = calculateFromUint8Array;
 
 }).call(this,require("buffer").Buffer)
 
-},{"buffer":105,"md5":219}],674:[function(require,module,exports){
+},{"buffer":105,"md5":219}],673:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encodeWithPrefix(value, width, signed, prefix) {
@@ -78532,7 +78509,7 @@ function decode(value) {
 }
 exports.decode = decode;
 
-},{}],675:[function(require,module,exports){
+},{}],674:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember = (function () {
@@ -78553,7 +78530,7 @@ var InducedMember = (function () {
 }());
 exports.default = InducedMember;
 
-},{}],676:[function(require,module,exports){
+},{}],675:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember_1 = require("./InducedMember");
@@ -78572,7 +78549,7 @@ var InducedPool = (function () {
 }());
 exports.default = InducedPool;
 
-},{"./InducedMember":675}],677:[function(require,module,exports){
+},{"./InducedMember":674}],676:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -78630,7 +78607,7 @@ var Pool = (function () {
 }());
 exports.default = Pool;
 
-},{"./PoolMember":678,"microevent.ts":223}],678:[function(require,module,exports){
+},{"./PoolMember":677,"microevent.ts":223}],677:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PoolMember = (function () {
@@ -78657,7 +78634,7 @@ var PoolMember = (function () {
 }());
 exports.default = PoolMember;
 
-},{}],679:[function(require,module,exports){
+},{}],678:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var SeedrandomGenerator = (function () {
@@ -78683,7 +78660,7 @@ var SeedrandomGenerator = (function () {
 }());
 exports.default = SeedrandomGenerator;
 
-},{}],680:[function(require,module,exports){
+},{}],679:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var seedrandom = require("seedrandom");
@@ -78704,7 +78681,7 @@ function restoreRng(state) {
 }
 exports.restoreRng = restoreRng;
 
-},{"./SeedrandomGenerator":679,"seedrandom":568}],681:[function(require,module,exports){
+},{"./SeedrandomGenerator":678,"seedrandom":567}],680:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler_1 = require("./PeriodicScheduler");
@@ -78757,7 +78734,7 @@ var Factory = (function () {
 }());
 exports.default = Factory;
 
-},{"./ImmedateScheduler":682,"./PeriodicScheduler":683,"./limiting/BusyWait":685,"./limiting/ConstantCycles":686,"./limiting/ConstantTimeslice":687}],682:[function(require,module,exports){
+},{"./ImmedateScheduler":681,"./PeriodicScheduler":682,"./limiting/BusyWait":684,"./limiting/ConstantCycles":685,"./limiting/ConstantTimeslice":686}],681:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var setImmediate_1 = require("./setImmediate");
@@ -78782,7 +78759,7 @@ var ImmediateScheduler = (function () {
 }());
 exports.default = ImmediateScheduler;
 
-},{"./setImmediate":688}],683:[function(require,module,exports){
+},{"./setImmediate":687}],682:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler = (function () {
@@ -78815,7 +78792,7 @@ var PeriodicScheduler = (function () {
 }());
 exports.default = PeriodicScheduler;
 
-},{}],684:[function(require,module,exports){
+},{}],683:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp = (self.performance && self.performance.now) ?
@@ -78823,7 +78800,7 @@ var getTimestamp = (self.performance && self.performance.now) ?
     function () { return Date.now(); };
 exports.default = getTimestamp;
 
-},{}],685:[function(require,module,exports){
+},{}],684:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -78862,7 +78839,7 @@ var ConstantTimesliceScheduler = (function () {
 }());
 exports.default = ConstantTimesliceScheduler;
 
-},{"../getTimestamp":684,"../setImmediate":688}],686:[function(require,module,exports){
+},{"../getTimestamp":683,"../setImmediate":687}],685:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -78914,7 +78891,7 @@ var ConstantCyclesScheduler = (function () {
 }());
 exports.default = ConstantCyclesScheduler;
 
-},{"../getTimestamp":684,"../setImmediate":688}],687:[function(require,module,exports){
+},{"../getTimestamp":683,"../setImmediate":687}],686:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -78953,7 +78930,7 @@ var ConstantTimesliceScheduler = (function () {
 }());
 exports.default = ConstantTimesliceScheduler;
 
-},{"../getTimestamp":684,"../setImmediate":688}],688:[function(require,module,exports){
+},{"../getTimestamp":683,"../setImmediate":687}],687:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var polyfill = require("setimmediate2");
@@ -78969,7 +78946,7 @@ function setImmediate(callback) {
 }
 exports.setImmediate = setImmediate;
 
-},{"setimmediate2":576}],689:[function(require,module,exports){
+},{"setimmediate2":575}],688:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -79020,7 +78997,7 @@ var FrameMergeProcessor = (function () {
 }());
 exports.default = FrameMergeProcessor;
 
-},{"microevent.ts":223}],690:[function(require,module,exports){
+},{"microevent.ts":223}],689:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -79037,7 +79014,7 @@ var PassthroughProcessor = (function () {
 }());
 exports.default = PassthroughProcessor;
 
-},{"microevent.ts":223}],691:[function(require,module,exports){
+},{"microevent.ts":223}],690:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config = require("./config");
@@ -79060,7 +79037,7 @@ var ProcessorFactory = (function () {
 }());
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":689,"./PassthroughProcessor":690,"./config":693}],692:[function(require,module,exports){
+},{"./FrameMergeProcessor":688,"./PassthroughProcessor":689,"./config":692}],691:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ProcessorFactory_1 = require("./ProcessorFactory");
@@ -79094,11 +79071,11 @@ var ProcessorPipeline = (function () {
 }());
 exports.default = ProcessorPipeline;
 
-},{"./ProcessorFactory":691}],693:[function(require,module,exports){
+},{"./ProcessorFactory":690}],692:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
-},{}],694:[function(require,module,exports){
+},{}],693:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface = (function () {
@@ -79150,7 +79127,7 @@ var ArrayBufferSurface = (function () {
 }());
 exports.default = ArrayBufferSurface;
 
-},{}],695:[function(require,module,exports){
+},{}],694:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var screenfull = require("screenfull");
@@ -79199,7 +79176,7 @@ var FullscreenVideoDriver = (function () {
 }());
 exports.default = FullscreenVideoDriver;
 
-},{"screenfull":567}],696:[function(require,module,exports){
+},{"screenfull":566}],695:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -79439,7 +79416,7 @@ function createShadowJoystick() {
 }
 var _a;
 
-},{"microevent.ts":223}],697:[function(require,module,exports){
+},{"microevent.ts":223}],696:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var MouseAsPaddleDriver = (function () {
@@ -79481,7 +79458,7 @@ var MouseAsPaddleDriver = (function () {
 }());
 exports.default = MouseAsPaddleDriver;
 
-},{}],698:[function(require,module,exports){
+},{}],697:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -79659,7 +79636,7 @@ var SimpleCanvasVideo = (function () {
 }());
 exports.default = SimpleCanvasVideo;
 
-},{"tslib":612}],699:[function(require,module,exports){
+},{"tslib":611}],698:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -79701,7 +79678,7 @@ var VideoEndpoint = (function () {
 }());
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":676,"../../tools/pool/Pool":677,"../../video/processing/ProcessorPipeline":692,"../../video/surface/ArrayBufferSurface":694,"microevent.ts":223}],700:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":675,"../../tools/pool/Pool":676,"../../video/processing/ProcessorPipeline":691,"../../video/surface/ArrayBufferSurface":693,"microevent.ts":223}],699:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebAudioDriver = (function () {
@@ -79823,7 +79800,7 @@ var Channel = (function () {
     return Channel;
 }());
 
-},{}],701:[function(require,module,exports){
+},{}],700:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
@@ -80067,7 +80044,7 @@ var WebglVideoDriver = (function () {
 }());
 exports.default = WebglVideoDriver;
 
-},{}],702:[function(require,module,exports){
+},{}],701:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -80252,7 +80229,7 @@ var KeyboardIO = (function () {
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"../../../machine/io/Switch":625,"microevent.ts":223}],703:[function(require,module,exports){
+},{"../../../machine/io/Switch":624,"microevent.ts":223}],702:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebAudio_1 = require("../../driver/WebAudio");
@@ -80282,7 +80259,7 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":700}],704:[function(require,module,exports){
+},{"../../driver/WebAudio":699}],703:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -80368,7 +80345,7 @@ var DriverManager = (function () {
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":705}],705:[function(require,module,exports){
+},{"./EmulationServiceInterface":704}],704:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -80383,7 +80360,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],706:[function(require,module,exports){
+},{}],705:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var VideoEndpoint_1 = require("../../../driver/VideoEndpoint");
@@ -80433,7 +80410,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{"../../../driver/VideoEndpoint":699}],707:[function(require,module,exports){
+},{"../../../driver/VideoEndpoint":698}],706:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -80631,7 +80608,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":626,"../../../../machine/stella/cartridge/CartridgeFactory":648,"../../../../tools/ClockProbe":672,"../../../../tools/scheduler/Factory":681,"../../../../tools/scheduler/PeriodicScheduler":683,"../EmulationServiceInterface":705,"./EmulationContext":706,"async-mutex":2,"microevent.ts":223}],708:[function(require,module,exports){
+},{"../../../../machine/stella/Board":625,"../../../../machine/stella/cartridge/CartridgeFactory":647,"../../../../tools/ClockProbe":671,"../../../../tools/scheduler/Factory":680,"../../../../tools/scheduler/PeriodicScheduler":682,"../EmulationServiceInterface":704,"./EmulationContext":705,"async-mutex":2,"microevent.ts":223}],707:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -80688,7 +80665,7 @@ var AudioProxy = (function () {
 }());
 exports.default = AudioProxy;
 
-},{"../../../../machine/stella/tia/ToneGenerator":668,"./messages":713,"microevent.ts":223}],709:[function(require,module,exports){
+},{"../../../../machine/stella/tia/ToneGenerator":667,"./messages":712,"microevent.ts":223}],708:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DigitalJoystick_1 = require("../../../../machine/io/DigitalJoystick");
@@ -80758,7 +80735,7 @@ var ControlProxy = (function () {
 }());
 exports.default = ControlProxy;
 
-},{"../../../../machine/io/DigitalJoystick":623,"../../../../machine/io/Paddle":624,"../../../../machine/stella/ControlPanel":629,"./messages":713}],710:[function(require,module,exports){
+},{"../../../../machine/io/DigitalJoystick":622,"../../../../machine/io/Paddle":623,"../../../../machine/stella/ControlPanel":628,"./messages":712}],709:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationContext = (function () {
@@ -80795,7 +80772,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{}],711:[function(require,module,exports){
+},{}],710:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -81029,7 +81006,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../EmulationServiceInterface":705,"./AudioProxy":708,"./ControlProxy":709,"./EmulationContext":710,"./VideoProxy":712,"./messages":713,"async-mutex":2,"microevent.ts":223,"worker-rpc":618}],712:[function(require,module,exports){
+},{"../EmulationServiceInterface":704,"./AudioProxy":707,"./ControlProxy":708,"./EmulationContext":709,"./VideoProxy":711,"./messages":712,"async-mutex":2,"microevent.ts":223,"worker-rpc":617}],711:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -81094,7 +81071,7 @@ var VideoProxy = (function () {
 }());
 exports.default = VideoProxy;
 
-},{"./messages":713,"microevent.ts":223}],713:[function(require,module,exports){
+},{"./messages":712,"microevent.ts":223}],712:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {
@@ -81120,6 +81097,54 @@ exports.SIGNAL_TYPE = {
     audioStop: 'audio/stop'
 };
 Object.freeze(exports.SIGNAL_TYPE);
+
+},{}],713:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.actions = {
+    runCurrentCartridge: 'cartridge-manager/run-current-cartridge',
+    uploadNewCartridge: 'cartridge-manager/upload-new-cartridge',
+    selectCartridge: 'cartridge-manager/select-cartridge',
+    confirmLoad: 'cartridge-manager/confirm-load',
+    confirmSelect: 'cartridge-manager/confirm-select'
+};
+Object.freeze(exports.actions);
+function runCurrentCartridge() {
+    return {
+        type: exports.actions.runCurrentCartridge
+    };
+}
+exports.runCurrentCartridge = runCurrentCartridge;
+function uploadNewCartridge(file) {
+    return {
+        type: exports.actions.uploadNewCartridge,
+        file: file
+    };
+}
+exports.uploadNewCartridge = uploadNewCartridge;
+function selectCartridge(key) {
+    return {
+        type: exports.actions.selectCartridge,
+        key: key
+    };
+}
+exports.selectCartridge = selectCartridge;
+function confirmLoad(discardChanges) {
+    if (discardChanges === void 0) { discardChanges = false; }
+    return {
+        type: exports.actions.confirmLoad,
+        discardChanges: discardChanges
+    };
+}
+exports.confirmLoad = confirmLoad;
+function confirmSelect(discardChanges) {
+    if (discardChanges === void 0) { discardChanges = false; }
+    return {
+        type: exports.actions.confirmSelect,
+        discardChanges: discardChanges
+    };
+}
+exports.confirmSelect = confirmSelect;
 
 },{}],714:[function(require,module,exports){
 "use strict";
@@ -81314,33 +81339,33 @@ function setMode(guiMode) {
     };
 }
 exports.setMode = setMode;
-function selectOpenPendingChangesModal(pendingSelectHash) {
+function openSelectPendingChangesModal(pendingSelectHash) {
     return {
         type: exports.types.selectOpenPendingChangesModal,
         pendingSelectHash: pendingSelectHash
     };
 }
-exports.selectOpenPendingChangesModal = selectOpenPendingChangesModal;
-function selectClosePendingChangesModal() {
+exports.openSelectPendingChangesModal = openSelectPendingChangesModal;
+function closeSelectPendingChangesModal() {
     return {
         type: exports.types.selectClosePendingChangesModal
     };
 }
-exports.selectClosePendingChangesModal = selectClosePendingChangesModal;
-function loadOpenPendingChangesModal(pendingLoad, pendingLoadName) {
+exports.closeSelectPendingChangesModal = closeSelectPendingChangesModal;
+function openLoadPendingChangesModal(pendingLoad, pendingLoadName) {
     return {
         type: exports.types.loadOpenPendingChangesModal,
         pendingLoad: pendingLoad,
         pendingLoadName: pendingLoadName
     };
 }
-exports.loadOpenPendingChangesModal = loadOpenPendingChangesModal;
-function loadClosePendingChangesModal() {
+exports.openLoadPendingChangesModal = openLoadPendingChangesModal;
+function closeLoadPendingChangesModal() {
     return {
         type: exports.types.loadClosePendingChangesModal
     };
 }
-exports.loadClosePendingChangesModal = loadClosePendingChangesModal;
+exports.closeLoadPendingChangesModal = closeLoadPendingChangesModal;
 
 },{}],718:[function(require,module,exports){
 "use strict";
@@ -81460,6 +81485,34 @@ function isSettingsChange(a) {
 exports.isSettingsChange = isSettingsChange;
 
 },{}],720:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
+var react_bootstrap_1 = require("react-bootstrap");
+var CartridgeControls_1 = require("./cartridge-manager/CartridgeControls");
+var CartridgeList_1 = require("./cartridge-manager/CartridgeList");
+var CartridgeSettings_1 = require("./cartridge-manager/CartridgeSettings");
+var PendingChangesModal_1 = require("./cartridge-manager/PendingChangesModal");
+function CartridgeManager(props) {
+    return (React.createElement(react_bootstrap_1.Grid, { fluid: true },
+        React.createElement(react_bootstrap_1.Row, null,
+            React.createElement(react_bootstrap_1.Col, { md: 5 },
+                React.createElement(CartridgeList_1.default, { cartridges: props.cartridges, selectedCartridgeKey: props.currentCartridge && props.currentCartridge.hash, onClick: props.onCartridgeSelected })),
+            React.createElement(react_bootstrap_1.Col, { md: 5, mdOffset: 1 },
+                React.createElement(CartridgeSettings_1.default, { cartridge: props.currentCartridge, onCartridgeNameChange: props.onCartridgeNameChange, onTvModeChanged: props.onTvModeChanged, onSave: props.onSave, onTogglePaddleEmulation: props.onTogglePaddleEmulation, onToggleAudioEnabled: props.onToggleAudioEnabled, onCartridgeTypeChange: props.onCartridgeTypeChange, onChangeSeedStrategy: props.onChangeSeedStrategy, onChangeSeedValue: props.onChangeSeedValue }))),
+        React.createElement(react_bootstrap_1.Row, null,
+            React.createElement(react_bootstrap_1.Col, { sm: 5 },
+                React.createElement(CartridgeControls_1.default, { active: !!props.currentCartridge, changes: props.pendingChanges, onDelete: props.onDelete, onSave: props.onSave, onRun: props.onRun, onCartridgeUploaded: props.onCartridgeUploaded }))),
+        React.createElement(PendingChangesModal_1.default, { show: props.showSelectPendingChangesModel, onHide: props.onSelectPendingChangesClose, onContinueAndSave: props.onSelectPendingChangesSave, onContinueAndDiscard: props.onSelectPendingChangesDiscard },
+            React.createElement("p", null, "There are unsaved changes in the currently selected cartridge. Selecting another cartridge will discard these changes."),
+            React.createElement("p", null, "Do you want to continue?")),
+        React.createElement(PendingChangesModal_1.default, { show: props.showLoadPendingChangesModel, onHide: props.onLoadPendingChangesClose, onContinueAndSave: props.onLoadPendingChangesSave, onContinueAndDiscard: props.onLoadPendingChangesDiscard },
+            React.createElement("p", null, "There are unsaved changes in the currently selected cartridge. Loading a cartridge will discard these changes."),
+            React.createElement("p", null, "Do you want to continue?"))));
+}
+exports.default = CartridgeManager;
+
+},{"./cartridge-manager/CartridgeControls":725,"./cartridge-manager/CartridgeList":726,"./cartridge-manager/CartridgeSettings":728,"./cartridge-manager/PendingChangesModal":730,"react":558,"react-bootstrap":321}],721:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -81605,43 +81658,12 @@ Emulation.contextTypes = tslib_1.__assign({}, Emulation_1.contextTypes);
 })(Emulation || (Emulation = {}));
 exports.default = Emulation;
 
-},{"../../../driver/FullscreenVideo":695,"../../../driver/MouseAsPaddle":697,"../../../driver/SimpleCanvasVideo":698,"../../../driver/webgl/WebglVideo":701,"../../driver/KeyboardIO":702,"../../service/DriverManager":704,"../../service/EmulationServiceInterface":705,"../context/Emulation":753,"./emulation/ControlPanel":736,"react":558,"react-bootstrap":321,"tslib":612}],721:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var React = require("react");
-var FileUploadButton = (function (_super) {
-    tslib_1.__extends(FileUploadButton, _super);
-    function FileUploadButton() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.state = {
-            id: "file_upload_" + Math.floor(Math.random() * 10000000)
-        };
-        return _this;
-    }
-    FileUploadButton.prototype.render = function () {
-        return React.createElement("div", { className: 'btn btn-default', style: { display: 'inline-block' } },
-            React.createElement("label", { htmlFor: this.state.id }, this.props.children),
-            React.createElement("input", { type: 'file', id: this.state.id, style: { display: 'none' }, onChange: this._onChange.bind(this) }));
-    };
-    FileUploadButton.prototype._onChange = function (e) {
-        this.props.onFilesSelected(e.currentTarget.files);
-    };
-    return FileUploadButton;
-}(React.Component));
-(function (FileUploadButton) {
-    FileUploadButton.defaultProps = {
-        onFilesSelected: function () { return undefined; }
-    };
-})(FileUploadButton || (FileUploadButton = {}));
-exports.default = FileUploadButton;
-
-},{"react":558,"tslib":612}],722:[function(require,module,exports){
+},{"../../../driver/FullscreenVideo":694,"../../../driver/MouseAsPaddle":696,"../../../driver/SimpleCanvasVideo":697,"../../../driver/webgl/WebglVideo":700,"../../driver/KeyboardIO":701,"../../service/DriverManager":703,"../../service/EmulationServiceInterface":704,"../context/Emulation":751,"./emulation/ControlPanel":733,"react":558,"react-bootstrap":321,"tslib":611}],722:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
 var react_bootstrap_1 = require("react-bootstrap");
-var Markdown_1 = require("./Markdown");
+var Markdown_1 = require("./general/Markdown");
 function Help(props) {
     return React.createElement(react_bootstrap_1.Grid, { fluid: true },
         React.createElement(react_bootstrap_1.Row, null,
@@ -81661,7 +81683,7 @@ function Help(props) {
 })(Help || (Help = {}));
 exports.default = Help;
 
-},{"./Markdown":724,"react":558,"react-bootstrap":321}],723:[function(require,module,exports){
+},{"./general/Markdown":736,"react":558,"react-bootstrap":321}],723:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -81678,85 +81700,12 @@ function Main(props) {
 }
 exports.default = Main;
 
-},{"./main/Navbar":737,"react":558,"tslib":612}],724:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var React = require("react");
-var commonmark = require("commonmark");
-var Markdown = (function (_super) {
-    tslib_1.__extends(Markdown, _super);
-    function Markdown(props, context) {
-        var _this = _super.call(this, props, context) || this;
-        _this.state = {
-            content: ''
-        };
-        return _this;
-    }
-    Markdown.prototype.componentWillMount = function () {
-        var _this = this;
-        this._loadSource()
-            .then(function (source) {
-            var parser = new commonmark.Parser(), renderer = new commonmark.HtmlRenderer();
-            _this.setState({
-                content: renderer.render(parser.parse(source))
-            });
-        })
-            .then(undefined, function (e) { return _this.props.onMarkdownError(e); });
-    };
-    Markdown.prototype.render = function () {
-        return React.createElement("div", { dangerouslySetInnerHTML: { __html: this.state.content }, className: this.props.className });
-    };
-    Markdown.prototype._loadSource = function () {
-        var _this = this;
-        return (this.props.useCache && Markdown._cache[this.props.url]) ?
-            Promise.resolve(Markdown._cache[this.props.url]) :
-            Promise.resolve($.ajax({
-                url: this.props.url,
-                dataType: 'text'
-            })).then(function (source) { return Markdown._cache[_this.props.url] = source; });
-    };
-    return Markdown;
-}(React.Component));
-Markdown.defaultProps = {
-    url: '',
-    useCache: true,
-    onMarkdownError: function (e) { return console.error(e.message); }
-};
-Markdown._cache = {};
-exports.default = Markdown;
-
-},{"commonmark":112,"react":558,"tslib":612}],725:[function(require,module,exports){
+},{"./main/Navbar":739,"react":558,"tslib":611}],724:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
 var react_bootstrap_1 = require("react-bootstrap");
-function PendingChangesModal(props) {
-    return React.createElement(react_bootstrap_1.Modal, { show: props.show, onHide: props.onHide },
-        React.createElement(react_bootstrap_1.Modal.Header, { closeButton: true },
-            React.createElement(react_bootstrap_1.Modal.Title, null, "Unsaved changes")),
-        React.createElement(react_bootstrap_1.Modal.Body, null, props.children),
-        React.createElement(react_bootstrap_1.Modal.Footer, null,
-            React.createElement(react_bootstrap_1.Button, { onClick: props.onHide }, "Cancel"),
-            React.createElement(react_bootstrap_1.Button, { onClick: props.onContinueAndSave }, "Continue & Save"),
-            React.createElement(react_bootstrap_1.Button, { onClick: props.onContinueAndDiscard }, "Continue & Discard")));
-}
-(function (PendingChangesModal) {
-    PendingChangesModal.defaultProps = {
-        show: false,
-        onHide: function () { return undefined; },
-        onContinueAndDiscard: function () { return undefined; },
-        onContinueAndSave: function () { return undefined; }
-    };
-})(PendingChangesModal || (PendingChangesModal = {}));
-exports.default = PendingChangesModal;
-
-},{"react":558,"react-bootstrap":321}],726:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var React = require("react");
-var react_bootstrap_1 = require("react-bootstrap");
-var Switch_1 = require("./Switch");
+var Switch_1 = require("./general/Switch");
 function Settings(props) {
     return React.createElement(react_bootstrap_1.Grid, { fluid: true, className: 'settings-grid' },
         React.createElement(react_bootstrap_1.Row, null,
@@ -81808,7 +81757,363 @@ function Settings(props) {
 })(Settings || (Settings = {}));
 exports.default = Settings;
 
-},{"./Switch":727,"react":558,"react-bootstrap":321}],727:[function(require,module,exports){
+},{"./general/Switch":737,"react":558,"react-bootstrap":321}],725:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
+var style_1 = require("../style");
+var react_bootstrap_1 = require("react-bootstrap");
+var FileUploadButton_1 = require("../general/FileUploadButton");
+function CartridgeControlsUnstyled(props) {
+    return React.createElement("div", { className: props.className },
+        React.createElement(FileUploadButton_1.default, { onFilesSelected: function (files) { return files.length === 1 ? props.onCartridgeUploaded(files[0]) : undefined; } }, "Load"),
+        React.createElement(react_bootstrap_1.Button, { disabled: !props.active, onClick: props.onDelete }, "Delete"),
+        React.createElement(react_bootstrap_1.Button, { disabled: !props.active || !props.changes, onClick: props.onSave }, "Save"),
+        React.createElement(react_bootstrap_1.Button, { disabled: !props.active, onClick: props.onRun }, props.changes ? 'Save & Run' : 'Run'));
+}
+(function (CartridgeControlsUnstyled) {
+    CartridgeControlsUnstyled.defaultProps = {
+        active: false,
+        changes: false,
+        onDelete: function () { return undefined; },
+        onSave: function () { return undefined; },
+        onRun: function () { return undefined; },
+        onCartridgeUploaded: function () { return undefined; }
+    };
+})(CartridgeControlsUnstyled || (CartridgeControlsUnstyled = {}));
+var CartridgeControlsStyled = (_a = ["\n    .btn:not(:last-child) {\n        margin-right: 2ex;\n    }\n\n    button[disabled] {\n        color: #777;\n    }\n"], _a.raw = ["\n    .btn:not(:last-child) {\n        margin-right: 2ex;\n    }\n\n    button[disabled] {\n        color: #777;\n    }\n"], style_1.styled(CartridgeControlsUnstyled)(_a));
+exports.default = CartridgeControlsStyled;
+var _a;
+
+},{"../general/FileUploadButton":735,"../style":745,"react":558,"react-bootstrap":321}],726:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
+var style_1 = require("../style");
+var BorderBox_1 = require("../general/BorderBox");
+function CartridgeListUnstyled(props) {
+    return React.createElement(BorderBox_1.default, { className: props.className },
+        React.createElement(ListStyled, null, Object
+            .keys(props.cartridges)
+            .map(function (key) { return props.cartridges[key]; })
+            .sort(function (c1, c2) { return c1.name === c2.name ? 0 : ((c1.name < c2.name) ? -1 : 1); })
+            .map(function (cartridge) {
+            return React.createElement(ListItemStyled, { onClick: function () { return props.onClick(cartridge.hash); }, className: props.selectedCartridgeKey === cartridge.hash ? 'selected' : '', key: cartridge.hash }, cartridge.name);
+        })));
+}
+(function (CartridgeListUnstyled) {
+    CartridgeListUnstyled.defaultProps = {
+        cartridges: {},
+        selectedCartridgeKey: '',
+        onClick: function () { return undefined; }
+    };
+})(CartridgeListUnstyled || (CartridgeListUnstyled = {}));
+var ListStyled = (_a = ["\n    list-style: none;\n    padding: 0;\n"], _a.raw = ["\n    list-style: none;\n    padding: 0;\n"], style_1.styled.ul(_a));
+var ListItemStyled = (_b = ["\n    cursor: pointer;\n    list-style: none;\n    padding-left: 0.3rem;\n    padding-right: 0.3rem;\n\n    &:nth-child(odd) {\n       background-color: #444;\n    }\n\n    &.selected {\n        color: black;\n        background: #bbb;\n    }\n"], _b.raw = ["\n    cursor: pointer;\n    list-style: none;\n    padding-left: 0.3rem;\n    padding-right: 0.3rem;\n\n    &:nth-child(odd) {\n       background-color: #444;\n    }\n\n    &.selected {\n        color: black;\n        background: #bbb;\n    }\n"], style_1.styled.li(_b));
+var CartridgeListStyled = (_c = ["\n    height: 15rem;\n    overflow-y: auto;\n    margin-bottom: 1.5rem;\n"], _c.raw = ["\n    height: 15rem;\n    overflow-y: auto;\n    margin-bottom: 1.5rem;\n"], style_1.styled(CartridgeListUnstyled)(_c));
+exports.default = CartridgeListStyled;
+var _a, _b, _c;
+
+},{"../general/BorderBox":734,"../style":745,"react":558}],727:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
+var react_bootstrap_1 = require("react-bootstrap");
+function CartridgeNameInput(props) {
+    return React.createElement(react_bootstrap_1.FormControl, { type: 'text', value: props.name, onChange: function (e) { return props.onNameChange(e.target.value); }, onKeyDown: function (e) { return e.keyCode === 13 ? props.onKeyEnter() : undefined; } });
+}
+(function (CartridgeNameInput) {
+    CartridgeNameInput.defaultProps = {
+        name: '',
+        onNameChange: function () { return undefined; },
+        onKeyEnter: function () { return undefined; },
+    };
+})(CartridgeNameInput || (CartridgeNameInput = {}));
+exports.default = CartridgeNameInput;
+
+},{"react":558,"react-bootstrap":321}],728:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var React = require("react");
+var react_bootstrap_1 = require("react-bootstrap");
+var style_1 = require("../style");
+var CartridgeNameInput_1 = require("./CartridgeNameInput");
+var TvModeSelect_1 = require("./TvModeSelect");
+var CartridgeTypeSelect_1 = require("./CartridgeTypeSelect");
+var Switch_1 = require("../general/Switch");
+var RandomSeedEdit_1 = require("./RandomSeedEdit");
+function CartridgeSettingsUnstyled(props) {
+    if (!props.cartridge) {
+        return null;
+    }
+    return React.createElement("div", { className: props.className },
+        React.createElement(LabelStyled, null, "Name:"),
+        React.createElement(CartridgeNameInput_1.default, { name: props.cartridge.name, onNameChange: props.onCartridgeNameChange, onKeyEnter: props.onSave }),
+        React.createElement(LabelStyled, null, "TV mode:"),
+        React.createElement(TvModeSelect_1.default, { tvMode: props.cartridge.tvMode, onTvModeChange: props.onTvModeChanged }),
+        React.createElement(LabelStyled, null, "Cartridge type:"),
+        React.createElement(CartridgeTypeSelect_1.default, { cartridgeType: props.cartridge.cartridgeType, onCartridgeTypeChange: props.onCartridgeTypeChange }),
+        React.createElement(LabelStyled, null, "Emulate paddles:"),
+        React.createElement(Switch_1.default, { state: props.cartridge.emulatePaddles, labelTrue: 'yes', labelFalse: 'no', onSwitch: props.onTogglePaddleEmulation }),
+        React.createElement(LabelStyled, null, "RNG seed:"),
+        React.createElement(RandomSeedEdit_1.default, tslib_1.__assign({}, props)),
+        React.createElement(LabelStyled, null, "Audio:"),
+        React.createElement(Switch_1.default, { state: props.cartridge.audioEnabled, labelTrue: 'enabled', labelFalse: 'disabled', onSwitch: props.onToggleAudioEnabled }));
+}
+(function (CartridgeSettingsUnstyled) {
+    CartridgeSettingsUnstyled.defaultProps = {
+        cartridge: null,
+        onCartridgeNameChange: function () { return undefined; },
+        onSave: function () { return undefined; },
+        onTvModeChanged: function () { return undefined; },
+        onTogglePaddleEmulation: function () { return undefined; },
+        onToggleAudioEnabled: function () { return undefined; },
+        onCartridgeTypeChange: function () { return undefined; },
+        onChangeSeedStrategy: function () { return undefined; },
+        onChangeSeedValue: function () { return undefined; }
+    };
+})(CartridgeSettingsUnstyled || (CartridgeSettingsUnstyled = {}));
+var LabelStyled = (_a = ["\n    display: block;\n\n    &:not(:first-child) {\n        margin-top: 1rem;\n    }\n"], _a.raw = ["\n    display: block;\n\n    &:not(:first-child) {\n        margin-top: 1rem;\n    }\n"], style_1.styled(react_bootstrap_1.ControlLabel)(_a));
+var CartridgeSettingsStyled = (_b = ["\n    ", "\n"], _b.raw = ["\n    ", "\n"], style_1.styled(CartridgeSettingsUnstyled)(_b, function (p) { return p.cartridge ? '' : 'display: none;'; }));
+exports.default = CartridgeSettingsStyled;
+var _a, _b;
+
+},{"../general/Switch":737,"../style":745,"./CartridgeNameInput":727,"./CartridgeTypeSelect":729,"./RandomSeedEdit":731,"./TvModeSelect":732,"react":558,"react-bootstrap":321,"tslib":611}],729:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var React = require("react");
+var CartridgeInfo_1 = require("../../../../../machine/stella/cartridge/CartridgeInfo");
+var react_bootstrap_1 = require("react-bootstrap");
+var CartridgeTypeSelect = (function (_super) {
+    tslib_1.__extends(CartridgeTypeSelect, _super);
+    function CartridgeTypeSelect() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.state = {
+            id: "cartridge_type_select_" + Math.floor(Math.random() * 10000000)
+        };
+        return _this;
+    }
+    CartridgeTypeSelect.prototype.render = function () {
+        var _this = this;
+        return React.createElement(react_bootstrap_1.DropdownButton, { id: this.state.id, title: CartridgeInfo_1.default.describeCartridgeType(this.props.cartridgeType), onSelect: this.props.onCartridgeTypeChange }, CartridgeInfo_1.default.getAllTypes().map(function (cartridgeType) {
+            return React.createElement(react_bootstrap_1.MenuItem, { eventKey: cartridgeType, active: cartridgeType === _this.props.cartridgeType, key: cartridgeType }, CartridgeInfo_1.default.describeCartridgeType(cartridgeType));
+        }));
+    };
+    return CartridgeTypeSelect;
+}(React.Component));
+(function (CartridgeTypeSelect) {
+    CartridgeTypeSelect.defaultProps = {
+        cartridgeType: CartridgeInfo_1.default.CartridgeType.unknown,
+        onCartridgeTypeChange: function () { return undefined; }
+    };
+})(CartridgeTypeSelect || (CartridgeTypeSelect = {}));
+exports.default = CartridgeTypeSelect;
+
+},{"../../../../../machine/stella/cartridge/CartridgeInfo":648,"react":558,"react-bootstrap":321,"tslib":611}],730:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
+var react_bootstrap_1 = require("react-bootstrap");
+function PendingChangesModal(props) {
+    return (React.createElement(react_bootstrap_1.Modal, { show: props.show, onHide: props.onHide },
+        React.createElement(react_bootstrap_1.Modal.Header, { closeButton: true },
+            React.createElement(react_bootstrap_1.Modal.Title, null, "Unsaved changes")),
+        React.createElement(react_bootstrap_1.Modal.Body, null, props.children),
+        React.createElement(react_bootstrap_1.Modal.Footer, null,
+            React.createElement(react_bootstrap_1.Button, { onClick: props.onHide }, "Cancel"),
+            React.createElement(react_bootstrap_1.Button, { onClick: props.onContinueAndSave }, "Continue & Save"),
+            React.createElement(react_bootstrap_1.Button, { onClick: props.onContinueAndDiscard }, "Continue & Discard"))));
+}
+(function (PendingChangesModal) {
+    PendingChangesModal.defaultProps = {
+        show: false,
+        onHide: function () { return undefined; },
+        onContinueAndDiscard: function () { return undefined; },
+        onContinueAndSave: function () { return undefined; }
+    };
+})(PendingChangesModal || (PendingChangesModal = {}));
+exports.default = PendingChangesModal;
+
+},{"react":558,"react-bootstrap":321}],731:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
+var ValidatingInput_1 = require("../general/ValidatingInput");
+var Switch_1 = require("../general/Switch");
+function RandomSeedEdit(props) {
+    return React.createElement("div", null,
+        React.createElement(Switch_1.default, { state: props.rngSeedAuto, labelTrue: 'auto', labelFalse: 'fixed', onSwitch: props.onChangeSeedStrategy }),
+        React.createElement(ValidatingInput_1.default, { value: '' + props.rngSeedValue, readOnly: props.rngSeedAuto, validator: function (value) { return !!value.match(/^(0|([1-9]\d*))$/); }, onChange: function (value) { return props.onChangeSeedValue(parseInt(value, 10)); }, onKeyEnter: props.onKeyEnter, style: {
+                display: props.rngSeedAuto ? 'none' : 'inline-block',
+                marginLeft: '1rem',
+                width: '6rem'
+            } }));
+}
+(function (RandomSeedEdit) {
+    RandomSeedEdit.defaultProps = {
+        rngSeedAuto: true,
+        rngSeedValue: 0,
+        onChangeSeedStrategy: function () { return undefined; },
+        onChangeSeedValue: function () { return undefined; },
+        onKeyEnter: function () { return undefined; }
+    };
+})(RandomSeedEdit || (RandomSeedEdit = {}));
+exports.default = RandomSeedEdit;
+
+},{"../general/Switch":737,"../general/ValidatingInput":738,"react":558}],732:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
+var react_bootstrap_1 = require("react-bootstrap");
+var Config_1 = require("../../../../../machine/stella/Config");
+function TvModeSelect(props) {
+    return React.createElement(react_bootstrap_1.ButtonGroup, null,
+        React.createElement(react_bootstrap_1.Button, { active: props.tvMode === 0, onClick: function () { return props.onTvModeChange(0); } }, "NTSC"),
+        React.createElement(react_bootstrap_1.Button, { active: props.tvMode === 1, onClick: function () { return props.onTvModeChange(1); } }, "PAL"),
+        React.createElement(react_bootstrap_1.Button, { active: props.tvMode === 2, onClick: function () { return props.onTvModeChange(2); } }, "SECAM"));
+}
+(function (TvModeSelect) {
+    TvModeSelect.defaultProps = {
+        tvMode: 0,
+        onTvModeChange: function () { return undefined; }
+    };
+})(TvModeSelect || (TvModeSelect = {}));
+exports.default = TvModeSelect;
+
+},{"../../../../../machine/stella/Config":627,"react":558,"react-bootstrap":321}],733:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
+var react_bootstrap_1 = require("react-bootstrap");
+var Switch_1 = require("../general/Switch");
+var EmulationServiceInterface_1 = require("../../../service/EmulationServiceInterface");
+function ControlPanel(props) {
+    return React.createElement("div", { style: props.style, className: 'emulation-control-panel' },
+        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block' } }, "Difficulty left"),
+        React.createElement(Switch_1.default, { labelTrue: 'Amateur / B', labelFalse: 'Pro / A', state: props.difficultyPlayer0, onSwitch: props.onSwitchDifficultyPlayer0 }),
+        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', paddingTop: '1rem' } }, "Difficulty right"),
+        React.createElement(Switch_1.default, { labelTrue: 'Amateur / B', labelFalse: 'Pro / A', state: props.difficultyPlayer1, onSwitch: props.onSwitchDifficultyPlayer1 }),
+        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', paddingTop: '1rem' } }, "TV mode"),
+        React.createElement(Switch_1.default, { labelTrue: 'B/W', labelFalse: 'Color', state: props.tvModeSwitch, onSwitch: props.onSwitchTvMode }),
+        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', paddingTop: '1rem' } }, "Limit framerate"),
+        React.createElement(Switch_1.default, { labelTrue: 'yes', labelFalse: 'no', state: props.enforceRateLimit, onSwitch: props.onEnforceRateLimitChange }),
+        React.createElement("div", { style: { paddingTop: '2rem' } },
+            React.createElement(react_bootstrap_1.Button, { style: { marginRight: '1rem' }, onClick: props.onReset }, "Reset"),
+            React.createElement(react_bootstrap_1.Button, { style: {
+                    display: (props.emulationState === EmulationServiceInterface_1.default.State.running ||
+                        props.emulationState === EmulationServiceInterface_1.default.State.paused) ? 'inline-block' : 'none'
+                }, onClick: props.emulationState === EmulationServiceInterface_1.default.State.running ? props.onPause : props.onResume }, props.emulationState === EmulationServiceInterface_1.default.State.running ? 'Pause' : 'Resume')));
+}
+(function (ControlPanel) {
+    ControlPanel.defaultProps = {
+        difficultyPlayer0: true,
+        difficultyPlayer1: true,
+        tvModeSwitch: false,
+        enforceRateLimit: true,
+        emulationState: EmulationServiceInterface_1.default.State.stopped,
+        style: {},
+        onSwitchDifficultyPlayer0: function () { return undefined; },
+        onSwitchDifficultyPlayer1: function () { return undefined; },
+        onSwitchTvMode: function () { return undefined; },
+        onEnforceRateLimitChange: function () { return undefined; },
+        onReset: function () { return undefined; },
+        onPause: function () { return undefined; },
+        onResume: function () { return undefined; }
+    };
+})(ControlPanel || (ControlPanel = {}));
+exports.default = ControlPanel;
+
+},{"../../../service/EmulationServiceInterface":704,"../general/Switch":737,"react":558,"react-bootstrap":321}],734:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var style_1 = require("../style");
+var BorderBox = (_a = ["\n    border: 2px solid;\n    background: #555;\n    box-shadow: 0 0 0 5px #555;\n"], _a.raw = ["\n    border: 2px solid;\n    background: #555;\n    box-shadow: 0 0 0 5px #555;\n"], style_1.styled.div(_a));
+BorderBox.displayName = 'BorderBox';
+exports.default = BorderBox;
+var _a;
+
+},{"../style":745}],735:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var React = require("react");
+var FileUploadButton = (function (_super) {
+    tslib_1.__extends(FileUploadButton, _super);
+    function FileUploadButton() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.state = {
+            id: "file_upload_" + Math.floor(Math.random() * 10000000)
+        };
+        return _this;
+    }
+    FileUploadButton.prototype.render = function () {
+        return React.createElement("div", { className: 'btn btn-default', style: { display: 'inline-block' } },
+            React.createElement("label", { htmlFor: this.state.id }, this.props.children),
+            React.createElement("input", { type: 'file', id: this.state.id, style: { display: 'none' }, onChange: this._onChange.bind(this) }));
+    };
+    FileUploadButton.prototype._onChange = function (e) {
+        this.props.onFilesSelected(e.currentTarget.files);
+    };
+    return FileUploadButton;
+}(React.Component));
+(function (FileUploadButton) {
+    FileUploadButton.defaultProps = {
+        onFilesSelected: function () { return undefined; }
+    };
+})(FileUploadButton || (FileUploadButton = {}));
+exports.default = FileUploadButton;
+
+},{"react":558,"tslib":611}],736:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var React = require("react");
+var commonmark = require("commonmark");
+var Markdown = (function (_super) {
+    tslib_1.__extends(Markdown, _super);
+    function Markdown(props, context) {
+        var _this = _super.call(this, props, context) || this;
+        _this.state = {
+            content: ''
+        };
+        return _this;
+    }
+    Markdown.prototype.componentWillMount = function () {
+        var _this = this;
+        this._loadSource()
+            .then(function (source) {
+            var parser = new commonmark.Parser(), renderer = new commonmark.HtmlRenderer();
+            _this.setState({
+                content: renderer.render(parser.parse(source))
+            });
+        })
+            .then(undefined, function (e) { return _this.props.onMarkdownError(e); });
+    };
+    Markdown.prototype.render = function () {
+        return React.createElement("div", { dangerouslySetInnerHTML: { __html: this.state.content }, className: this.props.className });
+    };
+    Markdown.prototype._loadSource = function () {
+        var _this = this;
+        return (this.props.useCache && Markdown._cache[this.props.url]) ?
+            Promise.resolve(Markdown._cache[this.props.url]) :
+            Promise.resolve($.ajax({
+                url: this.props.url,
+                dataType: 'text'
+            })).then(function (source) { return Markdown._cache[_this.props.url] = source; });
+    };
+    return Markdown;
+}(React.Component));
+Markdown.defaultProps = {
+    url: '',
+    useCache: true,
+    onMarkdownError: function (e) { return console.error(e.message); }
+};
+Markdown._cache = {};
+exports.default = Markdown;
+
+},{"commonmark":112,"react":558,"tslib":611}],737:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -81828,7 +82133,7 @@ function Switch(props) {
 })(Switch || (Switch = {}));
 exports.default = Switch;
 
-},{"react":558,"react-bootstrap":321}],728:[function(require,module,exports){
+},{"react":558,"react-bootstrap":321}],738:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -81869,231 +82174,7 @@ var ValidatingInput = (function (_super) {
 })(ValidatingInput || (ValidatingInput = {}));
 exports.default = ValidatingInput;
 
-},{"react":558,"react-bootstrap":321,"tslib":612}],729:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var React = require("react");
-var react_bootstrap_1 = require("react-bootstrap");
-var FileUploadButton_1 = require("../FileUploadButton");
-function CartridgeControls(props) {
-    return React.createElement("div", { className: 'cartridge-controls' },
-        React.createElement(FileUploadButton_1.default, { onFilesSelected: function (files) { return files.length === 1 ? props.onCartridgeUploaded(files[0], props.changes) : undefined; } }, "Load"),
-        React.createElement(react_bootstrap_1.Button, { disabled: !props.active, onClick: props.onDelete }, "Delete"),
-        React.createElement(react_bootstrap_1.Button, { disabled: !props.active || !props.changes, onClick: props.onSave }, "Save"),
-        React.createElement(react_bootstrap_1.Button, { disabled: !props.active, onClick: props.onRun }, props.changes ? 'Save & Run' : 'Run'));
-}
-(function (CartridgeControls) {
-    CartridgeControls.defaultProps = {
-        active: false,
-        changes: false,
-        onDelete: function () { return undefined; },
-        onSave: function () { return undefined; },
-        onRun: function () { return undefined; },
-        onCartridgeUploaded: function () { return undefined; }
-    };
-})(CartridgeControls || (CartridgeControls = {}));
-exports.default = CartridgeControls;
-
-},{"../FileUploadButton":721,"react":558,"react-bootstrap":321}],730:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var React = require("react");
-function CartridgeList(props) {
-    return React.createElement("div", { className: 'cartridge-list border-box' },
-        React.createElement("ul", null, Object
-            .keys(props.cartridges)
-            .map(function (key) { return props.cartridges[key]; })
-            .sort(function (c1, c2) { return c1.name === c2.name ? 0 : ((c1.name < c2.name) ? -1 : 1); })
-            .map(function (cartridge) {
-            return React.createElement("li", { onClick: function () { return props.onClick(cartridge.hash, props.pendingChanges); }, className: props.selectedKey === cartridge.hash ? 'selected' : '', key: cartridge.hash }, cartridge.name);
-        })));
-}
-(function (CartridgeList) {
-    CartridgeList.defaultProps = {
-        cartridges: {},
-        selectedKey: '',
-        pendingChanges: false,
-        onClick: function () { return undefined; }
-    };
-})(CartridgeList || (CartridgeList = {}));
-exports.default = CartridgeList;
-
-},{"react":558}],731:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var React = require("react");
-var react_bootstrap_1 = require("react-bootstrap");
-function CartridgeNameInput(props) {
-    return React.createElement(react_bootstrap_1.FormControl, { type: 'text', value: props.name, onChange: function (e) { return props.onNameChange(e.target.value); }, onKeyDown: function (e) { return e.keyCode === 13 ? props.onKeyEnter() : undefined; } });
-}
-(function (CartridgeNameInput) {
-    CartridgeNameInput.defaultProps = {
-        name: '',
-        onNameChange: function () { return undefined; },
-        onKeyEnter: function () { return undefined; },
-    };
-})(CartridgeNameInput || (CartridgeNameInput = {}));
-exports.default = CartridgeNameInput;
-
-},{"react":558,"react-bootstrap":321}],732:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var React = require("react");
-var react_bootstrap_1 = require("react-bootstrap");
-var CartridgeNameInput_1 = require("./CartridgeNameInput");
-var TvModeSelect_1 = require("./TvModeSelect");
-var CartridgeTypeSelect_1 = require("./CartridgeTypeSelect");
-var Switch_1 = require("../Switch");
-var RandomSeedEdit_1 = require("./RandomSeedEdit");
-function CartridgeSettings(props) {
-    return React.createElement("div", { className: props.visible ? '' : 'hidden' },
-        React.createElement(react_bootstrap_1.ControlLabel, null, "Name:"),
-        React.createElement(CartridgeNameInput_1.default, tslib_1.__assign({}, props)),
-        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', marginTop: '1rem' } }, "TV mode:"),
-        React.createElement(TvModeSelect_1.default, tslib_1.__assign({}, props)),
-        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', marginTop: '1rem' } }, "Cartridge type:"),
-        React.createElement(CartridgeTypeSelect_1.default, tslib_1.__assign({}, props)),
-        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', marginTop: '1rem' } }, "Emulate paddles:"),
-        React.createElement(Switch_1.default, { state: props.emulatePaddles, labelTrue: 'yes', labelFalse: 'no', onSwitch: props.onTogglePaddleEmulation }),
-        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', marginTop: '1rem' } }, "RNG seed:"),
-        React.createElement(RandomSeedEdit_1.default, tslib_1.__assign({}, props)),
-        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', marginTop: '1rem' } }, "Audio:"),
-        React.createElement(Switch_1.default, { state: props.audioEnabled, labelTrue: 'enabled', labelFalse: 'disabled', onSwitch: props.onToggleAudioEnabled }));
-}
-(function (CartridgeSettings) {
-    CartridgeSettings.defaultProps = Object.assign({
-        visible: false,
-        emulatePaddles: true,
-        audioEnabled: true,
-        onTogglePaddleEmulation: function () { return undefined; },
-        onToggleAudioEnabled: function () { return undefined; }
-    }, CartridgeNameInput_1.default.defaultProps, TvModeSelect_1.default.defaultProps, CartridgeTypeSelect_1.default.defaultProps, RandomSeedEdit_1.default.defaultProps);
-})(CartridgeSettings || (CartridgeSettings = {}));
-exports.default = CartridgeSettings;
-
-},{"../Switch":727,"./CartridgeNameInput":731,"./CartridgeTypeSelect":733,"./RandomSeedEdit":734,"./TvModeSelect":735,"react":558,"react-bootstrap":321,"tslib":612}],733:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var React = require("react");
-var CartridgeInfo_1 = require("../../../../../machine/stella/cartridge/CartridgeInfo");
-var react_bootstrap_1 = require("react-bootstrap");
-var CartridgeTypeSelect = (function (_super) {
-    tslib_1.__extends(CartridgeTypeSelect, _super);
-    function CartridgeTypeSelect() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.state = {
-            id: "cartridge_type_select_" + Math.floor(Math.random() * 10000000)
-        };
-        return _this;
-    }
-    CartridgeTypeSelect.prototype.render = function () {
-        var _this = this;
-        return React.createElement(react_bootstrap_1.DropdownButton, { id: this.state.id, title: CartridgeInfo_1.default.describeCartridgeType(this.props.cartridgeType), onSelect: this.props.onCartridgeTypeChange }, CartridgeInfo_1.default.getAllTypes().map(function (cartridgeType) {
-            return React.createElement(react_bootstrap_1.MenuItem, { eventKey: cartridgeType, active: cartridgeType === _this.props.cartridgeType, key: cartridgeType }, CartridgeInfo_1.default.describeCartridgeType(cartridgeType));
-        }));
-    };
-    return CartridgeTypeSelect;
-}(React.Component));
-(function (CartridgeTypeSelect) {
-    CartridgeTypeSelect.defaultProps = {
-        cartridgeType: CartridgeInfo_1.default.CartridgeType.unknown,
-        onCartridgeTypeChange: function () { return undefined; }
-    };
-})(CartridgeTypeSelect || (CartridgeTypeSelect = {}));
-exports.default = CartridgeTypeSelect;
-
-},{"../../../../../machine/stella/cartridge/CartridgeInfo":649,"react":558,"react-bootstrap":321,"tslib":612}],734:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var React = require("react");
-var ValidatingInput_1 = require("../ValidatingInput");
-var Switch_1 = require("../Switch");
-function RandomSeedEdit(props) {
-    return React.createElement("div", null,
-        React.createElement(Switch_1.default, { state: props.rngSeedAuto, labelTrue: 'auto', labelFalse: 'fixed', onSwitch: props.onChangeSeedStrategy }),
-        React.createElement(ValidatingInput_1.default, { value: '' + props.rngSeedValue, readOnly: props.rngSeedAuto, validator: function (value) { return !!value.match(/^(0|([1-9]\d*))$/); }, onChange: function (value) { return props.onChangeSeedValue(parseInt(value, 10)); }, onKeyEnter: props.onKeyEnter, style: {
-                display: props.rngSeedAuto ? 'none' : 'inline-block',
-                marginLeft: '1rem',
-                width: '6rem'
-            } }));
-}
-(function (RandomSeedEdit) {
-    RandomSeedEdit.defaultProps = {
-        rngSeedAuto: true,
-        rngSeedValue: 0,
-        onChangeSeedStrategy: function () { return undefined; },
-        onChangeSeedValue: function () { return undefined; },
-        onKeyEnter: function () { return undefined; }
-    };
-})(RandomSeedEdit || (RandomSeedEdit = {}));
-exports.default = RandomSeedEdit;
-
-},{"../Switch":727,"../ValidatingInput":728,"react":558}],735:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var React = require("react");
-var react_bootstrap_1 = require("react-bootstrap");
-var Config_1 = require("../../../../../machine/stella/Config");
-function TvModeSelect(props) {
-    return React.createElement(react_bootstrap_1.ButtonGroup, null,
-        React.createElement(react_bootstrap_1.Button, { active: props.tvMode === 0, onClick: function () { return props.onTvModeChange(0); } }, "NTSC"),
-        React.createElement(react_bootstrap_1.Button, { active: props.tvMode === 1, onClick: function () { return props.onTvModeChange(1); } }, "PAL"),
-        React.createElement(react_bootstrap_1.Button, { active: props.tvMode === 2, onClick: function () { return props.onTvModeChange(2); } }, "SECAM"));
-}
-(function (TvModeSelect) {
-    TvModeSelect.defaultProps = {
-        tvMode: 0,
-        onTvModeChange: function () { return undefined; }
-    };
-})(TvModeSelect || (TvModeSelect = {}));
-exports.default = TvModeSelect;
-
-},{"../../../../../machine/stella/Config":628,"react":558,"react-bootstrap":321}],736:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var React = require("react");
-var react_bootstrap_1 = require("react-bootstrap");
-var Switch_1 = require("../Switch");
-var EmulationServiceInterface_1 = require("../../../service/EmulationServiceInterface");
-function ControlPanel(props) {
-    return React.createElement("div", { style: props.style, className: 'emulation-control-panel' },
-        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block' } }, "Difficulty left"),
-        React.createElement(Switch_1.default, { labelTrue: 'Amateur / B', labelFalse: 'Pro / A', state: props.difficultyPlayer0, onSwitch: props.onSwitchDifficultyPlayer0 }),
-        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', paddingTop: '1rem' } }, "Difficulty right"),
-        React.createElement(Switch_1.default, { labelTrue: 'Amateur / B', labelFalse: 'Pro / A', state: props.difficultyPlayer1, onSwitch: props.onSwitchDifficultyPlayer1 }),
-        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', paddingTop: '1rem' } }, "TV mode"),
-        React.createElement(Switch_1.default, { labelTrue: 'B/W', labelFalse: 'Color', state: props.tvModeSwitch, onSwitch: props.onSwitchTvMode }),
-        React.createElement(react_bootstrap_1.ControlLabel, { style: { display: 'block', paddingTop: '1rem' } }, "Limit framerate"),
-        React.createElement(Switch_1.default, { labelTrue: 'yes', labelFalse: 'no', state: props.enforceRateLimit, onSwitch: props.onEnforceRateLimitChange }),
-        React.createElement("div", { style: { paddingTop: '2rem' } },
-            React.createElement(react_bootstrap_1.Button, { style: { marginRight: '1rem' }, onClick: props.onReset }, "Reset"),
-            React.createElement(react_bootstrap_1.Button, { style: {
-                    display: (props.emulationState === EmulationServiceInterface_1.default.State.running ||
-                        props.emulationState === EmulationServiceInterface_1.default.State.paused) ? 'inline-block' : 'none'
-                }, onClick: props.emulationState === EmulationServiceInterface_1.default.State.running ? props.onPause : props.onResume }, props.emulationState === EmulationServiceInterface_1.default.State.running ? 'Pause' : 'Resume')));
-}
-(function (ControlPanel) {
-    ControlPanel.defaultProps = {
-        difficultyPlayer0: true,
-        difficultyPlayer1: true,
-        tvModeSwitch: false,
-        enforceRateLimit: true,
-        emulationState: EmulationServiceInterface_1.default.State.stopped,
-        style: {},
-        onSwitchDifficultyPlayer0: function () { return undefined; },
-        onSwitchDifficultyPlayer1: function () { return undefined; },
-        onSwitchTvMode: function () { return undefined; },
-        onEnforceRateLimitChange: function () { return undefined; },
-        onReset: function () { return undefined; },
-        onPause: function () { return undefined; },
-        onResume: function () { return undefined; }
-    };
-})(ControlPanel || (ControlPanel = {}));
-exports.default = ControlPanel;
-
-},{"../../../service/EmulationServiceInterface":705,"../Switch":727,"react":558,"react-bootstrap":321}],737:[function(require,module,exports){
+},{"react":558,"react-bootstrap":321,"tslib":611}],739:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -82110,7 +82191,7 @@ function Navbar(props) {
 }
 exports.default = Navbar;
 
-},{"./navbar/Header":740,"./navbar/Navigation":741,"./navbar/StatusWidget":742,"react":558,"react-bootstrap":321,"tslib":612}],738:[function(require,module,exports){
+},{"./navbar/Header":742,"./navbar/Navigation":743,"./navbar/StatusWidget":744,"react":558,"react-bootstrap":321,"tslib":611}],740:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -82136,7 +82217,7 @@ var EmulationStatusStyled = (_a = ["\n    margin-left: 1rem;\n"], _a.raw = ["\n 
 exports.default = EmulationStatusStyled;
 var _a;
 
-},{"../../../../service/EmulationServiceInterface":705,"../../style":743,"react":558}],739:[function(require,module,exports){
+},{"../../../../service/EmulationServiceInterface":704,"../../style":745,"react":558}],741:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -82151,7 +82232,7 @@ var GamepadStatusStyled = (_a = ["\n    display: ", "\n"], _a.raw = ["\n    disp
 exports.default = GamepadStatusStyled;
 var _a;
 
-},{"../../style":743,"react":558}],740:[function(require,module,exports){
+},{"../../style":745,"react":558}],742:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -82162,7 +82243,7 @@ function Header(props) {
 }
 exports.default = Header;
 
-},{"react":558,"react-bootstrap":321}],741:[function(require,module,exports){
+},{"react":558,"react-bootstrap":321}],743:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -82188,7 +82269,7 @@ function Navigation(props) {
 exports.default = Navigation;
 var _a;
 
-},{"../../style":743,"react":558,"react-bootstrap":321,"react-router-bootstrap":494,"tslib":612}],742:[function(require,module,exports){
+},{"../../style":745,"react":558,"react-bootstrap":321,"react-router-bootstrap":494,"tslib":611}],744:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -82206,7 +82287,7 @@ var StatusWidgetStyled = (_a = ["\n    float: right;\n"], _a.raw = ["\n    float
 exports.default = StatusWidgetStyled;
 var _a;
 
-},{"../../style":743,"./EmulationStatus":738,"./GamepadStatus":739,"react":558,"tslib":612}],743:[function(require,module,exports){
+},{"../../style":745,"./EmulationStatus":740,"./GamepadStatus":741,"react":558,"tslib":611}],745:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var styledComponents = require("styled-components");
@@ -82218,35 +82299,51 @@ exports.keyframes = keyframes;
 exports.ThemeProvider = ThemeProvider;
 exports.default = styled;
 
-},{"styled-components":585}],744:[function(require,module,exports){
+},{"styled-components":584}],746:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var React = require("react");
-var react_bootstrap_1 = require("react-bootstrap");
-var pendingChangesModal_1 = require("./pendingChangesModal");
-var CartridgeList_1 = require("./cartridge_manager/CartridgeList");
-var CartridgeControls_1 = require("./cartridge_manager/CartridgeControls");
-var CartridgeSettings_1 = require("./cartridge_manager/CartridgeSettings");
-function CartridgeManager() {
-    return React.createElement(react_bootstrap_1.Grid, { fluid: true },
-        React.createElement(react_bootstrap_1.Row, null,
-            React.createElement(react_bootstrap_1.Col, { md: 5 },
-                React.createElement(CartridgeList_1.default, null)),
-            React.createElement(react_bootstrap_1.Col, { md: 5, mdOffset: 1 },
-                React.createElement(CartridgeSettings_1.default, null))),
-        React.createElement(react_bootstrap_1.Row, null,
-            React.createElement(react_bootstrap_1.Col, { sm: 5 },
-                React.createElement(CartridgeControls_1.default, null))),
-        React.createElement(pendingChangesModal_1.SelectPendingChangesModal, null,
-            React.createElement("p", null, "There are unsaved changes in the currently selected cartridge. Selecting another cartridge will discard these changes."),
-            React.createElement("p", null, "Do you want to continue?")),
-        React.createElement(pendingChangesModal_1.LoadPendingChangesModal, null,
-            React.createElement("p", null, "There are unsaved changes in the currently selected cartridge. Loading a cartridge will discard these changes."),
-            React.createElement("p", null, "Do you want to continue?")));
+var react_redux_1 = require("react-redux");
+var CartridgeManager_1 = require("../components/CartridgeManager");
+var Cartridge_1 = require("../model/Cartridge");
+var root_1 = require("../actions/root");
+var currentCartridge_1 = require("../actions/currentCartridge");
+var guiState_1 = require("../actions/guiState");
+var cartridgeManager_1 = require("../actions/cartridgeManager");
+function mapStateToProps(state) {
+    return {
+        cartridges: state.cartridges,
+        currentCartridge: state.currentCartridge,
+        pendingChanges: state.currentCartridge && !Cartridge_1.default.equals(state.currentCartridge, state.cartridges[state.currentCartridge.hash]),
+        showLoadPendingChangesModel: state.guiState.showLoadPendingChangesModal,
+        showSelectPendingChangesModel: state.guiState.showSelectPendingChangesModal
+    };
 }
+function mapDispatchToProps(dispatch) {
+    return {
+        onDelete: function () { return dispatch(root_1.deleteCurrentCartridge()); },
+        onSave: function () { return dispatch(root_1.saveCurrentCartride()); },
+        onRun: function () { return dispatch(cartridgeManager_1.runCurrentCartridge()); },
+        onCartridgeUploaded: function (file) { return dispatch(cartridgeManager_1.uploadNewCartridge(file)); },
+        onCartridgeSelected: function (key) { return dispatch(cartridgeManager_1.selectCartridge(key)); },
+        onCartridgeNameChange: function (value) { return dispatch(currentCartridge_1.changeName(value)); },
+        onTvModeChanged: function (mode) { return dispatch(currentCartridge_1.changeTvMode(mode)); },
+        onTogglePaddleEmulation: function (state) { return dispatch(currentCartridge_1.changePaddleEmulation(state)); },
+        onToggleAudioEnabled: function (state) { return dispatch(currentCartridge_1.toggleAudioEnabled(state)); },
+        onCartridgeTypeChange: function (type) { return dispatch(currentCartridge_1.changeCartridgeType(type)); },
+        onChangeSeedStrategy: function (auto) { return dispatch(currentCartridge_1.changeRngSeedStrategy(auto)); },
+        onChangeSeedValue: function (seed) { return dispatch(currentCartridge_1.changeRngSeed(seed)); },
+        onSelectPendingChangesClose: function () { return dispatch(guiState_1.closeSelectPendingChangesModal()); },
+        onSelectPendingChangesSave: function () { return dispatch(cartridgeManager_1.confirmSelect()); },
+        onSelectPendingChangesDiscard: function () { return dispatch(cartridgeManager_1.confirmSelect(true)); },
+        onLoadPendingChangesClose: function () { return dispatch(guiState_1.closeLoadPendingChangesModal()); },
+        onLoadPendingChangesSave: function () { return dispatch(cartridgeManager_1.confirmLoad()); },
+        onLoadPendingChangesDiscard: function () { return dispatch(cartridgeManager_1.confirmLoad(true)); }
+    };
+}
+var CartridgeManager = react_redux_1.connect(mapStateToProps, mapDispatchToProps)(CartridgeManager_1.default);
 exports.default = CartridgeManager;
 
-},{"./cartridge_manager/CartridgeControls":749,"./cartridge_manager/CartridgeList":750,"./cartridge_manager/CartridgeSettings":751,"./pendingChangesModal":752,"react":558,"react-bootstrap":321}],745:[function(require,module,exports){
+},{"../actions/cartridgeManager":713,"../actions/currentCartridge":714,"../actions/guiState":717,"../actions/root":718,"../components/CartridgeManager":720,"../model/Cartridge":754,"react-redux":486}],747:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -82281,7 +82378,7 @@ var EmulationContainer = react_redux_1.connect(mapStateToProps, {
 })(Emulation_1.default);
 exports.default = EmulationContainer;
 
-},{"../actions/emulation":715,"../components/Emulation":720,"../model/types":758,"react-redux":486,"react-router-redux":496}],746:[function(require,module,exports){
+},{"../actions/emulation":715,"../components/Emulation":721,"../model/types":756,"react-redux":486,"react-router-redux":496}],748:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -82295,7 +82392,7 @@ function mapStateToProps(state) {
 var HelpContainer = react_redux_1.connect(mapStateToProps)(Help_1.default);
 exports.default = HelpContainer;
 
-},{"../components/Help":722,"react-redux":486}],747:[function(require,module,exports){
+},{"../components/Help":722,"react-redux":486}],749:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -82312,7 +82409,7 @@ function mapStateToProps(state) {
 var Navbar = react_redux_1.connect(mapStateToProps, {}, undefined, { pure: false })(Main_1.default);
 exports.default = Navbar;
 
-},{"../components/Main":723,"../model/types":758,"react-redux":486}],748:[function(require,module,exports){
+},{"../components/Main":723,"../model/types":756,"react-redux":486}],750:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -82336,123 +82433,7 @@ var SettingsContainer = react_redux_1.connect(mapStateToProps, {
 })(Settings_1.default);
 exports.default = SettingsContainer;
 
-},{"../actions/settings":719,"../components/Settings":726,"react-redux":486}],749:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var react_redux_1 = require("react-redux");
-var react_router_redux_1 = require("react-router-redux");
-var types_1 = require("../../model/types");
-var root_1 = require("../../actions/root");
-var emulation_1 = require("../../actions/emulation");
-var guiState_1 = require("../../actions/guiState");
-var Cartridge_1 = require("../../model/Cartridge");
-var CartridgeControls_1 = require("../../components/cartridge_manager/CartridgeControls");
-function mapStateToProps(state) {
-    return {
-        active: !!state.currentCartridge,
-        changes: !!state.currentCartridge &&
-            !Cartridge_1.default.equals(state.currentCartridge, state.cartridges[state.currentCartridge.hash])
-    };
-}
-var CartridgeControlsContainer = react_redux_1.connect(mapStateToProps, {
-    onDelete: root_1.deleteCurrentCartridge,
-    onRun: function () { return root_1.batch(root_1.saveCurrentCartride(), guiState_1.setMode(types_1.GuiMode.run), emulation_1.start(), react_router_redux_1.push('/emulation')); },
-    onSave: root_1.saveCurrentCartride,
-    onCartridgeUploaded: function (file, changes) {
-        return function (dispatch) {
-            var reader = new FileReader();
-            reader.addEventListener('load', function () {
-                dispatch(changes ?
-                    guiState_1.loadOpenPendingChangesModal(reader.result, file.name) :
-                    root_1.registerNewCartridge(file.name, new Uint8Array(reader.result)));
-            });
-            reader.readAsArrayBuffer(file);
-        };
-    }
-})(CartridgeControls_1.default);
-exports.default = CartridgeControlsContainer;
-
-},{"../../actions/emulation":715,"../../actions/guiState":717,"../../actions/root":718,"../../components/cartridge_manager/CartridgeControls":729,"../../model/Cartridge":756,"../../model/types":758,"react-redux":486,"react-router-redux":496}],750:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var react_redux_1 = require("react-redux");
-var Cartridge_1 = require("../../model/Cartridge");
-var CartridgeList_1 = require("../../components/cartridge_manager/CartridgeList");
-var root_1 = require("../../actions/root");
-var guiState_1 = require("../../actions/guiState");
-function mapStateToProps(state) {
-    return {
-        cartridges: state.cartridges,
-        selectedKey: state.currentCartridge ? state.currentCartridge.hash : '',
-        pendingChanges: !!state.currentCartridge &&
-            !Cartridge_1.default.equals(state.currentCartridge, state.cartridges[state.currentCartridge.hash])
-    };
-}
-var CartridgeListContainer = react_redux_1.connect(mapStateToProps, {
-    onClick: function (hash, pendingChanges) {
-        return pendingChanges ? guiState_1.selectOpenPendingChangesModal(hash) : root_1.selectCartridge(hash);
-    }
-})(CartridgeList_1.default);
-exports.default = CartridgeListContainer;
-
-},{"../../actions/guiState":717,"../../actions/root":718,"../../components/cartridge_manager/CartridgeList":730,"../../model/Cartridge":756,"react-redux":486}],751:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var react_redux_1 = require("react-redux");
-var currentCartridge_1 = require("../../actions/currentCartridge");
-var root_1 = require("../../actions/root");
-var CartridgeSettings_1 = require("../../components/cartridge_manager/CartridgeSettings");
-var Config_1 = require("../../../../../machine/stella/Config");
-var CartridgeInfo_1 = require("../../../../../machine/stella/cartridge/CartridgeInfo");
-function mapStateToProps(state) {
-    return {
-        name: state.currentCartridge ? state.currentCartridge.name : '',
-        tvMode: state.currentCartridge ? state.currentCartridge.tvMode : 0,
-        cartridgeType: state.currentCartridge ?
-            state.currentCartridge.cartridgeType :
-            CartridgeInfo_1.default.CartridgeType.unknown,
-        emulatePaddles: state.currentCartridge ? state.currentCartridge.emulatePaddles : true,
-        visible: !!state.currentCartridge,
-        rngSeedAuto: state.currentCartridge ? state.currentCartridge.rngSeedAuto : true,
-        rngSeedValue: state.currentCartridge ? state.currentCartridge.rngSeed : 0,
-        audioEnabled: state.currentCartridge ? state.currentCartridge.audioEnabled : true
-    };
-}
-var CartridgeSettingsContainer = react_redux_1.connect(mapStateToProps, {
-    onNameChange: currentCartridge_1.changeName,
-    onKeyEnter: root_1.saveCurrentCartride,
-    onTvModeChange: currentCartridge_1.changeTvMode,
-    onCartridgeTypeChange: currentCartridge_1.changeCartridgeType,
-    onTogglePaddleEmulation: currentCartridge_1.changePaddleEmulation,
-    onChangeSeedStrategy: currentCartridge_1.changeRngSeedStrategy,
-    onChangeSeedValue: currentCartridge_1.changeRngSeed,
-    onToggleAudioEnabled: currentCartridge_1.toggleAudioEnabled
-})(CartridgeSettings_1.default);
-exports.default = CartridgeSettingsContainer;
-
-},{"../../../../../machine/stella/Config":628,"../../../../../machine/stella/cartridge/CartridgeInfo":649,"../../actions/currentCartridge":714,"../../actions/root":718,"../../components/cartridge_manager/CartridgeSettings":732,"react-redux":486}],752:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var react_redux_1 = require("react-redux");
-var guiState_1 = require("../actions/guiState");
-var root_1 = require("../actions/root");
-var PendingChangesModal_1 = require("../components/PendingChangesModal");
-exports.SelectPendingChangesModal = factory(function (state) { return state.guiState.showSelectPendingChangesModal; }, guiState_1.selectClosePendingChangesModal, root_1.selectCartridge);
-exports.LoadPendingChangesModal = factory(function (state) { return state.guiState.showLoadPendingChangesModal; }, guiState_1.loadClosePendingChangesModal, root_1.registerNewCartridge);
-function factory(showModal, closeActionEmitter, applyActionEmitter) {
-    function mapStateToProps(state) {
-        return {
-            show: showModal(state)
-        };
-    }
-    return react_redux_1.connect(mapStateToProps, {
-        onHide: function () { return closeActionEmitter(); },
-        onContinueAndDiscard: function () { return root_1.batch(applyActionEmitter(), closeActionEmitter()); },
-        onContinueAndSave: function () { return root_1.batch(root_1.saveCurrentCartride(), applyActionEmitter(), closeActionEmitter()); }
-    })(PendingChangesModal_1.default);
-}
-
-},{"../actions/guiState":717,"../actions/root":718,"../components/PendingChangesModal":725,"react-redux":486}],753:[function(require,module,exports){
+},{"../actions/settings":719,"../components/Settings":724,"react-redux":486}],751:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -82479,7 +82460,7 @@ var Provider = (function (_super) {
 Provider.childContextTypes = tslib_1.__assign({}, exports.contextTypes);
 exports.Provider = Provider;
 
-},{"prop-types":231,"react":558,"tslib":612}],754:[function(require,module,exports){
+},{"prop-types":231,"react":558,"tslib":611}],752:[function(require,module,exports){
 (function (process){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82490,7 +82471,6 @@ var react_router_1 = require("react-router");
 var redux_1 = require("redux");
 var styled_components_1 = require("styled-components");
 var react_redux_1 = require("react-redux");
-var redux_thunk_1 = require("redux-thunk");
 var react_router_redux_1 = require("react-router-redux");
 var Main_1 = require("./containers/Main");
 var CartridgeManager_1 = require("./containers/CartridgeManager");
@@ -82510,7 +82490,7 @@ function main() {
             switch (_a.label) {
                 case 0:
                     serviceContainer = new Container_1.default();
-                    store = redux_1.createStore(root_1.default, new State_1.default(), redux_1.compose(redux_1.applyMiddleware(redux_thunk_1.default, middleware_1.batchMiddleware, serviceContainer.getPersistenceProvider().getMiddleware(), serviceContainer.getEmulationProvider().getMiddleware(), react_router_redux_1.routerMiddleware(react_router_1.hashHistory)), ((process.env.NODE_ENV !== 'production' && window.devToolsExtension) ?
+                    store = redux_1.createStore(root_1.default, new State_1.default(), redux_1.compose(redux_1.applyMiddleware(middleware_1.batchMiddleware, serviceContainer.getPersistenceProvider().getMiddleware(), serviceContainer.getEmulationProvider().getMiddleware(), serviceContainer.getCartridgeManager().getMiddleware(), react_router_redux_1.routerMiddleware(react_router_1.hashHistory)), ((process.env.NODE_ENV !== 'production' && window.devToolsExtension) ?
                         window.devToolsExtension() :
                         function (x) { return x; })));
                     serviceContainer.setStore(store);
@@ -82544,7 +82524,7 @@ main();
 
 }).call(this,require('_process'))
 
-},{"./actions/environment":716,"./containers/CartridgeManager":744,"./containers/Emulation":745,"./containers/Help":746,"./containers/Main":747,"./containers/Settings":748,"./context/Emulation":753,"./middleware":755,"./reducers/root":763,"./service/implementation/Container":765,"./state/State":775,"_process":226,"react":558,"react-dom":332,"react-redux":486,"react-router":526,"react-router-redux":496,"redux":565,"redux-thunk":559,"styled-components":585,"tslib":612}],755:[function(require,module,exports){
+},{"./actions/environment":716,"./containers/CartridgeManager":746,"./containers/Emulation":747,"./containers/Help":748,"./containers/Main":749,"./containers/Settings":750,"./context/Emulation":751,"./middleware":753,"./reducers/root":761,"./service/implementation/Container":764,"./state/State":774,"_process":226,"react":558,"react-dom":332,"react-redux":486,"react-router":526,"react-router-redux":496,"redux":564,"styled-components":584,"tslib":611}],753:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var root_1 = require("./actions/root");
@@ -82562,7 +82542,7 @@ function dispatchBatchedActions(action, dispatch) {
     return dispatcher(undefined);
 }
 
-},{"./actions/root":718}],756:[function(require,module,exports){
+},{"./actions/root":718}],754:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../../../../machine/stella/Config");
@@ -82572,7 +82552,6 @@ var Cartridge;
     function create() {
         return {
             name: '',
-            buffer: null,
             hash: '',
             tvMode: 0,
             cartridgeType: CartridgeInfo_1.default.CartridgeType.unknown,
@@ -82597,7 +82576,7 @@ var Cartridge;
 })(Cartridge || (Cartridge = {}));
 exports.default = Cartridge;
 
-},{"../../../../machine/stella/Config":628,"../../../../machine/stella/cartridge/CartridgeInfo":649}],757:[function(require,module,exports){
+},{"../../../../machine/stella/Config":627,"../../../../machine/stella/cartridge/CartridgeInfo":648}],755:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Settings;
@@ -82627,7 +82606,7 @@ var Settings;
 })(Settings || (Settings = {}));
 exports.default = Settings;
 
-},{}],758:[function(require,module,exports){
+},{}],756:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var GuiMode;
@@ -82636,7 +82615,7 @@ var GuiMode;
     GuiMode[GuiMode["run"] = 1] = "run";
 })(GuiMode = exports.GuiMode || (exports.GuiMode = {}));
 
-},{}],759:[function(require,module,exports){
+},{}],757:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -82692,7 +82671,7 @@ function toggleAudioEnabled(cartridge, action) {
     return tslib_1.__assign({}, cartridge, { audioEnabled: action.audioEnabled });
 }
 
-},{"../actions/currentCartridge":714,"../model/Cartridge":756,"tslib":612}],760:[function(require,module,exports){
+},{"../actions/currentCartridge":714,"../model/Cartridge":754,"tslib":611}],758:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Emulation_1 = require("../state/Emulation");
@@ -82763,7 +82742,7 @@ function userPause(state) {
     return new Emulation_1.default({ pausedByUser: true }, state);
 }
 
-},{"../../service/EmulationServiceInterface":705,"../actions/emulation":715,"../state/Emulation":772}],761:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":704,"../actions/emulation":715,"../state/Emulation":771}],759:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Environment_1 = require("../state/Environment");
@@ -82784,7 +82763,7 @@ function initialize(state, action) {
     }, state);
 }
 
-},{"../actions/environment":716,"../state/Environment":773}],762:[function(require,module,exports){
+},{"../actions/environment":716,"../state/Environment":772}],760:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var guiState_1 = require("../actions/guiState");
@@ -82837,7 +82816,7 @@ function loadClosePendingChangesModal(state) {
     }, state);
 }
 
-},{"../actions/guiState":717,"../state/GuiState":774}],763:[function(require,module,exports){
+},{"../actions/guiState":717,"../state/GuiState":773}],761:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -82903,7 +82882,6 @@ function registerNewCartridge(state, a) {
         tvMode = 0;
     }
     var newCartridge = tslib_1.__assign({}, Cartridge_1.default.create(), { name: name,
-        buffer: buffer,
         hash: hash,
         tvMode: tvMode,
         cartridgeType: cartridgeType });
@@ -82930,7 +82908,7 @@ function saveCurrentCartride(state) {
     return new State_1.default({ cartridges: cartridges }, state);
 }
 
-},{"../../../../machine/stella/Config":628,"../../../../machine/stella/cartridge/CartridgeDetector":638,"../../../../tools/hash/md5":673,"../actions/root":718,"../model/Cartridge":756,"../state/State":775,"./currentCartridge":759,"./emulation":760,"./environment":761,"./guiState":762,"./settings":764,"react-router-redux":496,"tslib":612}],764:[function(require,module,exports){
+},{"../../../../machine/stella/Config":627,"../../../../machine/stella/cartridge/CartridgeDetector":637,"../../../../tools/hash/md5":672,"../actions/root":718,"../model/Cartridge":754,"../state/State":774,"./currentCartridge":757,"./emulation":758,"./environment":759,"./guiState":760,"./settings":762,"react-router-redux":496,"tslib":611}],762:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -82974,13 +82952,210 @@ function setMergeFrames(settings, action) {
     return tslib_1.__assign({}, settings, { mergeFrames: action.value });
 }
 
-},{"../actions/settings":719,"../model/Settings":757,"tslib":612}],765:[function(require,module,exports){
+},{"../actions/settings":719,"../model/Settings":755,"tslib":611}],763:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var react_router_redux_1 = require("react-router-redux");
+var cartridgeManager_1 = require("../../actions/cartridgeManager");
+var root_1 = require("../../actions/root");
+var guiState_1 = require("../../actions/guiState");
+var emulation_1 = require("../../actions/emulation");
+var types_1 = require("../../model/types");
+var Cartridge_1 = require("../../model/Cartridge");
+var md5_1 = require("../../../../../tools/hash/md5");
+var CartridgeManager = (function () {
+    function CartridgeManager(_storage) {
+        var _this = this;
+        this._storage = _storage;
+        this._middleware = function (api) { return function (next) { return function (action) { return tslib_1.__awaiter(_this, void 0, void 0, function () {
+            var _a;
+            return tslib_1.__generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = action.type;
+                        switch (_a) {
+                            case cartridgeManager_1.actions.runCurrentCartridge: return [3, 1];
+                            case cartridgeManager_1.actions.uploadNewCartridge: return [3, 3];
+                            case cartridgeManager_1.actions.confirmLoad: return [3, 5];
+                            case cartridgeManager_1.actions.selectCartridge: return [3, 7];
+                            case cartridgeManager_1.actions.confirmSelect: return [3, 9];
+                            case root_1.types.deleteCurrentCartridge: return [3, 11];
+                        }
+                        return [3, 13];
+                    case 1: return [4, next(action)];
+                    case 2:
+                        _b.sent();
+                        return [2, this._onRunCurrentCartridge()];
+                    case 3: return [4, next(action)];
+                    case 4:
+                        _b.sent();
+                        return [2, this._onUpload(action)];
+                    case 5: return [4, next(action)];
+                    case 6:
+                        _b.sent();
+                        return [2, this._onConfirmLoad(action)];
+                    case 7: return [4, next(action)];
+                    case 8:
+                        _b.sent();
+                        return [2, this._onSelectCartridge(action)];
+                    case 9: return [4, next(action)];
+                    case 10:
+                        _b.sent();
+                        return [2, this._onConfirmSelect(action)];
+                    case 11: return [4, this._onDeleteCurrentCartridge()];
+                    case 12:
+                        _b.sent();
+                        return [2, next(action)];
+                    case 13: return [2, next(action)];
+                }
+            });
+        }); }; }; };
+    }
+    CartridgeManager.prototype.setStore = function (store) {
+        this._store = store;
+    };
+    CartridgeManager.prototype.getMiddleware = function () {
+        return this._middleware;
+    };
+    CartridgeManager.prototype._onRunCurrentCartridge = function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, this._store.dispatch(root_1.saveCurrentCartride())];
+                    case 1:
+                        _a.sent();
+                        return [4, this._store.dispatch(guiState_1.setMode(types_1.GuiMode.run))];
+                    case 2:
+                        _a.sent();
+                        return [4, this._store.dispatch(emulation_1.start())];
+                    case 3:
+                        _a.sent();
+                        return [4, this._store.dispatch(react_router_redux_1.push('/emulation'))];
+                    case 4:
+                        _a.sent();
+                        return [2];
+                }
+            });
+        });
+    };
+    CartridgeManager.prototype._onUpload = function (action) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var state, name, changes, reader, cartridgeData;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        state = this._store.getState(), name = action.file.name, changes = !!state.currentCartridge &&
+                            !Cartridge_1.default.equals(state.currentCartridge, state.cartridges[state.currentCartridge.hash]);
+                        reader = new FileReader();
+                        return [4, new Promise(function (r) {
+                                reader.addEventListener('load', function () { return r(new Uint8Array(reader.result)); });
+                                reader.readAsArrayBuffer(action.file);
+                            })];
+                    case 1:
+                        cartridgeData = _a.sent();
+                        if (!changes) return [3, 3];
+                        return [4, this._store.dispatch(guiState_1.openLoadPendingChangesModal(cartridgeData, name))];
+                    case 2:
+                        _a.sent();
+                        return [3, 6];
+                    case 3: return [4, this._storage.saveImage(md5_1.calculateFromUint8Array(cartridgeData), cartridgeData)];
+                    case 4:
+                        _a.sent();
+                        return [4, this._store.dispatch(root_1.registerNewCartridge(name, cartridgeData))];
+                    case 5:
+                        _a.sent();
+                        _a.label = 6;
+                    case 6: return [2];
+                }
+            });
+        });
+    };
+    CartridgeManager.prototype._onConfirmLoad = function (action) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var cartridgeData;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!!action.discardChanges) return [3, 2];
+                        return [4, this._store.dispatch(root_1.saveCurrentCartride())];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2:
+                        cartridgeData = this._store.getState().guiState.pendingLoad;
+                        return [4, this._storage.saveImage(md5_1.calculateFromUint8Array(cartridgeData), cartridgeData)];
+                    case 3:
+                        _a.sent();
+                        return [4, this._store.dispatch(root_1.registerNewCartridge())];
+                    case 4:
+                        _a.sent();
+                        return [4, this._store.dispatch(guiState_1.closeLoadPendingChangesModal())];
+                    case 5:
+                        _a.sent();
+                        return [2];
+                }
+            });
+        });
+    };
+    CartridgeManager.prototype._onSelectCartridge = function (action) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var state, changes;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        state = this._store.getState(), changes = !!state.currentCartridge &&
+                            !Cartridge_1.default.equals(state.currentCartridge, state.cartridges[state.currentCartridge.hash]);
+                        if (!changes) return [3, 2];
+                        return [4, this._store.dispatch(guiState_1.openSelectPendingChangesModal(action.key))];
+                    case 1:
+                        _a.sent();
+                        return [3, 4];
+                    case 2: return [4, this._store.dispatch(root_1.selectCartridge(action.key))];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [2];
+                }
+            });
+        });
+    };
+    CartridgeManager.prototype._onConfirmSelect = function (action) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!!action.discardChanges) return [3, 2];
+                        return [4, this._store.dispatch(root_1.saveCurrentCartride())];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [4, this._store.dispatch(root_1.selectCartridge())];
+                    case 3:
+                        _a.sent();
+                        return [4, this._store.dispatch(guiState_1.closeSelectPendingChangesModal())];
+                    case 4:
+                        _a.sent();
+                        return [2];
+                }
+            });
+        });
+    };
+    CartridgeManager.prototype._onDeleteCurrentCartridge = function () {
+        return this._storage.deleteImage(this._store.getState().currentCartridge.hash);
+    };
+    return CartridgeManager;
+}());
+exports.default = CartridgeManager;
+
+},{"../../../../../tools/hash/md5":672,"../../actions/cartridgeManager":713,"../../actions/emulation":715,"../../actions/guiState":717,"../../actions/root":718,"../../model/Cartridge":754,"../../model/types":756,"react-router-redux":496,"tslib":611}],764:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var EmulationProvider_1 = require("./EmulationProvider");
 var PersistenceProvider_1 = require("./PersistenceProvider");
 var StorageManager_1 = require("./StorageManager");
+var CartridgManager_1 = require("./CartridgManager");
 var Container = (function () {
     function Container() {
         this._services = new Map();
@@ -82995,7 +83170,8 @@ var Container = (function () {
         return this;
     };
     Container.prototype.getEmulationProvider = function () {
-        return this._getOrCreateSingetonService('emulation-provider', function () { return new EmulationProvider_1.default(); }, true);
+        var _this = this;
+        return this._getOrCreateSingetonService('emulation-provider', function () { return new EmulationProvider_1.default(_this.getStorageManager()); }, true);
     };
     Container.prototype.getPersistenceProvider = function () {
         var _this = this;
@@ -83003,6 +83179,10 @@ var Container = (function () {
     };
     Container.prototype.getStorageManager = function () {
         return this._getOrCreateSingetonService('storage-manager', function () { return new StorageManager_1.default(); });
+    };
+    Container.prototype.getCartridgeManager = function () {
+        var _this = this;
+        return this._getOrCreateSingetonService('cartridge-manager', function () { return new CartridgManager_1.default(_this.getStorageManager()); }, true);
     };
     Container.prototype._getOrCreateSingetonService = function (key, factory, injectStore) {
         if (injectStore === void 0) { injectStore = false; }
@@ -83025,7 +83205,7 @@ var Container = (function () {
 }());
 exports.default = Container;
 
-},{"./EmulationProvider":766,"./PersistenceProvider":767,"./StorageManager":768,"microevent.ts":223}],766:[function(require,module,exports){
+},{"./CartridgManager":763,"./EmulationProvider":765,"./PersistenceProvider":766,"./StorageManager":767,"microevent.ts":223}],765:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -83038,8 +83218,9 @@ var Gamepad_1 = require("../../../../driver/Gamepad");
 var Config_1 = require("../../../../../machine/stella/Config");
 var VideoProcessorConfig = require("../../../../../video/processing/config");
 var EmulationProvider = (function () {
-    function EmulationProvider() {
+    function EmulationProvider(_storage) {
         var _this = this;
+        this._storage = _storage;
         this._middleware = function (api) { return function (next) { return function (a) { return tslib_1.__awaiter(_this, void 0, void 0, function () {
             var initialState, _a;
             return tslib_1.__generator(this, function (_b) {
@@ -83167,7 +83348,7 @@ var EmulationProvider = (function () {
     };
     EmulationProvider.prototype._startEmulation = function (action, cartridge, state) {
         return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var stellaConfig;
+            var stellaConfig, buffer;
             return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -83176,8 +83357,14 @@ var EmulationProvider = (function () {
                         }
                         action.hash = cartridge.hash;
                         stellaConfig = new Config_1.default(cartridge.tvMode, cartridge.audioEnabled, cartridge.rngSeedAuto ? -1 : cartridge.rngSeed, cartridge.emulatePaddles);
-                        return [4, this._service.start(cartridge.buffer, stellaConfig, cartridge.cartridgeType, state.settings.mergeFrames ? [{ type: 1 }] : undefined)];
+                        return [4, this._storage.getImage(cartridge.hash)];
                     case 1:
+                        buffer = _a.sent();
+                        if (!buffer) {
+                            throw new Error("no buffer for hash " + cartridge.hash);
+                        }
+                        return [4, this._service.start(buffer, stellaConfig, cartridge.cartridgeType, state.settings.mergeFrames ? [{ type: 1 }] : undefined)];
+                    case 2:
                         _a.sent();
                         this._updateControlPanelState(state.emulationState);
                         return [2];
@@ -83189,7 +83376,7 @@ var EmulationProvider = (function () {
 }());
 exports.default = EmulationProvider;
 
-},{"../../../../../machine/stella/Config":628,"../../../../../video/processing/config":693,"../../../../driver/Gamepad":696,"../../../driver/WebAudio":703,"../../../service/DriverManager":704,"../../../service/vanilla/EmulationService":707,"../../../service/worker/EmulationService":711,"../../actions/emulation":715,"tslib":612}],767:[function(require,module,exports){
+},{"../../../../../machine/stella/Config":627,"../../../../../video/processing/config":692,"../../../../driver/Gamepad":695,"../../../driver/WebAudio":702,"../../../service/DriverManager":703,"../../../service/vanilla/EmulationService":706,"../../../service/worker/EmulationService":710,"../../actions/emulation":715,"tslib":611}],766:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -83266,7 +83453,7 @@ var PersistenceProvider = (function () {
 }());
 exports.default = PersistenceProvider;
 
-},{"../../actions/root":718,"../../actions/settings":719,"tslib":612}],768:[function(require,module,exports){
+},{"../../actions/root":718,"../../actions/settings":719,"tslib":611}],767:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Database_1 = require("./storage/Database");
@@ -83301,6 +83488,23 @@ var StorageManager = (function () {
             .toArray()
             .then(function (results) { return _this._database.cartridge.bulkDelete(results.map(function (c) { return c.id; })); }));
     };
+    StorageManager.prototype.getImage = function (hash) {
+        return Promise.resolve(this._database
+            .image
+            .get(hash)
+            .then(function (image) { return image && image.buffer; }));
+    };
+    StorageManager.prototype.saveImage = function (hash, buffer) {
+        return Promise.resolve(this._database
+            .image
+            .put({ hash: hash, buffer: buffer })
+            .then(function () { return undefined; }));
+    };
+    StorageManager.prototype.deleteImage = function (hash) {
+        return Promise.resolve(this._database
+            .image
+            .delete(hash));
+    };
     StorageManager.prototype.getSettings = function () {
         return Promise.resolve(this._database
             .settings
@@ -83319,7 +83523,7 @@ var StorageManager = (function () {
 }());
 exports.default = StorageManager;
 
-},{"./storage/Cartridge":769,"./storage/Database":770,"./storage/Settings":771}],769:[function(require,module,exports){
+},{"./storage/Cartridge":768,"./storage/Database":769,"./storage/Settings":770}],768:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -83364,7 +83568,7 @@ function toState(cartridge) {
 }
 exports.toState = toState;
 
-},{"../../../../../../machine/stella/Config":628,"../../../../../../machine/stella/cartridge/CartridgeInfo":649,"tslib":612}],770:[function(require,module,exports){
+},{"../../../../../../machine/stella/Config":627,"../../../../../../machine/stella/cartridge/CartridgeInfo":648,"tslib":611}],769:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -83407,13 +83611,33 @@ var Database = (function (_super) {
             }
             cursor.update(cartridge);
         }); });
+        _this.version(5)
+            .stores({
+            cartridge: '++id, &hash',
+            settings: 'id',
+            image: '&hash'
+        })
+            .upgrade(function (transaction) {
+            var images = transaction.table('image');
+            transaction
+                .table('cartridge')
+                .each(function (cartridge, c) {
+                var cursor = c;
+                images.add({
+                    hash: cartridge.hash,
+                    buffer: cartridge.buffer
+                });
+                delete cartridge.buffer;
+                cursor.update(cartridge);
+            });
+        });
         return _this;
     }
     return Database;
 }(dexie_1.default));
 exports.default = Database;
 
-},{"dexie":122,"tslib":612}],771:[function(require,module,exports){
+},{"dexie":122,"tslib":611}],770:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -83432,7 +83656,7 @@ function toState(record) {
 }
 exports.toState = toState;
 
-},{"../../../model/Settings":757,"tslib":612}],772:[function(require,module,exports){
+},{"../../../model/Settings":755,"tslib":611}],771:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("../../service/EmulationServiceInterface");
@@ -83453,7 +83677,7 @@ var EmulationState = (function () {
 }());
 exports.default = EmulationState;
 
-},{"../../service/EmulationServiceInterface":705}],773:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":704}],772:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Environment = (function () {
@@ -83466,7 +83690,7 @@ var Environment = (function () {
 }());
 exports.default = Environment;
 
-},{}],774:[function(require,module,exports){
+},{}],773:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var types_1 = require("../model/types");
@@ -83482,7 +83706,7 @@ var GuiState = (function () {
 }());
 exports.default = GuiState;
 
-},{"../model/types":758}],775:[function(require,module,exports){
+},{"../model/types":756}],774:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var State = (function () {
@@ -83495,5 +83719,5 @@ var State = (function () {
 }());
 exports.default = State;
 
-},{}]},{},[754])
+},{}]},{},[752])
 //# sourceMappingURL=stellerator.js.map
