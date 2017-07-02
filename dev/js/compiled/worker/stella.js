@@ -1,10 +1,14 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Mutex = (function () {
     function Mutex() {
         this._queue = [];
         this._pending = false;
     }
+    Mutex.prototype.isLocked = function () {
+        return this._pending;
+    };
     Mutex.prototype.acquire = function () {
         var _this = this;
         var ticket = new Promise(function (resolve) { return _this._queue.push(resolve); });
@@ -44,12 +48,12 @@ var Mutex = (function () {
     };
     return Mutex;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Mutex;
 
 },{}],2:[function(require,module,exports){
 "use strict";
-var Mutex_1 = require('./Mutex');
+Object.defineProperty(exports, "__esModule", { value: true });
+var Mutex_1 = require("./Mutex");
 exports.Mutex = Mutex_1.default;
 
 },{"./Mutex":1}],3:[function(require,module,exports){
