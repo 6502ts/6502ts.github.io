@@ -96422,35 +96422,37 @@ var CartridgeManager = (function () {
                         zipfile = new JsZip();
                         _a.label = 1;
                     case 1:
-                        _a.trys.push([1, 7, , 10]);
+                        _a.trys.push([1, 8, , 11]);
                         return [4, zipfile.loadAsync(content)];
                     case 2:
                         _a.sent();
                         files = zipfile.file(/\.(bin|a26)$/);
-                        if (!(files.length === 1)) return [3, 4];
+                        if (!(files.length === 0)) return [3, 3];
+                        this._store.dispatch(zipfile_1.setError('No ROM images in ZIP file.'));
+                        return [3, 7];
+                    case 3:
+                        if (!(files.length === 1)) return [3, 5];
                         file = files[0];
                         return [4, file.async('uint8array')];
-                    case 3:
+                    case 4:
                         deflatedImage = _a.sent();
                         this._handleCartridge(file.name.replace(/^.*\//, ''), deflatedImage);
-                        return [3, 6];
-                    case 4:
-                        if (!(files.length > 1)) return [3, 6];
-                        return [4, this._store.dispatch(zipfile_1.set(content, files.map(function (f) { return f.name; }).sort()))];
-                    case 5:
+                        return [3, 7];
+                    case 5: return [4, this._store.dispatch(zipfile_1.set(content, files.map(function (f) { return f.name; }).sort()))];
+                    case 6:
                         _a.sent();
-                        _a.label = 6;
-                    case 6: return [3, 10];
-                    case 7:
+                        _a.label = 7;
+                    case 7: return [3, 11];
+                    case 8:
                         e_1 = _a.sent();
                         return [4, this._store.dispatch(zipfile_1.clear())];
-                    case 8:
-                        _a.sent();
-                        return [4, this._store.dispatch(zipfile_1.setError('Unable to read ZIP.'))];
                     case 9:
                         _a.sent();
-                        return [3, 10];
-                    case 10: return [2];
+                        return [4, this._store.dispatch(zipfile_1.setError('Unable to read ZIP.'))];
+                    case 10:
+                        _a.sent();
+                        return [3, 11];
+                    case 11: return [2];
                 }
             });
         });
