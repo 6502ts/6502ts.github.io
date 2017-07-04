@@ -21496,6 +21496,9 @@ var WebAudioDriver = (function () {
         this._channels.forEach(function (channel) { return channel.unbind(); });
         this._sources = null;
     };
+    WebAudioDriver.prototype.setMasterVolume = function (channel, volume) {
+        this._channels[channel].setMasterVolume(volume);
+    };
     return WebAudioDriver;
 }());
 exports.default = WebAudioDriver;
@@ -21506,6 +21509,8 @@ var Channel = (function () {
         this._source = null;
         this._gain = null;
         this._audio = null;
+        this._volume = 0;
+        this._masterVolume = 1;
     }
     Channel.prototype.init = function (context, target) {
         this._context = context;
@@ -21517,7 +21522,8 @@ var Channel = (function () {
             return;
         }
         this._audio = target;
-        this._gain.gain.value = this._audio.getVolume();
+        this._volume = this._audio.getVolume();
+        this._updateGain();
         this._audio.volumeChanged.addHandler(Channel._onVolumeChanged, this);
         this._audio.bufferChanged.addHandler(Channel._onBufferChanged, this);
         this._audio.stop.addHandler(Channel._onStop, this);
@@ -21535,8 +21541,13 @@ var Channel = (function () {
         }
         this._audio = null;
     };
+    Channel.prototype.setMasterVolume = function (volume) {
+        this._masterVolume = volume;
+        this._updateGain();
+    };
     Channel._onVolumeChanged = function (volume, self) {
-        self._gain.gain.value = volume;
+        self._volume = volume;
+        self._updateGain();
     };
     Channel._onBufferChanged = function (key, self) {
         if (!self._cache[key]) {
@@ -21559,6 +21570,9 @@ var Channel = (function () {
             self._source.stop();
             self._source = null;
         }
+    };
+    Channel.prototype._updateGain = function () {
+        this._gain.gain.value = this._volume * this._masterVolume;
     };
     return Channel;
 }());
@@ -21773,6 +21787,10 @@ var WebAudioDriver = (function () {
         }
         this._driver.unbind();
         this._audio = null;
+    };
+    WebAudioDriver.prototype.setMasterVolume = function (volume) {
+        this._driver.setMasterVolume(0, volume);
+        this._driver.setMasterVolume(1, volume);
     };
     return WebAudioDriver;
 }());

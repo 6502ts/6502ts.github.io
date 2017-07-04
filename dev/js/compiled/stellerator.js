@@ -92864,6 +92864,9 @@ var WebAudioDriver = (function () {
         this._channels.forEach(function (channel) { return channel.unbind(); });
         this._sources = null;
     };
+    WebAudioDriver.prototype.setMasterVolume = function (channel, volume) {
+        this._channels[channel].setMasterVolume(volume);
+    };
     return WebAudioDriver;
 }());
 exports.default = WebAudioDriver;
@@ -92874,6 +92877,8 @@ var Channel = (function () {
         this._source = null;
         this._gain = null;
         this._audio = null;
+        this._volume = 0;
+        this._masterVolume = 1;
     }
     Channel.prototype.init = function (context, target) {
         this._context = context;
@@ -92885,7 +92890,8 @@ var Channel = (function () {
             return;
         }
         this._audio = target;
-        this._gain.gain.value = this._audio.getVolume();
+        this._volume = this._audio.getVolume();
+        this._updateGain();
         this._audio.volumeChanged.addHandler(Channel._onVolumeChanged, this);
         this._audio.bufferChanged.addHandler(Channel._onBufferChanged, this);
         this._audio.stop.addHandler(Channel._onStop, this);
@@ -92903,8 +92909,13 @@ var Channel = (function () {
         }
         this._audio = null;
     };
+    Channel.prototype.setMasterVolume = function (volume) {
+        this._masterVolume = volume;
+        this._updateGain();
+    };
     Channel._onVolumeChanged = function (volume, self) {
-        self._gain.gain.value = volume;
+        self._volume = volume;
+        self._updateGain();
     };
     Channel._onBufferChanged = function (key, self) {
         if (!self._cache[key]) {
@@ -92927,6 +92938,9 @@ var Channel = (function () {
             self._source.stop();
             self._source = null;
         }
+    };
+    Channel.prototype._updateGain = function () {
+        this._gain.gain.value = this._volume * this._masterVolume;
     };
     return Channel;
 }());
@@ -93385,6 +93399,10 @@ var WebAudioDriver = (function () {
         }
         this._driver.unbind();
         this._audio = null;
+    };
+    WebAudioDriver.prototype.setMasterVolume = function (volume) {
+        this._driver.setMasterVolume(0, volume);
+        this._driver.setMasterVolume(1, volume);
     };
     return WebAudioDriver;
 }());
@@ -94249,7 +94267,7 @@ function Routing(props) {
 exports.Routing = Routing;
 exports.default = Routing;
 
-},{"./containers/CartridgeManager":833,"./containers/Emulation":834,"./containers/Help":835,"./containers/Settings":837,"react":620,"react-router":592}],797:[function(require,module,exports){
+},{"./containers/CartridgeManager":834,"./containers/Emulation":835,"./containers/Help":836,"./containers/Settings":838,"react":620,"react-router":592}],797:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.actions = {
@@ -94315,7 +94333,7 @@ exports.types = {
     changePaddleEmulation: 'current-cartridge/change-paddle-emulation',
     changeRngSeedStrategy: 'current-cartridge/change-rng-seed-strateg',
     changeRngSeed: 'current-cartridge/change-rng-seed',
-    toggleAudioEnabled: 'current-cartridge/toggle-audio-enabled'
+    changeVolume: 'current-cartridge/change-volume'
 };
 Object.freeze(exports.types);
 function changeName(name) {
@@ -94360,13 +94378,13 @@ function changeRngSeed(seed) {
     };
 }
 exports.changeRngSeed = changeRngSeed;
-function toggleAudioEnabled(audioEnabled) {
+function changeVolume(volume) {
     return {
-        type: exports.types.toggleAudioEnabled,
-        audioEnabled: audioEnabled
+        type: exports.types.changeVolume,
+        volume: volume
     };
 }
-exports.toggleAudioEnabled = toggleAudioEnabled;
+exports.changeVolume = changeVolume;
 
 },{}],799:[function(require,module,exports){
 "use strict";
@@ -94397,11 +94415,11 @@ function userPause() {
     };
 }
 exports.userPause = userPause;
-function start(hash) {
-    if (hash === void 0) { hash = ''; }
+function start(cartridge) {
+    if (cartridge === void 0) { cartridge = null; }
     return {
         type: exports.types.start,
-        hash: hash
+        cartridge: cartridge
     };
 }
 exports.start = start;
@@ -94594,6 +94612,7 @@ exports.types = {
     setGamma: 'settings/setGamma',
     setUseWorker: 'settings/setUseWorker',
     setMergeFrames: 'settings/mergeFrames',
+    setVolume: 'settings/setVolume',
     init: 'settings/init'
 };
 function setSmoothScaling(value) {
@@ -94642,6 +94661,13 @@ function isSettingsChange(a) {
     return a.type.indexOf('settings/') === 0 && a.type !== exports.types.init;
 }
 exports.isSettingsChange = isSettingsChange;
+function setVolume(volume) {
+    return {
+        type: exports.types.setVolume,
+        volume: volume
+    };
+}
+exports.setVolume = setVolume;
 
 },{}],804:[function(require,module,exports){
 "use strict";
@@ -94698,7 +94724,7 @@ function CartridgeManager(props) {
             React.createElement(react_bootstrap_1.Col, { md: 5 },
                 React.createElement(CartridgeList_1.default, { cartridges: props.cartridges, selectedCartridgeKey: props.currentCartridge && props.currentCartridge.hash, onClick: props.onCartridgeSelected })),
             React.createElement(react_bootstrap_1.Col, { md: 5, mdOffset: 1 },
-                React.createElement(CartridgeSettings_1.default, { cartridge: props.currentCartridge, onCartridgeNameChange: props.onCartridgeNameChange, onTvModeChanged: props.onTvModeChanged, onSave: props.onSave, onTogglePaddleEmulation: props.onTogglePaddleEmulation, onToggleAudioEnabled: props.onToggleAudioEnabled, onCartridgeTypeChange: props.onCartridgeTypeChange, onChangeSeedStrategy: props.onChangeSeedStrategy, onChangeSeedValue: props.onChangeSeedValue }))),
+                React.createElement(CartridgeSettings_1.default, { cartridge: props.currentCartridge, onCartridgeNameChange: props.onCartridgeNameChange, onTvModeChanged: props.onTvModeChanged, onSave: props.onSave, onTogglePaddleEmulation: props.onTogglePaddleEmulation, onCartridgeTypeChange: props.onCartridgeTypeChange, onChangeSeedStrategy: props.onChangeSeedStrategy, onChangeSeedValue: props.onChangeSeedValue, onChangeVolume: props.onChangeVolume }))),
         React.createElement(react_bootstrap_1.Row, null,
             React.createElement(react_bootstrap_1.Col, { sm: 5 },
                 React.createElement(CartridgeControls_1.default, { active: !!props.currentCartridge, changes: props.pendingChanges, onDelete: props.onDelete, onSave: props.onSave, onRun: props.onRun, onCartridgeUploaded: props.onCartridgeUploaded }))),
@@ -94859,7 +94885,7 @@ var Emulation = (function (_super) {
 })(Emulation || (Emulation = {}));
 exports.default = Emulation;
 
-},{"../../../driver/FullscreenVideo":777,"../../../driver/MouseAsPaddle":779,"../../../driver/SimpleCanvasVideo":780,"../../../driver/webgl/WebglVideo":783,"../../driver/KeyboardIO":784,"../../service/DriverManager":786,"../../service/EmulationServiceInterface":787,"../context/Emulation":838,"./emulation/ControlPanel":820,"react":620,"react-bootstrap":391,"tslib":689}],807:[function(require,module,exports){
+},{"../../../driver/FullscreenVideo":777,"../../../driver/MouseAsPaddle":779,"../../../driver/SimpleCanvasVideo":780,"../../../driver/webgl/WebglVideo":783,"../../driver/KeyboardIO":784,"../../service/DriverManager":786,"../../service/EmulationServiceInterface":787,"../context/Emulation":839,"./emulation/ControlPanel":820,"react":620,"react-bootstrap":391,"tslib":689}],807:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -94901,11 +94927,12 @@ function Main(props) {
 }
 exports.default = Main;
 
-},{"./main/Navbar":826,"react":620,"tslib":689}],809:[function(require,module,exports){
+},{"./main/Navbar":827,"react":620,"tslib":689}],809:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
 var react_bootstrap_1 = require("react-bootstrap");
+var Slider_1 = require("./general/Slider");
 var Switch_1 = require("./general/Switch");
 function Settings(props) {
     return React.createElement(react_bootstrap_1.Grid, { fluid: true, className: 'settings-grid' },
@@ -94917,6 +94944,11 @@ function Settings(props) {
                 React.createElement(react_bootstrap_1.ControlLabel, null, "Use worker (requires reload):")),
             React.createElement(react_bootstrap_1.Col, { sm: 8 },
                 React.createElement(Switch_1.default, { labelTrue: 'Yes', labelFalse: 'No', state: props.useWorker, onSwitch: props.onToggleUseWorker }))),
+        React.createElement(react_bootstrap_1.Row, null,
+            React.createElement(react_bootstrap_1.Col, { sm: 4 },
+                React.createElement(react_bootstrap_1.ControlLabel, null, "Volume:")),
+            React.createElement(react_bootstrap_1.Col, { sm: 4 },
+                React.createElement(Slider_1.default, { value: props.volume, min: 0, max: 1, step: 0.01, onChange: props.onChangeVolume }))),
         React.createElement(react_bootstrap_1.Row, { style: { marginTop: '1rem' } },
             React.createElement(react_bootstrap_1.Col, { md: 12 },
                 React.createElement("h1", null, "Display Settings"))),
@@ -94934,8 +94966,7 @@ function Settings(props) {
             React.createElement(react_bootstrap_1.Col, { sm: 4 },
                 React.createElement(react_bootstrap_1.ControlLabel, null, "Gamma correction (WebGL only):")),
             React.createElement(react_bootstrap_1.Col, { sm: 4 },
-                React.createElement("input", { type: 'range', value: props.gamma + '', min: '0.1', max: '5', step: '0.1', onChange: function (e) { return props.onChangeGamma(parseFloat(e.target.value)); } })),
-            React.createElement(react_bootstrap_1.Col, { sm: 1, style: { paddingLeft: '1rem' } }, props.gamma)),
+                React.createElement(Slider_1.default, { value: props.gamma, min: 0.1, max: 5, step: 0.1, onChange: props.onChangeGamma }))),
         React.createElement(react_bootstrap_1.Row, null,
             React.createElement(react_bootstrap_1.Col, { sm: 4 },
                 React.createElement(react_bootstrap_1.ControlLabel, null, "Reduce framerate (requires cartridge restart):")),
@@ -94953,12 +94984,13 @@ function Settings(props) {
         onToggleWebGlRendering: function () { return undefined; },
         onChangeGamma: function () { return undefined; },
         onToggleUseWorker: function () { return undefined; },
-        onToggleMergeFrames: function () { return undefined; }
+        onToggleMergeFrames: function () { return undefined; },
+        onChangeVolume: function () { return undefined; }
     };
 })(Settings || (Settings = {}));
 exports.default = Settings;
 
-},{"./general/Switch":824,"react":620,"react-bootstrap":391}],810:[function(require,module,exports){
+},{"./general/Slider":824,"./general/Switch":825,"react":620,"react-bootstrap":391}],810:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -94986,7 +95018,7 @@ var CartridgeControlsStyled = (_a = ["\n    .btn:not(:last-child) {\n        mar
 exports.default = CartridgeControlsStyled;
 var _a;
 
-},{"../general/FileUploadButton":822,"../style":832,"react":620,"react-bootstrap":391}],811:[function(require,module,exports){
+},{"../general/FileUploadButton":822,"../style":833,"react":620,"react-bootstrap":391}],811:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -95015,7 +95047,7 @@ var CartridgeListStyled = (_c = ["\n    height: 15rem;\n    overflow-y: auto;\n 
 exports.default = CartridgeListStyled;
 var _a, _b, _c;
 
-},{"../general/BorderBox":821,"../style":832,"react":620}],812:[function(require,module,exports){
+},{"../general/BorderBox":821,"../style":833,"react":620}],812:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -95040,6 +95072,7 @@ var React = require("react");
 var react_bootstrap_1 = require("react-bootstrap");
 var style_1 = require("../style");
 var CartridgeNameInput_1 = require("./CartridgeNameInput");
+var Slider_1 = require("../general/Slider");
 var TvModeSelect_1 = require("./TvModeSelect");
 var CartridgeTypeSelect_1 = require("./CartridgeTypeSelect");
 var Switch_1 = require("../general/Switch");
@@ -95059,8 +95092,8 @@ function CartridgeSettingsUnstyled(props) {
         React.createElement(Switch_1.default, { state: props.cartridge.emulatePaddles, labelTrue: 'yes', labelFalse: 'no', onSwitch: props.onTogglePaddleEmulation }),
         React.createElement(LabelStyled, null, "RNG seed:"),
         React.createElement(RandomSeedEdit_1.default, tslib_1.__assign({}, props)),
-        React.createElement(LabelStyled, null, "Audio:"),
-        React.createElement(Switch_1.default, { state: props.cartridge.audioEnabled, labelTrue: 'enabled', labelFalse: 'disabled', onSwitch: props.onToggleAudioEnabled }));
+        React.createElement(LabelStyled, null, "Volume:"),
+        React.createElement(Slider_1.default, { value: props.cartridge.volume, min: 0, max: 1, step: 0.01, onChange: props.onChangeVolume }));
 }
 (function (CartridgeSettingsUnstyled) {
     CartridgeSettingsUnstyled.defaultProps = {
@@ -95069,10 +95102,10 @@ function CartridgeSettingsUnstyled(props) {
         onSave: function () { return undefined; },
         onTvModeChanged: function () { return undefined; },
         onTogglePaddleEmulation: function () { return undefined; },
-        onToggleAudioEnabled: function () { return undefined; },
         onCartridgeTypeChange: function () { return undefined; },
         onChangeSeedStrategy: function () { return undefined; },
-        onChangeSeedValue: function () { return undefined; }
+        onChangeSeedValue: function () { return undefined; },
+        onChangeVolume: function () { return undefined; }
     };
 })(CartridgeSettingsUnstyled || (CartridgeSettingsUnstyled = {}));
 var LabelStyled = (_a = ["\n    display: block;\n\n    &:not(:first-child) {\n        margin-top: 1rem;\n    }\n"], _a.raw = ["\n    display: block;\n\n    &:not(:first-child) {\n        margin-top: 1rem;\n    }\n"], style_1.styled(react_bootstrap_1.ControlLabel)(_a));
@@ -95080,7 +95113,7 @@ var CartridgeSettingsStyled = (_b = ["\n    ", "\n"], _b.raw = ["\n    ", "\n"],
 exports.default = CartridgeSettingsStyled;
 var _a, _b;
 
-},{"../general/Switch":824,"../style":832,"./CartridgeNameInput":812,"./CartridgeTypeSelect":814,"./RandomSeedEdit":816,"./TvModeSelect":817,"react":620,"react-bootstrap":391,"tslib":689}],814:[function(require,module,exports){
+},{"../general/Slider":824,"../general/Switch":825,"../style":833,"./CartridgeNameInput":812,"./CartridgeTypeSelect":814,"./RandomSeedEdit":816,"./TvModeSelect":817,"react":620,"react-bootstrap":391,"tslib":689}],814:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -95163,7 +95196,7 @@ function RandomSeedEdit(props) {
 })(RandomSeedEdit || (RandomSeedEdit = {}));
 exports.default = RandomSeedEdit;
 
-},{"../general/Switch":824,"../general/ValidatingInput":825,"react":620}],817:[function(require,module,exports){
+},{"../general/Switch":825,"../general/ValidatingInput":826,"react":620}],817:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -95256,7 +95289,7 @@ var ZipfileSelectModal = (function (_super) {
 exports.default = ZipfileSelectModal;
 var _a;
 
-},{"../style":832,"react":620,"react-bootstrap":391,"tslib":689}],820:[function(require,module,exports){
+},{"../style":833,"react":620,"react-bootstrap":391,"tslib":689}],820:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -95299,7 +95332,7 @@ function ControlPanel(props) {
 })(ControlPanel || (ControlPanel = {}));
 exports.default = ControlPanel;
 
-},{"../../../service/EmulationServiceInterface":787,"../general/Switch":824,"react":620,"react-bootstrap":391}],821:[function(require,module,exports){
+},{"../../../service/EmulationServiceInterface":787,"../general/Switch":825,"react":620,"react-bootstrap":391}],821:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var style_1 = require("../style");
@@ -95308,7 +95341,7 @@ BorderBox.displayName = 'BorderBox';
 exports.default = BorderBox;
 var _a;
 
-},{"../style":832}],822:[function(require,module,exports){
+},{"../style":833}],822:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -95393,6 +95426,30 @@ exports.default = Markdown;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
+var style_1 = require("../style");
+var Container = (_a = ["\n    display: flex;\n    min-width: 4rem;\n    align-items: center;\n"], _a.raw = ["\n    display: flex;\n    min-width: 4rem;\n    align-items: center;\n"], style_1.styled.div(_a));
+var Label = (_b = ["\n    padding-left: 1rem;\n"], _b.raw = ["\n    padding-left: 1rem;\n"], style_1.styled.div(_b));
+function Slider(props) {
+    return (React.createElement(Container, null,
+        React.createElement("input", { type: 'range', value: props.value.toString(), min: props.min.toString(), max: props.max.toString(), step: props.step.toString(), onChange: function (e) { return props.onChange(parseFloat(e.target.value)); } }),
+        React.createElement(Label, null, props.value.toFixed(2))));
+}
+(function (Slider) {
+    Slider.defaultProps = {
+        value: 0,
+        max: 0,
+        min: 1,
+        step: 0.01,
+        onChange: function () { return undefined; }
+    };
+})(Slider || (Slider = {}));
+exports.default = Slider;
+var _a, _b;
+
+},{"../style":833,"react":620}],825:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
 var react_bootstrap_1 = require("react-bootstrap");
 function Switch(props) {
     return React.createElement(react_bootstrap_1.ButtonGroup, null,
@@ -95409,7 +95466,7 @@ function Switch(props) {
 })(Switch || (Switch = {}));
 exports.default = Switch;
 
-},{"react":620,"react-bootstrap":391}],825:[function(require,module,exports){
+},{"react":620,"react-bootstrap":391}],826:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -95450,7 +95507,7 @@ var ValidatingInput = (function (_super) {
 })(ValidatingInput || (ValidatingInput = {}));
 exports.default = ValidatingInput;
 
-},{"react":620,"react-bootstrap":391,"tslib":689}],826:[function(require,module,exports){
+},{"react":620,"react-bootstrap":391,"tslib":689}],827:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -95467,7 +95524,7 @@ function Navbar(props) {
 }
 exports.default = Navbar;
 
-},{"./navbar/Header":829,"./navbar/Navigation":830,"./navbar/StatusWidget":831,"react":620,"react-bootstrap":391,"tslib":689}],827:[function(require,module,exports){
+},{"./navbar/Header":830,"./navbar/Navigation":831,"./navbar/StatusWidget":832,"react":620,"react-bootstrap":391,"tslib":689}],828:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -95493,7 +95550,7 @@ var EmulationStatusStyled = (_a = ["\n    margin-left: 1rem;\n"], _a.raw = ["\n 
 exports.default = EmulationStatusStyled;
 var _a;
 
-},{"../../../../service/EmulationServiceInterface":787,"../../style":832,"react":620}],828:[function(require,module,exports){
+},{"../../../../service/EmulationServiceInterface":787,"../../style":833,"react":620}],829:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -95508,7 +95565,7 @@ var GamepadStatusStyled = (_a = ["\n    display: ", "\n"], _a.raw = ["\n    disp
 exports.default = GamepadStatusStyled;
 var _a;
 
-},{"../../style":832,"react":620}],829:[function(require,module,exports){
+},{"../../style":833,"react":620}],830:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -95519,7 +95576,7 @@ function Header(props) {
 }
 exports.default = Header;
 
-},{"react":620,"react-bootstrap":391}],830:[function(require,module,exports){
+},{"react":620,"react-bootstrap":391}],831:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -95545,7 +95602,7 @@ function Navigation(props) {
 exports.default = Navigation;
 var _a;
 
-},{"../../style":832,"react":620,"react-bootstrap":391,"react-router-bootstrap":565,"tslib":689}],831:[function(require,module,exports){
+},{"../../style":833,"react":620,"react-bootstrap":391,"react-router-bootstrap":565,"tslib":689}],832:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -95563,7 +95620,7 @@ var StatusWidgetStyled = (_a = ["\n    float: right;\n"], _a.raw = ["\n    float
 exports.default = StatusWidgetStyled;
 var _a;
 
-},{"../../style":832,"./EmulationStatus":827,"./GamepadStatus":828,"react":620,"tslib":689}],832:[function(require,module,exports){
+},{"../../style":833,"./EmulationStatus":828,"./GamepadStatus":829,"react":620,"tslib":689}],833:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var styledComponents = require("styled-components");
@@ -95575,7 +95632,7 @@ exports.keyframes = keyframes;
 exports.ThemeProvider = ThemeProvider;
 exports.default = styled;
 
-},{"styled-components":662}],833:[function(require,module,exports){
+},{"styled-components":662}],834:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -95608,10 +95665,10 @@ function mapDispatchToProps(dispatch) {
         onCartridgeNameChange: function (value) { return dispatch(currentCartridge_1.changeName(value)); },
         onTvModeChanged: function (mode) { return dispatch(currentCartridge_1.changeTvMode(mode)); },
         onTogglePaddleEmulation: function (state) { return dispatch(currentCartridge_1.changePaddleEmulation(state)); },
-        onToggleAudioEnabled: function (state) { return dispatch(currentCartridge_1.toggleAudioEnabled(state)); },
         onCartridgeTypeChange: function (type) { return dispatch(currentCartridge_1.changeCartridgeType(type)); },
         onChangeSeedStrategy: function (auto) { return dispatch(currentCartridge_1.changeRngSeedStrategy(auto)); },
         onChangeSeedValue: function (seed) { return dispatch(currentCartridge_1.changeRngSeed(seed)); },
+        onChangeVolume: function (volume) { return dispatch(currentCartridge_1.changeVolume(volume)); },
         onSelectPendingChangesClose: function () { return dispatch(guiState_1.closeSelectPendingChangesModal()); },
         onSelectPendingChangesSave: function () { return dispatch(cartridgeManager_1.confirmSelect()); },
         onSelectPendingChangesDiscard: function () { return dispatch(cartridgeManager_1.confirmSelect(true)); },
@@ -95626,7 +95683,7 @@ function mapDispatchToProps(dispatch) {
 var CartridgeManager = react_redux_1.connect(mapStateToProps, mapDispatchToProps)(CartridgeManager_1.default);
 exports.default = CartridgeManager;
 
-},{"../actions/cartridgeManager":797,"../actions/currentCartridge":798,"../actions/guiState":801,"../actions/root":802,"../actions/zipfile":804,"../components/CartridgeManager":805,"../model/Cartridge":841,"react-redux":557}],834:[function(require,module,exports){
+},{"../actions/cartridgeManager":797,"../actions/currentCartridge":798,"../actions/guiState":801,"../actions/root":802,"../actions/zipfile":804,"../components/CartridgeManager":805,"../model/Cartridge":842,"react-redux":557}],835:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -95661,7 +95718,7 @@ var EmulationContainer = react_redux_1.connect(mapStateToProps, {
 })(Emulation_1.default);
 exports.default = EmulationContainer;
 
-},{"../actions/emulation":799,"../components/Emulation":806,"../model/types":843,"react-redux":557,"react-router-redux":582}],835:[function(require,module,exports){
+},{"../actions/emulation":799,"../components/Emulation":806,"../model/types":844,"react-redux":557,"react-router-redux":582}],836:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -95675,7 +95732,7 @@ function mapStateToProps(state) {
 var HelpContainer = react_redux_1.connect(mapStateToProps)(Help_1.default);
 exports.default = HelpContainer;
 
-},{"../components/Help":807,"react-redux":557}],836:[function(require,module,exports){
+},{"../components/Help":807,"react-redux":557}],837:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -95692,7 +95749,7 @@ function mapStateToProps(state) {
 var Navbar = react_redux_1.connect(mapStateToProps, {}, undefined, { pure: false })(Main_1.default);
 exports.default = Navbar;
 
-},{"../components/Main":808,"../model/types":843,"react-redux":557}],837:[function(require,module,exports){
+},{"../components/Main":808,"../model/types":844,"react-redux":557}],838:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -95704,7 +95761,8 @@ function mapStateToProps(state) {
         webGlRendering: state.settings.webGlRendering,
         gamma: state.settings.gamma,
         useWorker: state.settings.useWorker,
-        mergeFrames: state.settings.mergeFrames
+        mergeFrames: state.settings.mergeFrames,
+        volume: state.settings.volume
     };
 }
 var SettingsContainer = react_redux_1.connect(mapStateToProps, {
@@ -95712,11 +95770,12 @@ var SettingsContainer = react_redux_1.connect(mapStateToProps, {
     onToggleWebGlRendering: settings_1.setWebGlRendering,
     onChangeGamma: settings_1.setGamma,
     onToggleUseWorker: settings_1.setUseWorker,
-    onToggleMergeFrames: settings_1.setMergeFrames
+    onToggleMergeFrames: settings_1.setMergeFrames,
+    onChangeVolume: settings_1.setVolume
 })(Settings_1.default);
 exports.default = SettingsContainer;
 
-},{"../actions/settings":803,"../components/Settings":809,"react-redux":557}],838:[function(require,module,exports){
+},{"../actions/settings":803,"../components/Settings":809,"react-redux":557}],839:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -95743,7 +95802,7 @@ var Provider = (function (_super) {
 }(React.Component));
 exports.Provider = Provider;
 
-},{"prop-types":302,"react":620,"tslib":689}],839:[function(require,module,exports){
+},{"prop-types":302,"react":620,"tslib":689}],840:[function(require,module,exports){
 (function (process){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -95799,7 +95858,7 @@ main();
 
 }).call(this,require('_process'))
 
-},{"./Routing":796,"./actions/environment":800,"./containers/Main":836,"./context/Emulation":838,"./middleware":840,"./reducers/root":848,"./service/implementation/Container":852,"./state/State":862,"_process":297,"history":214,"react":620,"react-dom":402,"react-redux":557,"react-router-redux":582,"redux":640,"styled-components":662,"tslib":689}],840:[function(require,module,exports){
+},{"./Routing":796,"./actions/environment":800,"./containers/Main":837,"./context/Emulation":839,"./middleware":841,"./reducers/root":849,"./service/implementation/Container":853,"./state/State":863,"_process":297,"history":214,"react":620,"react-dom":402,"react-redux":557,"react-router-redux":582,"redux":640,"styled-components":662,"tslib":689}],841:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var root_1 = require("./actions/root");
@@ -95817,7 +95876,7 @@ function dispatchBatchedActions(action, dispatch) {
     return dispatcher(undefined);
 }
 
-},{"./actions/root":802}],841:[function(require,module,exports){
+},{"./actions/root":802}],842:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../../../../machine/stella/Config");
@@ -95833,7 +95892,7 @@ var Cartridge;
             emulatePaddles: true,
             rngSeedAuto: true,
             rngSeed: 0,
-            audioEnabled: true
+            volume: 1
         };
     }
     Cartridge.create = create;
@@ -95846,13 +95905,13 @@ var Cartridge;
             c1.emulatePaddles === c2.emulatePaddles &&
             c1.rngSeedAuto === c2.rngSeedAuto &&
             c1.rngSeed === c2.rngSeed &&
-            c1.audioEnabled === c2.audioEnabled);
+            c1.volume === c2.volume);
     }
     Cartridge.equals = equals;
 })(Cartridge || (Cartridge = {}));
 exports.default = Cartridge;
 
-},{"../../../../machine/stella/Config":710,"../../../../machine/stella/cartridge/CartridgeInfo":731}],842:[function(require,module,exports){
+},{"../../../../machine/stella/Config":710,"../../../../machine/stella/cartridge/CartridgeInfo":731}],843:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Settings;
@@ -95865,7 +95924,8 @@ var Settings;
             webGlRendering: true,
             gamma: 1,
             useWorker: true,
-            mergeFrames: false
+            mergeFrames: false,
+            volume: 1
         };
     }
     Settings.create = create;
@@ -95882,7 +95942,7 @@ var Settings;
 })(Settings || (Settings = {}));
 exports.default = Settings;
 
-},{}],843:[function(require,module,exports){
+},{}],844:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var GuiMode;
@@ -95891,7 +95951,7 @@ var GuiMode;
     GuiMode[GuiMode["run"] = 1] = "run";
 })(GuiMode = exports.GuiMode || (exports.GuiMode = {}));
 
-},{}],844:[function(require,module,exports){
+},{}],845:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -95911,8 +95971,8 @@ function reduce(cartridge, action) {
             return changeRngSeedStrategy(cartridge, action);
         case currentCartridge_1.types.changeRngSeed:
             return changeRngSeed(cartridge, action);
-        case currentCartridge_1.types.toggleAudioEnabled:
-            return toggleAudioEnabled(cartridge, action);
+        case currentCartridge_1.types.changeVolume:
+            return changeVolume(cartridge, action);
         default:
             return cartridge;
     }
@@ -95942,12 +96002,13 @@ function changeRngSeed(cartridge, action) {
     if (cartridge === void 0) { cartridge = Cartridge_1.default.create(); }
     return tslib_1.__assign({}, cartridge, { rngSeed: action.seed });
 }
-function toggleAudioEnabled(cartridge, action) {
+function changeVolume(cartridge, action) {
     if (cartridge === void 0) { cartridge = Cartridge_1.default.create(); }
-    return tslib_1.__assign({}, cartridge, { audioEnabled: action.audioEnabled });
+    var volume = Math.max(Math.min(action.volume, 1), 0);
+    return tslib_1.__assign({}, cartridge, { volume: volume });
 }
 
-},{"../actions/currentCartridge":798,"../model/Cartridge":841,"tslib":689}],845:[function(require,module,exports){
+},{"../actions/currentCartridge":798,"../model/Cartridge":842,"tslib":689}],846:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Emulation_1 = require("../state/Emulation");
@@ -95991,7 +96052,7 @@ function changeTvMode(state, action) {
 }
 function start(state, action) {
     return new Emulation_1.default({
-        cartridgeHash: action.hash || state.cartridgeHash,
+        cartridge: action.cartridge || state.cartridge,
         pausedByUser: false,
     }, state);
 }
@@ -96018,7 +96079,7 @@ function userPause(state) {
     return new Emulation_1.default({ pausedByUser: true }, state);
 }
 
-},{"../../service/EmulationServiceInterface":787,"../actions/emulation":799,"../state/Emulation":859}],846:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":787,"../actions/emulation":799,"../state/Emulation":860}],847:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Environment_1 = require("../state/Environment");
@@ -96039,7 +96100,7 @@ function initialize(state, action) {
     }, state);
 }
 
-},{"../actions/environment":800,"../state/Environment":860}],847:[function(require,module,exports){
+},{"../actions/environment":800,"../state/Environment":861}],848:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var guiState_1 = require("../actions/guiState");
@@ -96092,7 +96153,7 @@ function loadClosePendingChangesModal(state) {
     }, state);
 }
 
-},{"../actions/guiState":801,"../state/GuiState":861}],848:[function(require,module,exports){
+},{"../actions/guiState":801,"../state/GuiState":862}],849:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -96186,7 +96247,7 @@ function saveCurrentCartride(state) {
     return new State_1.default({ cartridges: cartridges }, state);
 }
 
-},{"../../../../machine/stella/Config":710,"../../../../machine/stella/cartridge/CartridgeDetector":720,"../../../../tools/hash/md5":755,"../actions/root":802,"../model/Cartridge":841,"../state/State":862,"./currentCartridge":844,"./emulation":845,"./environment":846,"./guiState":847,"./settings":849,"./zipfile":850,"react-router-redux":582,"tslib":689}],849:[function(require,module,exports){
+},{"../../../../machine/stella/Config":710,"../../../../machine/stella/cartridge/CartridgeDetector":720,"../../../../tools/hash/md5":755,"../actions/root":802,"../model/Cartridge":842,"../state/State":863,"./currentCartridge":845,"./emulation":846,"./environment":847,"./guiState":848,"./settings":850,"./zipfile":851,"react-router-redux":582,"tslib":689}],850:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -96207,6 +96268,8 @@ function reducer(settings, action) {
             return init(settings, action);
         case settings_1.types.setMergeFrames:
             return setMergeFrames(settings, action);
+        case settings_1.types.setVolume:
+            return setVolume(settings, action);
     }
     return settings;
 }
@@ -96229,8 +96292,12 @@ function setUseWorker(settings, action) {
 function setMergeFrames(settings, action) {
     return tslib_1.__assign({}, settings, { mergeFrames: action.value });
 }
+function setVolume(settings, action) {
+    var volume = Math.max(Math.min(action.volume, 1), 0);
+    return tslib_1.__assign({}, settings, { volume: volume });
+}
 
-},{"../actions/settings":803,"../model/Settings":842,"tslib":689}],850:[function(require,module,exports){
+},{"../actions/settings":803,"../model/Settings":843,"tslib":689}],851:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Zipfile_1 = require("../state/Zipfile");
@@ -96270,7 +96337,7 @@ function clearError(state) {
     return new Zipfile_1.default({ error: '' }, state);
 }
 
-},{"../actions/zipfile":804,"../state/Zipfile":863}],851:[function(require,module,exports){
+},{"../actions/zipfile":804,"../state/Zipfile":864}],852:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -96575,7 +96642,7 @@ var CartridgeManager = (function () {
 }());
 exports.default = CartridgeManager;
 
-},{"../../../../../tools/hash/md5":755,"../../actions/cartridgeManager":797,"../../actions/emulation":799,"../../actions/guiState":801,"../../actions/root":802,"../../actions/zipfile":804,"../../model/Cartridge":841,"../../model/types":843,"jszip":234,"react-router-redux":582,"tslib":689}],852:[function(require,module,exports){
+},{"../../../../../tools/hash/md5":755,"../../actions/cartridgeManager":797,"../../actions/emulation":799,"../../actions/guiState":801,"../../actions/root":802,"../../actions/zipfile":804,"../../model/Cartridge":842,"../../model/types":844,"jszip":234,"react-router-redux":582,"tslib":689}],853:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -96632,11 +96699,12 @@ var Container = (function () {
 }());
 exports.default = Container;
 
-},{"./CartridgManager":851,"./EmulationProvider":853,"./PersistenceProvider":854,"./StorageManager":855,"microevent.ts":276}],853:[function(require,module,exports){
+},{"./CartridgManager":852,"./EmulationProvider":854,"./PersistenceProvider":855,"./StorageManager":856,"microevent.ts":276}],854:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var emulation_1 = require("../../actions/emulation");
+var settings_1 = require("../../actions/settings");
 var EmulationService_1 = require("../../../service/worker/EmulationService");
 var EmulationService_2 = require("../../../service/vanilla/EmulationService");
 var DriverManager_1 = require("../../../service/DriverManager");
@@ -96649,7 +96717,7 @@ var EmulationProvider = (function () {
         var _this = this;
         this._storage = _storage;
         this._middleware = (function (api) { return function (next) { return function (a) { return tslib_1.__awaiter(_this, void 0, void 0, function () {
-            var initialState, _a;
+            var initialState, result, _a;
             return tslib_1.__generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -96667,8 +96735,9 @@ var EmulationProvider = (function () {
                             case emulation_1.types.changeDifficulty: return [3, 9];
                             case emulation_1.types.changeTvMode: return [3, 9];
                             case emulation_1.types.setEnforceRateLimit: return [3, 11];
+                            case settings_1.types.setVolume: return [3, 13];
                         }
-                        return [3, 13];
+                        return [3, 15];
                     case 1: return [4, this._startEmulation(a, initialState.currentCartridge, initialState)];
                     case 2:
                         _b.sent();
@@ -96693,7 +96762,12 @@ var EmulationProvider = (function () {
                     case 12:
                         _b.sent();
                         return [2, next(a)];
-                    case 13: return [2, next(a)];
+                    case 13: return [4, next(a)];
+                    case 14:
+                        result = _b.sent();
+                        this._updateVolume();
+                        return [2, result];
+                    case 15: return [2, next(a)];
                 }
             });
         }); }; }; });
@@ -96782,14 +96856,15 @@ var EmulationProvider = (function () {
                         if (!cartridge) {
                             return [2];
                         }
-                        action.hash = cartridge.hash;
-                        stellaConfig = new Config_1.default(cartridge.tvMode, cartridge.audioEnabled, cartridge.rngSeedAuto ? -1 : cartridge.rngSeed, cartridge.emulatePaddles);
+                        action.cartridge = cartridge;
+                        stellaConfig = new Config_1.default(cartridge.tvMode, cartridge.volume > 0, cartridge.rngSeedAuto ? -1 : cartridge.rngSeed, cartridge.emulatePaddles);
                         return [4, this._storage.getImage(cartridge.hash)];
                     case 1:
                         buffer = _a.sent();
                         if (!buffer) {
                             throw new Error("no buffer for hash " + cartridge.hash);
                         }
+                        this._updateVolume(cartridge);
                         return [4, this._service.start(buffer, stellaConfig, cartridge.cartridgeType, state.settings.mergeFrames ? [{ type: 1 }] : undefined)];
                     case 2:
                         _a.sent();
@@ -96799,11 +96874,19 @@ var EmulationProvider = (function () {
             });
         });
     };
+    EmulationProvider.prototype._updateVolume = function (cartridge) {
+        if (cartridge === void 0) { cartridge = this._store.getState().emulationState.cartridge; }
+        if (!cartridge) {
+            return;
+        }
+        var state = this._store.getState();
+        this._audioDriver.setMasterVolume(state.settings.volume * cartridge.volume);
+    };
     return EmulationProvider;
 }());
 exports.default = EmulationProvider;
 
-},{"../../../../../machine/stella/Config":710,"../../../../../video/processing/config":775,"../../../../driver/Gamepad":778,"../../../driver/WebAudio":785,"../../../service/DriverManager":786,"../../../service/vanilla/EmulationService":789,"../../../service/worker/EmulationService":793,"../../actions/emulation":799,"tslib":689}],854:[function(require,module,exports){
+},{"../../../../../machine/stella/Config":710,"../../../../../video/processing/config":775,"../../../../driver/Gamepad":778,"../../../driver/WebAudio":785,"../../../service/DriverManager":786,"../../../service/vanilla/EmulationService":789,"../../../service/worker/EmulationService":793,"../../actions/emulation":799,"../../actions/settings":803,"tslib":689}],855:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -96880,7 +96963,7 @@ var PersistenceProvider = (function () {
 }());
 exports.default = PersistenceProvider;
 
-},{"../../actions/root":802,"../../actions/settings":803,"tslib":689}],855:[function(require,module,exports){
+},{"../../actions/root":802,"../../actions/settings":803,"tslib":689}],856:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Database_1 = require("./storage/Database");
@@ -96950,7 +97033,7 @@ var StorageManager = (function () {
 }());
 exports.default = StorageManager;
 
-},{"./storage/Cartridge":856,"./storage/Database":857,"./storage/Settings":858}],856:[function(require,module,exports){
+},{"./storage/Cartridge":857,"./storage/Database":858,"./storage/Settings":859}],857:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -96995,7 +97078,7 @@ function toState(cartridge) {
 }
 exports.toState = toState;
 
-},{"../../../../../../machine/stella/Config":710,"../../../../../../machine/stella/cartridge/CartridgeInfo":731,"tslib":689}],857:[function(require,module,exports){
+},{"../../../../../../machine/stella/Config":710,"../../../../../../machine/stella/cartridge/CartridgeInfo":731,"tslib":689}],858:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -97058,13 +97141,34 @@ var Database = (function (_super) {
                 cursor.update(cartridge);
             });
         });
+        _this.version(6)
+            .stores({
+            cartridge: '++id, &hash',
+            settings: 'id'
+        })
+            .upgrade(function (transaction) {
+            transaction
+                .table('cartridge')
+                .each(function (cartridge, c) {
+                var cursor = c;
+                cartridge.volume = cartridge.audioEnabled ? 1 : 0;
+                cursor.update(cartridge);
+            });
+            transaction
+                .table('settings')
+                .each(function (settings, c) {
+                var cursor = c;
+                settings.volume = 1;
+                cursor.update(settings);
+            });
+        });
         return _this;
     }
     return Database;
 }(dexie_1.default));
 exports.default = Database;
 
-},{"dexie":144,"tslib":689}],858:[function(require,module,exports){
+},{"dexie":144,"tslib":689}],859:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -97083,13 +97187,13 @@ function toState(record) {
 }
 exports.toState = toState;
 
-},{"../../../model/Settings":842,"tslib":689}],859:[function(require,module,exports){
+},{"../../../model/Settings":843,"tslib":689}],860:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("../../service/EmulationServiceInterface");
 var EmulationState = (function () {
     function EmulationState(changes, old) {
-        this.cartridgeHash = '';
+        this.cartridge = null;
         this.emulationState = EmulationServiceInterface_1.default.State.stopped;
         this.difficultyPlayer0 = true;
         this.difficultyPlayer1 = true;
@@ -97104,7 +97208,7 @@ var EmulationState = (function () {
 }());
 exports.default = EmulationState;
 
-},{"../../service/EmulationServiceInterface":787}],860:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":787}],861:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Environment = (function () {
@@ -97117,7 +97221,7 @@ var Environment = (function () {
 }());
 exports.default = Environment;
 
-},{}],861:[function(require,module,exports){
+},{}],862:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var types_1 = require("../model/types");
@@ -97133,7 +97237,7 @@ var GuiState = (function () {
 }());
 exports.default = GuiState;
 
-},{"../model/types":843}],862:[function(require,module,exports){
+},{"../model/types":844}],863:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var State = (function () {
@@ -97146,7 +97250,7 @@ var State = (function () {
 }());
 exports.default = State;
 
-},{}],863:[function(require,module,exports){
+},{}],864:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Zipfile = (function () {
@@ -97160,5 +97264,5 @@ var Zipfile = (function () {
 }());
 exports.default = Zipfile;
 
-},{}]},{},[839])
+},{}]},{},[840])
 //# sourceMappingURL=stellerator.js.map
