@@ -15016,7 +15016,7 @@ var Missile = (function () {
     Missile.prototype.tick = function (isReceivingHclock) {
         this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
         var starfieldEffect = this._moving && isReceivingHclock;
-        if (this._decodes[this._counter]) {
+        if (this._decodes[this._counter] && !this._resmp) {
             var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
             this._rendering = true;
             this._renderCounter = -4;
