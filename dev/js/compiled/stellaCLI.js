@@ -34,22 +34,22 @@ function placeHoldersCount (b64) {
 
 function byteLength (b64) {
   // base64 is 4/3 + up to two characters of the original data
-  return b64.length * 3 / 4 - placeHoldersCount(b64)
+  return (b64.length * 3 / 4) - placeHoldersCount(b64)
 }
 
 function toByteArray (b64) {
-  var i, j, l, tmp, placeHolders, arr
+  var i, l, tmp, placeHolders, arr
   var len = b64.length
   placeHolders = placeHoldersCount(b64)
 
-  arr = new Arr(len * 3 / 4 - placeHolders)
+  arr = new Arr((len * 3 / 4) - placeHolders)
 
   // if there are placeholders, only get up to the last complete 4 chars
   l = placeHolders > 0 ? len - 4 : len
 
   var L = 0
 
-  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+  for (i = 0; i < l; i += 4) {
     tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
     arr[L++] = (tmp >> 16) & 0xFF
     arr[L++] = (tmp >> 8) & 0xFF
@@ -2504,7 +2504,7 @@ process.umask = function() { return 0; };
 },{}],10:[function(require,module,exports){
 /*!
 * screenfull
-* v3.2.2 - 2017-06-14
+* v3.3.1 - 2017-07-07
 * (c) Sindre Sorhus; MIT License
 */
 (function () {
@@ -2581,6 +2581,11 @@ process.umask = function() { return 0; };
 		return false;
 	})();
 
+	var eventNameMap = {
+		change: fn.fullscreenchange,
+		error: fn.fullscreenerror
+	};
+
 	var screenfull = {
 		request: function (elem) {
 			var request = fn.requestFullscreen;
@@ -2608,10 +2613,22 @@ process.umask = function() { return 0; };
 			}
 		},
 		onchange: function (callback) {
-			document.addEventListener(fn.fullscreenchange, callback, false);
+			this.on('change', callback);
 		},
 		onerror: function (callback) {
-			document.addEventListener(fn.fullscreenerror, callback, false);
+			this.on('error', callback);
+		},
+		on: function (event, callback) {
+			var eventName = eventNameMap[event];
+			if (eventName) {
+				document.addEventListener(eventName, callback, false);
+			}
+		},
+		off: function (event, callback) {
+			var eventName = eventNameMap[event];
+			if (eventName) {
+				document.removeEventListener(eventName, callback, false);
+			}
 		},
 		raw: fn
 	};
@@ -21237,7 +21254,7 @@ var SimpleCanvasVideo = (function () {
         if (_aspect === void 0) { _aspect = 4 / 3; }
         this._canvas = _canvas;
         this._aspect = _aspect;
-        this._throttle = true;
+        this._syncRendering = true;
         this._animationFrameHandle = 0;
         this._pendingFrame = null;
         this._video = null;
@@ -21268,12 +21285,16 @@ var SimpleCanvasVideo = (function () {
         this.resize();
         return this;
     };
-    SimpleCanvasVideo.prototype.setThrottle = function (throttle) {
-        if (throttle === this._throttle) {
+    SimpleCanvasVideo.prototype.enableSyncRendering = function (syncRendering) {
+        if (syncRendering === this._syncRendering) {
             return;
         }
         this._cancelPendingFrame();
-        this._throttle = throttle;
+        this._syncRendering = syncRendering;
+        return this;
+    };
+    SimpleCanvasVideo.prototype.syncRenderingEnabled = function () {
+        return this._syncRendering;
     };
     SimpleCanvasVideo.prototype.bind = function (video) {
         if (this._video) {
@@ -21316,7 +21337,7 @@ var SimpleCanvasVideo = (function () {
             self._pendingFrame.release();
         }
         self._pendingFrame = imageDataPoolMember;
-        if (self._throttle) {
+        if (self._syncRendering) {
             if (!self._animationFrameHandle) {
                 self._scheduleDraw();
             }
@@ -21551,8 +21572,8 @@ var Channel = (function () {
     };
     Channel._onBufferChanged = function (key, self) {
         if (!self._cache[key]) {
-            var buffer_1 = self._audio.getBuffer(key), audioBuffer = self._context.createBuffer(1, buffer_1.getLength(), buffer_1.getSampleRate());
-            audioBuffer.getChannelData(0).set(buffer_1.getContent());
+            var sampleBuffer = self._audio.getBuffer(key), audioBuffer = self._context.createBuffer(1, sampleBuffer.getLength(), sampleBuffer.getSampleRate());
+            audioBuffer.getChannelData(0).set(sampleBuffer.getContent());
             self._cache[key] = audioBuffer;
         }
         var buffer = self._cache[key], source = self._context.createBufferSource();
