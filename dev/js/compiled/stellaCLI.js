@@ -4972,7 +4972,7 @@ var DebuggerCLI = (function (_super) {
 }(AbstractCLI_1.default));
 exports.default = DebuggerCLI;
 
-},{"../machine/Debugger":35,"../machine/vanilla/Board":89,"./AbstractCLI":24,"./CommandInterpreter":25,"./DebuggerFrontend":28,"path":8,"tslib":20}],28:[function(require,module,exports){
+},{"../machine/Debugger":35,"../machine/vanilla/Board":90,"./AbstractCLI":24,"./CommandInterpreter":25,"./DebuggerFrontend":28,"path":8,"tslib":20}],28:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface_1 = require("../machine/board/BoardInterface");
@@ -5151,7 +5151,7 @@ var DebuggerFrontend = (function () {
 }());
 exports.default = DebuggerFrontend;
 
-},{"../machine/board/BoardInterface":36,"../tools/hex":94,"util":23}],29:[function(require,module,exports){
+},{"../machine/board/BoardInterface":36,"../tools/hex":95,"util":23}],29:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Completer_1 = require("./Completer");
@@ -5471,7 +5471,7 @@ var StellaCLI = (function (_super) {
 }(DebuggerCLI_1.default));
 exports.default = StellaCLI;
 
-},{"../../machine/stella/Board":44,"../../machine/stella/Config":46,"../../machine/stella/cartridge/CartridgeFactory":66,"../../machine/stella/cartridge/CartridgeInfo":67,"../../tools/ClockProbe":92,"../../tools/scheduler/ImmedateScheduler":101,"../../tools/scheduler/PeriodicScheduler":102,"../../tools/scheduler/limiting/ConstantCycles":104,"../CommandInterpreter":25,"../DebuggerCLI":27,"./ControlPanelManagementProvider":30,"./SystemConfigSetupProvider":32,"microevent.ts":7,"tslib":20}],32:[function(require,module,exports){
+},{"../../machine/stella/Board":44,"../../machine/stella/Config":46,"../../machine/stella/cartridge/CartridgeFactory":67,"../../machine/stella/cartridge/CartridgeInfo":68,"../../tools/ClockProbe":93,"../../tools/scheduler/ImmedateScheduler":102,"../../tools/scheduler/PeriodicScheduler":103,"../../tools/scheduler/limiting/ConstantCycles":105,"../CommandInterpreter":25,"../DebuggerCLI":27,"./ControlPanelManagementProvider":30,"./SystemConfigSetupProvider":32,"microevent.ts":7,"tslib":20}],32:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../../machine/stella/Config");
@@ -5893,7 +5893,7 @@ var Debugger = (function () {
 }());
 exports.default = Debugger;
 
-},{"../tools/binary":93,"../tools/hex":94,"./board/BoardInterface":36,"./cpu/CpuInterface":38,"./cpu/Disassembler":39,"./cpu/Instruction":40,"util":23}],36:[function(require,module,exports){
+},{"../tools/binary":94,"../tools/hex":95,"./board/BoardInterface":36,"./cpu/CpuInterface":38,"./cpu/Disassembler":39,"./cpu/Instruction":40,"util":23}],36:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface;
@@ -7025,7 +7025,7 @@ var Disassembler = (function () {
 }());
 exports.default = Disassembler;
 
-},{"../../tools/hex":94,"./Instruction":40}],40:[function(require,module,exports){
+},{"../../tools/hex":95,"./Instruction":40}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction = (function () {
@@ -7688,7 +7688,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../../tools/rng/factory":100,"../board/BoardInterface":36,"../cpu/Cpu":37,"../cpu/CpuInterface":38,"../io/DigitalJoystick":41,"../io/Paddle":42,"./Bus":45,"./Config":46,"./ControlPanel":47,"./Pia":48,"./tia/Tia":85,"microevent.ts":7}],45:[function(require,module,exports){
+},{"../../tools/rng/factory":101,"../board/BoardInterface":36,"../cpu/Cpu":37,"../cpu/CpuInterface":38,"../io/DigitalJoystick":41,"../io/Paddle":42,"./Bus":45,"./Config":46,"./ControlPanel":47,"./Pia":48,"./tia/Tia":86,"microevent.ts":7}],45:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -8079,7 +8079,7 @@ var AbstractCartridge = (function () {
 }());
 exports.default = AbstractCartridge;
 
-},{"./CartridgeInfo":67,"./CartridgeInterface":68,"microevent.ts":7}],50:[function(require,module,exports){
+},{"./CartridgeInfo":68,"./CartridgeInterface":69,"microevent.ts":7}],50:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8108,7 +8108,7 @@ var Cartridge2k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge2k;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"tslib":20}],51:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],51:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8220,7 +8220,7 @@ var Cartridge3E = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3E;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"./util":75,"tslib":20}],52:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],52:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8277,7 +8277,7 @@ var Cartridge3F = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3F;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"./util":75,"tslib":20}],53:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],53:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8307,7 +8307,7 @@ var Cartridge4k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge4k;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"tslib":20}],54:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],54:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8495,7 +8495,7 @@ var Fetcher = (function () {
 }());
 exports.default = CartridgeDPC;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"tslib":20}],55:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],55:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8918,7 +8918,7 @@ var FractionalFetcher = (function () {
 }());
 exports.default = CartridgeDPCPlus;
 
-},{"../../../tools/hex":94,"./AbstractCartridge":49,"./CartridgeInfo":67,"./CartridgeInterface":68,"./thumbulator/Thumbulator":73,"./util":75,"tslib":20}],56:[function(require,module,exports){
+},{"../../../tools/hex":95,"./AbstractCartridge":49,"./CartridgeInfo":68,"./CartridgeInterface":69,"./thumbulator/Thumbulator":74,"./util":76,"tslib":20}],56:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo_1 = require("./CartridgeInfo");
@@ -8930,6 +8930,7 @@ var CartridgeFE_1 = require("./CartridgeFE");
 var CartridgeUA_1 = require("./CartridgeUA");
 var CartridgeE7_1 = require("./CartridgeE7");
 var CartridgeFA2_1 = require("./CartridgeFA2");
+var CartridgeEF_1 = require("./CartridgeEF");
 var CartridgeDPCPlus_1 = require("./CartridgeDPCPlus");
 var CartridgeDetector = (function () {
     function CartridgeDetector() {
@@ -8960,7 +8961,7 @@ var CartridgeDetector = (function () {
             case 0x8000:
                 return this._detect32k(buffer);
             case 0x10000:
-                return CartridgeInfo_1.default.CartridgeType.bankswitch_64k_F0;
+                return this._detect64k(buffer);
             default:
                 return CartridgeInfo_1.default.CartridgeType.unknown;
         }
@@ -9002,11 +9003,17 @@ var CartridgeDetector = (function () {
         }
         return CartridgeInfo_1.default.CartridgeType.bankswitch_32k_F4;
     };
+    CartridgeDetector.prototype._detect64k = function (buffer) {
+        if (CartridgeEF_1.default.matchesBuffer(buffer)) {
+            return CartridgeInfo_1.default.CartridgeType.bankswitch_64k_EF;
+        }
+        return CartridgeInfo_1.default.CartridgeType.bankswitch_64k_F0;
+    };
     return CartridgeDetector;
 }());
 exports.default = CartridgeDetector;
 
-},{"./Cartridge3E":51,"./Cartridge3F":52,"./CartridgeDPCPlus":55,"./CartridgeE0":57,"./CartridgeE7":58,"./CartridgeF8":62,"./CartridgeFA2":64,"./CartridgeFE":65,"./CartridgeInfo":67,"./CartridgeUA":70}],57:[function(require,module,exports){
+},{"./Cartridge3E":51,"./Cartridge3F":52,"./CartridgeDPCPlus":55,"./CartridgeE0":57,"./CartridgeE7":58,"./CartridgeEF":59,"./CartridgeF8":63,"./CartridgeFA2":65,"./CartridgeFE":66,"./CartridgeInfo":68,"./CartridgeUA":71}],57:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9092,7 +9099,7 @@ var CartridgeE0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeE0;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"./util":75,"tslib":20}],58:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],58:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9218,7 +9225,116 @@ var CartrdigeE7 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartrdigeE7;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"./util":75,"tslib":20}],59:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],59:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
+var cartridgeUtil = require("./util");
+var CartridgeEF = (function (_super) {
+    tslib_1.__extends(CartridgeEF, _super);
+    function CartridgeEF(buffer, _supportSC) {
+        if (_supportSC === void 0) { _supportSC = true; }
+        var _this = _super.call(this) || this;
+        _this._supportSC = _supportSC;
+        _this._bus = null;
+        _this._banks = new Array(16);
+        _this._ram = new Uint8Array(0x80);
+        _this._hasSC = false;
+        if (buffer.length !== 0x10000) {
+            throw new Error("buffer is not a 64k cartridge image: wrong length " + buffer.length);
+        }
+        for (var i = 0; i < 16; i++) {
+            _this._banks[i] = new Uint8Array(0x1000);
+        }
+        for (var i = 0; i < 0x1000; i++) {
+            for (var j = 0; j < 16; j++) {
+                _this._banks[j][i] = buffer[j * 0x1000 + i];
+            }
+        }
+        _this.reset();
+        return _this;
+    }
+    CartridgeEF.matchesBuffer = function (buffer) {
+        var matchMagic = function (magicString) {
+            var magic = magicString.split('').map(function (x) { return x.charCodeAt(0); });
+            for (var i = 0; i < magic.length; i++) {
+                if (magic[i] !== buffer[0xFFF8 + i]) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        if (buffer.length !== 0x10000) {
+            return false;
+        }
+        if (matchMagic('efef') || matchMagic('efsc')) {
+            return true;
+        }
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
+            [0x0C, 0xE0, 0xFF],
+            [0xAD, 0xE0, 0xFF],
+            [0x0C, 0xE0, 0x1F],
+            [0xAD, 0xE0, 0x1F]
+        ]);
+        for (var i = 0; i < 4; i++) {
+            if (signatureCounts[i] > 0) {
+                return true;
+            }
+        }
+        return false;
+    };
+    CartridgeEF.prototype.reset = function () {
+        this._bank = this._banks[15];
+        this._hasSC = false;
+    };
+    CartridgeEF.prototype.getType = function () {
+        return CartridgeInfo_1.default.CartridgeType.bankswitch_64k_EF;
+    };
+    CartridgeEF.prototype.randomize = function (rng) {
+        for (var i = 0; i < this._ram.length; i++) {
+            this._ram[i] = rng.int(0xFF);
+        }
+    };
+    CartridgeEF.prototype.setBus = function (bus) {
+        this._bus = bus;
+        return this;
+    };
+    CartridgeEF.prototype.read = function (address) {
+        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        return this.peek(address);
+    };
+    CartridgeEF.prototype.peek = function (address) {
+        address &= 0x0FFF;
+        if (this._hasSC && address >= 0x0080 && address < 0x0100) {
+            return this._ram[address - 0x80];
+        }
+        else {
+            return this._bank[address];
+        }
+    };
+    CartridgeEF.prototype.write = function (address, value) {
+        address &= 0x0FFF;
+        if (address < 0x80 && this._supportSC) {
+            this._hasSC = true;
+        }
+        this._access(address, value);
+    };
+    CartridgeEF.prototype._access = function (address, value) {
+        if (address < 0x80 && this._hasSC) {
+            this._ram[address] = value;
+            return;
+        }
+        if (address >= 0x0FE0 && address <= 0x0FEF) {
+            this._bank = this._banks[address - 0x0FE0];
+        }
+    };
+    return CartridgeEF;
+}(AbstractCartridge_1.default));
+exports.default = CartridgeEF;
+
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],60:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9274,7 +9390,7 @@ var CartridgeF0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF0;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"tslib":20}],60:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],61:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9353,7 +9469,7 @@ var CartridgeF4 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF4;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"tslib":20}],61:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],62:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9443,7 +9559,7 @@ var CartridgeF6 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF6;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"tslib":20}],62:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],63:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9528,7 +9644,7 @@ var CartridgeF8 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF8;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"./util":75,"tslib":20}],63:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9604,7 +9720,7 @@ var CartridgeFA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"tslib":20}],64:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],65:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9717,7 +9833,7 @@ var CartridgeFA2 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA2;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"./util":75,"tslib":20}],65:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9795,7 +9911,7 @@ var CartridgeFE = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFE;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"./util":75,"tslib":20}],66:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Cartridge2k_1 = require("./Cartridge2k");
@@ -9810,6 +9926,7 @@ var CartridgeUA_1 = require("./CartridgeUA");
 var CartridgeFA_1 = require("./CartridgeFA");
 var CartridgeE7_1 = require("./CartridgeE7");
 var CartridgeF0_1 = require("./CartridgeF0");
+var CartridgeEF_1 = require("./CartridgeEF");
 var CartridgeF4_1 = require("./CartridgeF4");
 var CartridgeFA2_1 = require("./CartridgeFA2");
 var CartridgeSupercharger_1 = require("./CartridgeSupercharger");
@@ -9854,6 +9971,8 @@ var CartridgeFactory = (function () {
                 return new CartridgeF4_1.default(buffer);
             case CartridgeInfo_1.default.CartridgeType.bankswitch_64k_F0:
                 return new CartridgeF0_1.default(buffer);
+            case CartridgeInfo_1.default.CartridgeType.bankswitch_64k_EF:
+                return new CartridgeEF_1.default(buffer);
             case CartridgeInfo_1.default.CartridgeType.bankswitch_3E:
                 return new Cartridge3E_1.default(buffer);
             case CartridgeInfo_1.default.CartridgeType.bankswitch_supercharger:
@@ -9868,7 +9987,7 @@ var CartridgeFactory = (function () {
 }());
 exports.default = CartridgeFactory;
 
-},{"./Cartridge2k":50,"./Cartridge3E":51,"./Cartridge3F":52,"./Cartridge4k":53,"./CartridgeDPC":54,"./CartridgeDPCPlus":55,"./CartridgeDetector":56,"./CartridgeE0":57,"./CartridgeE7":58,"./CartridgeF0":59,"./CartridgeF4":60,"./CartridgeF6":61,"./CartridgeF8":62,"./CartridgeFA":63,"./CartridgeFA2":64,"./CartridgeFE":65,"./CartridgeInfo":67,"./CartridgeSupercharger":69,"./CartridgeUA":70}],67:[function(require,module,exports){
+},{"./Cartridge2k":50,"./Cartridge3E":51,"./Cartridge3F":52,"./Cartridge4k":53,"./CartridgeDPC":54,"./CartridgeDPCPlus":55,"./CartridgeDetector":56,"./CartridgeE0":57,"./CartridgeE7":58,"./CartridgeEF":59,"./CartridgeF0":60,"./CartridgeF4":61,"./CartridgeF6":62,"./CartridgeF8":63,"./CartridgeFA":64,"./CartridgeFA2":65,"./CartridgeFE":66,"./CartridgeInfo":68,"./CartridgeSupercharger":70,"./CartridgeUA":71}],68:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo;
@@ -9889,10 +10008,11 @@ var CartridgeInfo;
         CartridgeType[CartridgeType["bankswitch_FA2"] = 11] = "bankswitch_FA2";
         CartridgeType[CartridgeType["bankswitch_32k_F4"] = 12] = "bankswitch_32k_F4";
         CartridgeType[CartridgeType["bankswitch_64k_F0"] = 13] = "bankswitch_64k_F0";
-        CartridgeType[CartridgeType["bankswitch_3E"] = 14] = "bankswitch_3E";
-        CartridgeType[CartridgeType["bankswitch_supercharger"] = 15] = "bankswitch_supercharger";
-        CartridgeType[CartridgeType["bankswitch_dpc_plus"] = 16] = "bankswitch_dpc_plus";
-        CartridgeType[CartridgeType["unknown"] = 17] = "unknown";
+        CartridgeType[CartridgeType["bankswitch_64k_EF"] = 14] = "bankswitch_64k_EF";
+        CartridgeType[CartridgeType["bankswitch_3E"] = 15] = "bankswitch_3E";
+        CartridgeType[CartridgeType["bankswitch_supercharger"] = 16] = "bankswitch_supercharger";
+        CartridgeType[CartridgeType["bankswitch_dpc_plus"] = 17] = "bankswitch_dpc_plus";
+        CartridgeType[CartridgeType["unknown"] = 18] = "unknown";
     })(CartridgeType = CartridgeInfo.CartridgeType || (CartridgeInfo.CartridgeType = {}));
     function getAllTypes() {
         return [
@@ -9911,6 +10031,7 @@ var CartridgeInfo;
             CartridgeType.bankswitch_32k_F4,
             CartridgeType.bankswitch_3E,
             CartridgeType.bankswitch_64k_F0,
+            CartridgeType.bankswitch_64k_EF,
             CartridgeType.bankswitch_supercharger,
             CartridgeType.bankswitch_dpc_plus,
             CartridgeType.unknown
@@ -9949,6 +10070,8 @@ var CartridgeInfo;
                 return 'bankswitched 3E (Tigervision + RAM) scheme';
             case CartridgeType.bankswitch_64k_F0:
                 return 'bankswitched 64k, F0 (Megaboy) scheme';
+            case CartridgeType.bankswitch_64k_EF:
+                return 'bankswitched 64k, EFSC (Homestar Runner) scheme';
             case CartridgeType.bankswitch_supercharger:
                 return 'bankswitched supercharger';
             case CartridgeType.bankswitch_dpc_plus:
@@ -9961,7 +10084,7 @@ var CartridgeInfo;
 })(CartridgeInfo || (CartridgeInfo = {}));
 exports.default = CartridgeInfo;
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInterface;
@@ -9978,7 +10101,7 @@ var CartridgeInterface;
 })(CartridgeInterface || (CartridgeInterface = {}));
 exports.default = CartridgeInterface;
 
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -10177,7 +10300,7 @@ var CartridgeSupercharger = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeSupercharger;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"./supercharger/Header":71,"./supercharger/blob":72,"tslib":20}],70:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./supercharger/Header":72,"./supercharger/blob":73,"tslib":20}],71:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -10244,7 +10367,7 @@ var CartridgeUA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeUA;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":67,"./util":75,"tslib":20}],71:[function(require,module,exports){
+},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],72:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Header = (function () {
@@ -10281,7 +10404,7 @@ var Header = (function () {
 }());
 exports.default = Header;
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bios = new Uint8Array([
@@ -10358,7 +10481,7 @@ exports.defaultHeader = new Uint8Array([
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00
 ]);
 
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var nativeThumbulator = require("./native/thumbulator");
@@ -10406,7 +10529,7 @@ var Thumbulator = (function () {
 }());
 exports.default = Thumbulator;
 
-},{"./native/thumbulator":74}],74:[function(require,module,exports){
+},{"./native/thumbulator":75}],75:[function(require,module,exports){
 (function (process){
 var Module = function (Module) {
     Module = Module || {};
@@ -18009,7 +18132,7 @@ module.exports = Module;
 
 }).call(this,require('_process'))
 
-},{"_process":9,"path":8}],75:[function(require,module,exports){
+},{"_process":9,"path":8}],76:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function searchForSignatures(buffer, signatures) {
@@ -18048,7 +18171,7 @@ function searchForSignatures(buffer, signatures) {
 }
 exports.searchForSignatures = searchForSignatures;
 
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -18123,7 +18246,7 @@ var Audio = (function () {
 }());
 exports.default = Audio;
 
-},{"./ToneGenerator":86,"microevent.ts":7}],77:[function(require,module,exports){
+},{"./ToneGenerator":87,"microevent.ts":7}],78:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Ball = (function () {
@@ -18260,7 +18383,7 @@ var Ball = (function () {
 }());
 exports.default = Ball;
 
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DelayQueue = (function () {
@@ -18334,7 +18457,7 @@ var QueueEntry = (function () {
 }());
 exports.default = DelayQueue;
 
-},{}],79:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -18508,7 +18631,7 @@ var FrameManager = (function () {
 }());
 exports.default = FrameManager;
 
-},{"../Config":46,"microevent.ts":7}],80:[function(require,module,exports){
+},{"../Config":46,"microevent.ts":7}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var LatchedInput = (function () {
@@ -18543,7 +18666,7 @@ var LatchedInput = (function () {
 }());
 exports.default = LatchedInput;
 
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -18701,7 +18824,7 @@ var Missile = (function () {
 }());
 exports.default = Missile;
 
-},{"./drawCounterDecodes":87}],82:[function(require,module,exports){
+},{"./drawCounterDecodes":88}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var C = 68e-9, RPOT = 1e6, R0 = 1.8e3, U = 5, LINES_FULL = 380;
@@ -18758,7 +18881,7 @@ var PaddleReader = (function () {
 }());
 exports.default = PaddleReader;
 
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -19017,7 +19140,7 @@ var Player = (function () {
 }());
 exports.default = Player;
 
-},{"./drawCounterDecodes":87}],84:[function(require,module,exports){
+},{"./drawCounterDecodes":88}],85:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Playfield = (function () {
@@ -19160,7 +19283,7 @@ var Playfield = (function () {
 }());
 exports.default = Playfield;
 
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -19830,7 +19953,7 @@ var Tia = (function () {
 })(Tia || (Tia = {}));
 exports.default = Tia;
 
-},{"../Config":46,"./Audio":76,"./Ball":77,"./DelayQueue":78,"./FrameManager":79,"./LatchedInput":80,"./Missile":81,"./PaddleReader":82,"./Player":83,"./Playfield":84,"./palette":88,"microevent.ts":7}],86:[function(require,module,exports){
+},{"../Config":46,"./Audio":77,"./Ball":78,"./DelayQueue":79,"./FrameManager":80,"./LatchedInput":81,"./Missile":82,"./PaddleReader":83,"./Player":84,"./Playfield":85,"./palette":89,"microevent.ts":7}],87:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../Config");
@@ -19928,7 +20051,7 @@ var ToneGenerator = (function () {
 }());
 exports.default = ToneGenerator;
 
-},{"../../../tools/AudioOutputBuffer":91,"../Config":46}],87:[function(require,module,exports){
+},{"../../../tools/AudioOutputBuffer":92,"../Config":46}],88:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160);
@@ -19971,7 +20094,7 @@ decodes3[12] = decodes3[28] = 1;
 decodes4[60] = 1;
 decodes6[28] = decodes6[60] = 1;
 
-},{}],88:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NTSC = new Uint32Array([
@@ -20365,7 +20488,7 @@ exports.SECAM = new Uint32Array([
     0xffffffff,
 ]);
 
-},{}],89:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -20492,7 +20615,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../board/BoardInterface":36,"../cpu/Cpu":37,"../cpu/CpuInterface":38,"./Memory":90,"microevent.ts":7}],90:[function(require,module,exports){
+},{"../board/BoardInterface":36,"../cpu/Cpu":37,"../cpu/CpuInterface":38,"./Memory":91,"microevent.ts":7}],91:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Memory = (function () {
@@ -20525,7 +20648,7 @@ var Memory = (function () {
 }());
 exports.default = Memory;
 
-},{}],91:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var AudioOutputBuffer = (function () {
@@ -20546,7 +20669,7 @@ var AudioOutputBuffer = (function () {
 }());
 exports.default = AudioOutputBuffer;
 
-},{}],92:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -20607,7 +20730,7 @@ var ClockProbe = (function () {
 }());
 exports.default = ClockProbe;
 
-},{"microevent.ts":7}],93:[function(require,module,exports){
+},{"microevent.ts":7}],94:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encode(value, width) {
@@ -20621,7 +20744,7 @@ function encode(value, width) {
 }
 exports.encode = encode;
 
-},{}],94:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encodeWithPrefix(value, width, signed, prefix) {
@@ -20660,7 +20783,7 @@ function decode(value) {
 }
 exports.decode = decode;
 
-},{}],95:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember = (function () {
@@ -20681,7 +20804,7 @@ var InducedMember = (function () {
 }());
 exports.default = InducedMember;
 
-},{}],96:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember_1 = require("./InducedMember");
@@ -20700,7 +20823,7 @@ var InducedPool = (function () {
 }());
 exports.default = InducedPool;
 
-},{"./InducedMember":95}],97:[function(require,module,exports){
+},{"./InducedMember":96}],98:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -20758,7 +20881,7 @@ var Pool = (function () {
 }());
 exports.default = Pool;
 
-},{"./PoolMember":98,"microevent.ts":7}],98:[function(require,module,exports){
+},{"./PoolMember":99,"microevent.ts":7}],99:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PoolMember = (function () {
@@ -20785,7 +20908,7 @@ var PoolMember = (function () {
 }());
 exports.default = PoolMember;
 
-},{}],99:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var SeedrandomGenerator = (function () {
@@ -20811,7 +20934,7 @@ var SeedrandomGenerator = (function () {
 }());
 exports.default = SeedrandomGenerator;
 
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var seedrandom = require("seedrandom");
@@ -20832,7 +20955,7 @@ function restoreRng(state) {
 }
 exports.restoreRng = restoreRng;
 
-},{"./SeedrandomGenerator":99,"seedrandom":11}],101:[function(require,module,exports){
+},{"./SeedrandomGenerator":100,"seedrandom":11}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var setImmediate_1 = require("./setImmediate");
@@ -20857,7 +20980,7 @@ var ImmediateScheduler = (function () {
 }());
 exports.default = ImmediateScheduler;
 
-},{"./setImmediate":105}],102:[function(require,module,exports){
+},{"./setImmediate":106}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler = (function () {
@@ -20890,7 +21013,7 @@ var PeriodicScheduler = (function () {
 }());
 exports.default = PeriodicScheduler;
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp = (self.performance && self.performance.now) ?
@@ -20898,7 +21021,7 @@ var getTimestamp = (self.performance && self.performance.now) ?
     function () { return Date.now(); };
 exports.default = getTimestamp;
 
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -20950,7 +21073,7 @@ var ConstantCyclesScheduler = (function () {
 }());
 exports.default = ConstantCyclesScheduler;
 
-},{"../getTimestamp":103,"../setImmediate":105}],105:[function(require,module,exports){
+},{"../getTimestamp":104,"../setImmediate":106}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var polyfill = require("setimmediate2");
@@ -20966,7 +21089,7 @@ function setImmediate(callback) {
 }
 exports.setImmediate = setImmediate;
 
-},{"setimmediate2":19}],106:[function(require,module,exports){
+},{"setimmediate2":19}],107:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -21017,7 +21140,7 @@ var FrameMergeProcessor = (function () {
 }());
 exports.default = FrameMergeProcessor;
 
-},{"microevent.ts":7}],107:[function(require,module,exports){
+},{"microevent.ts":7}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -21034,7 +21157,7 @@ var PassthroughProcessor = (function () {
 }());
 exports.default = PassthroughProcessor;
 
-},{"microevent.ts":7}],108:[function(require,module,exports){
+},{"microevent.ts":7}],109:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config = require("./config");
@@ -21057,7 +21180,7 @@ var ProcessorFactory = (function () {
 }());
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":106,"./PassthroughProcessor":107,"./config":110}],109:[function(require,module,exports){
+},{"./FrameMergeProcessor":107,"./PassthroughProcessor":108,"./config":111}],110:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ProcessorFactory_1 = require("./ProcessorFactory");
@@ -21091,11 +21214,11 @@ var ProcessorPipeline = (function () {
 }());
 exports.default = ProcessorPipeline;
 
-},{"./ProcessorFactory":108}],110:[function(require,module,exports){
+},{"./ProcessorFactory":109}],111:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface = (function () {
@@ -21147,7 +21270,7 @@ var ArrayBufferSurface = (function () {
 }());
 exports.default = ArrayBufferSurface;
 
-},{}],112:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var screenfull = require("screenfull");
@@ -21196,7 +21319,7 @@ var FullscreenVideoDriver = (function () {
 }());
 exports.default = FullscreenVideoDriver;
 
-},{"screenfull":10}],113:[function(require,module,exports){
+},{"screenfull":10}],114:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var MouseAsPaddleDriver = (function () {
@@ -21238,7 +21361,7 @@ var MouseAsPaddleDriver = (function () {
 }());
 exports.default = MouseAsPaddleDriver;
 
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -21420,7 +21543,7 @@ var SimpleCanvasVideo = (function () {
 }());
 exports.default = SimpleCanvasVideo;
 
-},{"tslib":20}],115:[function(require,module,exports){
+},{"tslib":20}],116:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -21462,7 +21585,7 @@ var VideoEndpoint = (function () {
 }());
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":96,"../../tools/pool/Pool":97,"../../video/processing/ProcessorPipeline":109,"../../video/surface/ArrayBufferSurface":111,"microevent.ts":7}],116:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":97,"../../tools/pool/Pool":98,"../../video/processing/ProcessorPipeline":110,"../../video/surface/ArrayBufferSurface":112,"microevent.ts":7}],117:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebAudioDriver = (function () {
@@ -21598,7 +21721,7 @@ var Channel = (function () {
     return Channel;
 }());
 
-},{}],117:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -21783,7 +21906,7 @@ var KeyboardIO = (function () {
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"../../../machine/io/Switch":43,"microevent.ts":7}],118:[function(require,module,exports){
+},{"../../../machine/io/Switch":43,"microevent.ts":7}],119:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebAudio_1 = require("../../driver/WebAudio");
@@ -21817,7 +21940,7 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":116}],"stellaCLI":[function(require,module,exports){
+},{"../../driver/WebAudio":117}],"stellaCLI":[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var StellaCLI_1 = require("../cli/stella/StellaCLI");
@@ -21919,5 +22042,5 @@ function setupPaddles(paddle0) {
     paddleDriver.bind(paddle0);
 }
 
-},{"../cli/JqtermCLIRunner":29,"../cli/stella/StellaCLI":31,"../fs/PrepackagedFilesystemProvider":34,"./driver/FullscreenVideo":112,"./driver/MouseAsPaddle":113,"./driver/SimpleCanvasVideo":114,"./driver/VideoEndpoint":115,"./stella/driver/KeyboardIO":117,"./stella/driver/WebAudio":118}]},{},[])
+},{"../cli/JqtermCLIRunner":29,"../cli/stella/StellaCLI":31,"../fs/PrepackagedFilesystemProvider":34,"./driver/FullscreenVideo":113,"./driver/MouseAsPaddle":114,"./driver/SimpleCanvasVideo":115,"./driver/VideoEndpoint":116,"./stella/driver/KeyboardIO":118,"./stella/driver/WebAudio":119}]},{},[])
 //# sourceMappingURL=stellaCLI.js.map
