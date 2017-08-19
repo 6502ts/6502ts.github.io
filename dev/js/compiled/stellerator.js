@@ -96422,7 +96422,6 @@ exports.default = CartridgeNameInput;
 },{"react":624,"react-bootstrap":396}],819:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
 var React = require("react");
 var react_bootstrap_1 = require("react-bootstrap");
 var style_1 = require("../style");
@@ -96446,7 +96445,7 @@ function CartridgeSettingsUnstyled(props) {
         React.createElement(LabelStyled, null, "Emulate paddles:"),
         React.createElement(Switch_1.default, { state: props.cartridge.emulatePaddles, labelTrue: 'yes', labelFalse: 'no', onSwitch: props.onTogglePaddleEmulation }),
         React.createElement(LabelStyled, null, "RNG seed:"),
-        React.createElement(RandomSeedEdit_1.default, tslib_1.__assign({}, props)),
+        React.createElement(RandomSeedEdit_1.default, { rngSeedAuto: props.cartridge.rngSeedAuto, rngSeedValue: props.cartridge.rngSeed, onChangeSeedStrategy: props.onChangeSeedStrategy, onChangeSeedValue: props.onChangeSeedValue }),
         React.createElement(LabelStyled, null, "Volume:"),
         React.createElement(Slider_1.default, { value: props.cartridge.volume, min: 0, max: 1, step: 0.01, onChange: props.onChangeVolume }));
 }
@@ -96468,7 +96467,7 @@ var CartridgeSettingsStyled = (_b = ["\n    ", "\n"], _b.raw = ["\n    ", "\n"],
 exports.default = CartridgeSettingsStyled;
 var _a, _b;
 
-},{"../general/Slider":830,"../general/Switch":831,"../style":839,"./CartridgeNameInput":818,"./CartridgeTypeSelect":820,"./RandomSeedEdit":822,"./TvModeSelect":823,"react":624,"react-bootstrap":396,"tslib":694}],820:[function(require,module,exports){
+},{"../general/Slider":830,"../general/Switch":831,"../style":839,"./CartridgeNameInput":818,"./CartridgeTypeSelect":820,"./RandomSeedEdit":822,"./TvModeSelect":823,"react":624,"react-bootstrap":396}],820:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -96531,14 +96530,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
 var ValidatingInput_1 = require("../general/ValidatingInput");
 var Switch_1 = require("../general/Switch");
+var style_1 = require("../style");
+var StyledSeedInput = (_a = ["\n    margin-left: 1rem;\n    width: 6rem;\n    display: ", "\n"], _a.raw = ["\n    margin-left: 1rem;\n    width: 6rem;\n    display: ", "\n"], style_1.styled(ValidatingInput_1.default)(_a, function (p) { return p.rngSeedAuto ? 'none' : 'inline-block'; }));
 function RandomSeedEdit(props) {
     return React.createElement("div", null,
         React.createElement(Switch_1.default, { state: props.rngSeedAuto, labelTrue: 'auto', labelFalse: 'fixed', onSwitch: props.onChangeSeedStrategy }),
-        React.createElement(ValidatingInput_1.default, { value: '' + props.rngSeedValue, readOnly: props.rngSeedAuto, validator: function (value) { return !!value.match(/^(0|([1-9]\d*))$/); }, onChange: function (value) { return props.onChangeSeedValue(parseInt(value, 10)); }, onKeyEnter: props.onKeyEnter, style: {
-                display: props.rngSeedAuto ? 'none' : 'inline-block',
-                marginLeft: '1rem',
-                width: '6rem'
-            } }));
+        React.createElement(StyledSeedInput, { value: '' + props.rngSeedValue, readOnly: props.rngSeedAuto, validator: function (value) { return !!value.match(/^(0|([1-9]\d*))$/); }, onChange: function (value) { return props.onChangeSeedValue(parseInt(value, 10)); }, onKeyEnter: props.onKeyEnter, rngSeedAuto: props.rngSeedAuto }));
 }
 (function (RandomSeedEdit) {
     RandomSeedEdit.defaultProps = {
@@ -96550,8 +96547,9 @@ function RandomSeedEdit(props) {
     };
 })(RandomSeedEdit || (RandomSeedEdit = {}));
 exports.default = RandomSeedEdit;
+var _a;
 
-},{"../general/Switch":831,"../general/ValidatingInput":832,"react":624}],823:[function(require,module,exports){
+},{"../general/Switch":831,"../general/ValidatingInput":832,"../style":839,"react":624}],823:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -96842,6 +96840,7 @@ exports.default = Switch;
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var React = require("react");
+var classnames = require("classnames");
 var react_bootstrap_1 = require("react-bootstrap");
 var ValidatingInput = (function (_super) {
     tslib_1.__extends(ValidatingInput, _super);
@@ -96854,7 +96853,7 @@ var ValidatingInput = (function (_super) {
     }
     ValidatingInput.prototype.render = function () {
         var _this = this;
-        return React.createElement(react_bootstrap_1.FormControl, { type: 'text', className: this.props.validator(this.state.rawValue) ? 'valid' : 'invalid', value: this.state.rawValue, onChange: function (e) { return _this._onChange(e.target.value); }, onKeyDown: function (e) { return e.keyCode === 13 ? _this.props.onKeyEnter() : undefined; }, readOnly: this.props.readOnly, style: this.props.style });
+        return React.createElement(react_bootstrap_1.FormControl, { type: 'text', className: classnames(this.props.className, this.props.validator(this.state.rawValue) ? 'valid' : 'invalid'), value: this.state.rawValue, onChange: function (e) { return _this._onChange(e.target.value); }, onKeyDown: function (e) { return e.keyCode === 13 ? _this.props.onKeyEnter() : undefined; }, readOnly: this.props.readOnly, style: this.props.style });
     };
     ValidatingInput.prototype.componentWillReceiveProps = function (props) {
         this.setState({ rawValue: props.value });
@@ -96878,7 +96877,7 @@ var ValidatingInput = (function (_super) {
 })(ValidatingInput || (ValidatingInput = {}));
 exports.default = ValidatingInput;
 
-},{"react":624,"react-bootstrap":396,"tslib":694}],833:[function(require,module,exports){
+},{"classnames":108,"react":624,"react-bootstrap":396,"tslib":694}],833:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
