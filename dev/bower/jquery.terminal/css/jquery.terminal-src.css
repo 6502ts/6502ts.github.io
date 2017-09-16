@@ -90,7 +90,6 @@
             animation: terminal-blink 1s infinite steps(1, start);
     border-left: 1px solid transparent;
     margin-left: -1px;
-    margin-top: 1px;
 }
 .bar.terminal .inverted, .bar.cmd .inverted {
     border-left-color: #aaa;
@@ -122,7 +121,7 @@
 .cmd .prompt + div {
     clear: right;
 }
-.terminal-output > div {
+.terminal-output > div, .terminal-output > div > div {
     /*padding-top: 3px;*/
     min-height: 14px;
 }
@@ -401,6 +400,9 @@
         font-size: calc(var(--size, 1) * 12px);
         line-height: calc(var(--size, 1) * 14px);
     }
+    .terminal .terminal-output div div {
+        min-height: calc(var(--size, 1) * 14px);
+    }
     .terminal .inverted, .cmd .inverted {
         background-color: var(--color, #aaa);
         color: var(--background, #000);
@@ -412,7 +414,6 @@
                 animation: var(--animation, terminal-blink) 1s infinite steps(1, start);
         color: var(--color, #aaa);
         background-color: var(--background, #000);
-        margin-top: calc(var(--size) * 1px);
     }
     .terminal h1::-moz-selection,
     .terminal h2::-moz-selection,

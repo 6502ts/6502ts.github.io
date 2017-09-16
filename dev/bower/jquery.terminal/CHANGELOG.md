@@ -1,3 +1,41 @@
+## 1.7.2
+* fix blur when click ouside terminal when element you click is on top of terminal
+* this is terminal instance inside echo function
+* fix localStorage exception and empty line height while creating terminal from data URI
+* refocus when click on terminal (fix for `:focus-within`)
+
+## 1.7.1
+* fix blur terminals when open context menu and then click right mouse button (sometimes last terminal didn't
+  get disabled)
+* fix backspase
+
+## 1.7.0
+### Features
+* add option caseSensitiveAutocomplete default to true [#332](https://github.com/jcubic/jquery.terminal/issues/332)
+* expose Stack/Cycle/History in $.terminal so they can be tested
+* make `:focus-within .prompt` selector work with terminal (work also on codepen)
+### Bugs
+* fix jumping of terminal when created one after another and changing the one that have focus in Edge
+* fix issue that all terminals was enabled not the last one created
+* fix issue that on click next terminal get focused on browsers with touch screen (reported by @itsZN [#330](https://github.com/jcubic/jquery.terminal/issues/330))
+* fix missing default keymap in cmd plugin (found on SO by Arnaldo Montoya)
+* update dterm to enable terminal when is visible (when open) using IntersectionObserver
+* fix issue with focus on click on MacOS (reported by @RomanPerin [#255](https://github.com/jcubic/jquery.terminal/issues/255))
+* fix pasting (reported by @artursOs [#331](https://github.com/jcubic/jquery.terminal/issues/331))
+* fix unescaped entity error (reported by Nikolai Orekhov [#333](https://github.com/jcubic/jquery.terminal/issues/333))
+* fix onFocus and onBlur events
+* fix blur textarea on disable
+
+## 1.6.4
+* just missed build
+
+## 1.6.3
+* fix issue with auto-enable and insert to DOM after terminal was created
+* fix issue with space and dead keys (reported by David Peter)
+
+## 1.6.2
+* fix altGr+key issue reported by Erik Lilja
+
 ## 1.6.1
 * don't call encode in escape_formatting (requested by @ovk)
 

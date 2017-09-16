@@ -286,14 +286,14 @@
 
     /* eslint-disable */
     var hasLS = function() {
-      var testKey = 'test', storage = window.localStorage;
-      try {
-        storage.setItem(testKey, '1');
-        storage.removeItem(testKey);
-        return true;
-      } catch (error) {
-        return false;
-      }
+        try {
+            var testKey = 'test', storage = window.localStorage;
+            storage.setItem(testKey, '1');
+            storage.removeItem(testKey);
+            return true;
+        } catch (error) {
+            return false;
+        }
     };
 
     // -----------------------------------------------------------------------
@@ -812,16 +812,24 @@
     // -----------------------------------------------------------------------
     // :: CYCLE DATA STRUCTURE
     // -----------------------------------------------------------------------
-    function Cycle(init) {
-        var data = init ? [init] : [];
+    function Cycle() {
+        var data = [].slice.call(arguments);
         var pos = 0;
         $.extend(this, {
             get: function() {
                 return data;
             },
-            rotate: function() {
-                if (!data.filter(Boolean).length) {
-                    return;
+            index: function() {
+                return pos;
+            },
+            rotate: function(skip) {
+                if (!skip) {
+                    var defined = data.filter(function(item) {
+                        return typeof item !== 'undefined';
+                    });
+                    if (!defined.length) {
+                        return;
+                    }
                 }
                 if (data.length === 1) {
                     return data[0];
@@ -831,10 +839,10 @@
                     } else {
                         ++pos;
                     }
-                    if (data[pos]) {
+                    if (typeof data[pos] !== 'undefined') {
                         return data[pos];
                     } else {
-                        return this.rotate();
+                        return this.rotate(true);
                     }
                 }
             },
@@ -852,6 +860,7 @@
                     }
                 }
                 this.append(item);
+                pos = data.length - 1;
             },
             front: function() {
                 if (data.length) {
@@ -1191,9 +1200,11 @@
                     self['delete'](-1);
                 }
                 // for next input after naitve backspace
-                no_keydown = true;
-                return false;
-                //return is_touch;
+                // we need timeout because we don't want it to trigger
+                // for current input but next one
+                self.oneTime(1, function() {
+                    no_keydown = true;
+                });
             },
             'TAB': function() {
                 self.insert('\t');
@@ -1341,7 +1352,7 @@
         function paste_event() {
             clip.val('');
             paste_count = 0;
-            clip.focus();
+            clip.trigger('focus', [true]);
             clip.on('input', function input(e) {
                 paste(e);
                 clip.off('input', input);
@@ -1385,13 +1396,15 @@
             var focus = clip.is(':focus');
             if (enabled) {
                 if (!focus) {
-                    clip.trigger('focus', [true]);
-                    self.oneTime(10, function() {
-                        clip.trigger('focus', [true]);
-                    });
+                    //clip.trigger('focus', [true]);
                 }
-            } else if (focus && is_touch) {
-                clip.blur();
+                self.oneTime(10, function() {
+                    if (!clip.is(':focus') && enabled) {
+                        clip.trigger('focus', [true]);
+                    }
+                });
+            } else if (focus && (is_mobile || !enabled)) {
+                clip.trigger('blur', [true]);
             }
         }
         // on mobile you can't delete character if input is empty (event
@@ -1400,11 +1413,13 @@
         function fix_textarea() {
             // delay worked while experimenting
             self.oneTime(10, function() {
-                //clip.val(command);
+                if (clip.val() !== command) {
+                    clip.val(command);
+                }
                 if (enabled) {
                     self.oneTime(10, function() {
                         try {
-                            //clip.caret(position);
+                            clip.caret(position);
                         } catch (e) {
                             // firefox throw NS_ERROR_FAILURE ignore
                         }
@@ -1777,12 +1792,12 @@
             if (self.isenabled()) {
                 var clip = self.find('textarea');
                 if (!clip.is(':focus')) {
-                    clip.focus();
+                    clip.trigger('focus', [true]);
                 }
                 //wait until Browser insert text to textarea
                 self.oneTime(100, function() {
                     self.insert(clip.val());
-                    clip.val('');
+                    clip.val(command);
                     fix_textarea();
                 });
             }
@@ -1908,7 +1923,7 @@
             destroy: function() {
                 doc.unbind('keypress.cmd', keypress_event);
                 doc.unbind('keydown.cmd', keydown_event);
-                doc.unbind('input.cmd', input);
+                doc.unbind('input.cmd', input_event);
                 self.stopTime('blink', blink);
                 self.find('.cursor').next().remove().end().prev().remove().
                     end().remove();
@@ -1995,8 +2010,8 @@
                     }
                     animation(true);
                     draw_prompt();
-                    mobile_focus();
                 }
+                mobile_focus();
                 return self;
             },
             isenabled: function() {
@@ -2128,18 +2143,18 @@
                 }
                 // this will prevent for instance backspace to go back one page
                 //prevent_keypress = true;
-                e.preventDefault();
+                //e.preventDefault();
             }
         }
         var doc = $(document.documentElement || window);
-        self.keymap(options.keymap);
+        self.keymap(options.keymap || {});
         function keypress_event(e) {
             debug('keypress "' + e.key + '" ' + e.fake);
             var result;
             if (!e.fake) {
                 no_keypress = false;
             }
-            if (e.ctrlKey || e.metaKey) {
+            if ((e.ctrlKey || e.metaKey) && !e.altKey) {
                 return;
             }
             if (prevent_keypress) {
@@ -2189,9 +2204,6 @@
                     } else {
                         self.insert(key);
                     }
-                    if (key === ' ') {
-                        return false;
-                    }
                 }
             }
         }
@@ -2204,12 +2216,13 @@
         }
         function debug(str) {
             if (false) {
-                $.terminal.active().echo(str);
+                console.log(str);
+                //$.terminal.active().echo(str);
             }
         }
-        function input() {
-            debug('input ' + no_keydown + ' || ((' + no_keypress + ' || ' +
-                  dead_key + ') && !' + skip_insert + ' && (' + single_key +
+        function input_event() {
+            debug('input ' + no_keydown + ' || ' + process + ' ((' + no_keypress +
+                  ' || ' + dead_key + ') && !' + skip_insert + ' && (' + single_key +
                   ' || ' + no_key + ') && !' + backspace + ')');
             // Some Androids don't fire keypress - #39
             // if there is dead_key we also need to grab real character #158
@@ -2266,25 +2279,15 @@
             skip_insert = false;
             no_keydown = true;
         }
-        doc.bind('keypress.cmd', keypress_event).bind('keydown.cmd', keydown_event).
-            bind('input.cmd', input);
+        doc.bind('keypress.cmd', keypress_event).bind('keydown.cmd', keydown_event)
+            .bind('input.cmd', input_event);
         (function() {
-            var isDragging = false;
             var was_down = false;
             var count = 0;
             self.on('mousedown.cmd', function() {
                 was_down = true;
-                self.oneTime(1, function() {
-                    $(window).on('mousemove.cmd_' + id, function() {
-                        isDragging = true;
-                        $(window).off('mousemove.cmd_' + id);
-                    });
-                });
             }).on('mouseup.cmd', function(e) {
-                var wasDragging = isDragging;
-                isDragging = false;
-                $(window).off('mousemove.cmd_' + id);
-                if (!wasDragging) {
+                if (get_selected_text() === '') {
                     var name = 'click_' + id;
                     if (++count === 1) {
                         var down = was_down;
@@ -2319,7 +2322,29 @@
         }
         return self;
     }; // cmd plugin
-
+    // -------------------------------------------------------------------------
+    /* eslint-disable */
+    // https://stackoverflow.com/questions/11381673/detecting-a-mobile-browser
+    var mobile_re = /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i;
+    var tablet_re = /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i;
+    var format_split_re = /(\[\[[!gbiuso]*;[^;]*;[^\]]*\](?:[^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]?)/i;
+    var format_parts_re = /\[\[([!gbiuso]*);([^;]*);([^;\]]*);?([^;\]]*);?([^\]]*)\]([^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]?/gi;
+    var format_re = /\[\[([!gbiuso]*;[^;\]]*;[^;\]]*(?:;|[^\]()]*);?[^\]]*)\]([^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]?/gi;
+    var format_exist_re = /\[\[([!gbiuso]*;[^;\]]*;[^;\]]*(?:;|[^\]()]*);?[^\]]*)\]([^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]/gi;
+    var format_full_re = /^\[\[([!gbiuso]*;[^;\]]*;[^;\]]*(?:;|[^\]()]*);?[^\]]*)\]([^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]$/gi;
+    var color_hex_re = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+    var url_re = /(\bhttps?:\/\/(?:(?:(?!&[^;]+;)|(?=&amp;))[^\s"'<>\][)])+\b)/gi;
+    var url_nf_re = /\b(https?:\/\/(?:(?:(?!&[^;]+;)|(?=&amp;))[^\s"'<>\][)])+)\b(?![^[\]]*])/gi;
+    var email_re = /((([^<>('")[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,})))/g;
+    var command_re = /((?:"[^"\\]*(?:\\[\S\s][^"\\]*)*"|'[^'\\]*(?:\\[\S\s][^'\\]*)*'|\/[^\/\\]*(?:\\[\S\s][^\/\\]*)*\/[gimy]*(?=\s|$)|(?:\\\s|\S))+)(?=\s|$)/gi;
+    var format_begin_re = /(\[\[[!gbiuso]*;[^;]*;[^\]]*\])/i;
+    var format_start_re = /^(\[\[[!gbiuso]*;[^;]*;[^\]]*\])/i;
+    var format_end_re = /\[\[[!gbiuso]*;[^;]*;[^\]]*\]?$/i;
+    var format_exec_re = /(\[\[(?:[^\]]|\\\])+\]\])/;
+    var float_re = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
+    var re_re = /^\/((?:\\\/|[^/]|\[[^\]]*\/[^\]]*\])+)\/([gimy]*)$/;
+    var unclosed_strings_re = /^(?=((?:[^"']+|"[^"\\]*(?:\\[^][^"\\]*)*"|'[^'\\]*(?:\\[^][^'\\]*)*')*))\1./;
+    /* eslint-enable */
     // -------------------------------------------------------------------------
     // :: TOOLS
     // -------------------------------------------------------------------------
@@ -2356,9 +2381,31 @@
         }
     })();
     // -------------------------------------------------------------------------
-    var is_touch = (function() {
-        return 'ontouchstart' in window || !!window.DocumentTouch &&
-            document instanceof window.DocumentTouch;
+    var is_mobile = (function(a) {
+        var check = false;
+        if (mobile_re.test(a) || tablet_re.test(a.substr(0, 4))) {
+            check = true;
+        }
+        return check;
+    })(navigator.userAgent || navigator.vendor || window.opera);
+    var get_selected_text = (function() {
+        if (window.getSelection || document.getSelection) {
+            return function() {
+                var selection = (window.getSelection || document.getSelection)();
+                if (selection.text) {
+                    return selection.text;
+                } else {
+                    return selection.toString();
+                }
+            };
+        } else if (document.selection && document.selection.type !== "Control") {
+            return function() {
+                return document.selection.createRange().text;
+            };
+        }
+        return function() {
+            return '';
+        };
     })();
     // -------------------------------------------------------------------------
     function process_command(string, fn) {
@@ -2388,26 +2435,6 @@
             };
         }
     }
-    // -------------------------------------------------------------------------
-    /* eslint-disable */
-    var format_split_re = /(\[\[[!gbiuso]*;[^;]*;[^\]]*\](?:[^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]?)/i;
-    var format_parts_re = /\[\[([!gbiuso]*);([^;]*);([^;\]]*);?([^;\]]*);?([^\]]*)\]([^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]?/gi;
-    var format_re = /\[\[([!gbiuso]*;[^;\]]*;[^;\]]*(?:;|[^\]()]*);?[^\]]*)\]([^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]?/gi;
-    var format_exist_re = /\[\[([!gbiuso]*;[^;\]]*;[^;\]]*(?:;|[^\]()]*);?[^\]]*)\]([^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]/gi;
-    var format_full_re = /^\[\[([!gbiuso]*;[^;\]]*;[^;\]]*(?:;|[^\]()]*);?[^\]]*)\]([^\]]*\\\][^\]]*|[^\]]*|[^[]*\[[^\]]*)\]$/gi;
-    var color_hex_re = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-    var url_re = /(\bhttps?:\/\/(?:(?:(?!&[^;]+;)|(?=&amp;))[^\s"'<>\][)])+\b)/gi;
-    var url_nf_re = /\b(https?:\/\/(?:(?:(?!&[^;]+;)|(?=&amp;))[^\s"'<>\][)])+)\b(?![^[\]]*])/gi;
-    var email_re = /((([^<>('")[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,})))/g;
-    var command_re = /((?:"[^"\\]*(?:\\[\S\s][^"\\]*)*"|'[^'\\]*(?:\\[\S\s][^'\\]*)*'|\/[^\/\\]*(?:\\[\S\s][^\/\\]*)*\/[gimy]*(?=\s|$)|(?:\\\s|\S))+)(?=\s|$)/gi;
-    var format_begin_re = /(\[\[[!gbiuso]*;[^;]*;[^\]]*\])/i;
-    var format_start_re = /^(\[\[[!gbiuso]*;[^;]*;[^\]]*\])/i;
-    var format_end_re = /\[\[[!gbiuso]*;[^;]*;[^\]]*\]?$/i;
-    var format_exec_re = /(\[\[(?:[^\]]|\\\])+\]\])/;
-    var float_re = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
-    var re_re = /^\/((?:\\\/|[^/]|\[[^\]]*\/[^\]]*\])+)\/([gimy]*)$/;
-    var unclosed_strings_re = /^(?=((?:[^"']+|"[^"\\]*(?:\\[^][^"\\]*)*"|'[^'\\]*(?:\\[^][^'\\]*)*')*))\1./;
-    /* eslint-enable */
     $.terminal = {
         version: '{{VER}}',
         // colors from http://www.w3.org/wiki/CSS/Properties/color/keywords
@@ -2445,6 +2472,10 @@
             'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue', 'tan',
             'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat',
             'white', 'whitesmoke', 'yellow', 'yellowgreen'],
+        // for unit tests
+        Cycle: Cycle,
+        History: History,
+        Stack: Stack,
         // ---------------------------------------------------------------------
         // :: Validate html color (it can be name or hex)
         // ---------------------------------------------------------------------
@@ -2530,22 +2561,11 @@
                 if (not_formatting) {
                     if (string[i] === '&') { // treat entity as one character
                         match = match_entity(i);
-                        if (!match) {
-                            // should never happen if used by terminal,
-                            // because it always calls $.terminal.encode
-                            // before this function
-                            throw new Error('Unclosed html entity at char ' + (i + 1));
+                        if (match) {
+                            i += match[1].length - 2; // because continue adds 1 to i
+                            continue;
                         }
-                        i += match[1].length - 2; // because continue adds 1 to i
-                        // here was code for issue #77 but it work without it
-                        // after refactoring and it would be hard to run this code
-                        // in this general function, maybe call callback one more time
-                        /*
-                        if (i === string.length - 1) {
-                            result.push(output + m[1]);
-                        }
-                        */
-                        continue;
+                        ++count;
                     } else if (string[i] === ']' && string[i - 1] === '\\') {
                         // escape \] counts as one character
                         --count;
@@ -2725,12 +2745,16 @@
             return result;
         },
         // ---------------------------------------------------------------------
+        // :: Escape & that's not part of entity
+        // ---------------------------------------------------------------------
+        amp: function(str) {
+            return str.replace(/&(?!#[0-9]+;|[a-zA-Z]+;)/g, '&amp;');
+        },
+        // ---------------------------------------------------------------------
         // :: Encode formating as html for insertion into DOM
         // ---------------------------------------------------------------------
         encode: function encode(str) {
-            // don't escape entities
-            str = str.replace(/&(?!#[0-9]+;|[a-zA-Z]+;)/g, '&amp;');
-            return str.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            return $.terminal.amp(str).replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 .replace(/ /g, '&nbsp;')
                 .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
         },
@@ -3248,6 +3272,25 @@
         } catch (e) {}
         $div.remove();
     }
+    function all(array, fn) {
+        var same = array.filter(function(item) {
+            return item[fn]() === item;
+        });
+        return same.length === array.length;
+    }
+    function string_case(string) {
+        var array = string.split('');
+        if (all(array, 'toLowerCase')) {
+            return 'lower';
+        } else if (all(array, 'toUpperCase')) {
+            return 'upper';
+        } else {
+            return 'mixed';
+        }
+    }
+    function same_case(string) {
+        return string_case(string) !== 'mixed';
+    }
     // -----------------------------------------------------------------------
     // :: TERMINAL PLUGIN CODE
     // -----------------------------------------------------------------------
@@ -3328,6 +3371,7 @@
         onAjaxError: null,
         scrollBottomOffset: 20,
         wordAutocomplete: true,
+        caseSensitiveAutocomplete: true,
         clickTimeout: 200,
         request: $.noop,
         response: $.noop,
@@ -4493,24 +4537,33 @@
         // ---------------------------------------------------------------------
         // :: return string that are common in all elements of the array
         // ---------------------------------------------------------------------
-        function common_string(string, array) {
+        function common_string(string, array, matchCase) {
             if (!array.length) {
                 return '';
             }
-            var found = false;
+            var type = string_case(string);
+            var result = [];
             loop:
             for (var j = string.length; j < array[0].length; ++j) {
                 for (var i = 1; i < array.length; ++i) {
-                    if (array[0].charAt(j) !== array[i].charAt(j)) {
-                        break loop;
+                    var a = array[0].charAt(j);
+                    var b = array[i].charAt(j);
+                    if (a !== b) {
+                        if (matchCase || type === 'mixed') {
+                            break loop;
+                        } else if (a.toLowerCase() === b.toLowerCase()) {
+                            if (type === 'lower') {
+                                result.push(a.toLowerCase());
+                            } else {
+                                result.push(a.toUpperCase());
+                            }
+                        }
+                    } else {
+                        result.push(a);
                     }
                 }
-                found = true;
             }
-            if (found) {
-                return array[0].slice(0, j);
-            }
-            return '';
+            return string + result.join('');
         }
         // ---------------------------------------------------------------------
         // :: Keydown event handler
@@ -4553,7 +4606,12 @@
                 // TODO: move this to cmd plugin
                 //       add completion = array | function
                 //       !!! Problem complete more then one key need terminal
-                var top = interpreters.top(), completion;
+                var top = interpreters.top(), completion, caseSensitive;
+                if (typeof top.caseSensitiveAutocomplete !== 'undefined') {
+                    caseSensitive = top.caseSensitiveAutocomplete;
+                } else {
+                    caseSensitive = settings.caseSensitiveAutocomplete;
+                }
                 if (settings.completion &&
                     $.type(settings.completion) !== 'boolean' &&
                     top.completion === undefined) {
@@ -4577,7 +4635,8 @@
                                 self.complete(commands, {
                                     echo: true,
                                     word: settings.wordAutocomplete,
-                                    escape: settings.completionEscape
+                                    escape: settings.completionEscape,
+                                    caseSensitive: caseSensitive
                                 });
                             });
                             break;
@@ -4585,7 +4644,8 @@
                             self.complete(completion, {
                                 echo: true,
                                 word: settings.wordAutocomplete,
-                                escape: settings.completionEscape
+                                escape: settings.completionEscape,
+                                caseSensitive: caseSensitive
                             });
                             break;
                         default:
@@ -4675,7 +4735,11 @@
             };
         }
         function strings() {
-            return $.extend({}, $.terminal.defaults.strings, settings.strings);
+            return $.extend(
+                {},
+                $.terminal.defaults.strings,
+                settings && settings.strings || {}
+            );
         }
         // ---------------------------------------------------------------------
         var self = this;
@@ -5017,8 +5081,10 @@
                 options = $.extend({
                     word: true,
                     echo: false,
-                    escape: true
+                    escape: true,
+                    caseSensitive: true
                 }, options || {});
+                var sensitive = options.caseSensitive;
                 // cursor can be in the middle of the command
                 // so we need to get the text before the cursor
                 var string = self.before_cursor(options.word).replace(/\\"/g, '"');
@@ -5060,20 +5126,32 @@
                         }
                     });
                 }
-                var regex = new RegExp('^' + safe);
-                var matched = [];
-                for (var i = commands.length; i--;) {
-                    if (regex.test(commands[i])) {
-                        var match = commands[i];
-                        if (quote === '"') {
-                            match = match.replace(/"/g, '\\"');
+                function matched_strings() {
+                    var matched = [];
+                    for (var i = commands.length; i--;) {
+                        if (regex.test(commands[i])) {
+                            var match = commands[i];
+                            if (quote === '"') {
+                                match = match.replace(/"/g, '\\"');
+                            }
+                            if (!quote && options.escape) {
+                                match = match.replace(/(["'() ])/g, '\\$1');
+                            }
+                            if (!sensitive && same_case(match)) {
+                                if (string.toLowerCase() === string) {
+                                    match = match.toLowerCase();
+                                } else if (string.toUpperCase() === string) {
+                                    match = match.toUpperCase();
+                                }
+                            }
+                            matched.push(match);
                         }
-                        if (!quote && options.escape) {
-                            match = match.replace(/(["'() ])/g, '\\$1');
-                        }
-                        matched.push(match);
                     }
+                    return matched;
                 }
+                var flags = sensitive ? '' : 'i';
+                var regex = new RegExp('^' + safe, flags);
+                var matched = matched_strings();
                 function replace(input, replacement) {
                     var text = self.get_command();
                     var pos = self.get_position();
@@ -5104,7 +5182,7 @@
                             return true;
                         }
                     } else {
-                        var common = common_string(string, matched);
+                        var common = common_string(string, matched, sensitive);
                         if (common) {
                             replace(string, common);
                             command = self.before_cursor(options.word);
@@ -5270,17 +5348,9 @@
                 if (terminals.length() === 1) {
                     return self;
                 } else {
-                    /*if (!is_scrolled_into_view(self)) {
-                       self.enable();
-                        $('html,body').animate({
-                            scrollTop: offsetTop-50
-                        }, 500);
-                        return self;
-                    } else {
-                    */
                     terminals.front().disable();
                     var next = terminals.rotate().enable();
-                    // 100 provides buffer in viewport
+                    // 50 provides buffer in viewport
                     var x = next.offset().top - 50;
                     $('html,body').animate({scrollTop: x}, 500);
                     try {
@@ -5299,26 +5369,11 @@
             // -------------------------------------------------------------
             focus: function(toggle, silent) {
                 cmd_ready(function ready() {
-                    var ret;
                     if (terminals.length() === 1) {
                         if (toggle === false) {
-                            try {
-                                ret = settings.onBlur.call(self, self);
-                                if (!silent && ret !== false || silent) {
-                                    self.disable();
-                                }
-                            } catch (e) {
-                                display_exception(e, 'onBlur');
-                            }
+                            self.disable(silent);
                         } else {
-                            try {
-                                ret = settings.onFocus.call(self, self);
-                                if (!silent && ret !== false || silent) {
-                                    self.enable();
-                                }
-                            } catch (e) {
-                                display_exception(e, 'onFocus');
-                            }
+                            self.enable(silent);
                         }
                     } else if (toggle === false) {
                         self.next();
@@ -5330,7 +5385,7 @@
                             // where cursor have blink class
                             terminals.forEach(function(terminal) {
                                 if (terminal !== self && terminal.enabled()) {
-                                    terminal.disable();
+                                    terminal.disable(silent);
                                 }
                             });
                             if (!silent) {
@@ -5342,8 +5397,8 @@
                             }
                         }
                         terminals.set(self);
-                        self.enable();
                     }
+                    self.enable(silent);
                 });
                 return self;
             },
@@ -5370,17 +5425,27 @@
             // -------------------------------------------------------------
             // :: Enable the terminal
             // -------------------------------------------------------------
-            enable: function() {
+            enable: function(silent) {
                 if (!enabled && !frozen) {
                     if (num_chars === undefined) {
                         // enabling first time
                         self.resize();
                     }
                     cmd_ready(function ready() {
-                        if (!self.paused()) {
-                            command_line.enable();
+                        var ret;
+                        if (!silent && !enabled) {
+                            try {
+                                ret = settings.onFocus.call(self, self);
+                            } catch (e) {
+                                display_exception(e, 'onFocus');
+                            }
                         }
-                        enabled = true;
+                        if (!silent && ret === undefined || silent) {
+                            enabled = true;
+                            if (!self.paused()) {
+                                command_line.enable();
+                            }
+                        }
                     });
                 }
                 return self;
@@ -5388,10 +5453,20 @@
             // -------------------------------------------------------------
             // :: Disable the terminal
             // -------------------------------------------------------------
-            disable: function() {
+            disable: function(silent) {
                 cmd_ready(function ready() {
-                    enabled = false;
-                    command_line.disable();
+                    var ret;
+                    if (!silent && enabled) {
+                        try {
+                            ret = settings.onBlur.call(self, self);
+                        } catch (e) {
+                            display_exception(e, 'onBlur');
+                        }
+                    }
+                    if (!silent && ret === undefined || silent) {
+                        enabled = false;
+                        command_line.disable();
+                    }
                 });
                 return self;
             },
@@ -5667,7 +5742,7 @@
             // :: it use $.when so you can echo a promise
             // -------------------------------------------------------------
             echo: function(string, options) {
-                function echo(string) {
+                function echo(arg) {
                     try {
                         var locals = $.extend({
                             flush: true,
@@ -5691,10 +5766,13 @@
                             }
                             output_buffer = [];
                         }
-                        process_line(string, locals);
+                        if (typeof arg === 'function') {
+                            arg = arg.bind(self);
+                        }
+                        process_line(arg, locals);
                         // extended commands should be processed only
                         // once in echo and not on redraw
-                        lines.push([string, $.extend(locals, {
+                        lines.push([arg, $.extend(locals, {
                             exec: false
                         })]);
                         if (locals.flush) {
@@ -6113,7 +6191,10 @@
                 return self;
             },
             // -------------------------------------------------------------
-            scroll_to_bottom: scroll_to_bottom,
+            scroll_to_bottom: function() {
+                scroll_to_bottom();
+                return self;
+            },
             // -------------------------------------------------------------
             // :: return true if terminal div or body is at the bottom
             // :: is use scrollBottomOffset option as margin for the check
@@ -6208,10 +6289,13 @@
                                                  settings.login);
         }
         terminals.append(self);
-        //terminals.set(self);
-        self.on('focus.terminal', 'textarea', function(e, skip) {
-            if (!enabled && !skip) {
-                self.enable();
+        self.on('focus.terminal', 'textarea', function(e) {
+            // for cases when user press tab to focus terminal
+            // this is also called when user open context menu and then click
+            // right mouse button on terminal
+            if (e.originalEvent !== undefined) {
+                // if terminal is enabled we need silent focus for multiple terminals
+                self.focus(true, !self.enabled());
             }
         });
         function focus_terminal() {
@@ -6221,7 +6305,7 @@
         }
         function blur_terminal() {
             old_enabled = enabled;
-            self.disable();
+            self.disable().find('textarea').trigger('blur', [true]);
         }
         function paste_event(e) {
             e = e.originalEvent;
@@ -6238,15 +6322,9 @@
                                 var URL = window.URL || window.webkitURL;
                                 var source = URL.createObjectURL(blob);
                                 self.echo('<img src="' + source + '"/>', {raw: true});
-                            } else if (items[i].type.indexOf('text/plain') !== -1) {
-                                items[i].getAsString(self.insert);
                             }
                         }
-                    } else if (e.clipboardData.getData) {
-                        var text = e.clipboardData.getData('text/plain');
-                        self.insert(text);
                     }
-                    return false;
                 }
             }
         }
@@ -6277,7 +6355,7 @@
                 historyFilter: settings.historyFilter,
                 historySize: settings.historySize,
                 width: '100%',
-                enabled: enabled && !is_touch,
+                enabled: false,
                 keydown: key_down,
                 keymap: new_keymap,
                 clickTimeout: settings.clickTimeout,
@@ -6307,16 +6385,19 @@
                 commands: commands
             });
             // touch devices need touch event to get virtual keyboard
-            if (enabled && self.is(':visible') && !is_touch) {
+            if (enabled && self.is(':visible') && !is_mobile) {
                 self.focus(undefined, true);
             } else {
                 self.disable();
             }
             function disable(e) {
-                var sender = $(e.target);
-                if (!sender.closest('.terminal').length &&
-                    self.enabled() &&
-                    settings.onBlur.call(self, self) !== false) {
+                e = e.originalEvent;
+                // e.terget is body when click outside of context menu to close it
+                // even if you click on terminal
+                var node = document.elementFromPoint(e.pageX, e.pageY);
+                if (!$(node).closest('.terminal').length && self.enabled()) {
+                    // we only need to disable when click outside of terminal
+                    // click on other terminal is handled by focus event
                     self.disable();
                 }
             }
@@ -6330,67 +6411,50 @@
             document.addEventListener("resume", function() {
                 self.disable();
             });
-            if (!is_touch) {
-                // work weird on mobile
-                $win.on('focus.terminal_' + self.id(), focus_terminal).
-                    on('blur.terminal_' + self.id(), blur_terminal);
-            } else {
-                /*
-                self.find('textarea').on('blur.terminal', function() {
-                    if (enabled) {
-                        self.focus(false);
-                    }
-                });*/
-            }
-            if (is_touch) {
+            if (is_mobile) {
                 self.click(function() {
-                    if (!self.enabled() && !frozen) {
-                        self.focus();
-                        command_line.enable();
-                    } else {
-                        self.focus(false);
+                    if (!frozen) {
+                        if (!self.enabled()) {
+                            self.focus();
+                            command_line.enable();
+                        } else {
+                            self.disable();
+                        }
                     }
                 });
             } else {
+                // work weird on mobile
+                $win.on('focus.terminal_' + self.id(), focus_terminal).
+                    on('blur.terminal_' + self.id(), blur_terminal);
                 // detect mouse drag
                 (function() {
                     var count = 0;
-                    var isDragging = false;
                     var $target;
                     var name = 'click_' + self.id();
+                    function position() {
+                        if ($target.is('.terminal') ||
+                            $target.is('.terminal-wrapper')) {
+                            var len = self.get_command().length;
+                            self.set_position(len);
+                        } else if ($target.closest('.prompt').length) {
+                            self.set_position(0);
+                        }
+                        count = 0;
+                    }
                     self.mousedown(function(e) {
                         $target = $(e.target);
-                        if (e.originalEvent.button === 2) {
-                            return;
-                        }
-                        self.oneTime(1, function() {
-                            $(window).on('mousemove.terminal_' + self.id(), function() {
-                                isDragging = true;
-                                count = 0;
-                                $(window).off('mousemove.terminal_' + self.id());
-                            });
-                        });
                     }).mouseup(function() {
-                        var wasDragging = isDragging;
-                        isDragging = false;
-                        $(window).off('mousemove.terminal_' + self.id());
-                        if (!wasDragging) {
+                        if (get_selected_text() === '') {
                             if (++count === 1) {
-                                if (!self.enabled() && !frozen) {
-                                    self.focus();
+                                if (!frozen) {
                                     command_line.enable();
-                                    count = 0;
-                                } else {
-                                    self.oneTime(settings.clickTimeout, name, function() {
-                                        if ($target.is('.terminal') ||
-                                            $target.is('.terminal-wrapper')) {
-                                            var len = self.get_command().length;
-                                            self.set_position(len);
-                                        } else if ($target.closest('.prompt').length) {
-                                            self.set_position(0);
-                                        }
+                                    if (!enabled) {
+                                        self.focus();
                                         count = 0;
-                                    });
+                                    } else {
+                                        var timeout = settings.clickTimeout;
+                                        self.oneTime(timeout, name, position);
+                                    }
                                 }
                             } else {
                                 self.stopTime(name);
@@ -6409,7 +6473,7 @@
                             if (!self.enabled()) {
                                 self.enable();
                             }
-                            e.preventDefault();
+                            //e.preventDefault();
                             var offset = command_line.offset();
                             clip.css({
                                 left: e.pageX - offset.left - 5,
@@ -6469,11 +6533,16 @@
                 if (visibility_observer) {
                     visibility_observer.unobserve(self[0]);
                 }
+                var was_enabled;
                 visibility_observer = new IntersectionObserver(function() {
                     if (self.is(':visible')) {
                         self.resizer('unbind').resizer(resize);
                         resize();
+                        if (was_enabled) {
+                            self.enabled();
+                        }
                     } else {
+                        was_enabled = $.terminal.active() === self && self.enabled();
                         self.disable();
                     }
                 }, {
@@ -6632,7 +6701,7 @@
                         delta = e.originalEvent.deltaY || e.originalEvent.detail;
                     }
                     mousewheel(e, -delta);
-                    return false;
+                    e.preventDefault();
                 });
             }
         }); // make_interpreter

@@ -3835,7 +3835,7 @@ var AbstractFileSystemProvider = (function () {
     };
     AbstractFileSystemProvider.prototype.popd = function () {
         if (this._directoryStack.length === 0) {
-            return;
+            return undefined;
         }
         var targetDir = this._directoryStack.shift();
         this.chdir(targetDir);
@@ -3970,7 +3970,7 @@ var Debugger = (function () {
     };
     Debugger.prototype.detach = function () {
         if (!this._board) {
-            return;
+            return this;
         }
         this._board.cpuClock.removeHandler(this._cpuClockHandler);
         this._board.trap.removeHandler(this._trapHandler);
@@ -4656,7 +4656,7 @@ var Cpu = (function () {
     };
     Cpu.prototype.cycle = function () {
         if (this._halted) {
-            return;
+            return this;
         }
         switch (this.executionState) {
             case 0:

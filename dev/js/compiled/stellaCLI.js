@@ -5562,7 +5562,7 @@ var AbstractFileSystemProvider = (function () {
     };
     AbstractFileSystemProvider.prototype.popd = function () {
         if (this._directoryStack.length === 0) {
-            return;
+            return undefined;
         }
         var targetDir = this._directoryStack.shift();
         this.chdir(targetDir);
@@ -5697,7 +5697,7 @@ var Debugger = (function () {
     };
     Debugger.prototype.detach = function () {
         if (!this._board) {
-            return;
+            return this;
         }
         this._board.cpuClock.removeHandler(this._cpuClockHandler);
         this._board.trap.removeHandler(this._trapHandler);
@@ -6383,7 +6383,7 @@ var Cpu = (function () {
     };
     Cpu.prototype.cycle = function () {
         if (this._halted) {
-            return;
+            return this;
         }
         switch (this.executionState) {
             case 0:
@@ -8523,7 +8523,7 @@ var CartridgeDPCPlus = (function (_super) {
             read16: function (address) {
                 if (address & 0x01) {
                     _this.triggerTrap(2, "unaligned 16 bit ARM read from " + hex_1.encode(address, 8, false));
-                    return;
+                    return 0;
                 }
                 var region = address >>> 28, addr = address & 0x0FFFFFFF;
                 switch (region) {
@@ -8550,7 +8550,7 @@ var CartridgeDPCPlus = (function (_super) {
             read32: function (address) {
                 if (address & 0x03) {
                     _this.triggerTrap(2, "unaligned 32 bit ARM read from " + hex_1.encode(address, 8, false));
-                    return;
+                    return 0;
                 }
                 var region = address >>> 28, addr = address & 0x0FFFFFFF;
                 switch (region) {
@@ -19884,6 +19884,9 @@ var Tia = (function () {
         this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.vblank ? 0xFF000000 : color;
     };
     Tia.prototype._updateCollision = function () {
+        if (this._frameManager.vblank) {
+            return;
+        }
         this._collisionMask |= (~this._player0.collision &
             ~this._player1.collision &
             ~this._missile0.collision &
@@ -20690,7 +20693,7 @@ var ClockProbe = (function () {
     };
     ClockProbe.prototype.start = function () {
         if (this._measurementTask) {
-            return;
+            return this;
         }
         this._timestamp = Date.now();
         this._counter = 0;
@@ -20699,7 +20702,7 @@ var ClockProbe = (function () {
     };
     ClockProbe.prototype.detach = function () {
         if (!this._clock) {
-            return;
+            return this;
         }
         this._clock.removeHandler(this._clockHandler, this);
         this._clock = undefined;
@@ -20707,7 +20710,7 @@ var ClockProbe = (function () {
     };
     ClockProbe.prototype.stop = function () {
         if (!this._measurementTask) {
-            return;
+            return this;
         }
         this._measurementTask.stop();
         this._measurementTask = undefined;
@@ -21410,7 +21413,7 @@ var SimpleCanvasVideo = (function () {
     };
     SimpleCanvasVideo.prototype.enableSyncRendering = function (syncRendering) {
         if (syncRendering === this._syncRendering) {
-            return;
+            return this;
         }
         this._cancelPendingFrame();
         this._syncRendering = syncRendering;
@@ -21421,7 +21424,7 @@ var SimpleCanvasVideo = (function () {
     };
     SimpleCanvasVideo.prototype.bind = function (video) {
         if (this._video) {
-            return;
+            return this;
         }
         this._video = video;
         this._videoWidth = this._renderCanvas.width = this._video.getWidth();
@@ -21433,7 +21436,7 @@ var SimpleCanvasVideo = (function () {
     };
     SimpleCanvasVideo.prototype.unbind = function () {
         if (!this._video) {
-            return;
+            return this;
         }
         this._video.newFrame.removeHandler(SimpleCanvasVideo._frameHandler, this);
         this._video = null;

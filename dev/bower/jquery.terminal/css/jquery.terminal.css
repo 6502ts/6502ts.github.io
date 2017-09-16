@@ -4,7 +4,7 @@
  *  __ / // // // // // _  // _// // / / // _  // _//     // //  \/ // _ \/ /
  * /  / // // // // // ___// / / // / / // ___// / / / / // // /\  // // / /__
  * \___//____ \\___//____//_/ _\_  / /_//____//_/ /_/ /_//_//_/ /_/ \__\_\___/
- *           \/              /____/                              version DEV
+ *           \/              /____/                              version 1.7.2
  * http://terminal.jcubic.pl
  *
  * This file is part of jQuery Terminal.
@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2017 Jakub Jankiewicz <http://jcubic.pl>
  * Released under the MIT license
  *
- * Date: Tue, 15 Aug 2017 12:10:20 +0000
+ * Date: Sat, 16 Sep 2017 14:57:36 +0000
  */
 .terminal .terminal-output .format, .cmd .format,
 .cmd .prompt, .cmd .prompt div, .terminal .terminal-output div div{
@@ -90,7 +90,6 @@
             animation: terminal-blink 1s infinite steps(1, start);
     border-left: 1px solid transparent;
     margin-left: -1px;
-    margin-top: 1px;
 }
 .bar.terminal .inverted, .bar.cmd .inverted {
     border-left-color: #aaa;
@@ -122,7 +121,7 @@
 .cmd .prompt + div {
     clear: right;
 }
-.terminal-output > div {
+.terminal-output > div, .terminal-output > div > div {
     /*padding-top: 3px;*/
     min-height: 14px;
 }
@@ -401,6 +400,9 @@
         font-size: calc(var(--size, 1) * 12px);
         line-height: calc(var(--size, 1) * 14px);
     }
+    .terminal .terminal-output div div {
+        min-height: calc(var(--size, 1) * 14px);
+    }
     .terminal .inverted, .cmd .inverted {
         background-color: var(--color, #aaa);
         color: var(--background, #000);
@@ -412,7 +414,6 @@
                 animation: var(--animation, terminal-blink) 1s infinite steps(1, start);
         color: var(--color, #aaa);
         background-color: var(--background, #000);
-        margin-top: calc(var(--size) * 1px);
     }
     .terminal h1::-moz-selection,
     .terminal h2::-moz-selection,

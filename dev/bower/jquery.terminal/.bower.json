@@ -1,6 +1,6 @@
 {
   "name": "jquery.terminal",
-  "version": "1.6.1",
+  "version": "1.7.2",
   "main": [
     "js/jquery.terminal.min.js",
     "js/jquery.mousewheel-min.js",
@@ -29,11 +29,11 @@
     "keyboardevent-key-polyfill": "^1.0.2"
   },
   "homepage": "https://github.com/jcubic/jquery.terminal",
-  "_release": "1.6.1",
+  "_release": "1.7.2",
   "_resolution": {
     "type": "version",
-    "tag": "1.6.1",
-    "commit": "5383e1bbf0211902e81f64582609b5827d120d46"
+    "tag": "1.7.2",
+    "commit": "0f81c69c1ba0f0cc0beb8e45c4c76800586e135e"
   },
   "_source": "https://github.com/jcubic/jquery.terminal.git",
   "_target": "^1.4.0",

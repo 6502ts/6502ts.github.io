@@ -4237,7 +4237,7 @@ var AbstractFileSystemProvider = (function () {
     };
     AbstractFileSystemProvider.prototype.popd = function () {
         if (this._directoryStack.length === 0) {
-            return;
+            return undefined;
         }
         var targetDir = this._directoryStack.shift();
         this.chdir(targetDir);
@@ -4372,7 +4372,7 @@ var Debugger = (function () {
     };
     Debugger.prototype.detach = function () {
         if (!this._board) {
-            return;
+            return this;
         }
         this._board.cpuClock.removeHandler(this._cpuClockHandler);
         this._board.trap.removeHandler(this._trapHandler);
@@ -5058,7 +5058,7 @@ var Cpu = (function () {
     };
     Cpu.prototype.cycle = function () {
         if (this._halted) {
-            return;
+            return this;
         }
         switch (this.executionState) {
             case 0:
@@ -6318,7 +6318,7 @@ var ClockProbe = (function () {
     };
     ClockProbe.prototype.start = function () {
         if (this._measurementTask) {
-            return;
+            return this;
         }
         this._timestamp = Date.now();
         this._counter = 0;
@@ -6327,7 +6327,7 @@ var ClockProbe = (function () {
     };
     ClockProbe.prototype.detach = function () {
         if (!this._clock) {
-            return;
+            return this;
         }
         this._clock.removeHandler(this._clockHandler, this);
         this._clock = undefined;
@@ -6335,7 +6335,7 @@ var ClockProbe = (function () {
     };
     ClockProbe.prototype.stop = function () {
         if (!this._measurementTask) {
-            return;
+            return this;
         }
         this._measurementTask.stop();
         this._measurementTask = undefined;
