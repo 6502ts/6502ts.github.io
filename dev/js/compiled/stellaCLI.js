@@ -21744,6 +21744,7 @@ var Channel = (function () {
 },{}],118:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var microevent_ts_1 = require("microevent.ts");
 function mkSwitch(swtch) {
     return {
@@ -21751,10 +21752,9 @@ function mkSwitch(swtch) {
         swtch: swtch
     };
 }
-function mkTrigger(event, onUp) {
-    if (onUp === void 0) { onUp = false; }
+function mkTrigger(event) {
     return {
-        type: onUp ? 2 : 1,
+        type: 1,
         trigger: event
     };
 }
@@ -21771,7 +21771,7 @@ var KeyboardIO = (function () {
         this._joystick1 = null;
         this._controlPanel = null;
         this._dispatchTable = {};
-        this._compiledMappings = {};
+        this._compiledMappings = new Map();
         this._compileMappings(mappings);
     }
     KeyboardIO.prototype.bind = function (joystick0, joystick1, controlPanel) {
@@ -21783,17 +21783,17 @@ var KeyboardIO = (function () {
         this._joystick1 = joystick1;
         this._controlPanel = controlPanel;
         this._updateActionTable();
-        var decodeAction = function (e) {
-            if (_this._compiledMappings[e.keyCode]) {
-                var modifiers = ((e.shiftKey ? 4 : 0) |
-                    (e.ctrlKey ? 1 : 0) |
-                    (e.altKey ? 2 : 0));
-                return _this._compiledMappings[e.keyCode][modifiers];
-            }
-            return undefined;
-        };
         this._keydownListener = function (e) {
-            var action = decodeAction(e);
+            if (!_this._compiledMappings.has(e.keyCode)) {
+                return;
+            }
+            var modifiers = ((e.shiftKey ? 4 : 0) |
+                (e.ctrlKey ? 1 : 0) |
+                (e.altKey ? 2 : 0));
+            if (!_this._compiledMappings.get(e.keyCode).get(modifiers)) {
+                return;
+            }
+            var action = _this._compiledMappings.get(e.keyCode).get(modifiers);
             if (typeof (action) !== 'undefined') {
                 e.preventDefault();
                 var dispatch = _this._dispatchTable[action];
@@ -21809,20 +21809,30 @@ var KeyboardIO = (function () {
             }
         };
         this._keyupListener = function (e) {
-            var action = decodeAction(e);
-            if (typeof (action) !== 'undefined') {
-                e.preventDefault();
-                var dispatch = _this._dispatchTable[action];
-                switch (dispatch.type) {
-                    case 0:
-                        dispatch.swtch.toggle(false);
-                        break;
-                    case 2:
-                        dispatch.trigger.dispatch(undefined);
-                        break;
-                    default:
+            if (!_this._compiledMappings.has(e.keyCode)) {
+                return;
+            }
+            try {
+                for (var _a = tslib_1.__values(_this._compiledMappings.get(e.keyCode).values()), _b = _a.next(); !_b.done; _b = _a.next()) {
+                    var action = _b.value;
+                    e.preventDefault();
+                    var dispatch = _this._dispatchTable[action];
+                    switch (dispatch.type) {
+                        case 0:
+                            dispatch.swtch.toggle(false);
+                            break;
+                        default:
+                    }
                 }
             }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+            var e_1, _c;
         };
         this._target.addEventListener('keydown', this._keydownListener);
         this._target.addEventListener('keyup', this._keyupListener);
@@ -21861,10 +21871,10 @@ var KeyboardIO = (function () {
                 2)) !== 0) {
                 throw new Error("invalid modifier set " + modifiers);
             }
-            if (!_this._compiledMappings[keycode]) {
-                _this._compiledMappings[keycode] = {};
+            if (!_this._compiledMappings.has(keycode)) {
+                _this._compiledMappings.set(keycode, new Map());
             }
-            _this._compiledMappings[keycode][modifiers] = action;
+            _this._compiledMappings.get(keycode).set(modifiers, action);
         };
         mappings.forEach(function (mapping) {
             var action = mapping.action, specs = Array.isArray(mapping.spec) ? mapping.spec : [mapping.spec];
@@ -21949,7 +21959,7 @@ var KeyboardIO = (function () {
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"microevent.ts":7}],119:[function(require,module,exports){
+},{"microevent.ts":7,"tslib":20}],119:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebAudio_1 = require("../../driver/WebAudio");

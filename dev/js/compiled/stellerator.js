@@ -94290,34 +94290,44 @@ var Channel = (function () {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
-var fragmentShaderSource = "precision mediump float;\n\nvarying vec2 v_TextureCoordinate;\n\nuniform sampler2D u_Sampler0, u_Sampler1, u_Sampler2, u_sampler;\nuniform float u_Gamma;\n\nvoid main() {\n    vec4 compositedTexel =\n        0.4 * texture2D(u_Sampler0, v_TextureCoordinate) +\n        0.4 * texture2D(u_Sampler1, v_TextureCoordinate) +\n        0.2 * texture2D(u_Sampler2, v_TextureCoordinate);\n\n    gl_FragColor = vec4(pow(compositedTexel.rgb, vec3(u_Gamma)), 1.);\n}\n";
-var vertexShaderSource = "attribute vec2 a_VertexPosition;\nattribute vec2 a_TextureCoordinate;\n\nvarying vec2 v_TextureCoordinate ;\n\nvoid main() {\n    v_TextureCoordinate = a_TextureCoordinate;\n    gl_Position = vec4(a_VertexPosition, 0, 1);\n}\n";
-var FRAME_COMPOSITING_COUNT = 3;
+var fragmentShaderPovSource = "precision mediump float;\n\nvarying vec2 v_TextureCoordinate;\n\nuniform sampler2D u_Sampler0, u_Sampler1, u_Sampler2;\nuniform float u_Gamma;\n\nvoid main() {\n    vec4 compositedTexel =\n        0.4 * texture2D(u_Sampler0, v_TextureCoordinate) +\n        0.4 * texture2D(u_Sampler1, v_TextureCoordinate) +\n        0.2 * texture2D(u_Sampler2, v_TextureCoordinate);\n\n    gl_FragColor = vec4(pow(compositedTexel.rgb, vec3(u_Gamma)), 1.);\n}\n";
+var fragmentSahderPlainSource = "precision mediump float;\n\nvarying vec2 v_TextureCoordinate;\n\nuniform sampler2D u_Sampler0;\nuniform float u_Gamma;\n\nvoid main() {\n    vec4 texel = texture2D(u_Sampler0, v_TextureCoordinate);\n\n    gl_FragColor = vec4(pow(texel.rgb, vec3(u_Gamma)), 1.);\n}\n";
+var vertexShaderSource = "attribute vec2 a_VertexPosition;\nattribute vec2 a_TextureCoordinate;\n\nvarying vec2 v_TextureCoordinate;\n\nvoid main() {\n    v_TextureCoordinate = a_TextureCoordinate;\n    gl_Position = vec4(a_VertexPosition, 0, 1);\n}\n";
 var WebglVideoDriver = (function () {
-    function WebglVideoDriver(_canvas, _gamma, _aspect) {
-        if (_gamma === void 0) { _gamma = 1; }
-        if (_aspect === void 0) { _aspect = 4 / 3; }
+    function WebglVideoDriver(_canvas, config) {
+        if (config === void 0) { config = {}; }
         this._canvas = _canvas;
-        this._gamma = _gamma;
-        this._aspect = _aspect;
         this._gl = null;
         this._program = null;
         this._vertexBuffer = null;
         this._textureCoordinateBuffer = null;
-        this._textures = new Array(FRAME_COMPOSITING_COUNT);
-        this._imageData = new Array(FRAME_COMPOSITING_COUNT);
-        this._imageDataGeneration = new Array(FRAME_COMPOSITING_COUNT);
-        this._textureGeneration = new Array(FRAME_COMPOSITING_COUNT);
         this._currentFrameIndex = 0;
         this._frameCount = 0;
+        this._gamma = 1;
+        this._aspect = 4 / 3;
+        this._povEmulation = true;
         this._animationFrameHandle = 0;
         this._syncRendering = true;
         this._video = null;
         this._interpolation = true;
+        if (typeof (config.aspect) !== 'undefined') {
+            this._aspect = config.aspect;
+        }
+        if (typeof (config.gamma) !== 'undefined') {
+            this._gamma = config.gamma;
+        }
+        if (typeof (config.povEmulation) !== 'undefined') {
+            this._povEmulation = config.povEmulation;
+        }
+        this._numberOfFramesToCompose = this._povEmulation ? 3 : 1;
+        this._textures = new Array(this._numberOfFramesToCompose);
+        this._imageData = new Array(this._numberOfFramesToCompose);
+        this._imageDataGeneration = new Array(this._numberOfFramesToCompose);
+        this._textureGeneration = new Array(this._numberOfFramesToCompose);
         this._gl = this._canvas.getContext('webgl', {
             alpha: false
         });
-        for (var i = 0; i < FRAME_COMPOSITING_COUNT; i++) {
+        for (var i = 0; i < this._numberOfFramesToCompose; i++) {
             this._imageDataGeneration[i] = 0;
             this._textureGeneration[i] = -1;
         }
@@ -94395,8 +94405,8 @@ var WebglVideoDriver = (function () {
         var oldImageData = self._imageData[self._currentFrameIndex];
         self._imageData[self._currentFrameIndex] = imageDataPoolMember;
         self._imageDataGeneration[self._currentFrameIndex]++;
-        self._currentFrameIndex = (self._currentFrameIndex + 1) % FRAME_COMPOSITING_COUNT;
-        if (self._frameCount < FRAME_COMPOSITING_COUNT) {
+        self._currentFrameIndex = (self._currentFrameIndex + 1) % self._numberOfFramesToCompose;
+        if (self._frameCount < self._numberOfFramesToCompose) {
             self._frameCount++;
         }
         else {
@@ -94424,12 +94434,12 @@ var WebglVideoDriver = (function () {
         this._animationFrameHandle = 0;
     };
     WebglVideoDriver.prototype._draw = function () {
-        if (this._frameCount < FRAME_COMPOSITING_COUNT) {
+        if (this._frameCount < this._numberOfFramesToCompose) {
             return;
         }
         var gl = this._gl;
-        for (var i = 0; i < FRAME_COMPOSITING_COUNT; i++) {
-            var frameIndex = (this._currentFrameIndex - i - 1 + FRAME_COMPOSITING_COUNT) % FRAME_COMPOSITING_COUNT;
+        for (var i = 0; i < this._numberOfFramesToCompose; i++) {
+            var frameIndex = (this._currentFrameIndex - i - 1 + this._numberOfFramesToCompose) % this._numberOfFramesToCompose;
             if (this._textureGeneration[frameIndex] !== this._imageDataGeneration[frameIndex]) {
                 gl.activeTexture(gl["TEXTURE" + frameIndex]);
                 gl.bindTexture(gl.TEXTURE_2D, this._textures[frameIndex]);
@@ -94437,8 +94447,8 @@ var WebglVideoDriver = (function () {
                 this._textureGeneration[frameIndex] = this._imageDataGeneration[frameIndex];
             }
         }
-        for (var i = 0; i < FRAME_COMPOSITING_COUNT; i++) {
-            gl.uniform1i(this._getUniformLocation("u_Sampler" + i), (this._currentFrameIndex + FRAME_COMPOSITING_COUNT - i - 1) % FRAME_COMPOSITING_COUNT);
+        for (var i = 0; i < this._numberOfFramesToCompose; i++) {
+            gl.uniform1i(this._getUniformLocation("u_Sampler" + i), (this._currentFrameIndex + this._numberOfFramesToCompose - i - 1) % this._numberOfFramesToCompose);
         }
         gl.uniform1f(this._getUniformLocation('u_Gamma'), this._gamma);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -94450,7 +94460,7 @@ var WebglVideoDriver = (function () {
         if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
             throw new Error("failed to compile vertex shader: " + gl.getShaderInfoLog(vertexShader));
         }
-        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        gl.shaderSource(fragmentShader, this._povEmulation ? fragmentShaderPovSource : fragmentSahderPlainSource);
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
             throw new Error("failed to compile fragment shader: " + gl.getShaderInfoLog(fragmentShader));
@@ -94465,12 +94475,12 @@ var WebglVideoDriver = (function () {
         this._program = program;
     };
     WebglVideoDriver.prototype._allocateTextures = function () {
-        for (var i = 0; i < FRAME_COMPOSITING_COUNT; i++) {
+        for (var i = 0; i < this._numberOfFramesToCompose; i++) {
             this._allocateTexture(i);
         }
     };
     WebglVideoDriver.prototype._configureTextures = function () {
-        for (var i = 0; i < FRAME_COMPOSITING_COUNT; i++) {
+        for (var i = 0; i < this._numberOfFramesToCompose; i++) {
             this._configureTexture(i);
         }
     };
@@ -94552,6 +94562,7 @@ exports.default = WebglVideoDriver;
 },{}],790:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var microevent_ts_1 = require("microevent.ts");
 function mkSwitch(swtch) {
     return {
@@ -94559,10 +94570,9 @@ function mkSwitch(swtch) {
         swtch: swtch
     };
 }
-function mkTrigger(event, onUp) {
-    if (onUp === void 0) { onUp = false; }
+function mkTrigger(event) {
     return {
-        type: onUp ? 2 : 1,
+        type: 1,
         trigger: event
     };
 }
@@ -94579,7 +94589,7 @@ var KeyboardIO = (function () {
         this._joystick1 = null;
         this._controlPanel = null;
         this._dispatchTable = {};
-        this._compiledMappings = {};
+        this._compiledMappings = new Map();
         this._compileMappings(mappings);
     }
     KeyboardIO.prototype.bind = function (joystick0, joystick1, controlPanel) {
@@ -94591,17 +94601,17 @@ var KeyboardIO = (function () {
         this._joystick1 = joystick1;
         this._controlPanel = controlPanel;
         this._updateActionTable();
-        var decodeAction = function (e) {
-            if (_this._compiledMappings[e.keyCode]) {
-                var modifiers = ((e.shiftKey ? 4 : 0) |
-                    (e.ctrlKey ? 1 : 0) |
-                    (e.altKey ? 2 : 0));
-                return _this._compiledMappings[e.keyCode][modifiers];
-            }
-            return undefined;
-        };
         this._keydownListener = function (e) {
-            var action = decodeAction(e);
+            if (!_this._compiledMappings.has(e.keyCode)) {
+                return;
+            }
+            var modifiers = ((e.shiftKey ? 4 : 0) |
+                (e.ctrlKey ? 1 : 0) |
+                (e.altKey ? 2 : 0));
+            if (!_this._compiledMappings.get(e.keyCode).get(modifiers)) {
+                return;
+            }
+            var action = _this._compiledMappings.get(e.keyCode).get(modifiers);
             if (typeof (action) !== 'undefined') {
                 e.preventDefault();
                 var dispatch = _this._dispatchTable[action];
@@ -94617,20 +94627,30 @@ var KeyboardIO = (function () {
             }
         };
         this._keyupListener = function (e) {
-            var action = decodeAction(e);
-            if (typeof (action) !== 'undefined') {
-                e.preventDefault();
-                var dispatch = _this._dispatchTable[action];
-                switch (dispatch.type) {
-                    case 0:
-                        dispatch.swtch.toggle(false);
-                        break;
-                    case 2:
-                        dispatch.trigger.dispatch(undefined);
-                        break;
-                    default:
+            if (!_this._compiledMappings.has(e.keyCode)) {
+                return;
+            }
+            try {
+                for (var _a = tslib_1.__values(_this._compiledMappings.get(e.keyCode).values()), _b = _a.next(); !_b.done; _b = _a.next()) {
+                    var action = _b.value;
+                    e.preventDefault();
+                    var dispatch = _this._dispatchTable[action];
+                    switch (dispatch.type) {
+                        case 0:
+                            dispatch.swtch.toggle(false);
+                            break;
+                        default:
+                    }
                 }
             }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+            var e_1, _c;
         };
         this._target.addEventListener('keydown', this._keydownListener);
         this._target.addEventListener('keyup', this._keyupListener);
@@ -94669,10 +94689,10 @@ var KeyboardIO = (function () {
                 2)) !== 0) {
                 throw new Error("invalid modifier set " + modifiers);
             }
-            if (!_this._compiledMappings[keycode]) {
-                _this._compiledMappings[keycode] = {};
+            if (!_this._compiledMappings.has(keycode)) {
+                _this._compiledMappings.set(keycode, new Map());
             }
-            _this._compiledMappings[keycode][modifiers] = action;
+            _this._compiledMappings.get(keycode).set(modifiers, action);
         };
         mappings.forEach(function (mapping) {
             var action = mapping.action, specs = Array.isArray(mapping.spec) ? mapping.spec : [mapping.spec];
@@ -94757,7 +94777,7 @@ var KeyboardIO = (function () {
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"microevent.ts":275}],791:[function(require,module,exports){
+},{"microevent.ts":275,"tslib":694}],791:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebAudio_1 = require("../../driver/WebAudio");
@@ -95992,6 +96012,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.types = {
     setSmoothScaling: 'settings/setSmoothScaling',
     setWebGlRendering: 'settings/setWebGlRendering',
+    setPovEmulation: 'settings/setPovEmulation',
     setGamma: 'settings/setGamma',
     setUseWorker: 'settings/setUseWorker',
     setMergeFrames: 'settings/mergeFrames',
@@ -96024,6 +96045,13 @@ function setWebGlRendering(value) {
     };
 }
 exports.setWebGlRendering = setWebGlRendering;
+function setPovEmulation(value) {
+    return {
+        type: exports.types.setPovEmulation,
+        value: value
+    };
+}
+exports.setPovEmulation = setPovEmulation;
 function setGamma(value) {
     return {
         type: exports.types.setGamma,
@@ -96191,7 +96219,10 @@ var Emulation = (function (_super) {
         var videoDriver;
         try {
             if (this.props.webGlRendering) {
-                videoDriver = new WebglVideo_1.default(this._canvasElt, this.props.gamma);
+                videoDriver = new WebglVideo_1.default(this._canvasElt, {
+                    gamma: this.props.gamma,
+                    povEmulation: this.props.povEmulation
+                });
             }
             else {
                 videoDriver = new SimpleCanvasVideo_1.default(this._canvasElt);
@@ -96273,7 +96304,7 @@ var Emulation = (function (_super) {
     return Emulation;
 }(React.Component));
 (function (Emulation) {
-    Emulation.defaultProps = tslib_1.__assign({ enabled: false, initialViewportWidth: 160, initialViewportHeight: 192, smoothScaling: true, webGlRendering: true, gamma: 1, emulationState: EmulationServiceInterface_1.default.State.stopped, pausedByUser: false, syncRendering: true, navigateAway: function () { return undefined; }, pauseEmulation: function () { return undefined; }, userPauseEmulation: function () { return undefined; }, resumeEmulation: function () { return undefined; }, resetEmulation: function () { return undefined; } }, ControlPanel_1.default.defaultProps);
+    Emulation.defaultProps = tslib_1.__assign({ enabled: false, initialViewportWidth: 160, initialViewportHeight: 192, smoothScaling: true, webGlRendering: true, povEmulation: true, gamma: 1, emulationState: EmulationServiceInterface_1.default.State.stopped, pausedByUser: false, syncRendering: true, navigateAway: function () { return undefined; }, pauseEmulation: function () { return undefined; }, userPauseEmulation: function () { return undefined; }, resumeEmulation: function () { return undefined; }, resetEmulation: function () { return undefined; } }, ControlPanel_1.default.defaultProps);
 })(Emulation || (Emulation = {}));
 exports.default = Emulation;
 
@@ -96356,6 +96387,11 @@ function Settings(props) {
                 React.createElement(Switch_1.default, { labelTrue: 'On', labelFalse: 'Off', state: props.webGlRendering, onSwitch: props.onToggleWebGlRendering }))),
         React.createElement(react_bootstrap_1.Row, null,
             React.createElement(react_bootstrap_1.Col, { sm: 4 },
+                React.createElement(react_bootstrap_1.ControlLabel, null, "POV / Phosphor emulation (WebGL only):")),
+            React.createElement(react_bootstrap_1.Col, { sm: 8 },
+                React.createElement(Switch_1.default, { labelTrue: 'On', labelFalse: 'Off', state: props.povEmulation, onSwitch: props.onTogglePovEmulation }))),
+        React.createElement(react_bootstrap_1.Row, null,
+            React.createElement(react_bootstrap_1.Col, { sm: 4 },
                 React.createElement(react_bootstrap_1.ControlLabel, null, "Gamma correction (WebGL only):")),
             React.createElement(react_bootstrap_1.Col, { sm: 4 },
                 React.createElement(Slider_1.default, { value: props.gamma, min: 0.1, max: 5, step: 0.1, onChange: props.onChangeGamma }))),
@@ -96374,9 +96410,12 @@ function Settings(props) {
     Settings.defaultProps = {
         smoothScaling: true,
         webGlRendering: true,
+        povEmulation: true,
         gamma: 1,
         useWorker: false,
         mergeFrames: false,
+        volume: 1,
+        syncRendering: true,
         onToggleSmoothScaling: function () { return undefined; },
         onToggleWebGlRendering: function () { return undefined; },
         onChangeGamma: function () { return undefined; },
@@ -97114,6 +97153,7 @@ function mapStateToProps(state) {
         enforceRateLimit: state.emulationState.enforceRateLimit,
         smoothScaling: state.settings.smoothScaling,
         webGlRendering: state.settings.webGlRendering,
+        povEmulation: state.settings.povEmulation,
         gamma: state.settings.gamma,
         pausedByUser: state.emulationState.pausedByUser,
         syncRendering: state.settings.syncRendering
@@ -97173,6 +97213,7 @@ function mapStateToProps(state) {
     return {
         smoothScaling: state.settings.smoothScaling,
         webGlRendering: state.settings.webGlRendering,
+        povEmulation: state.settings.povEmulation,
         gamma: state.settings.gamma,
         useWorker: state.settings.useWorker,
         mergeFrames: state.settings.mergeFrames,
@@ -97187,7 +97228,8 @@ var SettingsContainer = react_redux_1.connect(mapStateToProps, {
     onToggleUseWorker: settings_1.setUseWorker,
     onToggleMergeFrames: settings_1.setMergeFrames,
     onChangeVolume: settings_1.setVolume,
-    onChangeSyncRendering: settings_1.setSyncRendering
+    onChangeSyncRendering: settings_1.setSyncRendering,
+    onTogglePovEmulation: settings_1.setPovEmulation
 })(Settings_1.default);
 exports.default = SettingsContainer;
 
@@ -97338,6 +97380,7 @@ var Settings;
         return {
             smoothScaling: true,
             webGlRendering: true,
+            povEmulation: true,
             gamma: 1,
             useWorker: true,
             mergeFrames: false,
@@ -97677,6 +97720,8 @@ function reducer(settings, action) {
             return setSmoothScaling(settings, action);
         case settings_1.types.setWebGlRendering:
             return setWebGlRendering(settings, action);
+        case settings_1.types.setPovEmulation:
+            return setPovEmulation(settings, action);
         case settings_1.types.setGamma:
             return setGamma(settings, action);
         case settings_1.types.setUseWorker:
@@ -97701,6 +97746,9 @@ function init(state, action) {
 }
 function setWebGlRendering(settings, action) {
     return tslib_1.__assign({}, settings, { webGlRendering: action.value });
+}
+function setPovEmulation(settings, action) {
+    return tslib_1.__assign({}, settings, { povEmulation: action.value });
 }
 function setGamma(settings, action) {
     return Settings_1.default.clampGamma(tslib_1.__assign({}, settings, { gamma: action.value }));
@@ -98595,6 +98643,20 @@ var Database = (function (_super) {
                 .each(function (settings, c) {
                 var cursor = c;
                 settings.syncRendering = true;
+                cursor.update(settings);
+            });
+        });
+        _this.version(8)
+            .stores({
+            cartridge: '++id, &hash',
+            settings: 'id'
+        })
+            .upgrade(function (transaction) {
+            transaction
+                .table('settings')
+                .each(function (settings, c) {
+                var cursor = c;
+                settings.povEmulation = true;
                 cursor.update(settings);
             });
         });
