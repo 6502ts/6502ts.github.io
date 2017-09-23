@@ -91990,7 +91990,7 @@ var Tia = (function () {
             else {
                 this._tickHframe();
             }
-            if (this._collisionUpdateRequired) {
+            if (this._collisionUpdateRequired && !this._frameManager.vblank) {
                 this._updateCollision();
             }
         }
@@ -92188,6 +92188,10 @@ var Tia = (function () {
             50 * 228 * 312;
     };
     Tia.prototype._renderPixel = function (x, y) {
+        if (this._frameManager.vblank) {
+            this._frameManager.surfaceBuffer[y * 160 + x] = 0xFF000000;
+            return;
+        }
         var color = this._colorBk;
         switch (this._priority) {
             case 0:
@@ -92217,12 +92221,9 @@ var Tia = (function () {
             default:
                 throw new Error('invalid priority');
         }
-        this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.vblank ? 0xFF000000 : color;
+        this._frameManager.surfaceBuffer[y * 160 + x] = color;
     };
     Tia.prototype._updateCollision = function () {
-        if (this._frameManager.vblank) {
-            return;
-        }
         this._collisionMask |= (~this._player0.collision &
             ~this._player1.collision &
             ~this._missile0.collision &
@@ -93586,39 +93587,55 @@ var FullscreenVideoDriver = (function () {
     function FullscreenVideoDriver(_videoDriver) {
         this._videoDriver = _videoDriver;
         this._resizeListener = this._adjustSizeForFullscreen.bind(this);
+        this._changeListener = this._onChange.bind(this);
+        this._engaged = false;
     }
     FullscreenVideoDriver.prototype.engage = function () {
+        if (this._engaged) {
+            return;
+        }
+        this._engaged = true;
+        screenfull.on('change', this._changeListener);
         screenfull.request(this._videoDriver.getCanvas());
-        this._adjustSize();
     };
     FullscreenVideoDriver.prototype.disengage = function () {
+        if (!this._engaged) {
+            return;
+        }
         screenfull.exit();
-        this._adjustSize();
     };
     FullscreenVideoDriver.prototype.toggle = function () {
-        screenfull.toggle(this._videoDriver.getCanvas());
-        this._adjustSize();
+        if (this._engaged) {
+            this.disengage();
+        }
+        else {
+            this.engage();
+        }
     };
     FullscreenVideoDriver.prototype.isEngaged = function () {
-        return screenfull.isFullscreen;
+        return this._engaged;
     };
-    FullscreenVideoDriver.prototype._adjustSize = function () {
-        if (!this.isEngaged()) {
-            return;
+    FullscreenVideoDriver.prototype._onChange = function () {
+        if (screenfull.isFullscreen) {
+            window.addEventListener('resize', this._resizeListener);
+            this._adjustSizeForFullscreen();
         }
-        window.addEventListener('resize', this._resizeListener);
-        this._adjustSizeForFullscreen();
+        else {
+            this._resetSize();
+            window.removeEventListener('resize', this._resizeListener);
+            screenfull.off('change', this._changeListener);
+            this._engaged = false;
+        }
     };
-    FullscreenVideoDriver.prototype._adjustSizeForFullscreen = function () {
+    FullscreenVideoDriver.prototype._resetSize = function () {
         var _this = this;
         var element = this._videoDriver.getCanvas();
-        if (!this.isEngaged()) {
-            window.removeEventListener('resize', this._resizeListener);
-            element.style.width = '';
-            element.style.height = '';
-            setTimeout(function () { return _this._videoDriver.resize(); }, 0);
-            return;
-        }
+        element.style.width = '';
+        element.style.height = '';
+        setTimeout(function () { return _this._videoDriver.resize(); }, 0);
+    };
+    FullscreenVideoDriver.prototype._adjustSizeForFullscreen = function () {
+        var element = this._videoDriver.getCanvas();
         this._videoDriver.resize(window.innerWidth, window.innerHeight);
         element.style.width = window.innerWidth + 'px';
         element.style.height = window.innerHeight + 'px';
@@ -94536,11 +94553,22 @@ exports.default = WebglVideoDriver;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
-var Switch_1 = require("../../../machine/io/Switch");
+function mkSwitch(swtch) {
+    return {
+        type: 0,
+        swtch: swtch
+    };
+}
+function mkTrigger(event, onUp) {
+    if (onUp === void 0) { onUp = false; }
+    return {
+        type: onUp ? 2 : 1,
+        trigger: event
+    };
+}
 var KeyboardIO = (function () {
     function KeyboardIO(_target, mappings) {
         if (mappings === void 0) { mappings = KeyboardIO.defaultMappings; }
-        var _this = this;
         this._target = _target;
         this.toggleFullscreen = new microevent_ts_1.Event();
         this.hardReset = new microevent_ts_1.Event();
@@ -94550,15 +94578,9 @@ var KeyboardIO = (function () {
         this._joystick0 = null;
         this._joystick1 = null;
         this._controlPanel = null;
-        this._fullscreenSwitch = new Switch_1.default();
-        this._resetSwitch = new Switch_1.default();
-        this._togglePauseSwitch = new Switch_1.default();
-        this._actionTable = {};
+        this._dispatchTable = {};
         this._compiledMappings = {};
         this._compileMappings(mappings);
-        this._fullscreenSwitch.stateChanged.addHandler(function (state) { return state ? _this.toggleFullscreen.dispatch(undefined) : true; });
-        this._resetSwitch.stateChanged.addHandler(function (state) { return state ? _this.hardReset.dispatch(undefined) : true; });
-        this._togglePauseSwitch.stateChanged.addHandler(function (state) { return state ? _this.togglePause.dispatch(undefined) : true; });
     }
     KeyboardIO.prototype.bind = function (joystick0, joystick1, controlPanel) {
         var _this = this;
@@ -94582,14 +94604,32 @@ var KeyboardIO = (function () {
             var action = decodeAction(e);
             if (typeof (action) !== 'undefined') {
                 e.preventDefault();
-                _this._actionTable[action].toggle(true);
+                var dispatch = _this._dispatchTable[action];
+                switch (dispatch.type) {
+                    case 0:
+                        dispatch.swtch.toggle(true);
+                        break;
+                    case 1:
+                        dispatch.trigger.dispatch(undefined);
+                        break;
+                    default:
+                }
             }
         };
         this._keyupListener = function (e) {
             var action = decodeAction(e);
             if (typeof (action) !== 'undefined') {
                 e.preventDefault();
-                _this._actionTable[action].toggle(false);
+                var dispatch = _this._dispatchTable[action];
+                switch (dispatch.type) {
+                    case 0:
+                        dispatch.swtch.toggle(false);
+                        break;
+                    case 2:
+                        dispatch.trigger.dispatch(undefined);
+                        break;
+                    default:
+                }
             }
         };
         this._target.addEventListener('keydown', this._keydownListener);
@@ -94605,21 +94645,21 @@ var KeyboardIO = (function () {
         this._keydownListener = this._keyupListener = null;
     };
     KeyboardIO.prototype._updateActionTable = function () {
-        this._actionTable[12] = this._fullscreenSwitch;
-        this._actionTable[13] = this._resetSwitch;
-        this._actionTable[14] = this._togglePauseSwitch;
-        this._actionTable[0] = this._controlPanel.getSelectSwitch();
-        this._actionTable[1] = this._controlPanel.getResetButton();
-        this._actionTable[2] = this._joystick0.getLeft();
-        this._actionTable[3] = this._joystick0.getRight();
-        this._actionTable[4] = this._joystick0.getUp();
-        this._actionTable[5] = this._joystick0.getDown();
-        this._actionTable[10] = this._joystick0.getFire();
-        this._actionTable[6] = this._joystick1.getLeft();
-        this._actionTable[7] = this._joystick1.getRight();
-        this._actionTable[8] = this._joystick1.getUp();
-        this._actionTable[9] = this._joystick1.getDown();
-        this._actionTable[11] = this._joystick1.getFire();
+        this._dispatchTable[12] = mkTrigger(this.toggleFullscreen);
+        this._dispatchTable[13] = mkTrigger(this.hardReset);
+        this._dispatchTable[14] = mkTrigger(this.togglePause);
+        this._dispatchTable[0] = mkSwitch(this._controlPanel.getSelectSwitch());
+        this._dispatchTable[1] = mkSwitch(this._controlPanel.getResetButton());
+        this._dispatchTable[2] = mkSwitch(this._joystick0.getLeft());
+        this._dispatchTable[3] = mkSwitch(this._joystick0.getRight());
+        this._dispatchTable[4] = mkSwitch(this._joystick0.getUp());
+        this._dispatchTable[5] = mkSwitch(this._joystick0.getDown());
+        this._dispatchTable[10] = mkSwitch(this._joystick0.getFire());
+        this._dispatchTable[6] = mkSwitch(this._joystick1.getLeft());
+        this._dispatchTable[7] = mkSwitch(this._joystick1.getRight());
+        this._dispatchTable[8] = mkSwitch(this._joystick1.getUp());
+        this._dispatchTable[9] = mkSwitch(this._joystick1.getDown());
+        this._dispatchTable[11] = mkSwitch(this._joystick1.getFire());
     };
     KeyboardIO.prototype._compileMappings = function (mappings) {
         var _this = this;
@@ -94717,7 +94757,7 @@ var KeyboardIO = (function () {
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"../../../machine/io/Switch":712,"microevent.ts":275}],791:[function(require,module,exports){
+},{"microevent.ts":275}],791:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebAudio_1 = require("../../driver/WebAudio");

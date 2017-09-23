@@ -16074,7 +16074,7 @@ var Tia = (function () {
             else {
                 this._tickHframe();
             }
-            if (this._collisionUpdateRequired) {
+            if (this._collisionUpdateRequired && !this._frameManager.vblank) {
                 this._updateCollision();
             }
         }
@@ -16272,6 +16272,10 @@ var Tia = (function () {
             50 * 228 * 312;
     };
     Tia.prototype._renderPixel = function (x, y) {
+        if (this._frameManager.vblank) {
+            this._frameManager.surfaceBuffer[y * 160 + x] = 0xFF000000;
+            return;
+        }
         var color = this._colorBk;
         switch (this._priority) {
             case 0:
@@ -16301,12 +16305,9 @@ var Tia = (function () {
             default:
                 throw new Error('invalid priority');
         }
-        this._frameManager.surfaceBuffer[y * 160 + x] = this._frameManager.vblank ? 0xFF000000 : color;
+        this._frameManager.surfaceBuffer[y * 160 + x] = color;
     };
     Tia.prototype._updateCollision = function () {
-        if (this._frameManager.vblank) {
-            return;
-        }
         this._collisionMask |= (~this._player0.collision &
             ~this._player1.collision &
             ~this._missile0.collision &
