@@ -2380,6 +2380,11 @@ function opAac(state, bus, operand) {
     setFlagsNZ(state, state.a);
     state.flags = (state.flags & (~1)) | ((state.a & 0x80) >>> 7);
 }
+function opAtx(state, bus, operand) {
+    state.a &= operand;
+    state.x = state.a;
+    setFlagsNZ(state, state.a);
+}
 var Cpu = (function () {
     function Cpu(_bus, _rng) {
         this._bus = _bus;
@@ -2878,6 +2883,10 @@ var Cpu = (function () {
                 this._opCycles = 0;
                 this._instructionCallback = opAac;
                 break;
+            case 68:
+                this._opCycles = 0;
+                this._instructionCallback = opAtx;
+                break;
             default:
                 if (this._invalidInstructionCallback) {
                     this._invalidInstructionCallback(this);
@@ -3141,7 +3150,8 @@ var Instruction = (function () {
         Operation[Operation["lar"] = 65] = "lar";
         Operation[Operation["isc"] = 66] = "isc";
         Operation[Operation["aac"] = 67] = "aac";
-        Operation[Operation["invalid"] = 68] = "invalid";
+        Operation[Operation["atx"] = 68] = "atx";
+        Operation[Operation["invalid"] = 69] = "invalid";
     })(Operation = Instruction.Operation || (Instruction.Operation = {}));
     var OperationMap;
     (function (OperationMap) {
@@ -3213,7 +3223,8 @@ var Instruction = (function () {
         OperationMap[OperationMap["lar"] = 65] = "lar";
         OperationMap[OperationMap["isc"] = 66] = "isc";
         OperationMap[OperationMap["aac"] = 67] = "aac";
-        OperationMap[OperationMap["invalid"] = 68] = "invalid";
+        OperationMap[OperationMap["atx"] = 68] = "atx";
+        OperationMap[OperationMap["invalid"] = 69] = "invalid";
     })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
     var AddressingMode;
     (function (AddressingMode) {
@@ -3238,7 +3249,7 @@ exports.default = Instruction;
     var __init;
     (function (__init) {
         for (var i = 0; i < 256; i++) {
-            Instruction.opcodes[i] = new Instruction(68, 12);
+            Instruction.opcodes[i] = new Instruction(69, 12);
         }
         var operation, addressingMode, opcode;
         for (var i = 0; i < 8; i++) {
@@ -3298,7 +3309,7 @@ exports.default = Instruction;
                 if (operation === 47 && addressingMode === 1) {
                     addressingMode = 12;
                 }
-                if (operation !== 68 && addressingMode !== 12) {
+                if (operation !== 69 && addressingMode !== 12) {
                     opcode = (i << 5) | (j << 2) | 1;
                     Instruction.opcodes[opcode].operation = operation;
                     Instruction.opcodes[opcode].addressingMode = addressingMode;
@@ -3306,7 +3317,7 @@ exports.default = Instruction;
             }
         }
         function set(_opcode, _operation, _addressingMode) {
-            if (Instruction.opcodes[_opcode].operation !== 68) {
+            if (Instruction.opcodes[_opcode].operation !== 69) {
                 throw new Error('entry for opcode ' + _opcode + ' already exists');
             }
             Instruction.opcodes[_opcode].operation = _operation;
@@ -3465,6 +3476,7 @@ exports.default = Instruction;
         set(0xF3, 66, 11);
         set(0x0B, 67, 1);
         set(0x2B, 67, 1);
+        set(0xAB, 68, 1);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
 

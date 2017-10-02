@@ -1,6 +1,6 @@
 {
     "name": "jquery.terminal",
-    "version": "1.7.2",
+    "version": "1.8.0",
     "main": [
         "js/jquery.terminal.min.js",
         "js/jquery.mousewheel-min.js",
@@ -25,7 +25,6 @@
         "jquery": "~3"
     },
     "devDependencies": {
-        "jasmine": "~2.5.2",
         "keyboardevent-key-polyfill": "^1.0.2"
     }
 }
