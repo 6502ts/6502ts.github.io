@@ -115,7 +115,6 @@ function fromByteArray (uint8) {
 }
 
 },{}],2:[function(require,module,exports){
-(function (global){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -128,80 +127,57 @@ function fromByteArray (uint8) {
 
 var base64 = require('base64-js')
 var ieee754 = require('ieee754')
-var isArray = require('isarray')
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
 exports.INSPECT_MAX_BYTES = 50
 
+var K_MAX_LENGTH = 0x7fffffff
+exports.kMaxLength = K_MAX_LENGTH
+
 /**
  * If `Buffer.TYPED_ARRAY_SUPPORT`:
  *   === true    Use Uint8Array implementation (fastest)
- *   === false   Use Object implementation (most compatible, even IE6)
+ *   === false   Print warning and recommend using `buffer` v4.x which has an Object
+ *               implementation (most compatible, even IE6)
  *
  * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
  * Opera 11.6+, iOS 4.2+.
  *
- * Due to various browser bugs, sometimes the Object implementation will be used even
- * when the browser supports typed arrays.
- *
- * Note:
- *
- *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
- *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
- *
- *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
- *
- *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
- *     incorrect length in some situations.
-
- * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
- * get the Object implementation, which is slower but behaves correctly.
+ * We report that the browser does not support typed arrays if the are not subclassable
+ * using __proto__. Firefox 4-29 lacks support for adding new properties to `Uint8Array`
+ * (See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438). IE 10 lacks support
+ * for __proto__ and has a buggy typed array implementation.
  */
-Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
-  ? global.TYPED_ARRAY_SUPPORT
-  : typedArraySupport()
+Buffer.TYPED_ARRAY_SUPPORT = typedArraySupport()
 
-/*
- * Export kMaxLength after typed array support is determined.
- */
-exports.kMaxLength = kMaxLength()
+if (!Buffer.TYPED_ARRAY_SUPPORT && typeof console !== 'undefined' &&
+    typeof console.error === 'function') {
+  console.error(
+    'This browser lacks typed array (Uint8Array) support which is required by ' +
+    '`buffer` v5.x. Use `buffer` v4.x if you require old browser support.'
+  )
+}
 
 function typedArraySupport () {
+  // Can typed array instances can be augmented?
   try {
     var arr = new Uint8Array(1)
     arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
-    return arr.foo() === 42 && // typed array instances can be augmented
-        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
-        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+    return arr.foo() === 42
   } catch (e) {
     return false
   }
 }
 
-function kMaxLength () {
-  return Buffer.TYPED_ARRAY_SUPPORT
-    ? 0x7fffffff
-    : 0x3fffffff
-}
-
-function createBuffer (that, length) {
-  if (kMaxLength() < length) {
+function createBuffer (length) {
+  if (length > K_MAX_LENGTH) {
     throw new RangeError('Invalid typed array length')
   }
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = new Uint8Array(length)
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    if (that === null) {
-      that = new Buffer(length)
-    }
-    that.length = length
-  }
-
-  return that
+  // Return an augmented `Uint8Array` instance
+  var buf = new Uint8Array(length)
+  buf.__proto__ = Buffer.prototype
+  return buf
 }
 
 /**
@@ -215,10 +191,6 @@ function createBuffer (that, length) {
  */
 
 function Buffer (arg, encodingOrOffset, length) {
-  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
-    return new Buffer(arg, encodingOrOffset, length)
-  }
-
   // Common case.
   if (typeof arg === 'number') {
     if (typeof encodingOrOffset === 'string') {
@@ -226,33 +198,38 @@ function Buffer (arg, encodingOrOffset, length) {
         'If encoding is specified then the first argument must be a string'
       )
     }
-    return allocUnsafe(this, arg)
+    return allocUnsafe(arg)
   }
-  return from(this, arg, encodingOrOffset, length)
+  return from(arg, encodingOrOffset, length)
+}
+
+// Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+if (typeof Symbol !== 'undefined' && Symbol.species &&
+    Buffer[Symbol.species] === Buffer) {
+  Object.defineProperty(Buffer, Symbol.species, {
+    value: null,
+    configurable: true,
+    enumerable: false,
+    writable: false
+  })
 }
 
 Buffer.poolSize = 8192 // not used by this implementation
 
-// TODO: Legacy, not needed anymore. Remove in next major version.
-Buffer._augment = function (arr) {
-  arr.__proto__ = Buffer.prototype
-  return arr
-}
-
-function from (that, value, encodingOrOffset, length) {
+function from (value, encodingOrOffset, length) {
   if (typeof value === 'number') {
     throw new TypeError('"value" argument must not be a number')
   }
 
-  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
-    return fromArrayBuffer(that, value, encodingOrOffset, length)
+  if (isArrayBuffer(value)) {
+    return fromArrayBuffer(value, encodingOrOffset, length)
   }
 
   if (typeof value === 'string') {
-    return fromString(that, value, encodingOrOffset)
+    return fromString(value, encodingOrOffset)
   }
 
-  return fromObject(that, value)
+  return fromObject(value)
 }
 
 /**
@@ -264,21 +241,13 @@ function from (that, value, encodingOrOffset, length) {
  * Buffer.from(arrayBuffer[, byteOffset[, length]])
  **/
 Buffer.from = function (value, encodingOrOffset, length) {
-  return from(null, value, encodingOrOffset, length)
+  return from(value, encodingOrOffset, length)
 }
 
-if (Buffer.TYPED_ARRAY_SUPPORT) {
-  Buffer.prototype.__proto__ = Uint8Array.prototype
-  Buffer.__proto__ = Uint8Array
-  if (typeof Symbol !== 'undefined' && Symbol.species &&
-      Buffer[Symbol.species] === Buffer) {
-    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
-    Object.defineProperty(Buffer, Symbol.species, {
-      value: null,
-      configurable: true
-    })
-  }
-}
+// Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
+// https://github.com/feross/buffer/pull/148
+Buffer.prototype.__proto__ = Uint8Array.prototype
+Buffer.__proto__ = Uint8Array
 
 function assertSize (size) {
   if (typeof size !== 'number') {
@@ -288,20 +257,20 @@ function assertSize (size) {
   }
 }
 
-function alloc (that, size, fill, encoding) {
+function alloc (size, fill, encoding) {
   assertSize(size)
   if (size <= 0) {
-    return createBuffer(that, size)
+    return createBuffer(size)
   }
   if (fill !== undefined) {
     // Only pay attention to encoding if it's a string. This
     // prevents accidentally sending in a number that would
     // be interpretted as a start offset.
     return typeof encoding === 'string'
-      ? createBuffer(that, size).fill(fill, encoding)
-      : createBuffer(that, size).fill(fill)
+      ? createBuffer(size).fill(fill, encoding)
+      : createBuffer(size).fill(fill)
   }
-  return createBuffer(that, size)
+  return createBuffer(size)
 }
 
 /**
@@ -309,34 +278,28 @@ function alloc (that, size, fill, encoding) {
  * alloc(size[, fill[, encoding]])
  **/
 Buffer.alloc = function (size, fill, encoding) {
-  return alloc(null, size, fill, encoding)
+  return alloc(size, fill, encoding)
 }
 
-function allocUnsafe (that, size) {
+function allocUnsafe (size) {
   assertSize(size)
-  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-    for (var i = 0; i < size; ++i) {
-      that[i] = 0
-    }
-  }
-  return that
+  return createBuffer(size < 0 ? 0 : checked(size) | 0)
 }
 
 /**
  * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
  * */
 Buffer.allocUnsafe = function (size) {
-  return allocUnsafe(null, size)
+  return allocUnsafe(size)
 }
 /**
  * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
  */
 Buffer.allocUnsafeSlow = function (size) {
-  return allocUnsafe(null, size)
+  return allocUnsafe(size)
 }
 
-function fromString (that, string, encoding) {
+function fromString (string, encoding) {
   if (typeof encoding !== 'string' || encoding === '') {
     encoding = 'utf8'
   }
@@ -346,32 +309,30 @@ function fromString (that, string, encoding) {
   }
 
   var length = byteLength(string, encoding) | 0
-  that = createBuffer(that, length)
+  var buf = createBuffer(length)
 
-  var actual = that.write(string, encoding)
+  var actual = buf.write(string, encoding)
 
   if (actual !== length) {
     // Writing a hex string, for example, that contains invalid characters will
     // cause everything after the first invalid character to be ignored. (e.g.
     // 'abxxcd' will be treated as 'ab')
-    that = that.slice(0, actual)
+    buf = buf.slice(0, actual)
   }
 
-  return that
+  return buf
 }
 
-function fromArrayLike (that, array) {
+function fromArrayLike (array) {
   var length = array.length < 0 ? 0 : checked(array.length) | 0
-  that = createBuffer(that, length)
+  var buf = createBuffer(length)
   for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
+    buf[i] = array[i] & 255
   }
-  return that
+  return buf
 }
 
-function fromArrayBuffer (that, array, byteOffset, length) {
-  array.byteLength // this throws if `array` is not a valid ArrayBuffer
-
+function fromArrayBuffer (array, byteOffset, length) {
   if (byteOffset < 0 || array.byteLength < byteOffset) {
     throw new RangeError('\'offset\' is out of bounds')
   }
@@ -380,49 +341,43 @@ function fromArrayBuffer (that, array, byteOffset, length) {
     throw new RangeError('\'length\' is out of bounds')
   }
 
+  var buf
   if (byteOffset === undefined && length === undefined) {
-    array = new Uint8Array(array)
+    buf = new Uint8Array(array)
   } else if (length === undefined) {
-    array = new Uint8Array(array, byteOffset)
+    buf = new Uint8Array(array, byteOffset)
   } else {
-    array = new Uint8Array(array, byteOffset, length)
+    buf = new Uint8Array(array, byteOffset, length)
   }
 
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = array
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    that = fromArrayLike(that, array)
-  }
-  return that
+  // Return an augmented `Uint8Array` instance
+  buf.__proto__ = Buffer.prototype
+  return buf
 }
 
-function fromObject (that, obj) {
+function fromObject (obj) {
   if (Buffer.isBuffer(obj)) {
     var len = checked(obj.length) | 0
-    that = createBuffer(that, len)
+    var buf = createBuffer(len)
 
-    if (that.length === 0) {
-      return that
+    if (buf.length === 0) {
+      return buf
     }
 
-    obj.copy(that, 0, 0, len)
-    return that
+    obj.copy(buf, 0, 0, len)
+    return buf
   }
 
   if (obj) {
-    if ((typeof ArrayBuffer !== 'undefined' &&
-        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
-      if (typeof obj.length !== 'number' || isnan(obj.length)) {
-        return createBuffer(that, 0)
+    if (isArrayBufferView(obj) || 'length' in obj) {
+      if (typeof obj.length !== 'number' || numberIsNaN(obj.length)) {
+        return createBuffer(0)
       }
-      return fromArrayLike(that, obj)
+      return fromArrayLike(obj)
     }
 
-    if (obj.type === 'Buffer' && isArray(obj.data)) {
-      return fromArrayLike(that, obj.data)
+    if (obj.type === 'Buffer' && Array.isArray(obj.data)) {
+      return fromArrayLike(obj.data)
     }
   }
 
@@ -430,11 +385,11 @@ function fromObject (that, obj) {
 }
 
 function checked (length) {
-  // Note: cannot use `length < kMaxLength()` here because that fails when
+  // Note: cannot use `length < K_MAX_LENGTH` here because that fails when
   // length is NaN (which is otherwise coerced to zero.)
-  if (length >= kMaxLength()) {
+  if (length >= K_MAX_LENGTH) {
     throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
-                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+                         'size: 0x' + K_MAX_LENGTH.toString(16) + ' bytes')
   }
   return length | 0
 }
@@ -447,7 +402,7 @@ function SlowBuffer (length) {
 }
 
 Buffer.isBuffer = function isBuffer (b) {
-  return !!(b != null && b._isBuffer)
+  return b != null && b._isBuffer === true
 }
 
 Buffer.compare = function compare (a, b) {
@@ -493,7 +448,7 @@ Buffer.isEncoding = function isEncoding (encoding) {
 }
 
 Buffer.concat = function concat (list, length) {
-  if (!isArray(list)) {
+  if (!Array.isArray(list)) {
     throw new TypeError('"list" argument must be an Array of Buffers')
   }
 
@@ -526,8 +481,7 @@ function byteLength (string, encoding) {
   if (Buffer.isBuffer(string)) {
     return string.length
   }
-  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
-      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+  if (isArrayBufferView(string) || isArrayBuffer(string)) {
     return string.byteLength
   }
   if (typeof string !== 'string') {
@@ -637,8 +591,12 @@ function slowToString (encoding, start, end) {
   }
 }
 
-// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
-// Buffer instances.
+// This property is used by `Buffer.isBuffer` (and the `is-buffer` npm package)
+// to detect a Buffer instance. It's not possible to use `instanceof Buffer`
+// reliably in a browserify context because there could be multiple different
+// copies of the 'buffer' package in use. This method works even for Buffer
+// instances that were created from another copy of the `buffer` package.
+// See: https://github.com/feross/buffer/issues/154
 Buffer.prototype._isBuffer = true
 
 function swap (b, n, m) {
@@ -685,7 +643,7 @@ Buffer.prototype.swap64 = function swap64 () {
 }
 
 Buffer.prototype.toString = function toString () {
-  var length = this.length | 0
+  var length = this.length
   if (length === 0) return ''
   if (arguments.length === 0) return utf8Slice(this, 0, length)
   return slowToString.apply(this, arguments)
@@ -789,7 +747,7 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
     byteOffset = -0x80000000
   }
   byteOffset = +byteOffset  // Coerce to Number.
-  if (isNaN(byteOffset)) {
+  if (numberIsNaN(byteOffset)) {
     // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
     byteOffset = dir ? 0 : (buffer.length - 1)
   }
@@ -818,8 +776,7 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
     return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
   } else if (typeof val === 'number') {
     val = val & 0xFF // Search for a byte value [0-255]
-    if (Buffer.TYPED_ARRAY_SUPPORT &&
-        typeof Uint8Array.prototype.indexOf === 'function') {
+    if (typeof Uint8Array.prototype.indexOf === 'function') {
       if (dir) {
         return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
       } else {
@@ -921,7 +878,7 @@ function hexWrite (buf, string, offset, length) {
   }
   for (var i = 0; i < length; ++i) {
     var parsed = parseInt(string.substr(i * 2, 2), 16)
-    if (isNaN(parsed)) return i
+    if (numberIsNaN(parsed)) return i
     buf[offset + i] = parsed
   }
   return i
@@ -960,15 +917,14 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
     offset = 0
   // Buffer#write(string, offset[, length][, encoding])
   } else if (isFinite(offset)) {
-    offset = offset | 0
+    offset = offset >>> 0
     if (isFinite(length)) {
-      length = length | 0
+      length = length >>> 0
       if (encoding === undefined) encoding = 'utf8'
     } else {
       encoding = length
       length = undefined
     }
-  // legacy write(string, encoding, offset, length) - remove in v0.13
   } else {
     throw new Error(
       'Buffer.write(string, encoding, offset[, length]) is no longer supported'
@@ -1167,7 +1123,7 @@ function utf16leSlice (buf, start, end) {
   var bytes = buf.slice(start, end)
   var res = ''
   for (var i = 0; i < bytes.length; i += 2) {
-    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+    res += String.fromCharCode(bytes[i] + (bytes[i + 1] * 256))
   }
   return res
 }
@@ -1193,18 +1149,9 @@ Buffer.prototype.slice = function slice (start, end) {
 
   if (end < start) end = start
 
-  var newBuf
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    newBuf = this.subarray(start, end)
-    newBuf.__proto__ = Buffer.prototype
-  } else {
-    var sliceLen = end - start
-    newBuf = new Buffer(sliceLen, undefined)
-    for (var i = 0; i < sliceLen; ++i) {
-      newBuf[i] = this[i + start]
-    }
-  }
-
+  var newBuf = this.subarray(start, end)
+  // Return an augmented `Uint8Array` instance
+  newBuf.__proto__ = Buffer.prototype
   return newBuf
 }
 
@@ -1217,8 +1164,8 @@ function checkOffset (offset, ext, length) {
 }
 
 Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
@@ -1232,8 +1179,8 @@ Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert)
 }
 
 Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
     checkOffset(offset, byteLength, this.length)
   }
@@ -1248,21 +1195,25 @@ Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert)
 }
 
 Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 1, this.length)
   return this[offset]
 }
 
 Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return this[offset] | (this[offset + 1] << 8)
 }
 
 Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return (this[offset] << 8) | this[offset + 1]
 }
 
 Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return ((this[offset]) |
@@ -1272,6 +1223,7 @@ Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
 }
 
 Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return (this[offset] * 0x1000000) +
@@ -1281,8 +1233,8 @@ Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
 }
 
 Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
@@ -1299,8 +1251,8 @@ Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
 }
 
 Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var i = byteLength
@@ -1317,24 +1269,28 @@ Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
 }
 
 Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 1, this.length)
   if (!(this[offset] & 0x80)) return (this[offset])
   return ((0xff - this[offset] + 1) * -1)
 }
 
 Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   var val = this[offset] | (this[offset + 1] << 8)
   return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
 Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   var val = this[offset + 1] | (this[offset] << 8)
   return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
 Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return (this[offset]) |
@@ -1344,6 +1300,7 @@ Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
 }
 
 Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return (this[offset] << 24) |
@@ -1353,21 +1310,25 @@ Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
 }
 
 Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
   return ieee754.read(this, offset, true, 23, 4)
 }
 
 Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
   return ieee754.read(this, offset, false, 23, 4)
 }
 
 Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 8, this.length)
   return ieee754.read(this, offset, true, 52, 8)
 }
 
 Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 8, this.length)
   return ieee754.read(this, offset, false, 52, 8)
 }
@@ -1380,8 +1341,8 @@ function checkInt (buf, value, offset, ext, max, min) {
 
 Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
     var maxBytes = Math.pow(2, 8 * byteLength) - 1
     checkInt(this, value, offset, byteLength, maxBytes, 0)
@@ -1399,8 +1360,8 @@ Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, 
 
 Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
     var maxBytes = Math.pow(2, 8 * byteLength) - 1
     checkInt(this, value, offset, byteLength, maxBytes, 0)
@@ -1418,89 +1379,57 @@ Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, 
 
 Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   this[offset] = (value & 0xff)
   return offset + 1
 }
 
-function objectWriteUInt16 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
-    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
-      (littleEndian ? i : 1 - i) * 8
-  }
-}
-
 Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
   return offset + 2
 }
 
 Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
+  this[offset] = (value >>> 8)
+  this[offset + 1] = (value & 0xff)
   return offset + 2
-}
-
-function objectWriteUInt32 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffffffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
-    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
-  }
 }
 
 Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset + 3] = (value >>> 24)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 1] = (value >>> 8)
-    this[offset] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
+  this[offset + 3] = (value >>> 24)
+  this[offset + 2] = (value >>> 16)
+  this[offset + 1] = (value >>> 8)
+  this[offset] = (value & 0xff)
   return offset + 4
 }
 
 Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
+  this[offset] = (value >>> 24)
+  this[offset + 1] = (value >>> 16)
+  this[offset + 2] = (value >>> 8)
+  this[offset + 3] = (value & 0xff)
   return offset + 4
 }
 
 Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
+    var limit = Math.pow(2, (8 * byteLength) - 1)
 
     checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
@@ -1521,9 +1450,9 @@ Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, no
 
 Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
+    var limit = Math.pow(2, (8 * byteLength) - 1)
 
     checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
@@ -1544,9 +1473,8 @@ Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, no
 
 Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   if (value < 0) value = 0xff + value + 1
   this[offset] = (value & 0xff)
   return offset + 1
@@ -1554,58 +1482,42 @@ Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
 
 Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
   return offset + 2
 }
 
 Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
+  this[offset] = (value >>> 8)
+  this[offset + 1] = (value & 0xff)
   return offset + 2
 }
 
 Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 3] = (value >>> 24)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
+  this[offset + 2] = (value >>> 16)
+  this[offset + 3] = (value >>> 24)
   return offset + 4
 }
 
 Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (value < 0) value = 0xffffffff + value + 1
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
+  this[offset] = (value >>> 24)
+  this[offset + 1] = (value >>> 16)
+  this[offset + 2] = (value >>> 8)
+  this[offset + 3] = (value & 0xff)
   return offset + 4
 }
 
@@ -1615,6 +1527,8 @@ function checkIEEE754 (buf, value, offset, ext, max, min) {
 }
 
 function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  value = +value
+  offset = offset >>> 0
   if (!noAssert) {
     checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
   }
@@ -1631,6 +1545,8 @@ Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) 
 }
 
 function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  value = +value
+  offset = offset >>> 0
   if (!noAssert) {
     checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
   }
@@ -1679,7 +1595,7 @@ Buffer.prototype.copy = function copy (target, targetStart, start, end) {
     for (i = len - 1; i >= 0; --i) {
       target[i + targetStart] = this[i + start]
     }
-  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+  } else if (len < 1000) {
     // ascending copy from start
     for (i = 0; i < len; ++i) {
       target[i + targetStart] = this[i + start]
@@ -1748,7 +1664,7 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
   } else {
     var bytes = Buffer.isBuffer(val)
       ? val
-      : utf8ToBytes(new Buffer(val, encoding).toString())
+      : new Buffer(val, encoding)
     var len = bytes.length
     for (i = 0; i < end - start; ++i) {
       this[i + start] = bytes[i % len]
@@ -1761,11 +1677,11 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
 // HELPER FUNCTIONS
 // ================
 
-var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+var INVALID_BASE64_RE = /[^+/0-9A-Za-z-_]/g
 
 function base64clean (str) {
   // Node strips out invalid characters like \n and \t from the string, base64-js does not
-  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  str = str.trim().replace(INVALID_BASE64_RE, '')
   // Node converts strings with length < 2 to ''
   if (str.length < 2) return ''
   // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
@@ -1773,11 +1689,6 @@ function base64clean (str) {
     str = str + '='
   }
   return str
-}
-
-function stringtrim (str) {
-  if (str.trim) return str.trim()
-  return str.replace(/^\s+|\s+$/g, '')
 }
 
 function toHex (n) {
@@ -1902,20 +1813,24 @@ function blitBuffer (src, dst, offset, length) {
   return i
 }
 
-function isnan (val) {
-  return val !== val // eslint-disable-line no-self-compare
+// ArrayBuffers from another context (i.e. an iframe) do not pass the `instanceof` check
+// but they should be treated as valid. See: https://github.com/feross/buffer/issues/166
+function isArrayBuffer (obj) {
+  return obj instanceof ArrayBuffer ||
+    (obj != null && obj.constructor != null && obj.constructor.name === 'ArrayBuffer' &&
+      typeof obj.byteLength === 'number')
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+// Node 0.10 supports `ArrayBuffer` but lacks `ArrayBuffer.isView`
+function isArrayBufferView (obj) {
+  return (typeof ArrayBuffer.isView === 'function') && ArrayBuffer.isView(obj)
+}
 
-},{"base64-js":1,"ieee754":4,"isarray":3}],3:[function(require,module,exports){
-var toString = {}.toString;
+function numberIsNaN (obj) {
+  return obj !== obj // eslint-disable-line no-self-compare
+}
 
-module.exports = Array.isArray || function (arr) {
-  return toString.call(arr) == '[object Array]';
-};
-
-},{}],4:[function(require,module,exports){
+},{"base64-js":1,"ieee754":3}],3:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -2001,7 +1916,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 var factories = [];
 factories[0] = function () {
@@ -2079,12 +1994,12 @@ var Event = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Event;
 
-},{}],6:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 var Event_1 = require('./Event');
 exports.Event = Event_1.default;
 
-},{"./Event":5}],7:[function(require,module,exports){
+},{"./Event":4}],6:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2313,7 +2228,7 @@ var substr = 'ab'.substr(-1) === 'b'
 
 }).call(this,require('_process'))
 
-},{"_process":8}],8:[function(require,module,exports){
+},{"_process":7}],7:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -2499,7 +2414,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global){
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -2713,7 +2628,7 @@ var __asyncValues;
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -2738,14 +2653,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -3336,7 +3251,7 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./support/isBuffer":11,"_process":8,"inherits":10}],13:[function(require,module,exports){
+},{"./support/isBuffer":10,"_process":7,"inherits":9}],12:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -3354,20 +3269,20 @@ var AbstractCLI = (function () {
 }());
 exports.default = AbstractCLI;
 
-},{"microevent.ts":6}],14:[function(require,module,exports){
+},{"microevent.ts":5}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CommandInterpreter = (function () {
     function CommandInterpreter(commandTable) {
         this._commandTable = {};
         this._aliasTable = {};
-        if (typeof (commandTable) !== 'undefined') {
+        if (typeof commandTable !== 'undefined') {
             this.registerCommands(commandTable);
         }
     }
     CommandInterpreter.prototype.registerCommands = function (commandTable) {
         var _this = this;
-        Object.keys(commandTable).forEach(function (command) { return _this._commandTable[command] = commandTable[command]; });
+        Object.keys(commandTable).forEach(function (command) { return (_this._commandTable[command] = commandTable[command]); });
     };
     CommandInterpreter.prototype.execute = function (cmd) {
         cmd = cmd.replace(/;.*/, '');
@@ -3390,19 +3305,18 @@ var CommandInterpreter = (function () {
         var candidates = Object.keys(this._commandTable).filter(function (candidate) { return candidate.indexOf(name) === 0; });
         var nCandidates = candidates.length;
         if (nCandidates > 1) {
-            throw new Error('ambiguous command ' + name + ', candidates are ' +
-                candidates.join(', ').replace(/, $/, ''));
+            throw new Error('ambiguous command ' + name + ', candidates are ' + candidates.join(', ').replace(/, $/, ''));
         }
         if (nCandidates === 0) {
             throw new Error('invalid command ' + name);
         }
-        return this._aliasTable[name] = this._commandTable[candidates[0]];
+        return (this._aliasTable[name] = this._commandTable[candidates[0]]);
     };
     return CommandInterpreter;
 }());
 exports.default = CommandInterpreter;
 
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var pathlib = require("path");
@@ -3431,7 +3345,7 @@ var Completer = (function () {
         if (!this._fsProvider) {
             return [];
         }
-        if (path && path[path.length - 1] === pathlib.sep || path[path.length - 1] === '/') {
+        if ((path && path[path.length - 1] === pathlib.sep) || path[path.length - 1] === '/') {
             dirname = path;
             basename = '';
         }
@@ -3448,8 +3362,9 @@ var Completer = (function () {
         var _this = this;
         return paths.map(function (path) {
             try {
-                return (_this._fsProvider.getTypeSync(path) === 0 ?
-                    pathlib.join(path, pathlib.sep) : path);
+                return _this._fsProvider.getTypeSync(path) === 0
+                    ? pathlib.join(path, pathlib.sep)
+                    : path;
             }
             catch (e) {
                 return path;
@@ -3470,7 +3385,7 @@ var Completer = (function () {
 })(Completer || (Completer = {}));
 exports.default = Completer;
 
-},{"path":7}],16:[function(require,module,exports){
+},{"path":6}],15:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3498,7 +3413,8 @@ var DebuggerCLI = (function (_super) {
         var _this = this;
         this._fsProvider.pushd(path.dirname(filename));
         try {
-            this._fsProvider.readTextFileSync(path.basename(filename))
+            this._fsProvider
+                .readTextFileSync(path.basename(filename))
                 .split('\n')
                 .forEach(function (line) {
                 _this.pushInput(line);
@@ -3556,7 +3472,7 @@ var DebuggerCLI = (function (_super) {
     DebuggerCLI.prototype._extendCommandInterpreter = function () {
         var _this = this;
         this._commandInterpreter.registerCommands({
-            'quit': function () {
+            quit: function () {
                 _this._quit();
                 return 'bye';
             },
@@ -3578,7 +3494,7 @@ var DebuggerCLI = (function (_super) {
         }
     };
     DebuggerCLI.prototype._outputLine = function (line) {
-        this._output += (line + '\n');
+        this._output += line + '\n';
         this.events.outputAvailable.dispatch(undefined);
     };
     DebuggerCLI.prototype._getCommandInterpreter = function () {
@@ -3588,7 +3504,7 @@ var DebuggerCLI = (function (_super) {
 }(AbstractCLI_1.default));
 exports.default = DebuggerCLI;
 
-},{"../machine/Debugger":21,"../machine/vanilla/Board":27,"./AbstractCLI":13,"./CommandInterpreter":14,"./DebuggerFrontend":17,"path":7,"tslib":9}],17:[function(require,module,exports){
+},{"../machine/Debugger":20,"../machine/vanilla/Board":26,"./AbstractCLI":12,"./CommandInterpreter":13,"./DebuggerFrontend":16,"path":6,"tslib":8}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface_1 = require("../machine/board/BoardInterface");
@@ -3612,31 +3528,31 @@ var DebuggerFrontend = (function () {
         this._fileSystemProvider = _fileSystemProvider;
         this._commandInterpreter = _commandInterpreter;
         this._commandInterpreter.registerCommands({
-            'disassemble': this._disassemble.bind(this),
-            'dump': this._dump.bind(this),
-            'load': this._load.bind(this),
-            'hex2dec': this._hex2dec.bind(this),
-            'dec2hex': this._dec2hex.bind(this),
-            'state': this._state.bind(this),
-            'boot': this._boot.bind(this),
-            'stack': this._stack.bind(this),
-            'step': this._step.bind(this),
+            disassemble: this._disassemble.bind(this),
+            dump: this._dump.bind(this),
+            load: this._load.bind(this),
+            hex2dec: this._hex2dec.bind(this),
+            dec2hex: this._dec2hex.bind(this),
+            state: this._state.bind(this),
+            boot: this._boot.bind(this),
+            stack: this._stack.bind(this),
+            step: this._step.bind(this),
             'step-clock': this._stepClock.bind(this),
-            'reset': function () { return _this._reset(false); },
+            reset: function () { return _this._reset(false); },
             'reset-hard': function () { return _this._reset(true); },
             'break-on': this._enableBreakpoints.bind(this),
             'break-off': this._disableBreakpoints.bind(this),
-            'break': this._setBreakpoint.bind(this),
+            break: this._setBreakpoint.bind(this),
             'break-clear': this._clearBreakpoint.bind(this),
             'break-dump': this._showBreakpoints.bind(this),
             'break-clear-all': this._clearAllBreakpoints.bind(this),
             'trace-on': this._enableTrace.bind(this),
             'trace-off': this._disableTrace.bind(this),
-            'trace': this._trace.bind(this)
+            trace: this._trace.bind(this)
         });
     }
     DebuggerFrontend.prototype.describeTrap = function (trap) {
-        if (typeof (trap) === 'undefined') {
+        if (typeof trap === 'undefined') {
             trap = this._debugger.getLastTrap();
         }
         if (!trap) {
@@ -3688,7 +3604,7 @@ var DebuggerFrontend = (function () {
     DebuggerFrontend.prototype._boot = function () {
         var board = this._debugger.getBoard();
         var cycles = 0;
-        var clockHandler = function (clock) { return cycles += clock; };
+        var clockHandler = function (clock) { return (cycles += clock); };
         board.cpuClock.addHandler(clockHandler);
         var exception;
         try {
@@ -3699,7 +3615,7 @@ var DebuggerFrontend = (function () {
         }
         board.cpuClock.removeHandler(clockHandler);
         if (exception) {
-            throw (exception);
+            throw exception;
         }
         return util.format('Boot successful in %s cycles', cycles);
     };
@@ -3760,14 +3676,14 @@ var DebuggerFrontend = (function () {
         var requestedCycles = args.length > 0 ? decodeNumber(args[0]) : 1, timestamp = Date.now();
         var cycles = this._debugger.stepClock(requestedCycles);
         var time = Date.now() - timestamp, trap = this._debugger.getLastTrap();
-        return "clock stepped " + cycles + " cycles in " + time + " msec; " +
-            ("now at " + this._debugger.disassemble(1) + "\n" + (trap ? this.describeTrap(trap) : ''));
+        return ("clock stepped " + cycles + " cycles in " + time + " msec; " +
+            ("now at " + this._debugger.disassemble(1) + "\n" + (trap ? this.describeTrap(trap) : '')));
     };
     return DebuggerFrontend;
 }());
 exports.default = DebuggerFrontend;
 
-},{"../machine/board/BoardInterface":22,"../tools/hex":30,"util":12}],18:[function(require,module,exports){
+},{"../machine/board/BoardInterface":21,"../tools/hex":29,"util":11}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Completer_1 = require("./Completer");
@@ -3777,9 +3693,7 @@ var JqtermCLIRunner = (function () {
         var _this = this;
         this._cli = _cli;
         this._updateCompleter();
-        this._terminal = terminalElt.terminal(function (input, terminal) {
-            return _this._cli.pushInput(input);
-        }, {
+        this._terminal = terminalElt.terminal(function (input, terminal) { return _this._cli.pushInput(input); }, {
             greetings: 'Ready.',
             completion: this._getCompletionHandler(),
             exit: false,
@@ -3818,7 +3732,7 @@ var JqtermCLIRunner = (function () {
 }());
 exports.default = JqtermCLIRunner;
 
-},{"./Completer":15}],19:[function(require,module,exports){
+},{"./Completer":14}],18:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var pathlib = require("path");
@@ -3829,7 +3743,7 @@ var AbstractFileSystemProvider = (function () {
     }
     AbstractFileSystemProvider.prototype.pushd = function (path) {
         this._directoryStack.unshift(this._cwd);
-        if (typeof (path) !== 'undefined') {
+        if (typeof path !== 'undefined') {
             this.chdir(path);
         }
     };
@@ -3854,7 +3768,7 @@ var AbstractFileSystemProvider = (function () {
 }());
 exports.default = AbstractFileSystemProvider;
 
-},{"path":7}],20:[function(require,module,exports){
+},{"path":6}],19:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3872,7 +3786,7 @@ var PrepackagedFilesystemProvider = (function (_super) {
     PrepackagedFilesystemProvider.prototype.readBinaryFileSync = function (name) {
         name = this._resolvePath(name);
         var content = this._lookup(name);
-        if (typeof (content) === 'undefined') {
+        if (typeof content === 'undefined') {
             throw new Error(util.format('%s not part of file bundle', name));
         }
         if (!Buffer.isBuffer(content)) {
@@ -3887,10 +3801,10 @@ var PrepackagedFilesystemProvider = (function (_super) {
     PrepackagedFilesystemProvider.prototype.readDirSync = function (name) {
         name = this._resolvePath(name);
         var content = this._lookup(name);
-        if (typeof (content) === 'undefined') {
+        if (typeof content === 'undefined') {
             throw new Error(util.format('%s not part of file bundle', name));
         }
-        if (typeof (content) === 'string' || Buffer.isBuffer(content)) {
+        if (typeof content === 'string' || Buffer.isBuffer(content)) {
             throw new Error(util.format('%s is a file, not a directory', name));
         }
         return Object.keys(content);
@@ -3898,7 +3812,7 @@ var PrepackagedFilesystemProvider = (function (_super) {
     PrepackagedFilesystemProvider.prototype.getTypeSync = function (name) {
         name = this._resolvePath(name);
         var content = this._lookup(name);
-        if (typeof (content) === 'undefined') {
+        if (typeof content === 'undefined') {
             throw new Error(util.format('%s not part of file bundle', name));
         }
         if (Buffer.isBuffer(content)) {
@@ -3923,7 +3837,7 @@ var PrepackagedFilesystemProvider = (function (_super) {
                 return undefined;
             }
         }
-        if (name && typeof (scope[name]) === 'string') {
+        if (name && typeof scope[name] === 'string') {
             scope[name] = new Buffer(scope[name], 'base64');
         }
         return name ? scope[name] : scope;
@@ -3934,7 +3848,7 @@ exports.default = PrepackagedFilesystemProvider;
 
 }).call(this,require("buffer").Buffer)
 
-},{"./AbstractFileSystemProvider":19,"buffer":2,"tslib":9,"util":12}],21:[function(require,module,exports){
+},{"./AbstractFileSystemProvider":18,"buffer":2,"tslib":8,"util":11}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./cpu/Instruction");
@@ -3997,8 +3911,7 @@ var Debugger = (function () {
         var result = '';
         for (var address = 0; address < 0x10000; address++) {
             if (this._breakpoints[address]) {
-                result += (hex.encode(address, 4) + ': ' +
-                    this._breakpointDescriptions[address] + '\n');
+                result += hex.encode(address, 4) + ': ' + this._breakpointDescriptions[address] + '\n';
             }
         }
         return result.replace(/\n$/, '');
@@ -4015,9 +3928,12 @@ var Debugger = (function () {
         while (i < length) {
             address = (start + i) % 0x10000;
             instruction = Instruction_1.default.opcodes[this._peek(address)];
-            result += ((this._breakpoints[address] ? '(B) ' : '    ') +
-                hex.encode(address, 4) + ':   ' +
-                this._disassembler.disassembleAt(address) + '\n');
+            result +=
+                (this._breakpoints[address] ? '(B) ' : '    ') +
+                    hex.encode(address, 4) +
+                    ':   ' +
+                    this._disassembler.disassembleAt(address) +
+                    '\n';
             i += instruction.getSize();
         }
         return result.replace(/\n$/, '');
@@ -4030,7 +3946,8 @@ var Debugger = (function () {
         var result = '';
         length = Math.min(length, this._traceLength);
         for (var i = 0; i < length; i++) {
-            result += (this.disassembleAt(this._trace[(this._traceSize + this._traceIndex - length + i) % this._traceSize], 1) + '\n');
+            result +=
+                this.disassembleAt(this._trace[(this._traceSize + this._traceIndex - length + i) % this._traceSize], 1) + '\n';
         }
         return result + this.disassemble(1);
     };
@@ -4038,8 +3955,7 @@ var Debugger = (function () {
         var result = '', address;
         for (var i = 0; i < length; i++) {
             address = (start + i) % 0x10000;
-            result += (hex.encode(address, 4) + ':   ' +
-                hex.encode(this._peek(address), 2) + '\n');
+            result += hex.encode(address, 4) + ':   ' + hex.encode(this._peek(address), 2) + '\n';
         }
         return result.replace(/\n$/, '');
     };
@@ -4049,18 +3965,29 @@ var Debugger = (function () {
             case 0:
         }
         var result = '' +
-            'A = ' + hex.encode(state.a, 2) + '   ' +
-            'X = ' + hex.encode(state.x, 2) + '   ' +
-            'Y = ' + hex.encode(state.y, 2) + '   ' +
-            'S = ' + hex.encode(state.s, 2) + '   ' +
-            'P = ' + hex.encode(state.p, 4) + '\n' +
-            'flags = ' + binary.encode(state.flags, 8) + '\n' +
-            'state: ' + this._humanReadableExecutionState();
+            'A = ' +
+            hex.encode(state.a, 2) +
+            '   ' +
+            'X = ' +
+            hex.encode(state.x, 2) +
+            '   ' +
+            'Y = ' +
+            hex.encode(state.y, 2) +
+            '   ' +
+            'S = ' +
+            hex.encode(state.s, 2) +
+            '   ' +
+            'P = ' +
+            hex.encode(state.p, 4) +
+            '\n' +
+            'flags = ' +
+            binary.encode(state.flags, 8) +
+            '\n' +
+            'state: ' +
+            this._humanReadableExecutionState();
         var boardState = this._board.getBoardStateDebug();
         if (boardState) {
-            result += ('\n' +
-                '\n' +
-                boardState);
+            result += '\n' + '\n' + boardState;
         }
         return result;
     };
@@ -4070,7 +3997,7 @@ var Debugger = (function () {
     Debugger.prototype.step = function (instructions) {
         var instruction = 0, cycles = 0, lastExecutionState = this._cpu.executionState, cpuCycles = 0;
         var timer = this._board.getTimer();
-        var cpuClockHandler = function (c) { return cpuCycles += c; };
+        var cpuClockHandler = function (c) { return (cpuCycles += c); };
         this._board.cpuClock.addHandler(cpuClockHandler);
         this._lastTrap = undefined;
         this._board.resume();
@@ -4160,13 +4087,13 @@ var Debugger = (function () {
         return this._bus.peek(address % 0x10000);
     };
     Debugger.prototype._poke = function (address, value) {
-        this._bus.poke(address % 0x10000, value & 0xFF);
+        this._bus.poke(address % 0x10000, value & 0xff);
     };
     return Debugger;
 }());
 exports.default = Debugger;
 
-},{"../tools/binary":29,"../tools/hex":30,"./board/BoardInterface":22,"./cpu/CpuInterface":24,"./cpu/Disassembler":25,"./cpu/Instruction":26,"util":12}],22:[function(require,module,exports){
+},{"../tools/binary":28,"../tools/hex":29,"./board/BoardInterface":21,"./cpu/CpuInterface":23,"./cpu/Disassembler":24,"./cpu/Instruction":25,"util":11}],21:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface;
@@ -4183,62 +4110,64 @@ var BoardInterface;
 })(BoardInterface || (BoardInterface = {}));
 exports.default = BoardInterface;
 
-},{}],23:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./Instruction");
 var CpuInterface_1 = require("./CpuInterface");
 function restoreFlagsFromStack(state, bus) {
-    state.s = (state.s + 0x01) & 0xFF;
-    state.flags = (bus.read(0x0100 + state.s) | 32) & (~16);
+    state.s = (state.s + 0x01) & 0xff;
+    state.flags = (bus.read(0x0100 + state.s) | 32) & ~16;
 }
 function setFlagsNZ(state, operand) {
-    state.flags = (state.flags & ~(128 | 2)) |
-        (operand & 0x80) |
-        (operand ? 0 : 2);
+    state.flags =
+        (state.flags & ~(128 | 2)) |
+            (operand & 0x80) |
+            (operand ? 0 : 2);
 }
 function dispatchInterrupt(state, bus, vector) {
     var nextOpAddr = state.p;
     if (state.nmi) {
-        vector = 0xFFFA;
+        vector = 0xfffa;
     }
     state.nmi = state.irq = false;
-    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, state.flags & (~16));
-    state.s = (state.s + 0xFF) & 0xFF;
+    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, nextOpAddr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, state.flags & ~16);
+    state.s = (state.s + 0xff) & 0xff;
     state.flags |= 4;
-    state.p = (bus.readWord(vector));
+    state.p = bus.readWord(vector);
 }
 function opIrq(state, bus) {
-    dispatchInterrupt(state, bus, 0xFFFE);
+    dispatchInterrupt(state, bus, 0xfffe);
 }
 function opNmi(state, bus) {
-    dispatchInterrupt(state, bus, 0xFFFA);
+    dispatchInterrupt(state, bus, 0xfffa);
 }
 function opBoot(state, bus) {
-    state.p = bus.readWord(0xFFFC);
+    state.p = bus.readWord(0xfffc);
 }
 function opAdc(state, bus, operand) {
     if (state.flags & 8) {
-        var d0 = (operand & 0x0F) + (state.a & 0x0F) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
+        var d0 = (operand & 0x0f) + (state.a & 0x0f) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
         state.a = (d0 % 10) | ((d1 % 10) << 4);
-        state.flags = (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (d1 > 9 ? 1 : 0);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 > 9 ? 1 : 0);
     }
     else {
-        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
         state.flags =
             (state.flags &
                 ~(128 | 2 | 1 | 64)) |
                 (result & 0x80) |
                 (result ? 0 : 2) |
                 (sum >>> 8) |
-                (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
         state.a = result;
     }
 }
@@ -4248,42 +4177,44 @@ function opAnd(state, bus, operand) {
 }
 function opAslAcc(state) {
     var old = state.a;
-    state.a = (state.a << 1) & 0xFF;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old >>> 7);
+    state.a = (state.a << 1) & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
 }
 function opAslMem(state, bus, operand) {
-    var old = bus.read(operand), value = (old << 1) & 0xFF;
+    var old = bus.read(operand), value = (old << 1) & 0xff;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old >>> 7);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old >>> 7);
 }
 function opBit(state, bus, operand) {
     state.flags =
         (state.flags & ~(128 | 64 | 2)) |
             (operand & (128 | 64)) |
-            ((operand & state.a) ? 0 : 2);
+            (operand & state.a ? 0 : 2);
 }
 function opBrk(state, bus) {
-    var nextOpAddr = (state.p + 1) & 0xFFFF;
-    var vector = 0xFFFE;
+    var nextOpAddr = (state.p + 1) & 0xffff;
+    var vector = 0xfffe;
     if (state.nmi) {
-        vector = 0xFFFA;
+        vector = 0xfffa;
         state.nmi = false;
     }
     state.nmi = state.irq = false;
-    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
+    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, nextOpAddr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
     bus.write(state.s + 0x0100, state.flags | 16);
-    state.s = (state.s + 0xFF) & 0xFF;
+    state.s = (state.s + 0xff) & 0xff;
     state.flags |= 4;
-    state.p = (bus.readWord(vector));
+    state.p = bus.readWord(vector);
 }
 function opClc(state) {
     state.flags &= ~1;
@@ -4298,33 +4229,36 @@ function opClv(state) {
     state.flags &= ~64;
 }
 function opCmp(state, bus, operand) {
-    var diff = state.a + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.a + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opCpx(state, bus, operand) {
-    var diff = state.x + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.x + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opCpy(state, bus, operand) {
-    var diff = state.y + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.y + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opDec(state, bus, operand) {
-    var value = (bus.read(operand) + 0xFF) & 0xFF;
+    var value = (bus.read(operand) + 0xff) & 0xff;
     bus.write(operand, value);
     setFlagsNZ(state, value);
 }
 function opDex(state) {
-    state.x = (state.x + 0xFF) & 0xFF;
+    state.x = (state.x + 0xff) & 0xff;
     setFlagsNZ(state, state.x);
 }
 function opEor(state, bus, operand) {
@@ -4332,33 +4266,33 @@ function opEor(state, bus, operand) {
     setFlagsNZ(state, state.a);
 }
 function opDey(state) {
-    state.y = (state.y + 0xFF) & 0xFF;
+    state.y = (state.y + 0xff) & 0xff;
     setFlagsNZ(state, state.y);
 }
 function opInc(state, bus, operand) {
-    var value = (bus.read(operand) + 1) & 0xFF;
+    var value = (bus.read(operand) + 1) & 0xff;
     bus.write(operand, value);
     setFlagsNZ(state, value);
 }
 function opInx(state) {
-    state.x = (state.x + 0x01) & 0xFF;
+    state.x = (state.x + 0x01) & 0xff;
     setFlagsNZ(state, state.x);
 }
 function opIny(state) {
-    state.y = (state.y + 0x01) & 0xFF;
+    state.y = (state.y + 0x01) & 0xff;
     setFlagsNZ(state, state.y);
 }
 function opJmp(state, bus, operand) {
     state.p = operand;
 }
 function opJsr(state, bus, operand) {
-    var returnPtr = (state.p + 1) & 0xFFFF, addrLo = bus.read(state.p);
+    var returnPtr = (state.p + 1) & 0xffff, addrLo = bus.read(state.p);
     bus.read(0x0100 + state.s);
     bus.write(0x0100 + state.s, returnPtr >>> 8);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(0x0100 + state.s, returnPtr & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    state.p = addrLo | (bus.read((state.p + 1) & 0xFFFF) << 8);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(0x0100 + state.s, returnPtr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    state.p = addrLo | (bus.read((state.p + 1) & 0xffff) << 8);
 }
 function opLda(state, bus, operand, addressingMode) {
     state.a = addressingMode === 1 ? operand : bus.read(operand);
@@ -4375,18 +4309,20 @@ function opLdy(state, bus, operand, addressingMode) {
 function opLsrAcc(state) {
     var old = state.a;
     state.a = state.a >>> 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
 }
 function opLsrMem(state, bus, operand) {
     var old = bus.read(operand), value = old >>> 1;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old & 1);
 }
 function opNop() { }
 function opOra(state, bus, operand) {
@@ -4395,88 +4331,94 @@ function opOra(state, bus, operand) {
 }
 function opPhp(state, bus) {
     bus.write(0x0100 + state.s, state.flags | 16);
-    state.s = (state.s + 0xFF) & 0xFF;
+    state.s = (state.s + 0xff) & 0xff;
 }
 function opPlp(state, bus) {
     restoreFlagsFromStack(state, bus);
 }
 function opPha(state, bus) {
     bus.write(0x0100 + state.s, state.a);
-    state.s = (state.s + 0xFF) & 0xFF;
+    state.s = (state.s + 0xff) & 0xff;
 }
 function opPla(state, bus) {
-    state.s = (state.s + 0x01) & 0xFF;
+    state.s = (state.s + 0x01) & 0xff;
     state.a = bus.read(0x0100 + state.s);
     setFlagsNZ(state, state.a);
 }
 function opRolAcc(state) {
     var old = state.a;
-    state.a = ((state.a << 1) & 0xFF) | (state.flags & 1);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old >>> 7);
+    state.a = ((state.a << 1) & 0xff) | (state.flags & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
 }
 function opRolMem(state, bus, operand) {
-    var old = bus.read(operand), value = ((old << 1) & 0xFF) | (state.flags & 1);
+    var old = bus.read(operand), value = ((old << 1) & 0xff) | (state.flags & 1);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old >>> 7);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old >>> 7);
 }
 function opRorAcc(state) {
     var old = state.a;
     state.a = (state.a >>> 1) | ((state.flags & 1) << 7);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
 }
 function opRorMem(state, bus, operand) {
     var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old & 1);
 }
 function opRti(state, bus) {
     var returnPtr;
     restoreFlagsFromStack(state, bus);
-    state.s = (state.s + 1) & 0xFF;
+    state.s = (state.s + 1) & 0xff;
     returnPtr = bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xFF;
-    returnPtr |= (bus.read(0x0100 + state.s) << 8);
+    state.s = (state.s + 1) & 0xff;
+    returnPtr |= bus.read(0x0100 + state.s) << 8;
     state.p = returnPtr;
 }
 function opRts(state, bus) {
     var returnPtr;
     bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xFF;
+    state.s = (state.s + 1) & 0xff;
     returnPtr = bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xFF;
-    returnPtr += (bus.read(0x0100 + state.s) << 8);
-    state.p = (returnPtr + 1) & 0xFFFF;
+    state.s = (state.s + 1) & 0xff;
+    returnPtr += bus.read(0x0100 + state.s) << 8;
+    state.p = (returnPtr + 1) & 0xffff;
 }
 function opSbc(state, bus, operand) {
     if (state.flags & 8) {
-        var d0 = ((state.a & 0x0F) - (operand & 0x0F) - (~state.flags & 1)), d1 = ((state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0));
+        var d0 = (state.a & 0x0f) - (operand & 0x0f) - (~state.flags & 1), d1 = (state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0);
         state.a = (d0 < 0 ? 10 + d0 : d0) | ((d1 < 0 ? 10 + d1 : d1) << 4);
-        state.flags = (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (d1 < 0 ? 0 : 1);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 < 0 ? 0 : 1);
     }
     else {
-        operand = (~operand & 0xFF);
-        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
-        state.flags = (state.flags &
-            ~(128 | 2 | 1 | 64)) |
-            (result & 0x80) |
-            (result ? 0 : 2) |
-            (sum >>> 8) |
-            (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
+        operand = ~operand & 0xff;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
+        state.flags =
+            (state.flags &
+                ~(128 | 2 | 1 | 64)) |
+                (result & 0x80) |
+                (result ? 0 : 2) |
+                (sum >>> 8) |
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
         state.a = result;
     }
 }
@@ -4524,27 +4466,30 @@ function opTya(state) {
 function opAlr(state, bus, operand) {
     var i = state.a & operand;
     state.a = i >>> 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (i & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (i & 1);
 }
 function opAxs(state, bus, operand) {
-    var value = (state.a & state.x) + (~operand & 0xFF) + 1;
-    state.x = value & 0xFF;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.x & 0x80) |
-        ((state.x & 0xFF) ? 0 : 2) |
-        (value >>> 8);
+    var value = (state.a & state.x) + (~operand & 0xff) + 1;
+    state.x = value & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.x & 0x80) |
+            (state.x & 0xff ? 0 : 2) |
+            (value >>> 8);
 }
 function opDcp(state, bus, operand) {
-    var value = (bus.read(operand) + 0xFF) & 0xFF;
+    var value = (bus.read(operand) + 0xff) & 0xff;
     bus.write(operand, value);
-    var diff = state.a + (~value & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.a + (~value & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opLax(state, bus, operand) {
     state.a = operand;
@@ -4552,7 +4497,7 @@ function opLax(state, bus, operand) {
     setFlagsNZ(state, operand);
 }
 function opArr(state, bus, operand) {
-    state.a = ((state.a & operand) >>> 1) | ((state.flags & 1) ? 0x80 : 0);
+    state.a = ((state.a & operand) >>> 1) | (state.flags & 1 ? 0x80 : 0);
     state.flags =
         (state.flags & ~(1 | 128 | 2 | 64)) |
             ((state.a & 0x40) >>> 6) |
@@ -4562,7 +4507,7 @@ function opArr(state, bus, operand) {
 }
 function opSlo(state, bus, operand) {
     var value = bus.read(operand);
-    state.flags = state.flags & ~1 | value >>> 7;
+    state.flags = (state.flags & ~1) | (value >>> 7);
     value = value << 1;
     bus.write(operand, value);
     state.a = state.a | value;
@@ -4585,7 +4530,7 @@ function opIsc(state, bus, operand) {
 function opAac(state, bus, operand) {
     state.a &= operand;
     setFlagsNZ(state, state.a);
-    state.flags = (state.flags & (~1)) | ((state.a & 0x80) >>> 7);
+    state.flags = (state.flags & ~1) | ((state.a & 0x80) >>> 7);
 }
 function opAtx(state, bus, operand) {
     state.a &= operand;
@@ -4643,13 +4588,13 @@ var Cpu = (function () {
         return this._lastInstructionPointer;
     };
     Cpu.prototype.reset = function () {
-        this.state.a = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.x = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.y = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.s = 0xFD;
-        this.state.p = this._rng ? this._rng.int(0xFFFF) : 0;
-        this.state.flags = (this._rng ? this._rng.int(0xFF) : 0) |
-            4 | 32 | 16;
+        this.state.a = this._rng ? this._rng.int(0xff) : 0;
+        this.state.x = this._rng ? this._rng.int(0xff) : 0;
+        this.state.y = this._rng ? this._rng.int(0xff) : 0;
+        this.state.s = 0xfd;
+        this.state.p = this._rng ? this._rng.int(0xffff) : 0;
+        this.state.flags =
+            (this._rng ? this._rng.int(0xff) : 0) | 4 | 32 | 16;
         this.state.irq = false;
         this.state.nmi = false;
         this.executionState = 0;
@@ -4731,7 +4676,7 @@ var Cpu = (function () {
                 if (this.state.flags & 1) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -4747,7 +4692,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -4759,7 +4704,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -4776,7 +4721,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -4784,7 +4729,7 @@ var Cpu = (function () {
                 if (this.state.flags & 2) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -4796,7 +4741,7 @@ var Cpu = (function () {
                 if (this.state.flags & 128) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -4808,7 +4753,7 @@ var Cpu = (function () {
                 if (this.state.flags & 64) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -4824,7 +4769,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -5100,102 +5045,102 @@ var Cpu = (function () {
                 }
                 return;
         }
-        this.state.p = (this.state.p + 1) & 0xFFFF;
+        this.state.p = (this.state.p + 1) & 0xffff;
         var value, base;
         switch (addressingMode) {
             case 1:
                 this._operand = this._bus.read(this.state.p);
                 dereference = false;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles++;
                 break;
             case 2:
                 this._operand = this._bus.read(this.state.p);
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles++;
                 break;
             case 3:
                 this._operand = this._bus.readWord(this.state.p);
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 this._opCycles += 2;
                 break;
             case 4:
                 value = this._bus.readWord(this.state.p);
-                if ((value & 0xFF) === 0xFF) {
-                    this._operand = this._bus.read(value) + (this._bus.read(value & 0xFF00) << 8);
+                if ((value & 0xff) === 0xff) {
+                    this._operand = this._bus.read(value) + (this._bus.read(value & 0xff00) << 8);
                 }
                 else {
                     this._operand = this._bus.readWord(value);
                 }
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 this._opCycles += 4;
                 break;
             case 5:
                 value = this._bus.read(this.state.p);
-                value = (value & 0x80) ? -(~(value - 1) & 0xFF) : value;
-                this._operand = (this.state.p + value + 0x10001) & 0xFFFF;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
-                this._opCycles += (((this._operand & 0xFF00) !== (this.state.p & 0xFF00)) ? 3 : 2);
+                value = value & 0x80 ? -(~(value - 1) & 0xff) : value;
+                this._operand = (this.state.p + value + 0x10001) & 0xffff;
+                this.state.p = (this.state.p + 1) & 0xffff;
+                this._opCycles += (this._operand & 0xff00) !== (this.state.p & 0xff00) ? 3 : 2;
                 break;
             case 6:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
-                this._operand = (base + this.state.x) & 0xFF;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this._operand = (base + this.state.x) & 0xff;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles += 2;
                 break;
             case 7:
                 value = this._bus.readWord(this.state.p);
-                this._operand = (value + this.state.x) & 0xFFFF;
-                if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
-                    this._bus.read((value & 0xFF00) | (this._operand & 0xFF));
+                this._operand = (value + this.state.x) & 0xffff;
+                if ((this._operand & 0xff00) !== (value & 0xff00)) {
+                    this._bus.read((value & 0xff00) | (this._operand & 0xff));
                 }
-                this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this._opCycles += slowIndexedAccess || (this._operand & 0xff00) !== (value & 0xff00) ? 3 : 2;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 break;
             case 9:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
-                this._operand = (base + this.state.y) & 0xFF;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this._operand = (base + this.state.y) & 0xff;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles += 2;
                 break;
             case 10:
                 value = this._bus.readWord(this.state.p);
-                this._operand = (value + this.state.y) & 0xFFFF;
-                if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
-                    this._bus.read((value & 0xFF00) | (this._operand & 0xFF));
+                this._operand = (value + this.state.y) & 0xffff;
+                if ((this._operand & 0xff00) !== (value & 0xff00)) {
+                    this._bus.read((value & 0xff00) | (this._operand & 0xff));
                 }
-                this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this._opCycles += slowIndexedAccess || (this._operand & 0xff00) !== (value & 0xff00) ? 3 : 2;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 break;
             case 8:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
-                value = (base + this.state.x) & 0xFF;
-                if (value === 0xFF) {
-                    this._operand = this._bus.read(0xFF) + (this._bus.read(0x00) << 8);
+                value = (base + this.state.x) & 0xff;
+                if (value === 0xff) {
+                    this._operand = this._bus.read(0xff) + (this._bus.read(0x00) << 8);
                 }
                 else {
                     this._operand = this._bus.readWord(value);
                 }
                 this._opCycles += 4;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 break;
             case 11:
                 value = this._bus.read(this.state.p);
-                if (value === 0xFF) {
-                    value = this._bus.read(0xFF) + (this._bus.read(0x00) << 8);
+                if (value === 0xff) {
+                    value = this._bus.read(0xff) + (this._bus.read(0x00) << 8);
                 }
                 else {
                     value = this._bus.readWord(value);
                 }
-                this._operand = (value + this.state.y) & 0xFFFF;
-                if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
-                    this._bus.read((value & 0xFF00) | (this._operand & 0xFF));
+                this._operand = (value + this.state.y) & 0xffff;
+                if ((this._operand & 0xff00) !== (value & 0xff00)) {
+                    this._bus.read((value & 0xff00) | (this._operand & 0xff));
                 }
-                this._opCycles += ((slowIndexedAccess || (value & 0xFF00) !== (this._operand & 0xFF00)) ? 4 : 3);
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this._opCycles += slowIndexedAccess || (value & 0xff00) !== (this._operand & 0xff00) ? 4 : 3;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 break;
         }
         if (dereference) {
@@ -5218,7 +5163,7 @@ var Cpu = (function () {
 }());
 exports.default = Cpu;
 
-},{"./CpuInterface":24,"./Instruction":26}],24:[function(require,module,exports){
+},{"./CpuInterface":23,"./Instruction":25}],23:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CpuInterface;
@@ -5240,7 +5185,7 @@ var CpuInterface;
 })(CpuInterface || (CpuInterface = {}));
 exports.default = CpuInterface;
 
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./Instruction");
@@ -5267,7 +5212,7 @@ var Disassembler = (function () {
             if (a === void 0) { a = address + 1; }
             return hex.encode(_this._peek(a) + (_this._peek(a + 1) << 8), 4);
         };
-        var decodeSint8 = function (value) { return (value & 0x80) ? (-(~(value - 1) & 0xFF)) : value; };
+        var decodeSint8 = function (value) { return (value & 0x80 ? -(~(value - 1) & 0xff) : value); };
         switch (instruction.addressingMode) {
             case 0:
                 return operation;
@@ -5281,9 +5226,11 @@ var Disassembler = (function () {
                 return operation + ' (' + read16() + ')';
             case 5:
                 var distance = decodeSint8(this._peek(address + 1));
-                return operation + ' ' +
-                    hex.encode(distance, 2) + ' ; -> '
-                    + hex.encode((0x10002 + address + distance) % 0x10000, 4);
+                return (operation +
+                    ' ' +
+                    hex.encode(distance, 2) +
+                    ' ; -> ' +
+                    hex.encode((0x10002 + address + distance) % 0x10000, 4));
             case 6:
                 return operation + ' ' + read8() + ',X';
             case 7:
@@ -5307,7 +5254,7 @@ var Disassembler = (function () {
 }());
 exports.default = Disassembler;
 
-},{"../../tools/hex":30,"./Instruction":26}],26:[function(require,module,exports){
+},{"../../tools/hex":29,"./Instruction":25}],25:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction = (function () {
@@ -5492,67 +5439,67 @@ exports.default = Instruction;
             Instruction.opcodes[_opcode].addressingMode = _addressingMode;
         }
         set(0x06, 2, 2);
-        set(0x0A, 2, 0);
-        set(0x0E, 2, 3);
+        set(0x0a, 2, 0);
+        set(0x0e, 2, 3);
         set(0x16, 2, 6);
-        set(0x1E, 2, 7);
+        set(0x1e, 2, 7);
         set(0x26, 39, 2);
-        set(0x2A, 39, 0);
-        set(0x2E, 39, 3);
+        set(0x2a, 39, 0);
+        set(0x2e, 39, 3);
         set(0x36, 39, 6);
-        set(0x3E, 39, 7);
+        set(0x3e, 39, 7);
         set(0x46, 32, 2);
-        set(0x4A, 32, 0);
-        set(0x4E, 32, 3);
+        set(0x4a, 32, 0);
+        set(0x4e, 32, 3);
         set(0x56, 32, 6);
-        set(0x5E, 32, 7);
+        set(0x5e, 32, 7);
         set(0x66, 40, 2);
-        set(0x6A, 40, 0);
-        set(0x6E, 40, 3);
+        set(0x6a, 40, 0);
+        set(0x6e, 40, 3);
         set(0x76, 40, 6);
-        set(0x7E, 40, 7);
+        set(0x7e, 40, 7);
         set(0x86, 48, 2);
-        set(0x8E, 48, 3);
+        set(0x8e, 48, 3);
         set(0x96, 48, 9);
-        set(0xA2, 30, 1);
-        set(0xA6, 30, 2);
-        set(0xAE, 30, 3);
-        set(0xB6, 30, 9);
-        set(0xBE, 30, 10);
-        set(0xC6, 20, 2);
-        set(0xCE, 20, 3);
-        set(0xD6, 20, 6);
-        set(0xDE, 20, 7);
-        set(0xE6, 24, 2);
-        set(0xEE, 24, 3);
-        set(0xF6, 24, 6);
-        set(0xFE, 24, 7);
+        set(0xa2, 30, 1);
+        set(0xa6, 30, 2);
+        set(0xae, 30, 3);
+        set(0xb6, 30, 9);
+        set(0xbe, 30, 10);
+        set(0xc6, 20, 2);
+        set(0xce, 20, 3);
+        set(0xd6, 20, 6);
+        set(0xde, 20, 7);
+        set(0xe6, 24, 2);
+        set(0xee, 24, 3);
+        set(0xf6, 24, 6);
+        set(0xfe, 24, 7);
         set(0x24, 6, 2);
-        set(0x2C, 6, 3);
-        set(0x4C, 27, 3);
-        set(0x6C, 27, 4);
+        set(0x2c, 6, 3);
+        set(0x4c, 27, 3);
+        set(0x6c, 27, 4);
         set(0x84, 49, 2);
-        set(0x8C, 49, 3);
+        set(0x8c, 49, 3);
         set(0x94, 49, 6);
-        set(0xA0, 31, 1);
-        set(0xA4, 31, 2);
-        set(0xAC, 31, 3);
-        set(0xB4, 31, 6);
-        set(0xBC, 31, 7);
-        set(0xC0, 19, 1);
-        set(0xC4, 19, 2);
-        set(0xCC, 19, 3);
-        set(0xE0, 18, 1);
-        set(0xE4, 18, 2);
-        set(0xEC, 18, 3);
+        set(0xa0, 31, 1);
+        set(0xa4, 31, 2);
+        set(0xac, 31, 3);
+        set(0xb4, 31, 6);
+        set(0xbc, 31, 7);
+        set(0xc0, 19, 1);
+        set(0xc4, 19, 2);
+        set(0xcc, 19, 3);
+        set(0xe0, 18, 1);
+        set(0xe4, 18, 2);
+        set(0xec, 18, 3);
         set(0x10, 9, 5);
         set(0x30, 7, 5);
         set(0x50, 11, 5);
         set(0x70, 12, 5);
         set(0x90, 3, 5);
-        set(0xB0, 4, 5);
-        set(0xD0, 8, 5);
-        set(0xF0, 5, 5);
+        set(0xb0, 4, 5);
+        set(0xd0, 8, 5);
+        set(0xf0, 5, 5);
         set(0x00, 10, 0);
         set(0x20, 28, 0);
         set(0x40, 41, 0);
@@ -5562,29 +5509,29 @@ exports.default = Instruction;
         set(0x48, 35, 0);
         set(0x68, 37, 0);
         set(0x88, 22, 0);
-        set(0xA8, 51, 0);
-        set(0xC8, 26, 0);
-        set(0xE8, 25, 0);
+        set(0xa8, 51, 0);
+        set(0xc8, 26, 0);
+        set(0xe8, 25, 0);
         set(0x18, 13, 0);
         set(0x38, 44, 0);
         set(0x58, 15, 0);
         set(0x78, 46, 0);
         set(0x98, 55, 0);
-        set(0xB8, 16, 0);
-        set(0xD8, 14, 0);
-        set(0xF8, 45, 0);
-        set(0x8A, 53, 0);
-        set(0x9A, 54, 0);
-        set(0xAA, 50, 0);
-        set(0xBA, 52, 0);
-        set(0xCA, 21, 0);
-        set(0xEA, 33, 0);
-        set(0x1A, 33, 0);
-        set(0x3A, 33, 0);
-        set(0x5A, 33, 0);
-        set(0x7A, 33, 0);
-        set(0xDA, 33, 0);
-        set(0xFA, 33, 0);
+        set(0xb8, 16, 0);
+        set(0xd8, 14, 0);
+        set(0xf8, 45, 0);
+        set(0x8a, 53, 0);
+        set(0x9a, 54, 0);
+        set(0xaa, 50, 0);
+        set(0xba, 52, 0);
+        set(0xca, 21, 0);
+        set(0xea, 33, 0);
+        set(0x1a, 33, 0);
+        set(0x3a, 33, 0);
+        set(0x5a, 33, 0);
+        set(0x7a, 33, 0);
+        set(0xda, 33, 0);
+        set(0xfa, 33, 0);
         set(0x04, 56, 2);
         set(0x14, 56, 6);
         set(0x34, 56, 6);
@@ -5595,60 +5542,60 @@ exports.default = Instruction;
         set(0x80, 56, 1);
         set(0x82, 56, 1);
         set(0x89, 56, 1);
-        set(0xC2, 56, 1);
-        set(0xD4, 56, 6);
-        set(0xE2, 56, 1);
-        set(0xF4, 56, 6);
-        set(0x0C, 57, 3);
-        set(0x1C, 57, 7);
-        set(0x3C, 57, 7);
-        set(0x5C, 57, 7);
-        set(0x7C, 57, 7);
-        set(0xDC, 57, 7);
-        set(0xFC, 57, 7);
-        set(0xEB, 43, 1);
-        set(0x4B, 58, 1);
-        set(0xCB, 59, 1);
-        set(0xC7, 60, 2);
-        set(0xD7, 60, 6);
-        set(0xCF, 60, 3);
-        set(0xDF, 60, 7);
-        set(0xDB, 60, 10);
-        set(0xC3, 60, 8);
-        set(0xD3, 60, 11);
-        set(0xA7, 61, 2);
-        set(0xB7, 61, 9);
-        set(0xAF, 61, 3);
-        set(0xBF, 61, 10);
-        set(0xA3, 61, 8);
-        set(0xB3, 61, 11);
-        set(0x6B, 62, 1);
+        set(0xc2, 56, 1);
+        set(0xd4, 56, 6);
+        set(0xe2, 56, 1);
+        set(0xf4, 56, 6);
+        set(0x0c, 57, 3);
+        set(0x1c, 57, 7);
+        set(0x3c, 57, 7);
+        set(0x5c, 57, 7);
+        set(0x7c, 57, 7);
+        set(0xdc, 57, 7);
+        set(0xfc, 57, 7);
+        set(0xeb, 43, 1);
+        set(0x4b, 58, 1);
+        set(0xcb, 59, 1);
+        set(0xc7, 60, 2);
+        set(0xd7, 60, 6);
+        set(0xcf, 60, 3);
+        set(0xdf, 60, 7);
+        set(0xdb, 60, 10);
+        set(0xc3, 60, 8);
+        set(0xd3, 60, 11);
+        set(0xa7, 61, 2);
+        set(0xb7, 61, 9);
+        set(0xaf, 61, 3);
+        set(0xbf, 61, 10);
+        set(0xa3, 61, 8);
+        set(0xb3, 61, 11);
+        set(0x6b, 62, 1);
         set(0x07, 63, 2);
         set(0x17, 63, 6);
-        set(0x0F, 63, 3);
-        set(0x1F, 63, 7);
-        set(0x1B, 63, 10);
+        set(0x0f, 63, 3);
+        set(0x1f, 63, 7);
+        set(0x1b, 63, 10);
         set(0x03, 63, 8);
         set(0x13, 63, 11);
         set(0x87, 64, 2);
         set(0x97, 64, 9);
         set(0x83, 64, 8);
-        set(0x8F, 64, 3);
-        set(0xBB, 65, 10);
-        set(0xE7, 66, 2);
-        set(0xF7, 66, 6);
-        set(0xEF, 66, 3);
-        set(0xFF, 66, 7);
-        set(0xFB, 66, 10);
-        set(0xE3, 66, 8);
-        set(0xF3, 66, 11);
-        set(0x0B, 67, 1);
-        set(0x2B, 67, 1);
-        set(0xAB, 68, 1);
+        set(0x8f, 64, 3);
+        set(0xbb, 65, 10);
+        set(0xe7, 66, 2);
+        set(0xf7, 66, 6);
+        set(0xef, 66, 3);
+        set(0xff, 66, 7);
+        set(0xfb, 66, 10);
+        set(0xe3, 66, 8);
+        set(0xf3, 66, 11);
+        set(0x0b, 67, 1);
+        set(0x2b, 67, 1);
+        set(0xab, 68, 1);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -5671,7 +5618,7 @@ var Board = (function () {
         };
         this.cpuClock = this.clock;
         this._bus = this._createBus();
-        if (typeof (cpuFactory) === 'undefined') {
+        if (typeof cpuFactory === 'undefined') {
             cpuFactory = function (bus) { return new Cpu_1.default(bus); };
         }
         this._cpu = cpuFactory(this._bus);
@@ -5775,7 +5722,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../board/BoardInterface":22,"../cpu/Cpu":23,"../cpu/CpuInterface":24,"./Memory":28,"microevent.ts":6}],28:[function(require,module,exports){
+},{"../board/BoardInterface":21,"../cpu/Cpu":22,"../cpu/CpuInterface":23,"./Memory":27,"microevent.ts":5}],27:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Memory = (function () {
@@ -5796,7 +5743,7 @@ var Memory = (function () {
         return this._data[address];
     };
     Memory.prototype.readWord = function (address) {
-        return this._data[address] + (this._data[(address + 1) & 0xFFFF] << 8);
+        return this._data[address] + (this._data[(address + 1) & 0xffff] << 8);
     };
     Memory.prototype.write = function (address, value) {
         this._data[address] = value;
@@ -5808,12 +5755,12 @@ var Memory = (function () {
 }());
 exports.default = Memory;
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encode(value, width) {
     var result = Math.abs(value).toString(2);
-    if (typeof (width) !== 'undefined') {
+    if (typeof width !== 'undefined') {
         while (result.length < width) {
             result = '0' + result;
         }
@@ -5822,18 +5769,20 @@ function encode(value, width) {
 }
 exports.encode = encode;
 
-},{}],30:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encodeWithPrefix(value, width, signed, prefix) {
     if (signed === void 0) { signed = true; }
     if (prefix === void 0) { prefix = ''; }
     if (!signed && value < 0) {
-        return encodeWithPrefix(value >>> 16, (width && width > 8) ? width - 4 : 4, false, prefix) +
-            encodeWithPrefix(value & 0xFFFF, 4);
+        return (encodeWithPrefix(value >>> 16, width && width > 8 ? width - 4 : 4, false, prefix) +
+            encodeWithPrefix(value & 0xffff, 4));
     }
-    var result = Math.abs(value).toString(16).toUpperCase();
-    if (typeof (width) !== 'undefined') {
+    var result = Math.abs(value)
+        .toString(16)
+        .toUpperCase();
+    if (typeof width !== 'undefined') {
         while (result.length < width) {
             result = '0' + result;
         }
@@ -5877,5 +5826,5 @@ function run(fileBlob, terminalElt, interruptButton, clearButton) {
 }
 exports.run = run;
 
-},{"../cli/DebuggerCLI":16,"../cli/JqtermCLIRunner":18,"../fs/PrepackagedFilesystemProvider":20}]},{},[])
+},{"../cli/DebuggerCLI":15,"../cli/JqtermCLIRunner":17,"../fs/PrepackagedFilesystemProvider":19}]},{},[])
 //# sourceMappingURL=debuggerCLI.js.map

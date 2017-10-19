@@ -275,7 +275,9 @@ var Pool = (function () {
         var member;
         if (this._poolSize === 0) {
             var newItem = this._factory();
-            member = newItem && new PoolMember_1.default(newItem, function (victim) { return _this._releaseMember(victim); }, function (victim) { return _this._disposeMember(victim); });
+            member =
+                newItem &&
+                    new PoolMember_1.default(newItem, function (victim) { return _this._releaseMember(victim); }, function (victim) { return _this._disposeMember(victim); });
         }
         else {
             member = this._pool[--this._poolSize];
@@ -378,10 +380,10 @@ var FrameMergeProcessor = (function () {
         var buffer0 = this._framesOnHold[0].get().getBuffer(), buffer1 = this._framesOnHold[1].get().getBuffer();
         for (var i = 0; i < this._width * this._height; i++) {
             buffer0[i] =
-                0xFF000000 |
-                    ((((buffer0[i] & 0xFF0000) + (buffer1[i] & 0xFF0000)) >>> 1) & 0xFF0000) |
-                    ((((buffer0[i] & 0xFF00) + (buffer1[i] & 0xFF00)) >>> 1) & 0xFF00) |
-                    ((((buffer0[i] & 0xFF) + (buffer1[i] & 0xFF)) >>> 1) & 0xFF);
+                0xff000000 |
+                    ((((buffer0[i] & 0xff0000) + (buffer1[i] & 0xff0000)) >>> 1) & 0xff0000) |
+                    ((((buffer0[i] & 0xff00) + (buffer1[i] & 0xff00)) >>> 1) & 0xff00) |
+                    ((((buffer0[i] & 0xff) + (buffer1[i] & 0xff)) >>> 1) & 0xff);
         }
         this.emit.dispatch(this._framesOnHold[0]);
         this._framesOnHold[1].release();
@@ -571,7 +573,7 @@ var ArrayBufferSurface = (function () {
         this._buffer = null;
     }
     ArrayBufferSurface.createFromArrayBuffer = function (width, height, buffer) {
-        return (new ArrayBufferSurface()).replaceUnderlyingBuffer(width, height, buffer);
+        return new ArrayBufferSurface().replaceUnderlyingBuffer(width, height, buffer);
     };
     ArrayBufferSurface.prototype.replaceUnderlyingBuffer = function (width, height, buffer) {
         if (width * height * 4 !== buffer.byteLength) {

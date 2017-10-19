@@ -117,7 +117,6 @@ function fromByteArray (uint8) {
 },{}],2:[function(require,module,exports){
 
 },{}],3:[function(require,module,exports){
-(function (global){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -130,80 +129,57 @@ function fromByteArray (uint8) {
 
 var base64 = require('base64-js')
 var ieee754 = require('ieee754')
-var isArray = require('isarray')
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
 exports.INSPECT_MAX_BYTES = 50
 
+var K_MAX_LENGTH = 0x7fffffff
+exports.kMaxLength = K_MAX_LENGTH
+
 /**
  * If `Buffer.TYPED_ARRAY_SUPPORT`:
  *   === true    Use Uint8Array implementation (fastest)
- *   === false   Use Object implementation (most compatible, even IE6)
+ *   === false   Print warning and recommend using `buffer` v4.x which has an Object
+ *               implementation (most compatible, even IE6)
  *
  * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
  * Opera 11.6+, iOS 4.2+.
  *
- * Due to various browser bugs, sometimes the Object implementation will be used even
- * when the browser supports typed arrays.
- *
- * Note:
- *
- *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
- *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
- *
- *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
- *
- *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
- *     incorrect length in some situations.
-
- * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
- * get the Object implementation, which is slower but behaves correctly.
+ * We report that the browser does not support typed arrays if the are not subclassable
+ * using __proto__. Firefox 4-29 lacks support for adding new properties to `Uint8Array`
+ * (See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438). IE 10 lacks support
+ * for __proto__ and has a buggy typed array implementation.
  */
-Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
-  ? global.TYPED_ARRAY_SUPPORT
-  : typedArraySupport()
+Buffer.TYPED_ARRAY_SUPPORT = typedArraySupport()
 
-/*
- * Export kMaxLength after typed array support is determined.
- */
-exports.kMaxLength = kMaxLength()
+if (!Buffer.TYPED_ARRAY_SUPPORT && typeof console !== 'undefined' &&
+    typeof console.error === 'function') {
+  console.error(
+    'This browser lacks typed array (Uint8Array) support which is required by ' +
+    '`buffer` v5.x. Use `buffer` v4.x if you require old browser support.'
+  )
+}
 
 function typedArraySupport () {
+  // Can typed array instances can be augmented?
   try {
     var arr = new Uint8Array(1)
     arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
-    return arr.foo() === 42 && // typed array instances can be augmented
-        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
-        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+    return arr.foo() === 42
   } catch (e) {
     return false
   }
 }
 
-function kMaxLength () {
-  return Buffer.TYPED_ARRAY_SUPPORT
-    ? 0x7fffffff
-    : 0x3fffffff
-}
-
-function createBuffer (that, length) {
-  if (kMaxLength() < length) {
+function createBuffer (length) {
+  if (length > K_MAX_LENGTH) {
     throw new RangeError('Invalid typed array length')
   }
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = new Uint8Array(length)
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    if (that === null) {
-      that = new Buffer(length)
-    }
-    that.length = length
-  }
-
-  return that
+  // Return an augmented `Uint8Array` instance
+  var buf = new Uint8Array(length)
+  buf.__proto__ = Buffer.prototype
+  return buf
 }
 
 /**
@@ -217,10 +193,6 @@ function createBuffer (that, length) {
  */
 
 function Buffer (arg, encodingOrOffset, length) {
-  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
-    return new Buffer(arg, encodingOrOffset, length)
-  }
-
   // Common case.
   if (typeof arg === 'number') {
     if (typeof encodingOrOffset === 'string') {
@@ -228,33 +200,38 @@ function Buffer (arg, encodingOrOffset, length) {
         'If encoding is specified then the first argument must be a string'
       )
     }
-    return allocUnsafe(this, arg)
+    return allocUnsafe(arg)
   }
-  return from(this, arg, encodingOrOffset, length)
+  return from(arg, encodingOrOffset, length)
+}
+
+// Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+if (typeof Symbol !== 'undefined' && Symbol.species &&
+    Buffer[Symbol.species] === Buffer) {
+  Object.defineProperty(Buffer, Symbol.species, {
+    value: null,
+    configurable: true,
+    enumerable: false,
+    writable: false
+  })
 }
 
 Buffer.poolSize = 8192 // not used by this implementation
 
-// TODO: Legacy, not needed anymore. Remove in next major version.
-Buffer._augment = function (arr) {
-  arr.__proto__ = Buffer.prototype
-  return arr
-}
-
-function from (that, value, encodingOrOffset, length) {
+function from (value, encodingOrOffset, length) {
   if (typeof value === 'number') {
     throw new TypeError('"value" argument must not be a number')
   }
 
-  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
-    return fromArrayBuffer(that, value, encodingOrOffset, length)
+  if (isArrayBuffer(value)) {
+    return fromArrayBuffer(value, encodingOrOffset, length)
   }
 
   if (typeof value === 'string') {
-    return fromString(that, value, encodingOrOffset)
+    return fromString(value, encodingOrOffset)
   }
 
-  return fromObject(that, value)
+  return fromObject(value)
 }
 
 /**
@@ -266,21 +243,13 @@ function from (that, value, encodingOrOffset, length) {
  * Buffer.from(arrayBuffer[, byteOffset[, length]])
  **/
 Buffer.from = function (value, encodingOrOffset, length) {
-  return from(null, value, encodingOrOffset, length)
+  return from(value, encodingOrOffset, length)
 }
 
-if (Buffer.TYPED_ARRAY_SUPPORT) {
-  Buffer.prototype.__proto__ = Uint8Array.prototype
-  Buffer.__proto__ = Uint8Array
-  if (typeof Symbol !== 'undefined' && Symbol.species &&
-      Buffer[Symbol.species] === Buffer) {
-    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
-    Object.defineProperty(Buffer, Symbol.species, {
-      value: null,
-      configurable: true
-    })
-  }
-}
+// Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
+// https://github.com/feross/buffer/pull/148
+Buffer.prototype.__proto__ = Uint8Array.prototype
+Buffer.__proto__ = Uint8Array
 
 function assertSize (size) {
   if (typeof size !== 'number') {
@@ -290,20 +259,20 @@ function assertSize (size) {
   }
 }
 
-function alloc (that, size, fill, encoding) {
+function alloc (size, fill, encoding) {
   assertSize(size)
   if (size <= 0) {
-    return createBuffer(that, size)
+    return createBuffer(size)
   }
   if (fill !== undefined) {
     // Only pay attention to encoding if it's a string. This
     // prevents accidentally sending in a number that would
     // be interpretted as a start offset.
     return typeof encoding === 'string'
-      ? createBuffer(that, size).fill(fill, encoding)
-      : createBuffer(that, size).fill(fill)
+      ? createBuffer(size).fill(fill, encoding)
+      : createBuffer(size).fill(fill)
   }
-  return createBuffer(that, size)
+  return createBuffer(size)
 }
 
 /**
@@ -311,34 +280,28 @@ function alloc (that, size, fill, encoding) {
  * alloc(size[, fill[, encoding]])
  **/
 Buffer.alloc = function (size, fill, encoding) {
-  return alloc(null, size, fill, encoding)
+  return alloc(size, fill, encoding)
 }
 
-function allocUnsafe (that, size) {
+function allocUnsafe (size) {
   assertSize(size)
-  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-    for (var i = 0; i < size; ++i) {
-      that[i] = 0
-    }
-  }
-  return that
+  return createBuffer(size < 0 ? 0 : checked(size) | 0)
 }
 
 /**
  * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
  * */
 Buffer.allocUnsafe = function (size) {
-  return allocUnsafe(null, size)
+  return allocUnsafe(size)
 }
 /**
  * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
  */
 Buffer.allocUnsafeSlow = function (size) {
-  return allocUnsafe(null, size)
+  return allocUnsafe(size)
 }
 
-function fromString (that, string, encoding) {
+function fromString (string, encoding) {
   if (typeof encoding !== 'string' || encoding === '') {
     encoding = 'utf8'
   }
@@ -348,32 +311,30 @@ function fromString (that, string, encoding) {
   }
 
   var length = byteLength(string, encoding) | 0
-  that = createBuffer(that, length)
+  var buf = createBuffer(length)
 
-  var actual = that.write(string, encoding)
+  var actual = buf.write(string, encoding)
 
   if (actual !== length) {
     // Writing a hex string, for example, that contains invalid characters will
     // cause everything after the first invalid character to be ignored. (e.g.
     // 'abxxcd' will be treated as 'ab')
-    that = that.slice(0, actual)
+    buf = buf.slice(0, actual)
   }
 
-  return that
+  return buf
 }
 
-function fromArrayLike (that, array) {
+function fromArrayLike (array) {
   var length = array.length < 0 ? 0 : checked(array.length) | 0
-  that = createBuffer(that, length)
+  var buf = createBuffer(length)
   for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
+    buf[i] = array[i] & 255
   }
-  return that
+  return buf
 }
 
-function fromArrayBuffer (that, array, byteOffset, length) {
-  array.byteLength // this throws if `array` is not a valid ArrayBuffer
-
+function fromArrayBuffer (array, byteOffset, length) {
   if (byteOffset < 0 || array.byteLength < byteOffset) {
     throw new RangeError('\'offset\' is out of bounds')
   }
@@ -382,49 +343,43 @@ function fromArrayBuffer (that, array, byteOffset, length) {
     throw new RangeError('\'length\' is out of bounds')
   }
 
+  var buf
   if (byteOffset === undefined && length === undefined) {
-    array = new Uint8Array(array)
+    buf = new Uint8Array(array)
   } else if (length === undefined) {
-    array = new Uint8Array(array, byteOffset)
+    buf = new Uint8Array(array, byteOffset)
   } else {
-    array = new Uint8Array(array, byteOffset, length)
+    buf = new Uint8Array(array, byteOffset, length)
   }
 
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = array
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    that = fromArrayLike(that, array)
-  }
-  return that
+  // Return an augmented `Uint8Array` instance
+  buf.__proto__ = Buffer.prototype
+  return buf
 }
 
-function fromObject (that, obj) {
+function fromObject (obj) {
   if (Buffer.isBuffer(obj)) {
     var len = checked(obj.length) | 0
-    that = createBuffer(that, len)
+    var buf = createBuffer(len)
 
-    if (that.length === 0) {
-      return that
+    if (buf.length === 0) {
+      return buf
     }
 
-    obj.copy(that, 0, 0, len)
-    return that
+    obj.copy(buf, 0, 0, len)
+    return buf
   }
 
   if (obj) {
-    if ((typeof ArrayBuffer !== 'undefined' &&
-        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
-      if (typeof obj.length !== 'number' || isnan(obj.length)) {
-        return createBuffer(that, 0)
+    if (isArrayBufferView(obj) || 'length' in obj) {
+      if (typeof obj.length !== 'number' || numberIsNaN(obj.length)) {
+        return createBuffer(0)
       }
-      return fromArrayLike(that, obj)
+      return fromArrayLike(obj)
     }
 
-    if (obj.type === 'Buffer' && isArray(obj.data)) {
-      return fromArrayLike(that, obj.data)
+    if (obj.type === 'Buffer' && Array.isArray(obj.data)) {
+      return fromArrayLike(obj.data)
     }
   }
 
@@ -432,11 +387,11 @@ function fromObject (that, obj) {
 }
 
 function checked (length) {
-  // Note: cannot use `length < kMaxLength()` here because that fails when
+  // Note: cannot use `length < K_MAX_LENGTH` here because that fails when
   // length is NaN (which is otherwise coerced to zero.)
-  if (length >= kMaxLength()) {
+  if (length >= K_MAX_LENGTH) {
     throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
-                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+                         'size: 0x' + K_MAX_LENGTH.toString(16) + ' bytes')
   }
   return length | 0
 }
@@ -449,7 +404,7 @@ function SlowBuffer (length) {
 }
 
 Buffer.isBuffer = function isBuffer (b) {
-  return !!(b != null && b._isBuffer)
+  return b != null && b._isBuffer === true
 }
 
 Buffer.compare = function compare (a, b) {
@@ -495,7 +450,7 @@ Buffer.isEncoding = function isEncoding (encoding) {
 }
 
 Buffer.concat = function concat (list, length) {
-  if (!isArray(list)) {
+  if (!Array.isArray(list)) {
     throw new TypeError('"list" argument must be an Array of Buffers')
   }
 
@@ -528,8 +483,7 @@ function byteLength (string, encoding) {
   if (Buffer.isBuffer(string)) {
     return string.length
   }
-  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
-      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+  if (isArrayBufferView(string) || isArrayBuffer(string)) {
     return string.byteLength
   }
   if (typeof string !== 'string') {
@@ -639,8 +593,12 @@ function slowToString (encoding, start, end) {
   }
 }
 
-// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
-// Buffer instances.
+// This property is used by `Buffer.isBuffer` (and the `is-buffer` npm package)
+// to detect a Buffer instance. It's not possible to use `instanceof Buffer`
+// reliably in a browserify context because there could be multiple different
+// copies of the 'buffer' package in use. This method works even for Buffer
+// instances that were created from another copy of the `buffer` package.
+// See: https://github.com/feross/buffer/issues/154
 Buffer.prototype._isBuffer = true
 
 function swap (b, n, m) {
@@ -687,7 +645,7 @@ Buffer.prototype.swap64 = function swap64 () {
 }
 
 Buffer.prototype.toString = function toString () {
-  var length = this.length | 0
+  var length = this.length
   if (length === 0) return ''
   if (arguments.length === 0) return utf8Slice(this, 0, length)
   return slowToString.apply(this, arguments)
@@ -791,7 +749,7 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
     byteOffset = -0x80000000
   }
   byteOffset = +byteOffset  // Coerce to Number.
-  if (isNaN(byteOffset)) {
+  if (numberIsNaN(byteOffset)) {
     // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
     byteOffset = dir ? 0 : (buffer.length - 1)
   }
@@ -820,8 +778,7 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
     return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
   } else if (typeof val === 'number') {
     val = val & 0xFF // Search for a byte value [0-255]
-    if (Buffer.TYPED_ARRAY_SUPPORT &&
-        typeof Uint8Array.prototype.indexOf === 'function') {
+    if (typeof Uint8Array.prototype.indexOf === 'function') {
       if (dir) {
         return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
       } else {
@@ -923,7 +880,7 @@ function hexWrite (buf, string, offset, length) {
   }
   for (var i = 0; i < length; ++i) {
     var parsed = parseInt(string.substr(i * 2, 2), 16)
-    if (isNaN(parsed)) return i
+    if (numberIsNaN(parsed)) return i
     buf[offset + i] = parsed
   }
   return i
@@ -962,15 +919,14 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
     offset = 0
   // Buffer#write(string, offset[, length][, encoding])
   } else if (isFinite(offset)) {
-    offset = offset | 0
+    offset = offset >>> 0
     if (isFinite(length)) {
-      length = length | 0
+      length = length >>> 0
       if (encoding === undefined) encoding = 'utf8'
     } else {
       encoding = length
       length = undefined
     }
-  // legacy write(string, encoding, offset, length) - remove in v0.13
   } else {
     throw new Error(
       'Buffer.write(string, encoding, offset[, length]) is no longer supported'
@@ -1169,7 +1125,7 @@ function utf16leSlice (buf, start, end) {
   var bytes = buf.slice(start, end)
   var res = ''
   for (var i = 0; i < bytes.length; i += 2) {
-    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+    res += String.fromCharCode(bytes[i] + (bytes[i + 1] * 256))
   }
   return res
 }
@@ -1195,18 +1151,9 @@ Buffer.prototype.slice = function slice (start, end) {
 
   if (end < start) end = start
 
-  var newBuf
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    newBuf = this.subarray(start, end)
-    newBuf.__proto__ = Buffer.prototype
-  } else {
-    var sliceLen = end - start
-    newBuf = new Buffer(sliceLen, undefined)
-    for (var i = 0; i < sliceLen; ++i) {
-      newBuf[i] = this[i + start]
-    }
-  }
-
+  var newBuf = this.subarray(start, end)
+  // Return an augmented `Uint8Array` instance
+  newBuf.__proto__ = Buffer.prototype
   return newBuf
 }
 
@@ -1219,8 +1166,8 @@ function checkOffset (offset, ext, length) {
 }
 
 Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
@@ -1234,8 +1181,8 @@ Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert)
 }
 
 Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
     checkOffset(offset, byteLength, this.length)
   }
@@ -1250,21 +1197,25 @@ Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert)
 }
 
 Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 1, this.length)
   return this[offset]
 }
 
 Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return this[offset] | (this[offset + 1] << 8)
 }
 
 Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return (this[offset] << 8) | this[offset + 1]
 }
 
 Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return ((this[offset]) |
@@ -1274,6 +1225,7 @@ Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
 }
 
 Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return (this[offset] * 0x1000000) +
@@ -1283,8 +1235,8 @@ Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
 }
 
 Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
@@ -1301,8 +1253,8 @@ Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
 }
 
 Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var i = byteLength
@@ -1319,24 +1271,28 @@ Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
 }
 
 Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 1, this.length)
   if (!(this[offset] & 0x80)) return (this[offset])
   return ((0xff - this[offset] + 1) * -1)
 }
 
 Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   var val = this[offset] | (this[offset + 1] << 8)
   return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
 Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   var val = this[offset + 1] | (this[offset] << 8)
   return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
 Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return (this[offset]) |
@@ -1346,6 +1302,7 @@ Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
 }
 
 Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return (this[offset] << 24) |
@@ -1355,21 +1312,25 @@ Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
 }
 
 Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
   return ieee754.read(this, offset, true, 23, 4)
 }
 
 Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
   return ieee754.read(this, offset, false, 23, 4)
 }
 
 Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 8, this.length)
   return ieee754.read(this, offset, true, 52, 8)
 }
 
 Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 8, this.length)
   return ieee754.read(this, offset, false, 52, 8)
 }
@@ -1382,8 +1343,8 @@ function checkInt (buf, value, offset, ext, max, min) {
 
 Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
     var maxBytes = Math.pow(2, 8 * byteLength) - 1
     checkInt(this, value, offset, byteLength, maxBytes, 0)
@@ -1401,8 +1362,8 @@ Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, 
 
 Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
     var maxBytes = Math.pow(2, 8 * byteLength) - 1
     checkInt(this, value, offset, byteLength, maxBytes, 0)
@@ -1420,89 +1381,57 @@ Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, 
 
 Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   this[offset] = (value & 0xff)
   return offset + 1
 }
 
-function objectWriteUInt16 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
-    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
-      (littleEndian ? i : 1 - i) * 8
-  }
-}
-
 Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
   return offset + 2
 }
 
 Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
+  this[offset] = (value >>> 8)
+  this[offset + 1] = (value & 0xff)
   return offset + 2
-}
-
-function objectWriteUInt32 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffffffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
-    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
-  }
 }
 
 Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset + 3] = (value >>> 24)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 1] = (value >>> 8)
-    this[offset] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
+  this[offset + 3] = (value >>> 24)
+  this[offset + 2] = (value >>> 16)
+  this[offset + 1] = (value >>> 8)
+  this[offset] = (value & 0xff)
   return offset + 4
 }
 
 Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
+  this[offset] = (value >>> 24)
+  this[offset + 1] = (value >>> 16)
+  this[offset + 2] = (value >>> 8)
+  this[offset + 3] = (value & 0xff)
   return offset + 4
 }
 
 Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
+    var limit = Math.pow(2, (8 * byteLength) - 1)
 
     checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
@@ -1523,9 +1452,9 @@ Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, no
 
 Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
+    var limit = Math.pow(2, (8 * byteLength) - 1)
 
     checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
@@ -1546,9 +1475,8 @@ Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, no
 
 Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   if (value < 0) value = 0xff + value + 1
   this[offset] = (value & 0xff)
   return offset + 1
@@ -1556,58 +1484,42 @@ Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
 
 Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
   return offset + 2
 }
 
 Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
+  this[offset] = (value >>> 8)
+  this[offset + 1] = (value & 0xff)
   return offset + 2
 }
 
 Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 3] = (value >>> 24)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
+  this[offset + 2] = (value >>> 16)
+  this[offset + 3] = (value >>> 24)
   return offset + 4
 }
 
 Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (value < 0) value = 0xffffffff + value + 1
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
+  this[offset] = (value >>> 24)
+  this[offset + 1] = (value >>> 16)
+  this[offset + 2] = (value >>> 8)
+  this[offset + 3] = (value & 0xff)
   return offset + 4
 }
 
@@ -1617,6 +1529,8 @@ function checkIEEE754 (buf, value, offset, ext, max, min) {
 }
 
 function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  value = +value
+  offset = offset >>> 0
   if (!noAssert) {
     checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
   }
@@ -1633,6 +1547,8 @@ Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) 
 }
 
 function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  value = +value
+  offset = offset >>> 0
   if (!noAssert) {
     checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
   }
@@ -1681,7 +1597,7 @@ Buffer.prototype.copy = function copy (target, targetStart, start, end) {
     for (i = len - 1; i >= 0; --i) {
       target[i + targetStart] = this[i + start]
     }
-  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+  } else if (len < 1000) {
     // ascending copy from start
     for (i = 0; i < len; ++i) {
       target[i + targetStart] = this[i + start]
@@ -1750,7 +1666,7 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
   } else {
     var bytes = Buffer.isBuffer(val)
       ? val
-      : utf8ToBytes(new Buffer(val, encoding).toString())
+      : new Buffer(val, encoding)
     var len = bytes.length
     for (i = 0; i < end - start; ++i) {
       this[i + start] = bytes[i % len]
@@ -1763,11 +1679,11 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
 // HELPER FUNCTIONS
 // ================
 
-var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+var INVALID_BASE64_RE = /[^+/0-9A-Za-z-_]/g
 
 function base64clean (str) {
   // Node strips out invalid characters like \n and \t from the string, base64-js does not
-  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  str = str.trim().replace(INVALID_BASE64_RE, '')
   // Node converts strings with length < 2 to ''
   if (str.length < 2) return ''
   // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
@@ -1775,11 +1691,6 @@ function base64clean (str) {
     str = str + '='
   }
   return str
-}
-
-function stringtrim (str) {
-  if (str.trim) return str.trim()
-  return str.replace(/^\s+|\s+$/g, '')
 }
 
 function toHex (n) {
@@ -1904,20 +1815,24 @@ function blitBuffer (src, dst, offset, length) {
   return i
 }
 
-function isnan (val) {
-  return val !== val // eslint-disable-line no-self-compare
+// ArrayBuffers from another context (i.e. an iframe) do not pass the `instanceof` check
+// but they should be treated as valid. See: https://github.com/feross/buffer/issues/166
+function isArrayBuffer (obj) {
+  return obj instanceof ArrayBuffer ||
+    (obj != null && obj.constructor != null && obj.constructor.name === 'ArrayBuffer' &&
+      typeof obj.byteLength === 'number')
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+// Node 0.10 supports `ArrayBuffer` but lacks `ArrayBuffer.isView`
+function isArrayBufferView (obj) {
+  return (typeof ArrayBuffer.isView === 'function') && ArrayBuffer.isView(obj)
+}
 
-},{"base64-js":1,"ieee754":5,"isarray":4}],4:[function(require,module,exports){
-var toString = {}.toString;
+function numberIsNaN (obj) {
+  return obj !== obj // eslint-disable-line no-self-compare
+}
 
-module.exports = Array.isArray || function (arr) {
-  return toString.call(arr) == '[object Array]';
-};
-
-},{}],5:[function(require,module,exports){
+},{"base64-js":1,"ieee754":4}],4:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -2003,7 +1918,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],6:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 var factories = [];
 factories[0] = function () {
@@ -2081,12 +1996,12 @@ var Event = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Event;
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 var Event_1 = require('./Event');
 exports.Event = Event_1.default;
 
-},{"./Event":6}],8:[function(require,module,exports){
+},{"./Event":5}],7:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2315,7 +2230,7 @@ var substr = 'ab'.substr(-1) === 'b'
 
 }).call(this,require('_process'))
 
-},{"_process":9}],9:[function(require,module,exports){
+},{"_process":8}],8:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -2501,7 +2416,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /*!
 * screenfull
 * v3.3.1 - 2017-07-07
@@ -2671,7 +2586,7 @@ process.umask = function() { return 0; };
 	}
 })();
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 // A library of seedable RNGs implemented in Javascript.
 //
 // Usage:
@@ -2733,7 +2648,7 @@ sr.tychei = tychei;
 
 module.exports = sr;
 
-},{"./lib/alea":12,"./lib/tychei":13,"./lib/xor128":14,"./lib/xor4096":15,"./lib/xorshift7":16,"./lib/xorwow":17,"./seedrandom":18}],12:[function(require,module,exports){
+},{"./lib/alea":11,"./lib/tychei":12,"./lib/xor128":13,"./lib/xor4096":14,"./lib/xorshift7":15,"./lib/xorwow":16,"./seedrandom":17}],11:[function(require,module,exports){
 // A port of an algorithm by Johannes Baagøe <baagoe@baagoe.com>, 2010
 // http://baagoe.com/en/RandomMusings/javascript/
 // https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
@@ -2849,7 +2764,7 @@ if (module && module.exports) {
 
 
 
-},{}],13:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 // A Javascript implementaion of the "Tyche-i" prng algorithm by
 // Samuel Neves and Filipe Araujo.
 // See https://eden.dei.uc.pt/~sneves/pubs/2011-snfa2.pdf
@@ -2954,7 +2869,7 @@ if (module && module.exports) {
 
 
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 // A Javascript implementaion of the "xor128" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -3037,7 +2952,7 @@ if (module && module.exports) {
 
 
 
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // A Javascript implementaion of Richard Brent's Xorgens xor4096 algorithm.
 //
 // This fast non-cryptographic random number generator is designed for
@@ -3185,7 +3100,7 @@ if (module && module.exports) {
   (typeof define) == 'function' && define   // present with an AMD loader
 );
 
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // A Javascript implementaion of the "xorshift7" algorithm by
 // François Panneton and Pierre L'ecuyer:
 // "On the Xorgshift Random Number Generators"
@@ -3284,7 +3199,7 @@ if (module && module.exports) {
 );
 
 
-},{}],17:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 // A Javascript implementaion of the "xorwow" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -3372,7 +3287,7 @@ if (module && module.exports) {
 
 
 
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /*
 Copyright 2014 David Bau.
 
@@ -3621,7 +3536,7 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":2}],19:[function(require,module,exports){
+},{"crypto":2}],18:[function(require,module,exports){
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
@@ -3883,7 +3798,7 @@ return index;
 })));
 
 
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 (function (global){
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -4097,7 +4012,7 @@ var __asyncValues;
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -4122,14 +4037,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],23:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -4720,7 +4635,7 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./support/isBuffer":22,"_process":9,"inherits":21}],24:[function(require,module,exports){
+},{"./support/isBuffer":21,"_process":8,"inherits":20}],23:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -4738,20 +4653,20 @@ var AbstractCLI = (function () {
 }());
 exports.default = AbstractCLI;
 
-},{"microevent.ts":7}],25:[function(require,module,exports){
+},{"microevent.ts":6}],24:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CommandInterpreter = (function () {
     function CommandInterpreter(commandTable) {
         this._commandTable = {};
         this._aliasTable = {};
-        if (typeof (commandTable) !== 'undefined') {
+        if (typeof commandTable !== 'undefined') {
             this.registerCommands(commandTable);
         }
     }
     CommandInterpreter.prototype.registerCommands = function (commandTable) {
         var _this = this;
-        Object.keys(commandTable).forEach(function (command) { return _this._commandTable[command] = commandTable[command]; });
+        Object.keys(commandTable).forEach(function (command) { return (_this._commandTable[command] = commandTable[command]); });
     };
     CommandInterpreter.prototype.execute = function (cmd) {
         cmd = cmd.replace(/;.*/, '');
@@ -4774,19 +4689,18 @@ var CommandInterpreter = (function () {
         var candidates = Object.keys(this._commandTable).filter(function (candidate) { return candidate.indexOf(name) === 0; });
         var nCandidates = candidates.length;
         if (nCandidates > 1) {
-            throw new Error('ambiguous command ' + name + ', candidates are ' +
-                candidates.join(', ').replace(/, $/, ''));
+            throw new Error('ambiguous command ' + name + ', candidates are ' + candidates.join(', ').replace(/, $/, ''));
         }
         if (nCandidates === 0) {
             throw new Error('invalid command ' + name);
         }
-        return this._aliasTable[name] = this._commandTable[candidates[0]];
+        return (this._aliasTable[name] = this._commandTable[candidates[0]]);
     };
     return CommandInterpreter;
 }());
 exports.default = CommandInterpreter;
 
-},{}],26:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var pathlib = require("path");
@@ -4815,7 +4729,7 @@ var Completer = (function () {
         if (!this._fsProvider) {
             return [];
         }
-        if (path && path[path.length - 1] === pathlib.sep || path[path.length - 1] === '/') {
+        if ((path && path[path.length - 1] === pathlib.sep) || path[path.length - 1] === '/') {
             dirname = path;
             basename = '';
         }
@@ -4832,8 +4746,9 @@ var Completer = (function () {
         var _this = this;
         return paths.map(function (path) {
             try {
-                return (_this._fsProvider.getTypeSync(path) === 0 ?
-                    pathlib.join(path, pathlib.sep) : path);
+                return _this._fsProvider.getTypeSync(path) === 0
+                    ? pathlib.join(path, pathlib.sep)
+                    : path;
             }
             catch (e) {
                 return path;
@@ -4854,7 +4769,7 @@ var Completer = (function () {
 })(Completer || (Completer = {}));
 exports.default = Completer;
 
-},{"path":8}],27:[function(require,module,exports){
+},{"path":7}],26:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4882,7 +4797,8 @@ var DebuggerCLI = (function (_super) {
         var _this = this;
         this._fsProvider.pushd(path.dirname(filename));
         try {
-            this._fsProvider.readTextFileSync(path.basename(filename))
+            this._fsProvider
+                .readTextFileSync(path.basename(filename))
                 .split('\n')
                 .forEach(function (line) {
                 _this.pushInput(line);
@@ -4940,7 +4856,7 @@ var DebuggerCLI = (function (_super) {
     DebuggerCLI.prototype._extendCommandInterpreter = function () {
         var _this = this;
         this._commandInterpreter.registerCommands({
-            'quit': function () {
+            quit: function () {
                 _this._quit();
                 return 'bye';
             },
@@ -4962,7 +4878,7 @@ var DebuggerCLI = (function (_super) {
         }
     };
     DebuggerCLI.prototype._outputLine = function (line) {
-        this._output += (line + '\n');
+        this._output += line + '\n';
         this.events.outputAvailable.dispatch(undefined);
     };
     DebuggerCLI.prototype._getCommandInterpreter = function () {
@@ -4972,7 +4888,7 @@ var DebuggerCLI = (function (_super) {
 }(AbstractCLI_1.default));
 exports.default = DebuggerCLI;
 
-},{"../machine/Debugger":35,"../machine/vanilla/Board":90,"./AbstractCLI":24,"./CommandInterpreter":25,"./DebuggerFrontend":28,"path":8,"tslib":20}],28:[function(require,module,exports){
+},{"../machine/Debugger":34,"../machine/vanilla/Board":89,"./AbstractCLI":23,"./CommandInterpreter":24,"./DebuggerFrontend":27,"path":7,"tslib":19}],27:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface_1 = require("../machine/board/BoardInterface");
@@ -4996,31 +4912,31 @@ var DebuggerFrontend = (function () {
         this._fileSystemProvider = _fileSystemProvider;
         this._commandInterpreter = _commandInterpreter;
         this._commandInterpreter.registerCommands({
-            'disassemble': this._disassemble.bind(this),
-            'dump': this._dump.bind(this),
-            'load': this._load.bind(this),
-            'hex2dec': this._hex2dec.bind(this),
-            'dec2hex': this._dec2hex.bind(this),
-            'state': this._state.bind(this),
-            'boot': this._boot.bind(this),
-            'stack': this._stack.bind(this),
-            'step': this._step.bind(this),
+            disassemble: this._disassemble.bind(this),
+            dump: this._dump.bind(this),
+            load: this._load.bind(this),
+            hex2dec: this._hex2dec.bind(this),
+            dec2hex: this._dec2hex.bind(this),
+            state: this._state.bind(this),
+            boot: this._boot.bind(this),
+            stack: this._stack.bind(this),
+            step: this._step.bind(this),
             'step-clock': this._stepClock.bind(this),
-            'reset': function () { return _this._reset(false); },
+            reset: function () { return _this._reset(false); },
             'reset-hard': function () { return _this._reset(true); },
             'break-on': this._enableBreakpoints.bind(this),
             'break-off': this._disableBreakpoints.bind(this),
-            'break': this._setBreakpoint.bind(this),
+            break: this._setBreakpoint.bind(this),
             'break-clear': this._clearBreakpoint.bind(this),
             'break-dump': this._showBreakpoints.bind(this),
             'break-clear-all': this._clearAllBreakpoints.bind(this),
             'trace-on': this._enableTrace.bind(this),
             'trace-off': this._disableTrace.bind(this),
-            'trace': this._trace.bind(this)
+            trace: this._trace.bind(this)
         });
     }
     DebuggerFrontend.prototype.describeTrap = function (trap) {
-        if (typeof (trap) === 'undefined') {
+        if (typeof trap === 'undefined') {
             trap = this._debugger.getLastTrap();
         }
         if (!trap) {
@@ -5072,7 +4988,7 @@ var DebuggerFrontend = (function () {
     DebuggerFrontend.prototype._boot = function () {
         var board = this._debugger.getBoard();
         var cycles = 0;
-        var clockHandler = function (clock) { return cycles += clock; };
+        var clockHandler = function (clock) { return (cycles += clock); };
         board.cpuClock.addHandler(clockHandler);
         var exception;
         try {
@@ -5083,7 +4999,7 @@ var DebuggerFrontend = (function () {
         }
         board.cpuClock.removeHandler(clockHandler);
         if (exception) {
-            throw (exception);
+            throw exception;
         }
         return util.format('Boot successful in %s cycles', cycles);
     };
@@ -5144,14 +5060,14 @@ var DebuggerFrontend = (function () {
         var requestedCycles = args.length > 0 ? decodeNumber(args[0]) : 1, timestamp = Date.now();
         var cycles = this._debugger.stepClock(requestedCycles);
         var time = Date.now() - timestamp, trap = this._debugger.getLastTrap();
-        return "clock stepped " + cycles + " cycles in " + time + " msec; " +
-            ("now at " + this._debugger.disassemble(1) + "\n" + (trap ? this.describeTrap(trap) : ''));
+        return ("clock stepped " + cycles + " cycles in " + time + " msec; " +
+            ("now at " + this._debugger.disassemble(1) + "\n" + (trap ? this.describeTrap(trap) : '')));
     };
     return DebuggerFrontend;
 }());
 exports.default = DebuggerFrontend;
 
-},{"../machine/board/BoardInterface":36,"../tools/hex":95,"util":23}],29:[function(require,module,exports){
+},{"../machine/board/BoardInterface":35,"../tools/hex":94,"util":22}],28:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Completer_1 = require("./Completer");
@@ -5161,9 +5077,7 @@ var JqtermCLIRunner = (function () {
         var _this = this;
         this._cli = _cli;
         this._updateCompleter();
-        this._terminal = terminalElt.terminal(function (input, terminal) {
-            return _this._cli.pushInput(input);
-        }, {
+        this._terminal = terminalElt.terminal(function (input, terminal) { return _this._cli.pushInput(input); }, {
             greetings: 'Ready.',
             completion: this._getCompletionHandler(),
             exit: false,
@@ -5202,7 +5116,7 @@ var JqtermCLIRunner = (function () {
 }());
 exports.default = JqtermCLIRunner;
 
-},{"./Completer":26}],30:[function(require,module,exports){
+},{"./Completer":25}],29:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CotrolPanelManagementProvider = (function () {
@@ -5216,7 +5130,7 @@ var CotrolPanelManagementProvider = (function () {
             },
             'switch-difficulty-player-1': function (args) {
                 return _this._changeDifficultySwitch(_this._controlPanel.getDifficultySwitchP1(), 1, args);
-            },
+            }
         };
     }
     CotrolPanelManagementProvider.prototype.getCommands = function () {
@@ -5267,7 +5181,7 @@ var CotrolPanelManagementProvider = (function () {
 }());
 exports.default = CotrolPanelManagementProvider;
 
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -5291,7 +5205,7 @@ var StellaCLI = (function (_super) {
         var _this = _super.call(this, fsProvider) || this;
         _this._cartridgeFile = _cartridgeFile;
         _this.hardwareInitialized = new microevent_ts_1.Event();
-        _this._stellaConfig = new Config_1.default();
+        _this._stellaConfig = Config_1.default.create();
         _this._limitingScheduler = new ConstantCycles_1.default();
         _this._nonLimitingScheduler = new ImmedateScheduler_1.default();
         _this._state = 0;
@@ -5471,7 +5385,7 @@ var StellaCLI = (function (_super) {
 }(DebuggerCLI_1.default));
 exports.default = StellaCLI;
 
-},{"../../machine/stella/Board":44,"../../machine/stella/Config":46,"../../machine/stella/cartridge/CartridgeFactory":67,"../../machine/stella/cartridge/CartridgeInfo":68,"../../tools/ClockProbe":93,"../../tools/scheduler/ImmedateScheduler":102,"../../tools/scheduler/PeriodicScheduler":103,"../../tools/scheduler/limiting/ConstantCycles":105,"../CommandInterpreter":25,"../DebuggerCLI":27,"./ControlPanelManagementProvider":30,"./SystemConfigSetupProvider":32,"microevent.ts":7,"tslib":20}],32:[function(require,module,exports){
+},{"../../machine/stella/Board":43,"../../machine/stella/Config":45,"../../machine/stella/cartridge/CartridgeFactory":66,"../../machine/stella/cartridge/CartridgeInfo":67,"../../tools/ClockProbe":92,"../../tools/scheduler/ImmedateScheduler":101,"../../tools/scheduler/PeriodicScheduler":102,"../../tools/scheduler/limiting/ConstantCycles":104,"../CommandInterpreter":24,"../DebuggerCLI":26,"./ControlPanelManagementProvider":29,"./SystemConfigSetupProvider":31,"microevent.ts":6,"tslib":19}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../../machine/stella/Config");
@@ -5480,9 +5394,9 @@ var SystemConfigSetupProvider = (function () {
         this._config = _config;
         this._commands = {
             'tv-mode': this._setupVideo.bind(this),
-            'audio': this._setupAudio.bind(this),
-            'paddles': this._setupPaddles.bind(this),
-            'seed': this._setRandomSeed.bind(this)
+            audio: this._setupAudio.bind(this),
+            paddles: this._setupPaddles.bind(this),
+            seed: this._setRandomSeed.bind(this)
         };
     }
     SystemConfigSetupProvider.prototype.getCommands = function () {
@@ -5515,7 +5429,7 @@ var SystemConfigSetupProvider = (function () {
     };
     SystemConfigSetupProvider.prototype._setupPaddles = function (args) {
         if (args && args.length !== 0) {
-            this._config.emulatePaddles = (this._isArgTruthy(args[0]));
+            this._config.emulatePaddles = this._isArgTruthy(args[0]);
         }
         return "paddle emulation: " + (this._config.emulatePaddles ? 'enabled' : 'disabled');
     };
@@ -5545,7 +5459,7 @@ var SystemConfigSetupProvider = (function () {
 }());
 exports.default = SystemConfigSetupProvider;
 
-},{"../../machine/stella/Config":46}],33:[function(require,module,exports){
+},{"../../machine/stella/Config":45}],32:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var pathlib = require("path");
@@ -5556,7 +5470,7 @@ var AbstractFileSystemProvider = (function () {
     }
     AbstractFileSystemProvider.prototype.pushd = function (path) {
         this._directoryStack.unshift(this._cwd);
-        if (typeof (path) !== 'undefined') {
+        if (typeof path !== 'undefined') {
             this.chdir(path);
         }
     };
@@ -5581,7 +5495,7 @@ var AbstractFileSystemProvider = (function () {
 }());
 exports.default = AbstractFileSystemProvider;
 
-},{"path":8}],34:[function(require,module,exports){
+},{"path":7}],33:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -5599,7 +5513,7 @@ var PrepackagedFilesystemProvider = (function (_super) {
     PrepackagedFilesystemProvider.prototype.readBinaryFileSync = function (name) {
         name = this._resolvePath(name);
         var content = this._lookup(name);
-        if (typeof (content) === 'undefined') {
+        if (typeof content === 'undefined') {
             throw new Error(util.format('%s not part of file bundle', name));
         }
         if (!Buffer.isBuffer(content)) {
@@ -5614,10 +5528,10 @@ var PrepackagedFilesystemProvider = (function (_super) {
     PrepackagedFilesystemProvider.prototype.readDirSync = function (name) {
         name = this._resolvePath(name);
         var content = this._lookup(name);
-        if (typeof (content) === 'undefined') {
+        if (typeof content === 'undefined') {
             throw new Error(util.format('%s not part of file bundle', name));
         }
-        if (typeof (content) === 'string' || Buffer.isBuffer(content)) {
+        if (typeof content === 'string' || Buffer.isBuffer(content)) {
             throw new Error(util.format('%s is a file, not a directory', name));
         }
         return Object.keys(content);
@@ -5625,7 +5539,7 @@ var PrepackagedFilesystemProvider = (function (_super) {
     PrepackagedFilesystemProvider.prototype.getTypeSync = function (name) {
         name = this._resolvePath(name);
         var content = this._lookup(name);
-        if (typeof (content) === 'undefined') {
+        if (typeof content === 'undefined') {
             throw new Error(util.format('%s not part of file bundle', name));
         }
         if (Buffer.isBuffer(content)) {
@@ -5650,7 +5564,7 @@ var PrepackagedFilesystemProvider = (function (_super) {
                 return undefined;
             }
         }
-        if (name && typeof (scope[name]) === 'string') {
+        if (name && typeof scope[name] === 'string') {
             scope[name] = new Buffer(scope[name], 'base64');
         }
         return name ? scope[name] : scope;
@@ -5661,7 +5575,7 @@ exports.default = PrepackagedFilesystemProvider;
 
 }).call(this,require("buffer").Buffer)
 
-},{"./AbstractFileSystemProvider":33,"buffer":3,"tslib":20,"util":23}],35:[function(require,module,exports){
+},{"./AbstractFileSystemProvider":32,"buffer":3,"tslib":19,"util":22}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./cpu/Instruction");
@@ -5724,8 +5638,7 @@ var Debugger = (function () {
         var result = '';
         for (var address = 0; address < 0x10000; address++) {
             if (this._breakpoints[address]) {
-                result += (hex.encode(address, 4) + ': ' +
-                    this._breakpointDescriptions[address] + '\n');
+                result += hex.encode(address, 4) + ': ' + this._breakpointDescriptions[address] + '\n';
             }
         }
         return result.replace(/\n$/, '');
@@ -5742,9 +5655,12 @@ var Debugger = (function () {
         while (i < length) {
             address = (start + i) % 0x10000;
             instruction = Instruction_1.default.opcodes[this._peek(address)];
-            result += ((this._breakpoints[address] ? '(B) ' : '    ') +
-                hex.encode(address, 4) + ':   ' +
-                this._disassembler.disassembleAt(address) + '\n');
+            result +=
+                (this._breakpoints[address] ? '(B) ' : '    ') +
+                    hex.encode(address, 4) +
+                    ':   ' +
+                    this._disassembler.disassembleAt(address) +
+                    '\n';
             i += instruction.getSize();
         }
         return result.replace(/\n$/, '');
@@ -5757,7 +5673,8 @@ var Debugger = (function () {
         var result = '';
         length = Math.min(length, this._traceLength);
         for (var i = 0; i < length; i++) {
-            result += (this.disassembleAt(this._trace[(this._traceSize + this._traceIndex - length + i) % this._traceSize], 1) + '\n');
+            result +=
+                this.disassembleAt(this._trace[(this._traceSize + this._traceIndex - length + i) % this._traceSize], 1) + '\n';
         }
         return result + this.disassemble(1);
     };
@@ -5765,8 +5682,7 @@ var Debugger = (function () {
         var result = '', address;
         for (var i = 0; i < length; i++) {
             address = (start + i) % 0x10000;
-            result += (hex.encode(address, 4) + ':   ' +
-                hex.encode(this._peek(address), 2) + '\n');
+            result += hex.encode(address, 4) + ':   ' + hex.encode(this._peek(address), 2) + '\n';
         }
         return result.replace(/\n$/, '');
     };
@@ -5776,18 +5692,29 @@ var Debugger = (function () {
             case 0:
         }
         var result = '' +
-            'A = ' + hex.encode(state.a, 2) + '   ' +
-            'X = ' + hex.encode(state.x, 2) + '   ' +
-            'Y = ' + hex.encode(state.y, 2) + '   ' +
-            'S = ' + hex.encode(state.s, 2) + '   ' +
-            'P = ' + hex.encode(state.p, 4) + '\n' +
-            'flags = ' + binary.encode(state.flags, 8) + '\n' +
-            'state: ' + this._humanReadableExecutionState();
+            'A = ' +
+            hex.encode(state.a, 2) +
+            '   ' +
+            'X = ' +
+            hex.encode(state.x, 2) +
+            '   ' +
+            'Y = ' +
+            hex.encode(state.y, 2) +
+            '   ' +
+            'S = ' +
+            hex.encode(state.s, 2) +
+            '   ' +
+            'P = ' +
+            hex.encode(state.p, 4) +
+            '\n' +
+            'flags = ' +
+            binary.encode(state.flags, 8) +
+            '\n' +
+            'state: ' +
+            this._humanReadableExecutionState();
         var boardState = this._board.getBoardStateDebug();
         if (boardState) {
-            result += ('\n' +
-                '\n' +
-                boardState);
+            result += '\n' + '\n' + boardState;
         }
         return result;
     };
@@ -5797,7 +5724,7 @@ var Debugger = (function () {
     Debugger.prototype.step = function (instructions) {
         var instruction = 0, cycles = 0, lastExecutionState = this._cpu.executionState, cpuCycles = 0;
         var timer = this._board.getTimer();
-        var cpuClockHandler = function (c) { return cpuCycles += c; };
+        var cpuClockHandler = function (c) { return (cpuCycles += c); };
         this._board.cpuClock.addHandler(cpuClockHandler);
         this._lastTrap = undefined;
         this._board.resume();
@@ -5887,13 +5814,13 @@ var Debugger = (function () {
         return this._bus.peek(address % 0x10000);
     };
     Debugger.prototype._poke = function (address, value) {
-        this._bus.poke(address % 0x10000, value & 0xFF);
+        this._bus.poke(address % 0x10000, value & 0xff);
     };
     return Debugger;
 }());
 exports.default = Debugger;
 
-},{"../tools/binary":94,"../tools/hex":95,"./board/BoardInterface":36,"./cpu/CpuInterface":38,"./cpu/Disassembler":39,"./cpu/Instruction":40,"util":23}],36:[function(require,module,exports){
+},{"../tools/binary":93,"../tools/hex":94,"./board/BoardInterface":35,"./cpu/CpuInterface":37,"./cpu/Disassembler":38,"./cpu/Instruction":39,"util":22}],35:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface;
@@ -5910,62 +5837,64 @@ var BoardInterface;
 })(BoardInterface || (BoardInterface = {}));
 exports.default = BoardInterface;
 
-},{}],37:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./Instruction");
 var CpuInterface_1 = require("./CpuInterface");
 function restoreFlagsFromStack(state, bus) {
-    state.s = (state.s + 0x01) & 0xFF;
-    state.flags = (bus.read(0x0100 + state.s) | 32) & (~16);
+    state.s = (state.s + 0x01) & 0xff;
+    state.flags = (bus.read(0x0100 + state.s) | 32) & ~16;
 }
 function setFlagsNZ(state, operand) {
-    state.flags = (state.flags & ~(128 | 2)) |
-        (operand & 0x80) |
-        (operand ? 0 : 2);
+    state.flags =
+        (state.flags & ~(128 | 2)) |
+            (operand & 0x80) |
+            (operand ? 0 : 2);
 }
 function dispatchInterrupt(state, bus, vector) {
     var nextOpAddr = state.p;
     if (state.nmi) {
-        vector = 0xFFFA;
+        vector = 0xfffa;
     }
     state.nmi = state.irq = false;
-    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, state.flags & (~16));
-    state.s = (state.s + 0xFF) & 0xFF;
+    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, nextOpAddr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, state.flags & ~16);
+    state.s = (state.s + 0xff) & 0xff;
     state.flags |= 4;
-    state.p = (bus.readWord(vector));
+    state.p = bus.readWord(vector);
 }
 function opIrq(state, bus) {
-    dispatchInterrupt(state, bus, 0xFFFE);
+    dispatchInterrupt(state, bus, 0xfffe);
 }
 function opNmi(state, bus) {
-    dispatchInterrupt(state, bus, 0xFFFA);
+    dispatchInterrupt(state, bus, 0xfffa);
 }
 function opBoot(state, bus) {
-    state.p = bus.readWord(0xFFFC);
+    state.p = bus.readWord(0xfffc);
 }
 function opAdc(state, bus, operand) {
     if (state.flags & 8) {
-        var d0 = (operand & 0x0F) + (state.a & 0x0F) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
+        var d0 = (operand & 0x0f) + (state.a & 0x0f) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
         state.a = (d0 % 10) | ((d1 % 10) << 4);
-        state.flags = (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (d1 > 9 ? 1 : 0);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 > 9 ? 1 : 0);
     }
     else {
-        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
         state.flags =
             (state.flags &
                 ~(128 | 2 | 1 | 64)) |
                 (result & 0x80) |
                 (result ? 0 : 2) |
                 (sum >>> 8) |
-                (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
         state.a = result;
     }
 }
@@ -5975,42 +5904,44 @@ function opAnd(state, bus, operand) {
 }
 function opAslAcc(state) {
     var old = state.a;
-    state.a = (state.a << 1) & 0xFF;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old >>> 7);
+    state.a = (state.a << 1) & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
 }
 function opAslMem(state, bus, operand) {
-    var old = bus.read(operand), value = (old << 1) & 0xFF;
+    var old = bus.read(operand), value = (old << 1) & 0xff;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old >>> 7);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old >>> 7);
 }
 function opBit(state, bus, operand) {
     state.flags =
         (state.flags & ~(128 | 64 | 2)) |
             (operand & (128 | 64)) |
-            ((operand & state.a) ? 0 : 2);
+            (operand & state.a ? 0 : 2);
 }
 function opBrk(state, bus) {
-    var nextOpAddr = (state.p + 1) & 0xFFFF;
-    var vector = 0xFFFE;
+    var nextOpAddr = (state.p + 1) & 0xffff;
+    var vector = 0xfffe;
     if (state.nmi) {
-        vector = 0xFFFA;
+        vector = 0xfffa;
         state.nmi = false;
     }
     state.nmi = state.irq = false;
-    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
+    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, nextOpAddr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
     bus.write(state.s + 0x0100, state.flags | 16);
-    state.s = (state.s + 0xFF) & 0xFF;
+    state.s = (state.s + 0xff) & 0xff;
     state.flags |= 4;
-    state.p = (bus.readWord(vector));
+    state.p = bus.readWord(vector);
 }
 function opClc(state) {
     state.flags &= ~1;
@@ -6025,33 +5956,36 @@ function opClv(state) {
     state.flags &= ~64;
 }
 function opCmp(state, bus, operand) {
-    var diff = state.a + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.a + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opCpx(state, bus, operand) {
-    var diff = state.x + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.x + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opCpy(state, bus, operand) {
-    var diff = state.y + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.y + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opDec(state, bus, operand) {
-    var value = (bus.read(operand) + 0xFF) & 0xFF;
+    var value = (bus.read(operand) + 0xff) & 0xff;
     bus.write(operand, value);
     setFlagsNZ(state, value);
 }
 function opDex(state) {
-    state.x = (state.x + 0xFF) & 0xFF;
+    state.x = (state.x + 0xff) & 0xff;
     setFlagsNZ(state, state.x);
 }
 function opEor(state, bus, operand) {
@@ -6059,33 +5993,33 @@ function opEor(state, bus, operand) {
     setFlagsNZ(state, state.a);
 }
 function opDey(state) {
-    state.y = (state.y + 0xFF) & 0xFF;
+    state.y = (state.y + 0xff) & 0xff;
     setFlagsNZ(state, state.y);
 }
 function opInc(state, bus, operand) {
-    var value = (bus.read(operand) + 1) & 0xFF;
+    var value = (bus.read(operand) + 1) & 0xff;
     bus.write(operand, value);
     setFlagsNZ(state, value);
 }
 function opInx(state) {
-    state.x = (state.x + 0x01) & 0xFF;
+    state.x = (state.x + 0x01) & 0xff;
     setFlagsNZ(state, state.x);
 }
 function opIny(state) {
-    state.y = (state.y + 0x01) & 0xFF;
+    state.y = (state.y + 0x01) & 0xff;
     setFlagsNZ(state, state.y);
 }
 function opJmp(state, bus, operand) {
     state.p = operand;
 }
 function opJsr(state, bus, operand) {
-    var returnPtr = (state.p + 1) & 0xFFFF, addrLo = bus.read(state.p);
+    var returnPtr = (state.p + 1) & 0xffff, addrLo = bus.read(state.p);
     bus.read(0x0100 + state.s);
     bus.write(0x0100 + state.s, returnPtr >>> 8);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(0x0100 + state.s, returnPtr & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    state.p = addrLo | (bus.read((state.p + 1) & 0xFFFF) << 8);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(0x0100 + state.s, returnPtr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    state.p = addrLo | (bus.read((state.p + 1) & 0xffff) << 8);
 }
 function opLda(state, bus, operand, addressingMode) {
     state.a = addressingMode === 1 ? operand : bus.read(operand);
@@ -6102,18 +6036,20 @@ function opLdy(state, bus, operand, addressingMode) {
 function opLsrAcc(state) {
     var old = state.a;
     state.a = state.a >>> 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
 }
 function opLsrMem(state, bus, operand) {
     var old = bus.read(operand), value = old >>> 1;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old & 1);
 }
 function opNop() { }
 function opOra(state, bus, operand) {
@@ -6122,88 +6058,94 @@ function opOra(state, bus, operand) {
 }
 function opPhp(state, bus) {
     bus.write(0x0100 + state.s, state.flags | 16);
-    state.s = (state.s + 0xFF) & 0xFF;
+    state.s = (state.s + 0xff) & 0xff;
 }
 function opPlp(state, bus) {
     restoreFlagsFromStack(state, bus);
 }
 function opPha(state, bus) {
     bus.write(0x0100 + state.s, state.a);
-    state.s = (state.s + 0xFF) & 0xFF;
+    state.s = (state.s + 0xff) & 0xff;
 }
 function opPla(state, bus) {
-    state.s = (state.s + 0x01) & 0xFF;
+    state.s = (state.s + 0x01) & 0xff;
     state.a = bus.read(0x0100 + state.s);
     setFlagsNZ(state, state.a);
 }
 function opRolAcc(state) {
     var old = state.a;
-    state.a = ((state.a << 1) & 0xFF) | (state.flags & 1);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old >>> 7);
+    state.a = ((state.a << 1) & 0xff) | (state.flags & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
 }
 function opRolMem(state, bus, operand) {
-    var old = bus.read(operand), value = ((old << 1) & 0xFF) | (state.flags & 1);
+    var old = bus.read(operand), value = ((old << 1) & 0xff) | (state.flags & 1);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old >>> 7);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old >>> 7);
 }
 function opRorAcc(state) {
     var old = state.a;
     state.a = (state.a >>> 1) | ((state.flags & 1) << 7);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
 }
 function opRorMem(state, bus, operand) {
     var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old & 1);
 }
 function opRti(state, bus) {
     var returnPtr;
     restoreFlagsFromStack(state, bus);
-    state.s = (state.s + 1) & 0xFF;
+    state.s = (state.s + 1) & 0xff;
     returnPtr = bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xFF;
-    returnPtr |= (bus.read(0x0100 + state.s) << 8);
+    state.s = (state.s + 1) & 0xff;
+    returnPtr |= bus.read(0x0100 + state.s) << 8;
     state.p = returnPtr;
 }
 function opRts(state, bus) {
     var returnPtr;
     bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xFF;
+    state.s = (state.s + 1) & 0xff;
     returnPtr = bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xFF;
-    returnPtr += (bus.read(0x0100 + state.s) << 8);
-    state.p = (returnPtr + 1) & 0xFFFF;
+    state.s = (state.s + 1) & 0xff;
+    returnPtr += bus.read(0x0100 + state.s) << 8;
+    state.p = (returnPtr + 1) & 0xffff;
 }
 function opSbc(state, bus, operand) {
     if (state.flags & 8) {
-        var d0 = ((state.a & 0x0F) - (operand & 0x0F) - (~state.flags & 1)), d1 = ((state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0));
+        var d0 = (state.a & 0x0f) - (operand & 0x0f) - (~state.flags & 1), d1 = (state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0);
         state.a = (d0 < 0 ? 10 + d0 : d0) | ((d1 < 0 ? 10 + d1 : d1) << 4);
-        state.flags = (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (d1 < 0 ? 0 : 1);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 < 0 ? 0 : 1);
     }
     else {
-        operand = (~operand & 0xFF);
-        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
-        state.flags = (state.flags &
-            ~(128 | 2 | 1 | 64)) |
-            (result & 0x80) |
-            (result ? 0 : 2) |
-            (sum >>> 8) |
-            (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
+        operand = ~operand & 0xff;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
+        state.flags =
+            (state.flags &
+                ~(128 | 2 | 1 | 64)) |
+                (result & 0x80) |
+                (result ? 0 : 2) |
+                (sum >>> 8) |
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
         state.a = result;
     }
 }
@@ -6251,27 +6193,30 @@ function opTya(state) {
 function opAlr(state, bus, operand) {
     var i = state.a & operand;
     state.a = i >>> 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (i & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (i & 1);
 }
 function opAxs(state, bus, operand) {
-    var value = (state.a & state.x) + (~operand & 0xFF) + 1;
-    state.x = value & 0xFF;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.x & 0x80) |
-        ((state.x & 0xFF) ? 0 : 2) |
-        (value >>> 8);
+    var value = (state.a & state.x) + (~operand & 0xff) + 1;
+    state.x = value & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.x & 0x80) |
+            (state.x & 0xff ? 0 : 2) |
+            (value >>> 8);
 }
 function opDcp(state, bus, operand) {
-    var value = (bus.read(operand) + 0xFF) & 0xFF;
+    var value = (bus.read(operand) + 0xff) & 0xff;
     bus.write(operand, value);
-    var diff = state.a + (~value & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.a + (~value & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opLax(state, bus, operand) {
     state.a = operand;
@@ -6279,7 +6224,7 @@ function opLax(state, bus, operand) {
     setFlagsNZ(state, operand);
 }
 function opArr(state, bus, operand) {
-    state.a = ((state.a & operand) >>> 1) | ((state.flags & 1) ? 0x80 : 0);
+    state.a = ((state.a & operand) >>> 1) | (state.flags & 1 ? 0x80 : 0);
     state.flags =
         (state.flags & ~(1 | 128 | 2 | 64)) |
             ((state.a & 0x40) >>> 6) |
@@ -6289,7 +6234,7 @@ function opArr(state, bus, operand) {
 }
 function opSlo(state, bus, operand) {
     var value = bus.read(operand);
-    state.flags = state.flags & ~1 | value >>> 7;
+    state.flags = (state.flags & ~1) | (value >>> 7);
     value = value << 1;
     bus.write(operand, value);
     state.a = state.a | value;
@@ -6312,7 +6257,7 @@ function opIsc(state, bus, operand) {
 function opAac(state, bus, operand) {
     state.a &= operand;
     setFlagsNZ(state, state.a);
-    state.flags = (state.flags & (~1)) | ((state.a & 0x80) >>> 7);
+    state.flags = (state.flags & ~1) | ((state.a & 0x80) >>> 7);
 }
 function opAtx(state, bus, operand) {
     state.a &= operand;
@@ -6370,13 +6315,13 @@ var Cpu = (function () {
         return this._lastInstructionPointer;
     };
     Cpu.prototype.reset = function () {
-        this.state.a = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.x = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.y = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.s = 0xFD;
-        this.state.p = this._rng ? this._rng.int(0xFFFF) : 0;
-        this.state.flags = (this._rng ? this._rng.int(0xFF) : 0) |
-            4 | 32 | 16;
+        this.state.a = this._rng ? this._rng.int(0xff) : 0;
+        this.state.x = this._rng ? this._rng.int(0xff) : 0;
+        this.state.y = this._rng ? this._rng.int(0xff) : 0;
+        this.state.s = 0xfd;
+        this.state.p = this._rng ? this._rng.int(0xffff) : 0;
+        this.state.flags =
+            (this._rng ? this._rng.int(0xff) : 0) | 4 | 32 | 16;
         this.state.irq = false;
         this.state.nmi = false;
         this.executionState = 0;
@@ -6458,7 +6403,7 @@ var Cpu = (function () {
                 if (this.state.flags & 1) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -6474,7 +6419,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -6486,7 +6431,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -6503,7 +6448,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -6511,7 +6456,7 @@ var Cpu = (function () {
                 if (this.state.flags & 2) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -6523,7 +6468,7 @@ var Cpu = (function () {
                 if (this.state.flags & 128) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -6535,7 +6480,7 @@ var Cpu = (function () {
                 if (this.state.flags & 64) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -6551,7 +6496,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -6827,102 +6772,102 @@ var Cpu = (function () {
                 }
                 return;
         }
-        this.state.p = (this.state.p + 1) & 0xFFFF;
+        this.state.p = (this.state.p + 1) & 0xffff;
         var value, base;
         switch (addressingMode) {
             case 1:
                 this._operand = this._bus.read(this.state.p);
                 dereference = false;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles++;
                 break;
             case 2:
                 this._operand = this._bus.read(this.state.p);
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles++;
                 break;
             case 3:
                 this._operand = this._bus.readWord(this.state.p);
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 this._opCycles += 2;
                 break;
             case 4:
                 value = this._bus.readWord(this.state.p);
-                if ((value & 0xFF) === 0xFF) {
-                    this._operand = this._bus.read(value) + (this._bus.read(value & 0xFF00) << 8);
+                if ((value & 0xff) === 0xff) {
+                    this._operand = this._bus.read(value) + (this._bus.read(value & 0xff00) << 8);
                 }
                 else {
                     this._operand = this._bus.readWord(value);
                 }
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 this._opCycles += 4;
                 break;
             case 5:
                 value = this._bus.read(this.state.p);
-                value = (value & 0x80) ? -(~(value - 1) & 0xFF) : value;
-                this._operand = (this.state.p + value + 0x10001) & 0xFFFF;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
-                this._opCycles += (((this._operand & 0xFF00) !== (this.state.p & 0xFF00)) ? 3 : 2);
+                value = value & 0x80 ? -(~(value - 1) & 0xff) : value;
+                this._operand = (this.state.p + value + 0x10001) & 0xffff;
+                this.state.p = (this.state.p + 1) & 0xffff;
+                this._opCycles += (this._operand & 0xff00) !== (this.state.p & 0xff00) ? 3 : 2;
                 break;
             case 6:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
-                this._operand = (base + this.state.x) & 0xFF;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this._operand = (base + this.state.x) & 0xff;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles += 2;
                 break;
             case 7:
                 value = this._bus.readWord(this.state.p);
-                this._operand = (value + this.state.x) & 0xFFFF;
-                if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
-                    this._bus.read((value & 0xFF00) | (this._operand & 0xFF));
+                this._operand = (value + this.state.x) & 0xffff;
+                if ((this._operand & 0xff00) !== (value & 0xff00)) {
+                    this._bus.read((value & 0xff00) | (this._operand & 0xff));
                 }
-                this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this._opCycles += slowIndexedAccess || (this._operand & 0xff00) !== (value & 0xff00) ? 3 : 2;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 break;
             case 9:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
-                this._operand = (base + this.state.y) & 0xFF;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this._operand = (base + this.state.y) & 0xff;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles += 2;
                 break;
             case 10:
                 value = this._bus.readWord(this.state.p);
-                this._operand = (value + this.state.y) & 0xFFFF;
-                if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
-                    this._bus.read((value & 0xFF00) | (this._operand & 0xFF));
+                this._operand = (value + this.state.y) & 0xffff;
+                if ((this._operand & 0xff00) !== (value & 0xff00)) {
+                    this._bus.read((value & 0xff00) | (this._operand & 0xff));
                 }
-                this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this._opCycles += slowIndexedAccess || (this._operand & 0xff00) !== (value & 0xff00) ? 3 : 2;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 break;
             case 8:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
-                value = (base + this.state.x) & 0xFF;
-                if (value === 0xFF) {
-                    this._operand = this._bus.read(0xFF) + (this._bus.read(0x00) << 8);
+                value = (base + this.state.x) & 0xff;
+                if (value === 0xff) {
+                    this._operand = this._bus.read(0xff) + (this._bus.read(0x00) << 8);
                 }
                 else {
                     this._operand = this._bus.readWord(value);
                 }
                 this._opCycles += 4;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 break;
             case 11:
                 value = this._bus.read(this.state.p);
-                if (value === 0xFF) {
-                    value = this._bus.read(0xFF) + (this._bus.read(0x00) << 8);
+                if (value === 0xff) {
+                    value = this._bus.read(0xff) + (this._bus.read(0x00) << 8);
                 }
                 else {
                     value = this._bus.readWord(value);
                 }
-                this._operand = (value + this.state.y) & 0xFFFF;
-                if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
-                    this._bus.read((value & 0xFF00) | (this._operand & 0xFF));
+                this._operand = (value + this.state.y) & 0xffff;
+                if ((this._operand & 0xff00) !== (value & 0xff00)) {
+                    this._bus.read((value & 0xff00) | (this._operand & 0xff));
                 }
-                this._opCycles += ((slowIndexedAccess || (value & 0xFF00) !== (this._operand & 0xFF00)) ? 4 : 3);
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this._opCycles += slowIndexedAccess || (value & 0xff00) !== (this._operand & 0xff00) ? 4 : 3;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 break;
         }
         if (dereference) {
@@ -6945,7 +6890,7 @@ var Cpu = (function () {
 }());
 exports.default = Cpu;
 
-},{"./CpuInterface":38,"./Instruction":40}],38:[function(require,module,exports){
+},{"./CpuInterface":37,"./Instruction":39}],37:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CpuInterface;
@@ -6967,7 +6912,7 @@ var CpuInterface;
 })(CpuInterface || (CpuInterface = {}));
 exports.default = CpuInterface;
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./Instruction");
@@ -6994,7 +6939,7 @@ var Disassembler = (function () {
             if (a === void 0) { a = address + 1; }
             return hex.encode(_this._peek(a) + (_this._peek(a + 1) << 8), 4);
         };
-        var decodeSint8 = function (value) { return (value & 0x80) ? (-(~(value - 1) & 0xFF)) : value; };
+        var decodeSint8 = function (value) { return (value & 0x80 ? -(~(value - 1) & 0xff) : value); };
         switch (instruction.addressingMode) {
             case 0:
                 return operation;
@@ -7008,9 +6953,11 @@ var Disassembler = (function () {
                 return operation + ' (' + read16() + ')';
             case 5:
                 var distance = decodeSint8(this._peek(address + 1));
-                return operation + ' ' +
-                    hex.encode(distance, 2) + ' ; -> '
-                    + hex.encode((0x10002 + address + distance) % 0x10000, 4);
+                return (operation +
+                    ' ' +
+                    hex.encode(distance, 2) +
+                    ' ; -> ' +
+                    hex.encode((0x10002 + address + distance) % 0x10000, 4));
             case 6:
                 return operation + ' ' + read8() + ',X';
             case 7:
@@ -7034,7 +6981,7 @@ var Disassembler = (function () {
 }());
 exports.default = Disassembler;
 
-},{"../../tools/hex":95,"./Instruction":40}],40:[function(require,module,exports){
+},{"../../tools/hex":94,"./Instruction":39}],39:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction = (function () {
@@ -7219,67 +7166,67 @@ exports.default = Instruction;
             Instruction.opcodes[_opcode].addressingMode = _addressingMode;
         }
         set(0x06, 2, 2);
-        set(0x0A, 2, 0);
-        set(0x0E, 2, 3);
+        set(0x0a, 2, 0);
+        set(0x0e, 2, 3);
         set(0x16, 2, 6);
-        set(0x1E, 2, 7);
+        set(0x1e, 2, 7);
         set(0x26, 39, 2);
-        set(0x2A, 39, 0);
-        set(0x2E, 39, 3);
+        set(0x2a, 39, 0);
+        set(0x2e, 39, 3);
         set(0x36, 39, 6);
-        set(0x3E, 39, 7);
+        set(0x3e, 39, 7);
         set(0x46, 32, 2);
-        set(0x4A, 32, 0);
-        set(0x4E, 32, 3);
+        set(0x4a, 32, 0);
+        set(0x4e, 32, 3);
         set(0x56, 32, 6);
-        set(0x5E, 32, 7);
+        set(0x5e, 32, 7);
         set(0x66, 40, 2);
-        set(0x6A, 40, 0);
-        set(0x6E, 40, 3);
+        set(0x6a, 40, 0);
+        set(0x6e, 40, 3);
         set(0x76, 40, 6);
-        set(0x7E, 40, 7);
+        set(0x7e, 40, 7);
         set(0x86, 48, 2);
-        set(0x8E, 48, 3);
+        set(0x8e, 48, 3);
         set(0x96, 48, 9);
-        set(0xA2, 30, 1);
-        set(0xA6, 30, 2);
-        set(0xAE, 30, 3);
-        set(0xB6, 30, 9);
-        set(0xBE, 30, 10);
-        set(0xC6, 20, 2);
-        set(0xCE, 20, 3);
-        set(0xD6, 20, 6);
-        set(0xDE, 20, 7);
-        set(0xE6, 24, 2);
-        set(0xEE, 24, 3);
-        set(0xF6, 24, 6);
-        set(0xFE, 24, 7);
+        set(0xa2, 30, 1);
+        set(0xa6, 30, 2);
+        set(0xae, 30, 3);
+        set(0xb6, 30, 9);
+        set(0xbe, 30, 10);
+        set(0xc6, 20, 2);
+        set(0xce, 20, 3);
+        set(0xd6, 20, 6);
+        set(0xde, 20, 7);
+        set(0xe6, 24, 2);
+        set(0xee, 24, 3);
+        set(0xf6, 24, 6);
+        set(0xfe, 24, 7);
         set(0x24, 6, 2);
-        set(0x2C, 6, 3);
-        set(0x4C, 27, 3);
-        set(0x6C, 27, 4);
+        set(0x2c, 6, 3);
+        set(0x4c, 27, 3);
+        set(0x6c, 27, 4);
         set(0x84, 49, 2);
-        set(0x8C, 49, 3);
+        set(0x8c, 49, 3);
         set(0x94, 49, 6);
-        set(0xA0, 31, 1);
-        set(0xA4, 31, 2);
-        set(0xAC, 31, 3);
-        set(0xB4, 31, 6);
-        set(0xBC, 31, 7);
-        set(0xC0, 19, 1);
-        set(0xC4, 19, 2);
-        set(0xCC, 19, 3);
-        set(0xE0, 18, 1);
-        set(0xE4, 18, 2);
-        set(0xEC, 18, 3);
+        set(0xa0, 31, 1);
+        set(0xa4, 31, 2);
+        set(0xac, 31, 3);
+        set(0xb4, 31, 6);
+        set(0xbc, 31, 7);
+        set(0xc0, 19, 1);
+        set(0xc4, 19, 2);
+        set(0xcc, 19, 3);
+        set(0xe0, 18, 1);
+        set(0xe4, 18, 2);
+        set(0xec, 18, 3);
         set(0x10, 9, 5);
         set(0x30, 7, 5);
         set(0x50, 11, 5);
         set(0x70, 12, 5);
         set(0x90, 3, 5);
-        set(0xB0, 4, 5);
-        set(0xD0, 8, 5);
-        set(0xF0, 5, 5);
+        set(0xb0, 4, 5);
+        set(0xd0, 8, 5);
+        set(0xf0, 5, 5);
         set(0x00, 10, 0);
         set(0x20, 28, 0);
         set(0x40, 41, 0);
@@ -7289,29 +7236,29 @@ exports.default = Instruction;
         set(0x48, 35, 0);
         set(0x68, 37, 0);
         set(0x88, 22, 0);
-        set(0xA8, 51, 0);
-        set(0xC8, 26, 0);
-        set(0xE8, 25, 0);
+        set(0xa8, 51, 0);
+        set(0xc8, 26, 0);
+        set(0xe8, 25, 0);
         set(0x18, 13, 0);
         set(0x38, 44, 0);
         set(0x58, 15, 0);
         set(0x78, 46, 0);
         set(0x98, 55, 0);
-        set(0xB8, 16, 0);
-        set(0xD8, 14, 0);
-        set(0xF8, 45, 0);
-        set(0x8A, 53, 0);
-        set(0x9A, 54, 0);
-        set(0xAA, 50, 0);
-        set(0xBA, 52, 0);
-        set(0xCA, 21, 0);
-        set(0xEA, 33, 0);
-        set(0x1A, 33, 0);
-        set(0x3A, 33, 0);
-        set(0x5A, 33, 0);
-        set(0x7A, 33, 0);
-        set(0xDA, 33, 0);
-        set(0xFA, 33, 0);
+        set(0xb8, 16, 0);
+        set(0xd8, 14, 0);
+        set(0xf8, 45, 0);
+        set(0x8a, 53, 0);
+        set(0x9a, 54, 0);
+        set(0xaa, 50, 0);
+        set(0xba, 52, 0);
+        set(0xca, 21, 0);
+        set(0xea, 33, 0);
+        set(0x1a, 33, 0);
+        set(0x3a, 33, 0);
+        set(0x5a, 33, 0);
+        set(0x7a, 33, 0);
+        set(0xda, 33, 0);
+        set(0xfa, 33, 0);
         set(0x04, 56, 2);
         set(0x14, 56, 6);
         set(0x34, 56, 6);
@@ -7322,60 +7269,60 @@ exports.default = Instruction;
         set(0x80, 56, 1);
         set(0x82, 56, 1);
         set(0x89, 56, 1);
-        set(0xC2, 56, 1);
-        set(0xD4, 56, 6);
-        set(0xE2, 56, 1);
-        set(0xF4, 56, 6);
-        set(0x0C, 57, 3);
-        set(0x1C, 57, 7);
-        set(0x3C, 57, 7);
-        set(0x5C, 57, 7);
-        set(0x7C, 57, 7);
-        set(0xDC, 57, 7);
-        set(0xFC, 57, 7);
-        set(0xEB, 43, 1);
-        set(0x4B, 58, 1);
-        set(0xCB, 59, 1);
-        set(0xC7, 60, 2);
-        set(0xD7, 60, 6);
-        set(0xCF, 60, 3);
-        set(0xDF, 60, 7);
-        set(0xDB, 60, 10);
-        set(0xC3, 60, 8);
-        set(0xD3, 60, 11);
-        set(0xA7, 61, 2);
-        set(0xB7, 61, 9);
-        set(0xAF, 61, 3);
-        set(0xBF, 61, 10);
-        set(0xA3, 61, 8);
-        set(0xB3, 61, 11);
-        set(0x6B, 62, 1);
+        set(0xc2, 56, 1);
+        set(0xd4, 56, 6);
+        set(0xe2, 56, 1);
+        set(0xf4, 56, 6);
+        set(0x0c, 57, 3);
+        set(0x1c, 57, 7);
+        set(0x3c, 57, 7);
+        set(0x5c, 57, 7);
+        set(0x7c, 57, 7);
+        set(0xdc, 57, 7);
+        set(0xfc, 57, 7);
+        set(0xeb, 43, 1);
+        set(0x4b, 58, 1);
+        set(0xcb, 59, 1);
+        set(0xc7, 60, 2);
+        set(0xd7, 60, 6);
+        set(0xcf, 60, 3);
+        set(0xdf, 60, 7);
+        set(0xdb, 60, 10);
+        set(0xc3, 60, 8);
+        set(0xd3, 60, 11);
+        set(0xa7, 61, 2);
+        set(0xb7, 61, 9);
+        set(0xaf, 61, 3);
+        set(0xbf, 61, 10);
+        set(0xa3, 61, 8);
+        set(0xb3, 61, 11);
+        set(0x6b, 62, 1);
         set(0x07, 63, 2);
         set(0x17, 63, 6);
-        set(0x0F, 63, 3);
-        set(0x1F, 63, 7);
-        set(0x1B, 63, 10);
+        set(0x0f, 63, 3);
+        set(0x1f, 63, 7);
+        set(0x1b, 63, 10);
         set(0x03, 63, 8);
         set(0x13, 63, 11);
         set(0x87, 64, 2);
         set(0x97, 64, 9);
         set(0x83, 64, 8);
-        set(0x8F, 64, 3);
-        set(0xBB, 65, 10);
-        set(0xE7, 66, 2);
-        set(0xF7, 66, 6);
-        set(0xEF, 66, 3);
-        set(0xFF, 66, 7);
-        set(0xFB, 66, 10);
-        set(0xE3, 66, 8);
-        set(0xF3, 66, 11);
-        set(0x0B, 67, 1);
-        set(0x2B, 67, 1);
-        set(0xAB, 68, 1);
+        set(0x8f, 64, 3);
+        set(0xbb, 65, 10);
+        set(0xe7, 66, 2);
+        set(0xf7, 66, 6);
+        set(0xef, 66, 3);
+        set(0xff, 66, 7);
+        set(0xfb, 66, 10);
+        set(0xe3, 66, 8);
+        set(0xf3, 66, 11);
+        set(0x0b, 67, 1);
+        set(0x2b, 67, 1);
+        set(0xab, 68, 1);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
 
-},{}],41:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Switch_1 = require("./Switch");
@@ -7406,7 +7353,7 @@ var DigitalJoystick = (function () {
 }());
 exports.default = DigitalJoystick;
 
-},{"./Switch":43}],42:[function(require,module,exports){
+},{"./Switch":42}],41:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -7431,7 +7378,7 @@ var Paddle = (function () {
 }());
 exports.default = Paddle;
 
-},{"./Switch":43,"microevent.ts":7}],43:[function(require,module,exports){
+},{"./Switch":42,"microevent.ts":6}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -7460,7 +7407,7 @@ var Switch = (function () {
 }());
 exports.default = Switch;
 
-},{"microevent.ts":7}],44:[function(require,module,exports){
+},{"microevent.ts":6}],43:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -7498,7 +7445,7 @@ var Board = (function () {
         this._rng = factory_1.createRng(_config.randomSeed < 0 ? Math.random() : _config.randomSeed);
         cartridge.randomize(this._rng);
         var bus = new Bus_1.default();
-        if (typeof (cpuFactory) === 'undefined') {
+        if (typeof cpuFactory === 'undefined') {
             cpuFactory = function (_bus, rng) { return new Cpu_1.default(_bus, rng); };
         }
         var controlPanel = new ControlPanel_1.default(), joystick0 = new DigitalJoystick_1.default(), joystick1 = new DigitalJoystick_1.default(), paddles = new Array(4);
@@ -7509,12 +7456,8 @@ var Board = (function () {
         var pia = new Pia_1.default(controlPanel, joystick0, joystick1, this._rng);
         var tia = new Tia_1.default(_config, joystick0, joystick1, paddles);
         cpu.setInvalidInstructionCallback(function () { return _this._onInvalidInstruction(); });
-        tia
-            .setCpu(cpu)
-            .setBus(bus);
-        cartridge
-            .setCpu(cpu)
-            .setBus(bus);
+        tia.setCpu(cpu).setBus(bus);
+        cartridge.setCpu(cpu).setBus(bus);
         pia.setBus(bus);
         bus
             .setTia(tia)
@@ -7529,7 +7472,9 @@ var Board = (function () {
         this._joystick0 = joystick0;
         this._joystick1 = joystick1;
         this._paddles = paddles;
-        this._bus.event.trap.addHandler(function (payload) { return _this.triggerTrap(1, payload.message); });
+        this._bus.event.trap.addHandler(function (payload) {
+            return _this.triggerTrap(1, payload.message);
+        });
         this._clockMhz = Config_1.default.getClockMhz(_config);
         this._sliceSize = 228 * (_config.tvMode === 0 ? 262 : 312);
         this.reset();
@@ -7619,13 +7564,15 @@ var Board = (function () {
     };
     Board.prototype.getBoardStateDebug = function () {
         var sep = '============';
-        return 'TIA:\n' +
-            sep + '\n' +
-            this._tia.getDebugState() + '\n' +
+        return ('TIA:\n' +
+            sep +
+            '\n' +
+            this._tia.getDebugState() +
+            '\n' +
             "\n" +
             "PIA:\n" +
             (sep + "\n") +
-            (this._pia.getDebugState() + "\n");
+            (this._pia.getDebugState() + "\n"));
     };
     Board.prototype.setClockMode = function (clockMode) {
         this._clockMode = clockMode;
@@ -7699,7 +7646,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../../tools/rng/factory":101,"../board/BoardInterface":36,"../cpu/Cpu":37,"../cpu/CpuInterface":38,"../io/DigitalJoystick":41,"../io/Paddle":42,"./Bus":45,"./Config":46,"./ControlPanel":47,"./Pia":48,"./tia/Tia":86,"microevent.ts":7}],45:[function(require,module,exports){
+},{"../../tools/rng/factory":100,"../board/BoardInterface":35,"../cpu/Cpu":36,"../cpu/CpuInterface":37,"../io/DigitalJoystick":40,"../io/Paddle":41,"./Bus":44,"./Config":45,"./ControlPanel":46,"./Pia":47,"./tia/Tia":85,"microevent.ts":6}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -7741,11 +7688,11 @@ var Bus = (function () {
         return this;
     };
     Bus.prototype.readWord = function (address) {
-        return this.read(address) | ((this.read((address + 1) & 0xFFFF)) << 8);
+        return this.read(address) | (this.read((address + 1) & 0xffff) << 8);
     };
     Bus.prototype.read = function (address) {
         this._lastAddressBusValue = address;
-        address &= 0x1FFF;
+        address &= 0x1fff;
         if (address & 0x1000) {
             this._lastDataBusValue = this._cartridge.read(address);
             this.event.read.dispatch(2);
@@ -7763,7 +7710,7 @@ var Bus = (function () {
     Bus.prototype.write = function (address, value) {
         this._lastDataBusValue = value;
         this._lastAddressBusValue = address;
-        address &= 0x1FFF;
+        address &= 0x1fff;
         if (address & 0x1000) {
             this._cartridge.write(address, value);
             this.event.write.dispatch(2);
@@ -7778,7 +7725,7 @@ var Bus = (function () {
         }
     };
     Bus.prototype.peek = function (address) {
-        address &= 0x1FFF;
+        address &= 0x1fff;
         if (address & 0x1000) {
             return this._cartridge.peek(address);
         }
@@ -7819,21 +7766,18 @@ var Bus = (function () {
 })(Bus || (Bus = {}));
 exports.default = Bus;
 
-},{"microevent.ts":7}],46:[function(require,module,exports){
+},{"microevent.ts":6}],45:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Config = (function () {
-    function Config(tvMode, enableAudio, randomSeed, emulatePaddles) {
-        if (tvMode === void 0) { tvMode = 0; }
-        if (enableAudio === void 0) { enableAudio = true; }
-        if (randomSeed === void 0) { randomSeed = -1; }
-        if (emulatePaddles === void 0) { emulatePaddles = true; }
-        this.tvMode = tvMode;
-        this.enableAudio = enableAudio;
-        this.randomSeed = randomSeed;
-        this.emulatePaddles = emulatePaddles;
+var tslib_1 = require("tslib");
+var Config;
+(function (Config) {
+    function create(config) {
+        if (config === void 0) { config = {}; }
+        return tslib_1.__assign({ tvMode: 0, enableAudio: true, randomSeed: -1, emulatePaddles: true, frameStart: -1 }, config);
     }
-    Config.getClockMhz = function (config) {
+    Config.create = create;
+    function getClockMhz(config) {
         switch (config.tvMode) {
             case 0:
                 return 3.579545;
@@ -7841,12 +7785,12 @@ var Config = (function () {
             case 2:
                 return 3.546894;
         }
-    };
-    return Config;
-}());
+    }
+    Config.getClockMhz = getClockMhz;
+})(Config || (Config = {}));
 exports.default = Config;
 
-},{}],47:[function(require,module,exports){
+},{"tslib":19}],46:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Switch_1 = require("../io/Switch");
@@ -7877,7 +7821,7 @@ var ControlPanel = (function () {
 }());
 exports.default = ControlPanel;
 
-},{"../io/Switch":43}],48:[function(require,module,exports){
+},{"../io/Switch":42}],47:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -7900,13 +7844,13 @@ var Pia = (function () {
     }
     Pia.prototype.reset = function () {
         for (var i = 0; i < 128; i++) {
-            this.ram[i] = this._rng ? this._rng.int(0xFF) : 0;
+            this.ram[i] = this._rng ? this._rng.int(0xff) : 0;
         }
         this._interruptFlag = 0;
         this._flagSetDuringThisCycle = false;
         this._timerDivide = 1024;
         this._subTimer = 0;
-        this._rng.int(0xFF);
+        this._rng.int(0xff);
         this._timerValue = 0;
         this._timerWrapped = false;
     };
@@ -7920,7 +7864,7 @@ var Pia = (function () {
             }
         }
         else {
-            return this.ram[address & 0x7F];
+            return this.ram[address & 0x7f];
         }
     };
     Pia.prototype.peek = function (address) {
@@ -7933,7 +7877,7 @@ var Pia = (function () {
             }
         }
         else {
-            return this.ram[address & 0x7F];
+            return this.ram[address & 0x7f];
         }
     };
     Pia.prototype.write = function (address, value) {
@@ -7946,7 +7890,7 @@ var Pia = (function () {
             }
         }
         else {
-            this.ram[address & 0x7F] = value;
+            this.ram[address & 0x7f] = value;
         }
     };
     Pia.prototype.cycle = function () {
@@ -7959,8 +7903,7 @@ var Pia = (function () {
         this._bus = bus;
         return this;
     };
-    Pia.prototype._writeIo = function (address, value) {
-    };
+    Pia.prototype._writeIo = function (address, value) { };
     Pia.prototype._writeTimer = function (address, value) {
         this._interruptFlag = 0;
         switch (address & 0x0297) {
@@ -8014,17 +7957,17 @@ var Pia = (function () {
         }
     };
     Pia.prototype._peekTimer = function (address) {
-        return (address & 0x01) ? (this._interruptFlag & 0x80) : this._timerValue;
+        return address & 0x01 ? this._interruptFlag & 0x80 : this._timerValue;
     };
     Pia.prototype._cycleTimer = function () {
         this._flagSetDuringThisCycle = false;
         if (this._timerWrapped) {
-            this._timerValue = (this._timerValue + 0xFF) & 0xFF;
+            this._timerValue = (this._timerValue + 0xff) & 0xff;
         }
         else if (this._subTimer === 0 && --this._timerValue < 0) {
-            this._timerValue = 0xFF;
+            this._timerValue = 0xff;
             this._flagSetDuringThisCycle = true;
-            this._interruptFlag = 0xFF;
+            this._interruptFlag = 0xff;
             this._timerWrapped = true;
         }
         if (++this._subTimer === this._timerDivide) {
@@ -8046,7 +7989,7 @@ var Pia = (function () {
 })(Pia || (Pia = {}));
 exports.default = Pia;
 
-},{"microevent.ts":7}],49:[function(require,module,exports){
+},{"microevent.ts":6}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -8063,8 +8006,7 @@ var AbstractCartridge = (function () {
     AbstractCartridge.prototype.peek = function (address) {
         return this.read(address);
     };
-    AbstractCartridge.prototype.write = function (address, value) {
-    };
+    AbstractCartridge.prototype.write = function (address, value) { };
     AbstractCartridge.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.unknown;
     };
@@ -8074,10 +8016,8 @@ var AbstractCartridge = (function () {
     AbstractCartridge.prototype.setBus = function (bus) {
         return this;
     };
-    AbstractCartridge.prototype.notifyCpuCycleComplete = function () {
-    };
-    AbstractCartridge.prototype.randomize = function (rng) {
-    };
+    AbstractCartridge.prototype.notifyCpuCycleComplete = function () { };
+    AbstractCartridge.prototype.randomize = function (rng) { };
     AbstractCartridge.prototype.triggerTrap = function (reason, message) {
         if (this.trap.hasHandlers) {
             this.trap.dispatch(new CartridgeInterface_1.default.TrapPayload(reason, this, message));
@@ -8090,7 +8030,7 @@ var AbstractCartridge = (function () {
 }());
 exports.default = AbstractCartridge;
 
-},{"./CartridgeInfo":68,"./CartridgeInterface":69,"microevent.ts":7}],50:[function(require,module,exports){
+},{"./CartridgeInfo":67,"./CartridgeInterface":68,"microevent.ts":6}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8105,12 +8045,12 @@ var Cartridge2k = (function (_super) {
             throw new Error("buffer is not a 2k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < buffer.length && i < 0x0800; i++) {
-            _this._rom[0x07FF - i] = buffer[buffer.length - 1 - i];
+            _this._rom[0x07ff - i] = buffer[buffer.length - 1 - i];
         }
         return _this;
     }
     Cartridge2k.prototype.read = function (address) {
-        return this._rom[address & 0x07FF];
+        return this._rom[address & 0x07ff];
     };
     Cartridge2k.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.vanilla_2k;
@@ -8119,7 +8059,7 @@ var Cartridge2k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge2k;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],51:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"tslib":19}],50:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8134,7 +8074,7 @@ var Cartridge3E = (function (_super) {
         _this._ramSelect = false;
         _this._ramBanks = new Array(0x0100);
         _this._bus = null;
-        if ((buffer.length & 0x07FF) !== 0) {
+        if ((buffer.length & 0x07ff) !== 0) {
             throw new Error("buffer length " + buffer.length + " is not a multiple of 2k");
         }
         var bankCount = buffer.length >>> 11;
@@ -8145,7 +8085,7 @@ var Cartridge3E = (function (_super) {
         for (var i = 0; i < bankCount; i++) {
             _this._banks[i] = new Uint8Array(0x0800);
         }
-        for (var i = 0; i <= 0xFF; i++) {
+        for (var i = 0; i <= 0xff; i++) {
             _this._ramBanks[i] = new Uint8Array(0x0400);
         }
         _this._ramBank = _this._ramBanks[0];
@@ -8159,7 +8099,7 @@ var Cartridge3E = (function (_super) {
         return _this;
     }
     Cartridge3E.matchesBuffer = function (buffer) {
-        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3E, 0xA9, 0x00]]);
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3e, 0xa9, 0x00]]);
         return signatureCounts[0] >= 1;
     };
     Cartridge3E.prototype.reset = function () {
@@ -8168,7 +8108,7 @@ var Cartridge3E = (function (_super) {
     Cartridge3E.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ramBanks.length; i++) {
             for (var j = 0; j < 0x0400; j++) {
-                this._ramBanks[i][j] = rng.int(0xFF);
+                this._ramBanks[i][j] = rng.int(0xff);
             }
         }
     };
@@ -8178,20 +8118,20 @@ var Cartridge3E = (function (_super) {
         return this;
     };
     Cartridge3E.prototype.read = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._ramSelect) {
             if (address < 0x0400) {
                 return this._ramBank[address];
             }
             if (address < 0x0800) {
-                return this._ramBank[address & 0x03FF] = this._bus.getLastDataBusValue();
+                return (this._ramBank[address & 0x03ff] = this._bus.getLastDataBusValue());
             }
-            return this._bank1[address & 0x07FF];
+            return this._bank1[address & 0x07ff];
         }
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     Cartridge3E.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._ramSelect) {
             if (address < 0x0400) {
                 return this._ramBank[address];
@@ -8199,17 +8139,17 @@ var Cartridge3E = (function (_super) {
             if (address < 0x0800) {
                 return this._bus.getLastDataBusValue();
             }
-            return this._bank1[address & 0x07FF];
+            return this._bank1[address & 0x07ff];
         }
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     Cartridge3E.prototype.write = function (address, value) {
         if (!this._ramSelect) {
             return;
         }
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address >= 0x0400 && address < 0x0800) {
-            this._ramBank[address & 0x03FF] = value;
+            this._ramBank[address & 0x03ff] = value;
         }
     };
     Cartridge3E.prototype.getType = function () {
@@ -8217,11 +8157,11 @@ var Cartridge3E = (function (_super) {
     };
     Cartridge3E._onBusAccess = function (accessType, self) {
         switch (self._bus.getLastAddresBusValue()) {
-            case 0x003F:
+            case 0x003f:
                 self._ramSelect = false;
                 self._bank0 = self._banks[self._bus.getLastDataBusValue() % self._banks.length];
                 break;
-            case 0x003E:
+            case 0x003e:
                 self._ramSelect = true;
                 self._ramBank = self._ramBanks[self._bus.getLastDataBusValue() % 32];
                 break;
@@ -8231,7 +8171,7 @@ var Cartridge3E = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3E;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],52:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./util":75,"tslib":19}],51:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8260,7 +8200,7 @@ var Cartridge3F = (function (_super) {
         return _this;
     }
     Cartridge3F.matchesBuffer = function (buffer) {
-        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3F]]);
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3f]]);
         return signatureCounts[0] >= 2;
     };
     Cartridge3F.prototype.reset = function () {
@@ -8273,14 +8213,14 @@ var Cartridge3F = (function (_super) {
         return this;
     };
     Cartridge3F.prototype.read = function (address) {
-        address &= 0x0FFF;
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        address &= 0x0fff;
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     Cartridge3F.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_3F;
     };
     Cartridge3F._onBusAccess = function (accessType, self) {
-        if (self._bus.getLastAddresBusValue() === 0x003F) {
+        if (self._bus.getLastAddresBusValue() === 0x003f) {
             self._bank0 = self._banks[self._bus.getLastDataBusValue() & 0x03];
         }
     };
@@ -8288,7 +8228,7 @@ var Cartridge3F = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3F;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],53:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./util":75,"tslib":19}],52:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8304,12 +8244,12 @@ var Cartridge4k = (function (_super) {
         }
         var len = Math.min(0x1000, buffer.length);
         for (var i = 0; i < 0x1000 && i < buffer.length; i++) {
-            _this._rom[0x0FFF - i] = buffer[len - 1 - i];
+            _this._rom[0x0fff - i] = buffer[len - 1 - i];
         }
         return _this;
     }
     Cartridge4k.prototype.read = function (address) {
-        return this._rom[address & 0x0FFF];
+        return this._rom[address & 0x0fff];
     };
     Cartridge4k.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.vanilla_4k;
@@ -8318,7 +8258,7 @@ var Cartridge4k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge4k;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],54:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"tslib":19}],53:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8365,19 +8305,19 @@ var CartridgeDPC = (function (_super) {
         return this._access(address, this._bus.getLastDataBusValue());
     };
     CartridgeDPC.prototype.peek = function (address) {
-        return this._bank[address & 0x0FFF];
+        return this._bank[address & 0x0fff];
     };
     CartridgeDPC.prototype.write = function (address, value) {
         this._access(address, value);
     };
     CartridgeDPC.prototype._access = function (address, value) {
-        address &= 0x0FFF;
-        if (address > 0x7F) {
+        address &= 0x0fff;
+        if (address > 0x7f) {
             switch (address) {
-                case 0x0FF8:
+                case 0x0ff8:
                     this._bank = this._bank0;
                     break;
-                case 0x0FF9:
+                case 0x0ff9:
                     this._bank = this._bank1;
                     break;
                 default:
@@ -8386,11 +8326,11 @@ var CartridgeDPC = (function (_super) {
             return this._bank[address];
         }
         if (address < 0x08) {
-            return (address & 0x04) ? 0 : this._randomNext();
+            return address & 0x04 ? 0 : this._randomNext();
         }
         if (address < 0x40) {
             var fetcher = this._fetchers[(address - 8) & 0x07], mask = fetcher.mask;
-            var fetchedData = this._fetcherData[0x07FF - fetcher.pointer];
+            var fetchedData = this._fetcherData[0x07ff - fetcher.pointer];
             fetcher.next();
             switch ((address - 8) >>> 3) {
                 case 0:
@@ -8399,17 +8339,17 @@ var CartridgeDPC = (function (_super) {
                     return fetchedData & mask;
                 case 2:
                     fetchedData &= mask;
-                    return ((fetchedData << 4) | (fetchedData >>> 4)) & 0xFF;
+                    return ((fetchedData << 4) | (fetchedData >>> 4)) & 0xff;
                 case 3:
                     fetchedData &= mask;
-                    return ((fetchedData & 0x01) << 7) |
+                    return (((fetchedData & 0x01) << 7) |
                         ((fetchedData & 0x02) << 5) |
                         ((fetchedData & 0x04) << 3) |
                         ((fetchedData & 0x08) << 1) |
                         ((fetchedData & 0x10) >>> 1) |
                         ((fetchedData & 0x20) >>> 3) |
                         ((fetchedData & 0x40) >>> 5) |
-                        ((fetchedData & 0x80) >>> 7);
+                        ((fetchedData & 0x80) >>> 7));
                 case 4:
                     return (fetchedData & mask) >>> 1;
                 case 5:
@@ -8432,7 +8372,7 @@ var CartridgeDPC = (function (_super) {
                     break;
                 case 3:
                     fetcher.setHigh(value);
-                    if (address > 0x5C) {
+                    if (address > 0x5c) {
                         fetcher.setMusicMode(value);
                     }
                     break;
@@ -8449,8 +8389,8 @@ var CartridgeDPC = (function (_super) {
         var oldRng = this._rng;
         this._rng =
             ((this._rng << 1) |
-                (~(((this._rng >>> 7) ^ (this._rng >>> 5)) ^ ((this._rng >>> 4) ^ (this._rng >>> 3))) & 0x01)) &
-                0xFF;
+                (~((this._rng >>> 7) ^ (this._rng >>> 5) ^ ((this._rng >>> 4) ^ (this._rng >>> 3))) & 0x01)) &
+                0xff;
         return oldRng;
     };
     return CartridgeDPC;
@@ -8471,7 +8411,7 @@ var Fetcher = (function () {
         this.musicMode = false;
     };
     Fetcher.prototype.next = function () {
-        this.pointer = (this.pointer + 0x07FF) & 0x07FF;
+        this.pointer = (this.pointer + 0x07ff) & 0x07ff;
         this._updateMask();
     };
     Fetcher.prototype.setStart = function (start) {
@@ -8488,17 +8428,17 @@ var Fetcher = (function () {
         this._updateMask();
     };
     Fetcher.prototype.setHigh = function (value) {
-        this.pointer = (this.pointer & 0xFF) | ((value & 0x07) << 8);
+        this.pointer = (this.pointer & 0xff) | ((value & 0x07) << 8);
         this._updateMask();
     };
     Fetcher.prototype.setMusicMode = function (value) {
         this.musicMode = (value & 0x10) !== 0;
     };
     Fetcher.prototype._updateMask = function () {
-        if ((this.pointer & 0xFF) === this.start) {
-            this.mask = 0xFF;
+        if ((this.pointer & 0xff) === this.start) {
+            this.mask = 0xff;
         }
-        if ((this.pointer & 0xFF) === this.end) {
+        if ((this.pointer & 0xff) === this.end) {
             this.mask = 0x00;
         }
     };
@@ -8506,7 +8446,7 @@ var Fetcher = (function () {
 }());
 exports.default = CartridgeDPC;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],55:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"tslib":19}],54:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -8536,7 +8476,7 @@ var CartridgeDPCPlus = (function (_super) {
                     _this.triggerTrap(2, "unaligned 16 bit ARM read from " + hex_1.encode(address, 8, false));
                     return 0;
                 }
-                var region = address >>> 28, addr = address & 0x0FFFFFFF;
+                var region = address >>> 28, addr = address & 0x0fffffff;
                 switch (region) {
                     case 0x0:
                         if (addr < 0x8000) {
@@ -8548,9 +8488,9 @@ var CartridgeDPCPlus = (function (_super) {
                             return _this._ram16[addr >>> 1];
                         }
                         break;
-                    case 0xE:
+                    case 0xe:
                         switch (addr) {
-                            case 0x001FC000:
+                            case 0x001fc000:
                                 return _this._armMamcr;
                         }
                         break;
@@ -8563,7 +8503,7 @@ var CartridgeDPCPlus = (function (_super) {
                     _this.triggerTrap(2, "unaligned 32 bit ARM read from " + hex_1.encode(address, 8, false));
                     return 0;
                 }
-                var region = address >>> 28, addr = address & 0x0FFFFFFF;
+                var region = address >>> 28, addr = address & 0x0fffffff;
                 switch (region) {
                     case 0x0:
                         if (addr < 0x8000) {
@@ -8575,7 +8515,7 @@ var CartridgeDPCPlus = (function (_super) {
                             return _this._ram32[addr >>> 2];
                         }
                         break;
-                    case 0xE:
+                    case 0xe:
                         switch (addr) {
                             case 0x8004:
                             case 0x8008:
@@ -8591,17 +8531,17 @@ var CartridgeDPCPlus = (function (_super) {
                     _this.triggerTrap(2, "unaligned 16 bit ARM write: " + hex_1.encode(value, 4) + " -> " + hex_1.encode(address, 8, false));
                     return;
                 }
-                var region = address >>> 28, addr = address & 0x0FFFFFFF;
+                var region = address >>> 28, addr = address & 0x0fffffff;
                 switch (region) {
                     case 0x04:
                         if (addr < 0x2000) {
-                            _this._ram16[addr >>> 1] = value & 0xFFFF;
+                            _this._ram16[addr >>> 1] = value & 0xffff;
                             return;
                         }
                         break;
-                    case 0xE:
+                    case 0xe:
                         switch (addr) {
-                            case 0x001FC000:
+                            case 0x001fc000:
                                 _this._armMamcr = value;
                                 return;
                         }
@@ -8614,14 +8554,14 @@ var CartridgeDPCPlus = (function (_super) {
                     _this.triggerTrap(2, "unaligned 32 bit ARM write: " + hex_1.encode(value, 8, false) + " -> " + hex_1.encode(address, 8, false));
                     return;
                 }
-                var region = address >>> 28, addr = address & 0x0FFFFFFF;
+                var region = address >>> 28, addr = address & 0x0fffffff;
                 switch (region) {
                     case 0x4:
                         if (addr < 0x2000) {
                             _this._ram32[addr >>> 2] = value;
                             return;
                         }
-                    case 0xE:
+                    case 0xe:
                         switch (addr) {
                             case 0x8004:
                             case 0x8008:
@@ -8634,7 +8574,7 @@ var CartridgeDPCPlus = (function (_super) {
         };
         _this._armMamcr = 0;
         _this._thumbulator = new Thumbulator_1.default(_this._thumbulatorBus, {
-            trapOnInstructionFetch: function (address) { return address === 0x8004 ? 255 : 0; }
+            trapOnInstructionFetch: function (address) { return (address === 0x8004 ? 255 : 0); }
         });
         if (buffer.length < 28 * 0x0400 || buffer.length > 0x8000) {
             throw new Error("not a DPC+ image: invalid lenght " + buffer.length);
@@ -8645,12 +8585,12 @@ var CartridgeDPCPlus = (function (_super) {
         _this._imageRom = new Uint8Array(_this._romBuffer, 0x8000 - 0x1400, 0x1000);
         _this._frequencyRom = new Uint8Array(_this._romBuffer, 0x8000 - 0x0400);
         for (var i = 0; i < 6; i++) {
-            _this._banks[i] = new Uint8Array(_this._romBuffer, 0x0C00 + i * 0x1000, 0x1000);
+            _this._banks[i] = new Uint8Array(_this._romBuffer, 0x0c00 + i * 0x1000, 0x1000);
         }
         _this._ram8 = new Uint8Array(_this._ramBuffer);
         _this._ram16 = new Uint16Array(_this._ramBuffer);
         _this._ram32 = new Uint32Array(_this._ramBuffer);
-        _this._imageRam = new Uint8Array(_this._ramBuffer, 0x0C00, 0x1000);
+        _this._imageRam = new Uint8Array(_this._ramBuffer, 0x0c00, 0x1000);
         _this._frequencyRam = new Uint8Array(_this._ramBuffer, 0x2000 - 0x0400);
         var rom8 = new Uint8Array(_this._romBuffer), offset = 0x8000 - buffer.length;
         for (var i = 0; i < buffer.length; i++) {
@@ -8681,7 +8621,7 @@ var CartridgeDPCPlus = (function (_super) {
         }
         this._parameterIndex = 0;
         this._fastFetch = this._ldaPending = false;
-        this._rng = 0x2B435044;
+        this._rng = 0x2b435044;
     };
     CartridgeDPCPlus.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_dpc_plus;
@@ -8694,15 +8634,15 @@ var CartridgeDPCPlus = (function (_super) {
         return this._access(address, this._bus.getLastDataBusValue());
     };
     CartridgeDPCPlus.prototype.peek = function (address) {
-        return this._currentBank[address & 0x0FFF];
+        return this._currentBank[address & 0x0fff];
     };
     CartridgeDPCPlus.prototype.write = function (address, value) {
         this._access(address, value);
     };
     CartridgeDPCPlus.prototype._access = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         var readResult = this._currentBank[address];
-        if (this._fastFetch && this._ldaPending && address > 0x7F && address < 0x0FF6 && readResult < 0x28) {
+        if (this._fastFetch && this._ldaPending && address > 0x7f && address < 0x0ff6 && readResult < 0x28) {
             address = readResult;
         }
         this._ldaPending = false;
@@ -8714,16 +8654,16 @@ var CartridgeDPCPlus = (function (_super) {
                     switch (idx) {
                         case 0x00:
                             this._advanceRng();
-                            return this._rng & 0xFF;
+                            return this._rng & 0xff;
                         case 0x01:
                             this._rewindRng();
-                            return this._rng & 0xFF;
+                            return this._rng & 0xff;
                         case 0x02:
-                            return (this._rng >>> 8) & 0xFF;
+                            return (this._rng >>> 8) & 0xff;
                         case 0x03:
-                            return (this._rng >>> 16) & 0xFF;
+                            return (this._rng >>> 16) & 0xff;
                         case 0x04:
-                            return (this._rng >>> 24) & 0xFF;
+                            return (this._rng >>> 24) & 0xff;
                     }
                     return 0;
                 case 0x01:
@@ -8739,14 +8679,14 @@ var CartridgeDPCPlus = (function (_super) {
                     fractionalFetcher.increment();
                     return result;
                 case 0x04:
-                    return (idx < 4) ? fetcher.mask() : 0;
+                    return idx < 4 ? fetcher.mask() : 0;
                 default:
                     return 0;
             }
         }
         else if (address < 0x80) {
             var idx = address & 0x07, fetcher = this._fetchers[idx], fractionalFetcher = this._fractionalFetchers[idx];
-            switch (((address - 0x28) >>> 3) & 0x0F) {
+            switch (((address - 0x28) >>> 3) & 0x0f) {
                 case 0x00:
                     fractionalFetcher.setPointerLo(value);
                     break;
@@ -8768,7 +8708,7 @@ var CartridgeDPCPlus = (function (_super) {
                 case 0x06:
                     switch (idx) {
                         case 0x00:
-                            this._fastFetch = (value === 0);
+                            this._fastFetch = value === 0;
                             break;
                         case 0x01:
                             if (this._parameterIndex < 8) {
@@ -8790,23 +8730,23 @@ var CartridgeDPCPlus = (function (_super) {
                 case 0x09:
                     switch (idx) {
                         case 0x00:
-                            this._rng = 0x2B435044;
+                            this._rng = 0x2b435044;
                             break;
                         case 0x01:
-                            this._rng = (this._rng & 0xFFFFFF00) | value;
+                            this._rng = (this._rng & 0xffffff00) | value;
                             break;
                         case 0x02:
-                            this._rng = (this._rng & 0xFFFF00FF) | (value << 8);
+                            this._rng = (this._rng & 0xffff00ff) | (value << 8);
                             break;
                         case 0x03:
-                            this._rng = (this._rng & 0xFF00FFFF) | (value << 16);
+                            this._rng = (this._rng & 0xff00ffff) | (value << 16);
                             break;
                         case 0x04:
-                            this._rng = (this._rng & 0x00FFFFFF) | (value << 24);
+                            this._rng = (this._rng & 0x00ffffff) | (value << 24);
                             break;
                     }
                     break;
-                case 0x0A:
+                case 0x0a:
                     this._imageRam[fetcher.pointer] = value;
                     fetcher.increment();
                     break;
@@ -8814,11 +8754,11 @@ var CartridgeDPCPlus = (function (_super) {
                     break;
             }
         }
-        else if (address > 0x0FF5 && address < 0x0FFC) {
-            this._currentBank = this._banks[address - 0x0FF6];
+        else if (address > 0x0ff5 && address < 0x0ffc) {
+            this._currentBank = this._banks[address - 0x0ff6];
         }
-        if (this._fastFetch && address > 0x7F && address < 0x0FF6) {
-            this._ldaPending = (readResult === 0xA9);
+        if (this._fastFetch && address > 0x7f && address < 0x0ff6) {
+            this._ldaPending = readResult === 0xa9;
         }
         return readResult;
     };
@@ -8830,13 +8770,13 @@ var CartridgeDPCPlus = (function (_super) {
                 break;
             case 1:
                 for (var i = 0; i < this._parameters[3]; i++) {
-                    this._ram8[0x0C00 + ((this._fetchers[this._parameters[2] & 0x07].pointer + i) & 0x0FFF)] = this._rom8[0x0C00 + ((romBase + i) % 0x7400)];
+                    this._ram8[0x0c00 + ((this._fetchers[this._parameters[2] & 0x07].pointer + i) & 0x0fff)] = this._rom8[0x0c00 + (romBase + i) % 0x7400];
                 }
                 this._parameterIndex = 0;
                 break;
             case 2:
                 for (var i = 0; i < this._parameters[3]; i++) {
-                    this._ram8[0x0C00 + ((this._fetchers[this._parameters[2] & 0x07].pointer + i) & 0x0FFF)] = this._parameters[0];
+                    this._ram8[0x0c00 + ((this._fetchers[this._parameters[2] & 0x07].pointer + i) & 0x0fff)] = this._parameters[0];
                 }
                 this._parameterIndex = 0;
                 break;
@@ -8852,9 +8792,9 @@ var CartridgeDPCPlus = (function (_super) {
         for (var i = 0; i <= 12; i++) {
             this._thumbulator.writeRegister(i, 0);
         }
-        this._thumbulator.writeRegister(13, 0x40001FB4);
+        this._thumbulator.writeRegister(13, 0x40001fb4);
         this._thumbulator.writeRegister(14, 32772 - 1);
-        this._thumbulator.writeRegister(15, 0x0C0B);
+        this._thumbulator.writeRegister(15, 0x0c0b);
         this._armMamcr = 0;
         var trap = this._thumbulator.run(500000);
         if (trap !== 255) {
@@ -8862,13 +8802,13 @@ var CartridgeDPCPlus = (function (_super) {
         }
     };
     CartridgeDPCPlus.prototype._advanceRng = function () {
-        this._rng = ((this._rng & (1 << 10)) ? 0x10adab1e : 0x00) ^
-            ((this._rng >>> 11) | (this._rng << 21));
+        this._rng = (this._rng & (1 << 10) ? 0x10adab1e : 0x00) ^ ((this._rng >>> 11) | (this._rng << 21));
     };
     CartridgeDPCPlus.prototype._rewindRng = function () {
-        this._rng = ((this._rng & (1 << 31)) ?
-            ((0x10adab1e ^ this._rng) << 11) | ((0x10adab1e ^ this._rng) >>> 21) :
-            (this._rng << 11) | (this._rng >>> 21));
+        this._rng =
+            this._rng & (1 << 31)
+                ? ((0x10adab1e ^ this._rng) << 11) | ((0x10adab1e ^ this._rng) >>> 21)
+                : (this._rng << 11) | (this._rng >>> 21);
     };
     return CartridgeDPCPlus;
 }(AbstractCartridge_1.default));
@@ -8885,19 +8825,19 @@ var Fetcher = (function () {
         this.pointer = this.top = this.bottom = 0;
     };
     Fetcher.prototype.setPointerHi = function (value) {
-        this.pointer = (this.pointer & 0xFF) | ((value & 0x0F) << 8);
+        this.pointer = (this.pointer & 0xff) | ((value & 0x0f) << 8);
     };
     Fetcher.prototype.setPointerLo = function (value) {
-        this.pointer = (this.pointer & 0x0F00) | (value & 0xFF);
+        this.pointer = (this.pointer & 0x0f00) | (value & 0xff);
     };
     Fetcher.prototype.increment = function () {
-        this.pointer = (this.pointer + 1) & 0xFFF;
+        this.pointer = (this.pointer + 1) & 0xfff;
     };
     Fetcher.prototype.decrement = function () {
-        this.pointer = (this.pointer + 0xFFF) & 0xFFF;
+        this.pointer = (this.pointer + 0xfff) & 0xfff;
     };
     Fetcher.prototype.mask = function () {
-        return ((this.top - (this.pointer & 0xFF)) & 0xFF) > ((this.top - this.bottom) & 0xFF) ? 0xFF : 0;
+        return ((this.top - (this.pointer & 0xff)) & 0xff) > ((this.top - this.bottom) & 0xff) ? 0xff : 0;
     };
     return Fetcher;
 }());
@@ -8913,23 +8853,23 @@ var FractionalFetcher = (function () {
         this.pointer = this.fraction = 0;
     };
     FractionalFetcher.prototype.setPointerHi = function (value) {
-        this.pointer = (this.pointer & 0x00FFFF) | ((value & 0x0F) << 16);
+        this.pointer = (this.pointer & 0x00ffff) | ((value & 0x0f) << 16);
     };
     FractionalFetcher.prototype.setPointerLo = function (value) {
-        this.pointer = (this.pointer & 0x0F00FF) | ((value & 0xFF) << 8);
+        this.pointer = (this.pointer & 0x0f00ff) | ((value & 0xff) << 8);
     };
     FractionalFetcher.prototype.setFraction = function (value) {
         this.fraction = value;
-        this.pointer &= 0x0FFF00;
+        this.pointer &= 0x0fff00;
     };
     FractionalFetcher.prototype.increment = function () {
-        this.pointer = (this.pointer + this.fraction) & 0x0FFFFF;
+        this.pointer = (this.pointer + this.fraction) & 0x0fffff;
     };
     return FractionalFetcher;
 }());
 exports.default = CartridgeDPCPlus;
 
-},{"../../../tools/hex":95,"./AbstractCartridge":49,"./CartridgeInfo":68,"./CartridgeInterface":69,"./thumbulator/Thumbulator":74,"./util":76,"tslib":20}],56:[function(require,module,exports){
+},{"../../../tools/hex":94,"./AbstractCartridge":48,"./CartridgeInfo":67,"./CartridgeInterface":68,"./thumbulator/Thumbulator":73,"./util":75,"tslib":19}],55:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo_1 = require("./CartridgeInfo");
@@ -9024,7 +8964,7 @@ var CartridgeDetector = (function () {
 }());
 exports.default = CartridgeDetector;
 
-},{"./Cartridge3E":51,"./Cartridge3F":52,"./CartridgeDPCPlus":55,"./CartridgeE0":57,"./CartridgeE7":58,"./CartridgeEF":59,"./CartridgeF8":63,"./CartridgeFA2":65,"./CartridgeFE":66,"./CartridgeInfo":68,"./CartridgeUA":71}],57:[function(require,module,exports){
+},{"./Cartridge3E":50,"./Cartridge3F":51,"./CartridgeDPCPlus":54,"./CartridgeE0":56,"./CartridgeE7":57,"./CartridgeEF":58,"./CartridgeF8":62,"./CartridgeFA2":64,"./CartridgeFE":65,"./CartridgeInfo":67,"./CartridgeUA":70}],56:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9053,14 +8993,14 @@ var CartridgeE0 = (function (_super) {
     }
     CartridgeE0.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0x8D, 0xE0, 0x1F],
-            [0x8D, 0xE0, 0x5F],
-            [0x8D, 0xE9, 0xFF],
-            [0x0C, 0xE0, 0x1F],
-            [0xAD, 0xE0, 0x1F],
-            [0xAD, 0xE9, 0xFF],
-            [0xAD, 0xED, 0xFF],
-            [0xAD, 0xF3, 0xBF]
+            [0x8d, 0xe0, 0x1f],
+            [0x8d, 0xe0, 0x5f],
+            [0x8d, 0xe9, 0xff],
+            [0x0c, 0xe0, 0x1f],
+            [0xad, 0xe0, 0x1f],
+            [0xad, 0xe9, 0xff],
+            [0xad, 0xed, 0xff],
+            [0xad, 0xf3, 0xbf]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -9075,19 +9015,19 @@ var CartridgeE0 = (function (_super) {
         }
     };
     CartridgeE0.prototype.read = function (address) {
-        address &= 0x0FFF;
-        if (address >= 0x0FE0 && address < 0x0FF8) {
+        address &= 0x0fff;
+        if (address >= 0x0fe0 && address < 0x0ff8) {
             this._handleBankswitch(address);
         }
-        return this._activeBanks[(address >> 10)][address & 0x03FF];
+        return this._activeBanks[address >> 10][address & 0x03ff];
     };
     CartridgeE0.prototype.peek = function (address) {
-        address &= 0x0FFF;
-        return this._activeBanks[(address >> 10)][address & 0x03FF];
+        address &= 0x0fff;
+        return this._activeBanks[address >> 10][address & 0x03ff];
     };
     CartridgeE0.prototype.write = function (address, value) {
-        var addressMasked = address & 0x0FFF;
-        if (addressMasked >= 0x0FE0 && addressMasked < 0x0FF8) {
+        var addressMasked = address & 0x0fff;
+        if (addressMasked >= 0x0fe0 && addressMasked < 0x0ff8) {
             this._handleBankswitch(addressMasked);
         }
         return _super.prototype.write.call(this, address, value);
@@ -9096,21 +9036,21 @@ var CartridgeE0 = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_E0;
     };
     CartridgeE0.prototype._handleBankswitch = function (address) {
-        if (address < 0x0FE8) {
-            this._activeBanks[0] = this._banks[address - 0x0FE0];
+        if (address < 0x0fe8) {
+            this._activeBanks[0] = this._banks[address - 0x0fe0];
         }
-        else if (address < 0x0FF0) {
-            this._activeBanks[1] = this._banks[address - 0x0FE8];
+        else if (address < 0x0ff0) {
+            this._activeBanks[1] = this._banks[address - 0x0fe8];
         }
         else {
-            this._activeBanks[2] = this._banks[address - 0x0FF0];
+            this._activeBanks[2] = this._banks[address - 0x0ff0];
         }
     };
     return CartridgeE0;
 }(AbstractCartridge_1.default));
 exports.default = CartridgeE0;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],58:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./util":75,"tslib":19}],57:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9144,13 +9084,13 @@ var CartrdigeE7 = (function (_super) {
     }
     CartrdigeE7.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0xAD, 0xE2, 0xFF],
-            [0xAD, 0xE5, 0xFF],
-            [0xAD, 0xE5, 0x1F],
-            [0xAD, 0xE7, 0x1F],
-            [0x0C, 0xE7, 0x1F],
-            [0x8D, 0xE7, 0xFF],
-            [0x8D, 0xE7, 0x1F]
+            [0xad, 0xe2, 0xff],
+            [0xad, 0xe5, 0xff],
+            [0xad, 0xe5, 0x1f],
+            [0xad, 0xe7, 0x1f],
+            [0x0c, 0xe7, 0x1f],
+            [0x8d, 0xe7, 0xff],
+            [0x8d, 0xe7, 0x1f]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -9165,11 +9105,11 @@ var CartrdigeE7 = (function (_super) {
         this._ram0Enabled = false;
     };
     CartrdigeE7.prototype.read = function (address) {
-        this._handleBankswitch(address & 0x0FFF);
+        this._handleBankswitch(address & 0x0fff);
         return this.peek(address);
     };
     CartrdigeE7.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x0800) {
             if (this._ram0Enabled) {
                 return address >= 0x0400 ? this._ram0[address - 0x0400] : 0;
@@ -9178,13 +9118,13 @@ var CartrdigeE7 = (function (_super) {
                 return this._bank0[address];
             }
         }
-        if (address <= 0x09FF) {
+        if (address <= 0x09ff) {
             return address >= 0x0900 ? this._ram1[address - 0x0900] : 0;
         }
-        return this._banks[7][0x07FF - (0x0FFF - address)];
+        return this._banks[7][0x07ff - (0x0fff - address)];
     };
     CartrdigeE7.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         this._handleBankswitch(address);
         if (address < 0x0400) {
             if (this._ram0Enabled) {
@@ -9197,7 +9137,7 @@ var CartrdigeE7 = (function (_super) {
         else if (address < 0x0800) {
             _super.prototype.write.call(this, address, value);
         }
-        else if (address < 0x08FF) {
+        else if (address < 0x08ff) {
             this._ram1[address - 0x0800] = value;
         }
         else {
@@ -9210,33 +9150,33 @@ var CartrdigeE7 = (function (_super) {
     CartrdigeE7.prototype.randomize = function (rng) {
         for (var i = 0; i < 4; i++) {
             for (var j = 0; j < this._ram1Banks[i].length; j++) {
-                this._ram1Banks[i][j] = rng.int(0xFF);
+                this._ram1Banks[i][j] = rng.int(0xff);
             }
         }
         for (var i = 0; i < this._ram0.length; i++) {
-            this._ram0[i] = rng.int(0xFF);
+            this._ram0[i] = rng.int(0xff);
         }
     };
     CartrdigeE7.prototype._handleBankswitch = function (address) {
-        if (address < 0x0FE0) {
+        if (address < 0x0fe0) {
             return;
         }
-        if (address <= 0x0FE6) {
-            this._bank0 = this._banks[address & 0x000F];
+        if (address <= 0x0fe6) {
+            this._bank0 = this._banks[address & 0x000f];
             this._ram0Enabled = false;
         }
-        else if (address === 0x0FE7) {
+        else if (address === 0x0fe7) {
             this._ram0Enabled = true;
         }
-        else if (address <= 0x0FEB) {
-            this._ram1 = this._ram1Banks[address - 0x0FE8];
+        else if (address <= 0x0feb) {
+            this._ram1 = this._ram1Banks[address - 0x0fe8];
         }
     };
     return CartrdigeE7;
 }(AbstractCartridge_1.default));
 exports.default = CartrdigeE7;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],59:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./util":75,"tslib":19}],58:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9271,7 +9211,7 @@ var CartridgeEF = (function (_super) {
         var matchMagic = function (magicString) {
             var magic = magicString.split('').map(function (x) { return x.charCodeAt(0); });
             for (var i = 0; i < magic.length; i++) {
-                if (magic[i] !== buffer[0xFFF8 + i]) {
+                if (magic[i] !== buffer[0xfff8 + i]) {
                     return false;
                 }
             }
@@ -9284,10 +9224,10 @@ var CartridgeEF = (function (_super) {
             return true;
         }
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0x0C, 0xE0, 0xFF],
-            [0xAD, 0xE0, 0xFF],
-            [0x0C, 0xE0, 0x1F],
-            [0xAD, 0xE0, 0x1F]
+            [0x0c, 0xe0, 0xff],
+            [0xad, 0xe0, 0xff],
+            [0x0c, 0xe0, 0x1f],
+            [0xad, 0xe0, 0x1f]
         ]);
         for (var i = 0; i < 4; i++) {
             if (signatureCounts[i] > 0) {
@@ -9305,7 +9245,7 @@ var CartridgeEF = (function (_super) {
     };
     CartridgeEF.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ram.length; i++) {
-            this._ram[i] = rng.int(0xFF);
+            this._ram[i] = rng.int(0xff);
         }
     };
     CartridgeEF.prototype.setBus = function (bus) {
@@ -9313,11 +9253,11 @@ var CartridgeEF = (function (_super) {
         return this;
     };
     CartridgeEF.prototype.read = function (address) {
-        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this._access(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeEF.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._ram[address - 0x80];
         }
@@ -9326,7 +9266,7 @@ var CartridgeEF = (function (_super) {
         }
     };
     CartridgeEF.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x80 && this._supportSC) {
             this._hasSC = true;
         }
@@ -9337,15 +9277,15 @@ var CartridgeEF = (function (_super) {
             this._ram[address] = value;
             return;
         }
-        if (address >= 0x0FE0 && address <= 0x0FEF) {
-            this._bank = this._banks[address - 0x0FE0];
+        if (address >= 0x0fe0 && address <= 0x0fef) {
+            this._bank = this._banks[address - 0x0fe0];
         }
     };
     return CartridgeEF;
 }(AbstractCartridge_1.default));
 exports.default = CartridgeEF;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],60:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./util":75,"tslib":19}],59:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9376,15 +9316,15 @@ var CartridgeF0 = (function (_super) {
         this._currentBank = this._banks[this._bankIdx];
     };
     CartridgeF0.prototype.read = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         this._handleBankswitch(address);
         return this._currentBank[address];
     };
     CartridgeF0.prototype.peek = function (address) {
-        return this._currentBank[address & 0x0FFF];
+        return this._currentBank[address & 0x0fff];
     };
     CartridgeF0.prototype.write = function (address, value) {
-        address &= 0xFFF;
+        address &= 0xfff;
         this._handleBankswitch(address);
         _super.prototype.write.call(this, address, value);
     };
@@ -9392,8 +9332,8 @@ var CartridgeF0 = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_64k_F0;
     };
     CartridgeF0.prototype._handleBankswitch = function (address) {
-        if (address === 0x0FF0) {
-            this._bankIdx = (this._bankIdx + 1) & 0x0F;
+        if (address === 0x0ff0) {
+            this._bankIdx = (this._bankIdx + 1) & 0x0f;
             this._currentBank = this._banks[this._bankIdx];
         }
     };
@@ -9401,7 +9341,7 @@ var CartridgeF0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF0;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],61:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"tslib":19}],60:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9440,7 +9380,7 @@ var CartridgeF4 = (function (_super) {
     };
     CartridgeF4.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ram.length; i++) {
-            this._ram[i] = rng.int(0xFF);
+            this._ram[i] = rng.int(0xff);
         }
     };
     CartridgeF4.prototype.setBus = function (bus) {
@@ -9448,11 +9388,11 @@ var CartridgeF4 = (function (_super) {
         return this;
     };
     CartridgeF4.prototype.read = function (address) {
-        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this._access(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeF4.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._ram[address - 0x80];
         }
@@ -9461,7 +9401,7 @@ var CartridgeF4 = (function (_super) {
         }
     };
     CartridgeF4.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x80 && this._supportSC) {
             this._hasSC = true;
         }
@@ -9472,15 +9412,15 @@ var CartridgeF4 = (function (_super) {
             this._ram[address] = value;
             return;
         }
-        if (address >= 0x0FF4 && address <= 0x0FFB) {
-            this._bank = this._banks[address - 0x0FF4];
+        if (address >= 0x0ff4 && address <= 0x0ffb) {
+            this._bank = this._banks[address - 0x0ff4];
         }
     };
     return CartridgeF4;
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF4;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],62:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"tslib":19}],61:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9517,18 +9457,18 @@ var CartridgeF6 = (function (_super) {
         this._hasSC = false;
     };
     CartridgeF6.prototype.read = function (address) {
-        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this._access(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeF6.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._saraRAM[address - 0x80];
         }
         return this._bank[address];
     };
     CartridgeF6.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x80 && this._supportSC) {
             this._hasSC = true;
         }
@@ -9539,7 +9479,7 @@ var CartridgeF6 = (function (_super) {
     };
     CartridgeF6.prototype.randomize = function (rng) {
         for (var i = 0; i < this._saraRAM.length; i++) {
-            this._saraRAM[i] = rng.int(0xFF);
+            this._saraRAM[i] = rng.int(0xff);
         }
     };
     CartridgeF6.prototype.setBus = function (bus) {
@@ -9548,20 +9488,20 @@ var CartridgeF6 = (function (_super) {
     };
     CartridgeF6.prototype._access = function (address, value) {
         if (address < 0x80 && this._hasSC) {
-            this._saraRAM[address] = value & 0xFF;
+            this._saraRAM[address] = value & 0xff;
             return;
         }
         switch (address) {
-            case 0x0FF6:
+            case 0x0ff6:
                 this._bank = this._bank0;
                 break;
-            case 0x0FF7:
+            case 0x0ff7:
                 this._bank = this._bank1;
                 break;
-            case 0x0FF8:
+            case 0x0ff8:
                 this._bank = this._bank2;
                 break;
-            case 0x0FF9:
+            case 0x0ff9:
                 this._bank = this._bank3;
                 break;
         }
@@ -9570,7 +9510,7 @@ var CartridgeF6 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF6;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],63:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"tslib":19}],62:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9600,7 +9540,7 @@ var CartridgeF8 = (function (_super) {
         return _this;
     }
     CartridgeF8.matchesBuffer = function (buffer) {
-        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x8D, 0xF9, 0x1F]]);
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x8d, 0xf9, 0x1f]]);
         return signatureCounts[0] >= 2;
     };
     CartridgeF8.prototype.reset = function () {
@@ -9608,18 +9548,18 @@ var CartridgeF8 = (function (_super) {
         this._hasSC = false;
     };
     CartridgeF8.prototype.read = function (address) {
-        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this._access(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeF8.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._saraRAM[address - 0x80];
         }
         return this._bank[address];
     };
     CartridgeF8.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x80 && this._supportSC) {
             this._hasSC = true;
         }
@@ -9630,7 +9570,7 @@ var CartridgeF8 = (function (_super) {
     };
     CartridgeF8.prototype.randomize = function (rng) {
         for (var i = 0; i < this._saraRAM.length; i++) {
-            this._saraRAM[i] = rng.int(0xFF);
+            this._saraRAM[i] = rng.int(0xff);
         }
     };
     CartridgeF8.prototype.setBus = function (bus) {
@@ -9639,14 +9579,14 @@ var CartridgeF8 = (function (_super) {
     };
     CartridgeF8.prototype._access = function (address, value) {
         if (address < 0x80 && this._hasSC) {
-            this._saraRAM[address] = value & 0xFF;
+            this._saraRAM[address] = value & 0xff;
             return;
         }
         switch (address) {
-            case 0x0FF8:
+            case 0x0ff8:
                 this._bank = this._bank0;
                 break;
-            case 0x0FF9:
+            case 0x0ff9:
                 this._bank = this._bank1;
                 break;
         }
@@ -9655,7 +9595,7 @@ var CartridgeF8 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF8;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],64:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./util":75,"tslib":19}],63:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9685,27 +9625,27 @@ var CartridgeFA = (function (_super) {
     };
     CartridgeFA.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ram.length; i++) {
-            this._ram[i] = rng.int(0xFF);
+            this._ram[i] = rng.int(0xff);
         }
     };
     CartridgeFA.prototype.read = function (address) {
-        this._handleBankswitch(address & 0x0FFF);
+        this._handleBankswitch(address & 0x0fff);
         return this.peek(address);
     };
     CartridgeFA.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address >= 0x0100 && address < 0x0200) {
-            return this._ram[address & 0xFF];
+            return this._ram[address & 0xff];
         }
         else {
             return this._bank[address];
         }
     };
     CartridgeFA.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         this._handleBankswitch(address);
         if (address < 0x0100) {
-            this._ram[address] = value & 0xFF;
+            this._ram[address] = value & 0xff;
         }
         else {
             _super.prototype.write.call(this, address, value);
@@ -9716,13 +9656,13 @@ var CartridgeFA = (function (_super) {
     };
     CartridgeFA.prototype._handleBankswitch = function (address) {
         switch (address) {
-            case 0x0FF8:
+            case 0x0ff8:
                 this._bank = this._bank0;
                 break;
-            case 0x0FF9:
+            case 0x0ff9:
                 this._bank = this._bank1;
                 break;
-            case 0x0FFA:
+            case 0x0ffa:
                 this._bank = this._bank2;
                 break;
         }
@@ -9731,7 +9671,7 @@ var CartridgeFA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"tslib":20}],65:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"tslib":19}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9764,10 +9704,10 @@ var CartridgeFA2 = (function (_super) {
     }
     CartridgeFA2.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0xA0, 0xC1, 0x1F, 0xE0],
-            [0x00, 0x80, 0x02, 0xE0]
+            [0xa0, 0xc1, 0x1f, 0xe0],
+            [0x00, 0x80, 0x02, 0xe0]
         ]);
-        return (signatureCounts[0] > 0 || signatureCounts[1] > 0);
+        return signatureCounts[0] > 0 || signatureCounts[1] > 0;
     };
     CartridgeFA2.prototype.reset = function () {
         this._accessCounter = 0;
@@ -9779,7 +9719,7 @@ var CartridgeFA2 = (function (_super) {
     };
     CartridgeFA2.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ram.length; i++) {
-            this._ram[i] = rng.int(0xFF);
+            this._ram[i] = rng.int(0xff);
         }
     };
     CartridgeFA2.prototype.setBus = function (bus) {
@@ -9787,48 +9727,50 @@ var CartridgeFA2 = (function (_super) {
         return this;
     };
     CartridgeFA2.prototype.read = function (address) {
-        this.write(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this.write(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeFA2.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address >= 0x0100 && address < 0x0200) {
             return this._ram[address - 0x0100];
         }
-        else if (address === 0x0FF4) {
-            return this._accessCounter >= this._accessCounterLimit ?
-                (this._bank[address] & ~0x40) :
-                (this._bank[address] | 0x40);
+        else if (address === 0x0ff4) {
+            return this._accessCounter >= this._accessCounterLimit
+                ?
+                    this._bank[address] & ~0x40
+                :
+                    this._bank[address] | 0x40;
         }
         else {
             return this._bank[address];
         }
     };
     CartridgeFA2.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         this._accessCounter++;
         if (address < 0x0100) {
             this._ram[address] = value;
             return;
         }
-        if (address === 0x0FF4) {
+        if (address === 0x0ff4) {
             return this._handleIo();
         }
-        if (address >= 0x0FF5 && address <= 0x0FFB) {
-            this._bank = this._banks[address - 0x0FF5];
+        if (address >= 0x0ff5 && address <= 0x0ffb) {
+            this._bank = this._banks[address - 0x0ff5];
         }
     };
     CartridgeFA2.prototype._handleIo = function () {
         if (this._accessCounter < this._accessCounterLimit) {
             return;
         }
-        if (this._ram[0xFF] === 1) {
+        if (this._ram[0xff] === 1) {
             for (var i = 0; i < 0x100; i++) {
                 this._ram[i] = this._savedRam[i];
             }
             this._accessCounterLimit = 10;
         }
-        else if (this._ram[0xFF] === 2) {
+        else if (this._ram[0xff] === 2) {
             for (var i = 0; i < 0x100; i++) {
                 this._savedRam[i] = this._ram[i];
             }
@@ -9838,13 +9780,13 @@ var CartridgeFA2 = (function (_super) {
             return;
         }
         this._accessCounter = 0;
-        this._ram[0xFF] = 0;
+        this._ram[0xff] = 0;
     };
     return CartridgeFA2;
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA2;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],66:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./util":75,"tslib":19}],65:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -9871,10 +9813,10 @@ var CartridgeFE = (function (_super) {
     }
     CartridgeFE.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0x20, 0x00, 0xD0, 0xC6, 0xC5],
-            [0x20, 0xC3, 0xF8, 0xA5, 0x82],
-            [0xD0, 0xFB, 0x20, 0x73, 0xFE],
-            [0x20, 0x00, 0xF0, 0x84, 0xD6]
+            [0x20, 0x00, 0xd0, 0xc6, 0xc5],
+            [0x20, 0xc3, 0xf8, 0xa5, 0x82],
+            [0xd0, 0xfb, 0x20, 0x73, 0xfe],
+            [0x20, 0x00, 0xf0, 0x84, 0xd6]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -9889,7 +9831,7 @@ var CartridgeFE = (function (_super) {
         this._lastAddressBusValue = -1;
     };
     CartridgeFE.prototype.read = function (address) {
-        return this._bank[address & 0x0FFF];
+        return this._bank[address & 0x0fff];
     };
     CartridgeFE.prototype.write = function (address, value) {
         _super.prototype.write.call(this, address, value);
@@ -9916,13 +9858,13 @@ var CartridgeFE = (function (_super) {
         if (self._lastAccessWasFE) {
             self._bank = (self._bus.getLastDataBusValue() & 0x20) > 0 ? self._bank0 : self._bank1;
         }
-        self._lastAccessWasFE = self._bus.getLastAddresBusValue() === 0x01FE;
+        self._lastAccessWasFE = self._bus.getLastAddresBusValue() === 0x01fe;
     };
     return CartridgeFE;
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFE;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],67:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./util":75,"tslib":19}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Cartridge2k_1 = require("./Cartridge2k");
@@ -9949,7 +9891,7 @@ var CartridgeFactory = (function () {
     function CartridgeFactory() {
     }
     CartridgeFactory.prototype.createCartridge = function (buffer, cartridgeType) {
-        if (typeof (cartridgeType) === 'undefined') {
+        if (typeof cartridgeType === 'undefined') {
             var detector = new CartridgeDetector_1.default();
             cartridgeType = detector.detectCartridgeType(buffer);
         }
@@ -9998,7 +9940,7 @@ var CartridgeFactory = (function () {
 }());
 exports.default = CartridgeFactory;
 
-},{"./Cartridge2k":50,"./Cartridge3E":51,"./Cartridge3F":52,"./Cartridge4k":53,"./CartridgeDPC":54,"./CartridgeDPCPlus":55,"./CartridgeDetector":56,"./CartridgeE0":57,"./CartridgeE7":58,"./CartridgeEF":59,"./CartridgeF0":60,"./CartridgeF4":61,"./CartridgeF6":62,"./CartridgeF8":63,"./CartridgeFA":64,"./CartridgeFA2":65,"./CartridgeFE":66,"./CartridgeInfo":68,"./CartridgeSupercharger":70,"./CartridgeUA":71}],68:[function(require,module,exports){
+},{"./Cartridge2k":49,"./Cartridge3E":50,"./Cartridge3F":51,"./Cartridge4k":52,"./CartridgeDPC":53,"./CartridgeDPCPlus":54,"./CartridgeDetector":55,"./CartridgeE0":56,"./CartridgeE7":57,"./CartridgeEF":58,"./CartridgeF0":59,"./CartridgeF4":60,"./CartridgeF6":61,"./CartridgeF8":62,"./CartridgeFA":63,"./CartridgeFA2":64,"./CartridgeFE":65,"./CartridgeInfo":67,"./CartridgeSupercharger":69,"./CartridgeUA":70}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo;
@@ -10095,7 +10037,7 @@ var CartridgeInfo;
 })(CartridgeInfo || (CartridgeInfo = {}));
 exports.default = CartridgeInfo;
 
-},{}],69:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInterface;
@@ -10112,7 +10054,7 @@ var CartridgeInterface;
 })(CartridgeInterface || (CartridgeInterface = {}));
 exports.default = CartridgeInterface;
 
-},{}],70:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -10181,7 +10123,7 @@ var CartridgeSupercharger = (function (_super) {
         return this;
     };
     CartridgeSupercharger.prototype.read = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address === 0x0850 && this._bank1Type === 1) {
             this._loadIntoRam(this._bus.peek(0x80));
         }
@@ -10189,14 +10131,14 @@ var CartridgeSupercharger = (function (_super) {
         if (value >= 0) {
             return value;
         }
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     CartridgeSupercharger.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._pendingWrite && this._writeRamEnabled && this._transitionCount === 5) {
             return this._pendingWriteData;
         }
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     CartridgeSupercharger.prototype.write = function (address, value) {
         this._access(address, value);
@@ -10214,14 +10156,14 @@ var CartridgeSupercharger = (function (_super) {
         }
     };
     CartridgeSupercharger.prototype._access = function (address, value) {
-        address &= 0x0FFF;
-        if ((address & 0x0F00) === 0 && (!this._pendingWrite || !this._writeRamEnabled)) {
-            this._pendingWriteData = address & 0x00FF;
+        address &= 0x0fff;
+        if ((address & 0x0f00) === 0 && (!this._pendingWrite || !this._writeRamEnabled)) {
+            this._pendingWriteData = address & 0x00ff;
             this._transitionCount = 0;
             this._pendingWrite = true;
             return -1;
         }
-        if (address === 0x0FF8) {
+        if (address === 0x0ff8) {
             this._setBankswitchMode((this._pendingWriteData & 28) >>> 2);
             this._writeRamEnabled = (this._pendingWriteData & 0x02) > 0;
             this._pendingWrite = false;
@@ -10232,7 +10174,7 @@ var CartridgeSupercharger = (function (_super) {
                 this._bank0[address] = this._pendingWriteData;
             }
             else if (this._bank1Type === 0) {
-                this._bank1[address & 0x07FF] = this._pendingWriteData;
+                this._bank1[address & 0x07ff] = this._pendingWriteData;
             }
             this._pendingWrite = false;
             return this._pendingWriteData;
@@ -10271,9 +10213,9 @@ var CartridgeSupercharger = (function (_super) {
         for (var i = 0; i < 0x0800; i++) {
             this._rom[i] = i < blob_1.bios.length ? blob_1.bios[i] : 0x02;
         }
-        this._rom[109] = this._showLoadingBars ? 0 : 0xFF;
-        this._rom[0x07FF] = this._rom[0x07FD] = 0xF8;
-        this._rom[0x07FE] = this._rom[0x07FC] = 0x0A;
+        this._rom[109] = this._showLoadingBars ? 0 : 0xff;
+        this._rom[0x07ff] = this._rom[0x07fd] = 0xf8;
+        this._rom[0x07fe] = this._rom[0x07fc] = 0x0a;
     };
     CartridgeSupercharger.prototype._loadIntoRam = function (loadId) {
         var loadIndex;
@@ -10299,7 +10241,7 @@ var CartridgeSupercharger = (function (_super) {
                 checksum += load[256 * blockIdx + i];
                 this._ramBanks[bank][base + i] = load[256 * blockIdx + i];
             }
-            if ((checksum & 0xFF) !== 0x55) {
+            if ((checksum & 0xff) !== 0x55) {
                 console.log("load " + loadIndex + ", block " + blockIdx + ": invalid checksum");
             }
         }
@@ -10311,7 +10253,7 @@ var CartridgeSupercharger = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeSupercharger;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./supercharger/Header":72,"./supercharger/blob":73,"tslib":20}],71:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./supercharger/Header":71,"./supercharger/blob":72,"tslib":19}],70:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -10338,9 +10280,9 @@ var CartridgeUA = (function (_super) {
     }
     CartridgeUA.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0x8D, 0x40, 0x02],
-            [0xAD, 0x40, 0x02],
-            [0xBD, 0x1F, 0x02]
+            [0x8d, 0x40, 0x02],
+            [0xad, 0x40, 0x02],
+            [0xbd, 0x1f, 0x02]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -10353,7 +10295,7 @@ var CartridgeUA = (function (_super) {
         this._bank = this._bank0;
     };
     CartridgeUA.prototype.read = function (address) {
-        return this._bank[address & 0x0FFF];
+        return this._bank[address & 0x0fff];
     };
     CartridgeUA.prototype.setBus = function (bus) {
         this._bus = bus;
@@ -10378,7 +10320,7 @@ var CartridgeUA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeUA;
 
-},{"./AbstractCartridge":49,"./CartridgeInfo":68,"./util":76,"tslib":20}],72:[function(require,module,exports){
+},{"./AbstractCartridge":48,"./CartridgeInfo":67,"./util":75,"tslib":19}],71:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Header = (function () {
@@ -10409,90 +10351,571 @@ var Header = (function () {
             this.multiloadId +
             this.progressBarSpeedLow +
             this.progressBarSpeedHigh;
-        return (checksum & 0xFF) === 0x55;
+        return (checksum & 0xff) === 0x55;
     };
     return Header;
 }());
 exports.default = Header;
 
-},{}],73:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bios = new Uint8Array([
-    0xa5, 0xfa, 0x85, 0x80, 0x4c, 0x18, 0xf8, 0xff,
-    0xff, 0xff, 0x78, 0xd8, 0xa0, 0x00, 0xa2, 0x00,
-    0x94, 0x00, 0xe8, 0xd0, 0xfb, 0x4c, 0x50, 0xf8,
-    0xa2, 0x00, 0xbd, 0x06, 0xf0, 0xad, 0xf8, 0xff,
-    0xa2, 0x00, 0xad, 0x00, 0xf0, 0xea, 0xbd, 0x00,
-    0xf7, 0xca, 0xd0, 0xf6, 0x4c, 0x50, 0xf8, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xa2, 0x03, 0xbc, 0x22, 0xf9, 0x94, 0xfa, 0xca,
-    0x10, 0xf8, 0xa0, 0x00, 0xa2, 0x28, 0x94, 0x04,
-    0xca, 0x10, 0xfb, 0xa2, 0x1c, 0x94, 0x81, 0xca,
-    0x10, 0xfb, 0xa9, 0xff, 0xc9, 0x00, 0xd0, 0x03,
-    0x4c, 0x13, 0xf9, 0xa9, 0x00, 0x85, 0x1b, 0x85,
-    0x1c, 0x85, 0x1d, 0x85, 0x1e, 0x85, 0x1f, 0x85,
-    0x19, 0x85, 0x1a, 0x85, 0x08, 0x85, 0x01, 0xa9,
-    0x10, 0x85, 0x21, 0x85, 0x02, 0xa2, 0x07, 0xca,
-    0xca, 0xd0, 0xfd, 0xa9, 0x00, 0x85, 0x20, 0x85,
-    0x10, 0x85, 0x11, 0x85, 0x02, 0x85, 0x2a, 0xa9,
-    0x05, 0x85, 0x0a, 0xa9, 0xff, 0x85, 0x0d, 0x85,
-    0x0e, 0x85, 0x0f, 0x85, 0x84, 0x85, 0x85, 0xa9,
-    0xf0, 0x85, 0x83, 0xa9, 0x74, 0x85, 0x09, 0xa9,
-    0x0c, 0x85, 0x15, 0xa9, 0x1f, 0x85, 0x17, 0x85,
-    0x82, 0xa9, 0x07, 0x85, 0x19, 0xa2, 0x08, 0xa0,
-    0x00, 0x85, 0x02, 0x88, 0xd0, 0xfb, 0x85, 0x02,
-    0x85, 0x02, 0xa9, 0x02, 0x85, 0x02, 0x85, 0x00,
-    0x85, 0x02, 0x85, 0x02, 0x85, 0x02, 0xa9, 0x00,
-    0x85, 0x00, 0xca, 0x10, 0xe4, 0x06, 0x83, 0x66,
-    0x84, 0x26, 0x85, 0xa5, 0x83, 0x85, 0x0d, 0xa5,
-    0x84, 0x85, 0x0e, 0xa5, 0x85, 0x85, 0x0f, 0xa6,
-    0x82, 0xca, 0x86, 0x82, 0x86, 0x17, 0xe0, 0x0a,
-    0xd0, 0xc3, 0xa9, 0x02, 0x85, 0x01, 0xa2, 0x1c,
-    0xa0, 0x00, 0x84, 0x19, 0x84, 0x09, 0x94, 0x81,
-    0xca, 0x10, 0xfb, 0xa6, 0x80, 0xdd, 0x00, 0xf0,
-    0xa9, 0x9a, 0xa2, 0xff, 0xa0, 0x00, 0x9a, 0x4c,
-    0xfa, 0x00, 0xcd, 0xf8, 0xff, 0x4c
+    0xa5,
+    0xfa,
+    0x85,
+    0x80,
+    0x4c,
+    0x18,
+    0xf8,
+    0xff,
+    0xff,
+    0xff,
+    0x78,
+    0xd8,
+    0xa0,
+    0x00,
+    0xa2,
+    0x00,
+    0x94,
+    0x00,
+    0xe8,
+    0xd0,
+    0xfb,
+    0x4c,
+    0x50,
+    0xf8,
+    0xa2,
+    0x00,
+    0xbd,
+    0x06,
+    0xf0,
+    0xad,
+    0xf8,
+    0xff,
+    0xa2,
+    0x00,
+    0xad,
+    0x00,
+    0xf0,
+    0xea,
+    0xbd,
+    0x00,
+    0xf7,
+    0xca,
+    0xd0,
+    0xf6,
+    0x4c,
+    0x50,
+    0xf8,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xa2,
+    0x03,
+    0xbc,
+    0x22,
+    0xf9,
+    0x94,
+    0xfa,
+    0xca,
+    0x10,
+    0xf8,
+    0xa0,
+    0x00,
+    0xa2,
+    0x28,
+    0x94,
+    0x04,
+    0xca,
+    0x10,
+    0xfb,
+    0xa2,
+    0x1c,
+    0x94,
+    0x81,
+    0xca,
+    0x10,
+    0xfb,
+    0xa9,
+    0xff,
+    0xc9,
+    0x00,
+    0xd0,
+    0x03,
+    0x4c,
+    0x13,
+    0xf9,
+    0xa9,
+    0x00,
+    0x85,
+    0x1b,
+    0x85,
+    0x1c,
+    0x85,
+    0x1d,
+    0x85,
+    0x1e,
+    0x85,
+    0x1f,
+    0x85,
+    0x19,
+    0x85,
+    0x1a,
+    0x85,
+    0x08,
+    0x85,
+    0x01,
+    0xa9,
+    0x10,
+    0x85,
+    0x21,
+    0x85,
+    0x02,
+    0xa2,
+    0x07,
+    0xca,
+    0xca,
+    0xd0,
+    0xfd,
+    0xa9,
+    0x00,
+    0x85,
+    0x20,
+    0x85,
+    0x10,
+    0x85,
+    0x11,
+    0x85,
+    0x02,
+    0x85,
+    0x2a,
+    0xa9,
+    0x05,
+    0x85,
+    0x0a,
+    0xa9,
+    0xff,
+    0x85,
+    0x0d,
+    0x85,
+    0x0e,
+    0x85,
+    0x0f,
+    0x85,
+    0x84,
+    0x85,
+    0x85,
+    0xa9,
+    0xf0,
+    0x85,
+    0x83,
+    0xa9,
+    0x74,
+    0x85,
+    0x09,
+    0xa9,
+    0x0c,
+    0x85,
+    0x15,
+    0xa9,
+    0x1f,
+    0x85,
+    0x17,
+    0x85,
+    0x82,
+    0xa9,
+    0x07,
+    0x85,
+    0x19,
+    0xa2,
+    0x08,
+    0xa0,
+    0x00,
+    0x85,
+    0x02,
+    0x88,
+    0xd0,
+    0xfb,
+    0x85,
+    0x02,
+    0x85,
+    0x02,
+    0xa9,
+    0x02,
+    0x85,
+    0x02,
+    0x85,
+    0x00,
+    0x85,
+    0x02,
+    0x85,
+    0x02,
+    0x85,
+    0x02,
+    0xa9,
+    0x00,
+    0x85,
+    0x00,
+    0xca,
+    0x10,
+    0xe4,
+    0x06,
+    0x83,
+    0x66,
+    0x84,
+    0x26,
+    0x85,
+    0xa5,
+    0x83,
+    0x85,
+    0x0d,
+    0xa5,
+    0x84,
+    0x85,
+    0x0e,
+    0xa5,
+    0x85,
+    0x85,
+    0x0f,
+    0xa6,
+    0x82,
+    0xca,
+    0x86,
+    0x82,
+    0x86,
+    0x17,
+    0xe0,
+    0x0a,
+    0xd0,
+    0xc3,
+    0xa9,
+    0x02,
+    0x85,
+    0x01,
+    0xa2,
+    0x1c,
+    0xa0,
+    0x00,
+    0x84,
+    0x19,
+    0x84,
+    0x09,
+    0x94,
+    0x81,
+    0xca,
+    0x10,
+    0xfb,
+    0xa6,
+    0x80,
+    0xdd,
+    0x00,
+    0xf0,
+    0xa9,
+    0x9a,
+    0xa2,
+    0xff,
+    0xa0,
+    0x00,
+    0x9a,
+    0x4c,
+    0xfa,
+    0x00,
+    0xcd,
+    0xf8,
+    0xff,
+    0x4c
 ]);
 exports.defaultHeader = new Uint8Array([
-    0xac, 0xfa, 0x0f, 0x18, 0x62, 0x00, 0x24, 0x02,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0x00, 0x04, 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c,
-    0x01, 0x05, 0x09, 0x0d, 0x11, 0x15, 0x19, 0x1d,
-    0x02, 0x06, 0x0a, 0x0e, 0x12, 0x16, 0x1a, 0x1e,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00
+    0xac,
+    0xfa,
+    0x0f,
+    0x18,
+    0x62,
+    0x00,
+    0x24,
+    0x02,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0x00,
+    0x04,
+    0x08,
+    0x0c,
+    0x10,
+    0x14,
+    0x18,
+    0x1c,
+    0x01,
+    0x05,
+    0x09,
+    0x0d,
+    0x11,
+    0x15,
+    0x19,
+    0x1d,
+    0x02,
+    0x06,
+    0x0a,
+    0x0e,
+    0x12,
+    0x16,
+    0x1a,
+    0x1e,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0x00
 ]);
 
-},{}],74:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var nativeThumbulator = require("./native/thumbulator");
@@ -10531,16 +10954,17 @@ var Thumbulator = (function () {
             printErr: printer,
             trapOnInstructionFetch: options.trapOnInstructionFetch || (function () { return 0; }),
             busRead16: bus.read16,
-            busRead32: bus.read32 || (function (address) { return (bus.read16(address) & 0xFFFF) | (bus.read16(address + 2) << 16); }),
+            busRead32: bus.read32 || (function (address) { return (bus.read16(address) & 0xffff) | (bus.read16(address + 2) << 16); }),
             busWrite16: bus.write16,
-            busWrite32: bus.write32 || (function (address, value) { return (bus.write16(address, value & 0xFFFF), bus.write16(address + 2, value >>> 16)); })
+            busWrite32: bus.write32 ||
+                (function (address, value) { return (bus.write16(address, value & 0xffff), bus.write16(address + 2, value >>> 16)); })
         };
     };
     return Thumbulator;
 }());
 exports.default = Thumbulator;
 
-},{"./native/thumbulator":75}],75:[function(require,module,exports){
+},{"./native/thumbulator":74}],74:[function(require,module,exports){
 (function (process){
 var Module = function (Module) {
     Module = Module || {};
@@ -18143,7 +18567,7 @@ module.exports = Module;
 
 }).call(this,require('_process'))
 
-},{"_process":9,"path":8}],76:[function(require,module,exports){
+},{"_process":8,"path":7}],75:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function searchForSignatures(buffer, signatures) {
@@ -18182,7 +18606,7 @@ function searchForSignatures(buffer, signatures) {
 }
 exports.searchForSignatures = searchForSignatures;
 
-},{}],77:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -18207,7 +18631,7 @@ var Audio = (function () {
         this._frequency = -1;
     };
     Audio.prototype.audc = function (value) {
-        value &= 0x0F;
+        value &= 0x0f;
         if (value === this._tone) {
             return;
         }
@@ -18215,7 +18639,7 @@ var Audio = (function () {
         this._dispatchBufferChanged();
     };
     Audio.prototype.audf = function (value) {
-        value &= 0x1F;
+        value &= 0x1f;
         if (value === this._frequency) {
             return;
         }
@@ -18223,7 +18647,7 @@ var Audio = (function () {
         this._dispatchBufferChanged();
     };
     Audio.prototype.audv = function (value) {
-        value &= 0x0F;
+        value &= 0x0f;
         if (value === this._volume) {
             return;
         }
@@ -18257,14 +18681,14 @@ var Audio = (function () {
 }());
 exports.default = Audio;
 
-},{"./ToneGenerator":87,"microevent.ts":7}],78:[function(require,module,exports){
+},{"./ToneGenerator":86,"microevent.ts":6}],77:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Ball = (function () {
     function Ball(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
         this._flushLineCache = _flushLineCache;
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._enabledOld = false;
         this._enabledNew = false;
@@ -18282,7 +18706,7 @@ var Ball = (function () {
         this.reset();
     }
     Ball.prototype.reset = function () {
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._width = 1;
         this._enabledOld = false;
@@ -18342,7 +18766,7 @@ var Ball = (function () {
         return this._moving;
     };
     Ball.prototype.tick = function (isReceivingHclock) {
-        this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
+        this.collision = this._rendering && this._renderCounter >= 0 && this._enabled ? 0 : this._collisionMask;
         var starfieldEffect = this._moving && isReceivingHclock;
         if (this._counter === 156) {
             var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
@@ -18394,14 +18818,14 @@ var Ball = (function () {
 }());
 exports.default = Ball;
 
-},{}],79:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DelayQueue = (function () {
     function DelayQueue(_length, size) {
         this._length = _length;
         this._nextIndex = 0;
-        this._indices = new Uint8Array(0xFF);
+        this._indices = new Uint8Array(0xff);
         this._queue = new Array(this._length);
         for (var i = 0; i < this._length; i++) {
             this._queue[i] = new QueueEntry(size);
@@ -18430,7 +18854,7 @@ var DelayQueue = (function () {
         this._nextIndex = (this._nextIndex + 1) % this._length;
         for (var i = 0; i < entry.nextIndex; i++) {
             handler(entry.addresses[i], entry.values[i], scope);
-            this._indices[entry.addresses[i]] = 0xFF;
+            this._indices[entry.addresses[i]] = 0xff;
         }
         entry.nextIndex = 0;
     };
@@ -18468,7 +18892,7 @@ var QueueEntry = (function () {
 }());
 exports.default = DelayQueue;
 
-},{}],80:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -18491,6 +18915,7 @@ var FrameManager = (function () {
         this._lineInState = 0;
         this._surfaceFactory = null;
         this._surface = null;
+        this._frameStart = -1;
         switch (this._config.tvMode) {
             case 0:
                 this._vblankLines = 40;
@@ -18508,6 +18933,7 @@ var FrameManager = (function () {
         }
         this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines + 3;
         this._maxLinesWithoutVsync = this._frameLines * 50;
+        this._frameStart = this._config.frameStart;
         this.reset();
     }
     FrameManager.prototype.reset = function () {
@@ -18534,14 +18960,14 @@ var FrameManager = (function () {
                 }
                 break;
             case 2:
-                if (this._waitForVsync) {
-                    if (this._lineInState >=
-                        (this.vblank ? this._vblankLines : this._vblankLines - 10)) {
+                if (this._frameStart >= 0) {
+                    if (this._lineInState > this._frameStart) {
                         this._startFrame();
                     }
                 }
                 else {
-                    if (!this.vblank) {
+                    if (this._lineInState >=
+                        (this.vblank ? this._vblankLines : this._vblankLines - 10)) {
                         this._startFrame();
                     }
                 }
@@ -18605,8 +19031,8 @@ var FrameManager = (function () {
         return this._state === 3 ? this._lineInState : 0;
     };
     FrameManager.prototype.getDebugState = function () {
-        return this._getReadableState() + ", line = " + this._lineInState + ", " +
-            ("vblank = " + (this.vblank ? '1' : '0') + ", " + (this._waitForVsync ? '' : 'given up on vsync'));
+        return (this._getReadableState() + ", line = " + this._lineInState + ", " +
+            ("vblank = " + (this.vblank ? '1' : '0') + ", " + (this._waitForVsync ? '' : 'given up on vsync')));
     };
     FrameManager.prototype._getReadableState = function () {
         switch (this._state) {
@@ -18642,7 +19068,7 @@ var FrameManager = (function () {
 }());
 exports.default = FrameManager;
 
-},{"../Config":46,"microevent.ts":7}],81:[function(require,module,exports){
+},{"../Config":45,"microevent.ts":6}],80:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var LatchedInput = (function () {
@@ -18677,7 +19103,7 @@ var LatchedInput = (function () {
 }());
 exports.default = LatchedInput;
 
-},{}],82:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -18685,7 +19111,7 @@ var Missile = (function () {
     function Missile(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
         this._flushLineCache = _flushLineCache;
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._enabled = false;
         this._enam = false;
@@ -18702,7 +19128,7 @@ var Missile = (function () {
         this.reset();
     }
     Missile.prototype.reset = function () {
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this._width = 1;
         this._enabled = false;
         this._counter = 0;
@@ -18717,7 +19143,7 @@ var Missile = (function () {
         this._lastMovementTick = 0;
     };
     Missile.prototype.enam = function (value) {
-        var enam = (value & 2) > 0, enabled = enam && (this._resmp === 0);
+        var enam = (value & 2) > 0, enabled = enam && this._resmp === 0;
         if (enam !== this._enam || enabled !== this._enabled) {
             this._flushLineCache();
         }
@@ -18736,7 +19162,7 @@ var Missile = (function () {
             else {
                 switch (this._width) {
                     case 8:
-                        this._renderCounter = (counter - 157) + ((this._renderCounter >= 4) ? 4 : 0);
+                        this._renderCounter = counter - 157 + (this._renderCounter >= 4 ? 4 : 0);
                         break;
                     case 4:
                         this._renderCounter = counter - 157;
@@ -18794,7 +19220,7 @@ var Missile = (function () {
         return this._moving;
     };
     Missile.prototype.tick = function (isReceivingHclock) {
-        this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
+        this.collision = this._rendering && this._renderCounter >= 0 && this._enabled ? 0 : this._collisionMask;
         var starfieldEffect = this._moving && isReceivingHclock;
         if (this._decodes[this._counter] && !this._resmp) {
             var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
@@ -18835,7 +19261,7 @@ var Missile = (function () {
 }());
 exports.default = Missile;
 
-},{"./drawCounterDecodes":88}],83:[function(require,module,exports){
+},{"./drawCounterDecodes":87}],82:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var C = 68e-9, RPOT = 1e6, R0 = 1.8e3, U = 5, LINES_FULL = 380;
@@ -18884,15 +19310,18 @@ var PaddleReader = (function () {
             return;
         }
         var timestamp = this._timestampRef();
-        this._u = U * (1 - (1 - this._u / U) *
-            Math.exp(-(timestamp - this._timestamp) / (this._value * RPOT + R0) / C / this._clockFreq));
+        this._u =
+            U *
+                (1 -
+                    (1 - this._u / U) *
+                        Math.exp(-(timestamp - this._timestamp) / (this._value * RPOT + R0) / C / this._clockFreq));
         this._timestamp = timestamp;
     };
     return PaddleReader;
 }());
 exports.default = PaddleReader;
 
-},{}],84:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -18900,7 +19329,7 @@ var Player = (function () {
     function Player(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
         this._flushLineCache = _flushLineCache;
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._hmmClocks = 0;
         this._counter = 0;
@@ -18920,7 +19349,7 @@ var Player = (function () {
         this.reset();
     }
     Player.prototype.reset = function () {
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._hmmClocks = 0;
         this._counter = 0;
@@ -18967,7 +19396,7 @@ var Player = (function () {
         this._decodes = drawCounterDecodes_1.decodesPlayer[masked];
         if (this._decodes !== oldDecodes &&
             this._rendering &&
-            (this._renderCounter - -5) < 2 &&
+            this._renderCounter - -5 < 2 &&
             !this._decodes[(this._counter - this._renderCounter + -5 + 159) % 160]) {
             this._rendering = false;
         }
@@ -18979,7 +19408,7 @@ var Player = (function () {
             return;
         }
         var delta = this._renderCounter - -5;
-        switch (this._divider << 4 | this._dividerPending) {
+        switch ((this._divider << 4) | this._dividerPending) {
             case 0x12:
             case 0x14:
                 if (hblank) {
@@ -18987,7 +19416,7 @@ var Player = (function () {
                         this._setDivider(this._dividerPending);
                     }
                     else {
-                        this._dividerChangeCounter = (delta < 5 ? 1 : 0);
+                        this._dividerChangeCounter = delta < 5 ? 1 : 0;
                     }
                 }
                 else {
@@ -19009,16 +19438,16 @@ var Player = (function () {
                     this._renderCounter--;
                 }
                 else {
-                    this._dividerChangeCounter = (hblank ? 0 : 1);
+                    this._dividerChangeCounter = hblank ? 0 : 1;
                 }
                 break;
             case 0x42:
             case 0x24:
-                if (this._renderCounter < 1 || (hblank && (this._renderCounter % this._divider === 1))) {
+                if (this._renderCounter < 1 || (hblank && this._renderCounter % this._divider === 1)) {
                     this._setDivider(this._dividerPending);
                 }
                 else {
-                    this._dividerChangeCounter = (this._divider - (this._renderCounter - 1) % this._divider);
+                    this._dividerChangeCounter = this._divider - (this._renderCounter - 1) % this._divider;
                 }
                 break;
             default:
@@ -19027,7 +19456,7 @@ var Player = (function () {
     };
     Player.prototype.resp = function (counter) {
         this._counter = counter;
-        if (this._rendering && (this._renderCounter - -5) < 4) {
+        if (this._rendering && this._renderCounter - -5 < 4) {
             this._renderCounter = -5 + (counter - 157);
         }
     };
@@ -19060,9 +19489,12 @@ var Player = (function () {
         return this._moving;
     };
     Player.prototype.tick = function () {
-        this.collision = (this._rendering &&
-            this._renderCounter >= this._renderCounterTripPoint &&
-            (this._pattern & (1 << this._sampleCounter))) ? 0 : this._collisionMask;
+        this.collision =
+            this._rendering &&
+                this._renderCounter >= this._renderCounterTripPoint &&
+                this._pattern & (1 << this._sampleCounter)
+                ? 0
+                : this._collisionMask;
         if (this._decodes[this._counter]) {
             this._rendering = true;
             this._renderCounter = -5;
@@ -19082,7 +19514,7 @@ var Player = (function () {
                     }
                     break;
                 default:
-                    if (this._renderCounter > 1 && ((this._renderCounter - 1) % this._divider) === 0) {
+                    if (this._renderCounter > 1 && (this._renderCounter - 1) % this._divider === 0) {
                         this._sampleCounter++;
                     }
                     if (this._renderCounter > 0 &&
@@ -19151,7 +19583,7 @@ var Player = (function () {
 }());
 exports.default = Player;
 
-},{"./drawCounterDecodes":88}],85:[function(require,module,exports){
+},{"./drawCounterDecodes":87}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Playfield = (function () {
@@ -19188,12 +19620,12 @@ var Playfield = (function () {
         this._applyColors();
     };
     Playfield.prototype.pf0 = function (value) {
-        if (this._pf0 === (value >>> 4)) {
+        if (this._pf0 === value >>> 4) {
             return;
         }
         this._flushLineCache();
         this._pf0 = value >>> 4;
-        this._pattern = (this._pattern & 0x000FFFF0) | this._pf0;
+        this._pattern = (this._pattern & 0x000ffff0) | this._pf0;
     };
     Playfield.prototype.pf1 = function (value) {
         if (this._pf1 === value) {
@@ -19201,15 +19633,16 @@ var Playfield = (function () {
         }
         this._flushLineCache();
         this._pf1 = value;
-        this._pattern = (this._pattern & 0x000FF00F)
-            | ((value & 0x80) >>> 3)
-            | ((value & 0x40) >>> 1)
-            | ((value & 0x20) << 1)
-            | ((value & 0x10) << 3)
-            | ((value & 0x08) << 5)
-            | ((value & 0x04) << 7)
-            | ((value & 0x02) << 9)
-            | ((value & 0x01) << 11);
+        this._pattern =
+            (this._pattern & 0x000ff00f) |
+                ((value & 0x80) >>> 3) |
+                ((value & 0x40) >>> 1) |
+                ((value & 0x20) << 1) |
+                ((value & 0x10) << 3) |
+                ((value & 0x08) << 5) |
+                ((value & 0x04) << 7) |
+                ((value & 0x02) << 9) |
+                ((value & 0x01) << 11);
     };
     Playfield.prototype.pf2 = function (value) {
         if (this._pf2 === value) {
@@ -19217,7 +19650,7 @@ var Playfield = (function () {
         }
         this._flushLineCache();
         this._pf2 = value;
-        this._pattern = (this._pattern & 0x00000FFF) | ((value & 0xFF) << 12);
+        this._pattern = (this._pattern & 0x00000fff) | ((value & 0xff) << 12);
     };
     Playfield.prototype.ctrlpf = function (value) {
         var reflected = (value & 0x01) > 0, colorMode = (value & 0x06) === 0x02 ? 1 : 0;
@@ -19294,7 +19727,7 @@ var Playfield = (function () {
 }());
 exports.default = Playfield;
 
-},{}],86:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -19326,10 +19759,10 @@ var Tia = (function () {
         this._movementInProgress = false;
         this._extendedHblank = false;
         this._xDelta = 0;
-        this._clock = 0.;
+        this._clock = 0;
         this._linesSinceChange = 0;
         this._maxLinesTotal = 0;
-        this._colorBk = 0xFF000000;
+        this._colorBk = 0xff000000;
         this._priority = 0;
         this._collisionMask = 0;
         this._player0 = new Player_1.default(31744, function () { return _this._flushLineCache(); });
@@ -19361,10 +19794,10 @@ var Tia = (function () {
         this._priority = 0;
         this._hstate = 0;
         this._collisionMask = 0;
-        this._colorBk = 0xFF000000;
+        this._colorBk = 0xff000000;
         this._linesSinceChange = 0;
         this._collisionUpdateRequired = false;
-        this._clock = 0.;
+        this._clock = 0;
         this._maxLinesTotal = 0;
         this._xDelta = 0;
         this._delayQueue.reset();
@@ -19413,7 +19846,7 @@ var Tia = (function () {
     Tia.prototype.read = function (address) {
         var lastDataBusValue = this._bus.getLastDataBusValue();
         var result;
-        switch (address & 0x0F) {
+        switch (address & 0x0f) {
             case 8:
                 result = this._config.emulatePaddles ? this._paddles[0].inpt() : 0;
                 break;
@@ -19433,48 +19866,55 @@ var Tia = (function () {
                 result = this._input1.inpt();
                 break;
             case 0:
-                result = (((this._collisionMask & 8760 & 31744) ? 0x40 : 0) |
-                    ((this._collisionMask & 8760 & 17344) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 8760 & 31744 ? 0x40 : 0) |
+                        (this._collisionMask & 8760 & 17344 ? 0x80 : 0);
                 break;
             case 1:
-                result = (((this._collisionMask & 4390 & 17344) ? 0x40 : 0) |
-                    ((this._collisionMask & 4390 & 31744) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 4390 & 17344 ? 0x40 : 0) |
+                        (this._collisionMask & 4390 & 31744 ? 0x80 : 0);
                 break;
             case 2:
-                result = (((this._collisionMask & 31744 & 2197) ? 0x40 : 0) |
-                    ((this._collisionMask & 31744 & 1099) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 31744 & 2197 ? 0x40 : 0) |
+                        (this._collisionMask & 31744 & 1099 ? 0x80 : 0);
                 break;
             case 3:
-                result = (((this._collisionMask & 17344 & 2197) ? 0x40 : 0) |
-                    ((this._collisionMask & 17344 & 1099) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 17344 & 2197 ? 0x40 : 0) |
+                        (this._collisionMask & 17344 & 1099 ? 0x80 : 0);
                 break;
             case 4:
-                result = (((this._collisionMask & 8760 & 2197) ? 0x40 : 0) |
-                    ((this._collisionMask & 8760 & 1099) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 8760 & 2197 ? 0x40 : 0) |
+                        (this._collisionMask & 8760 & 1099 ? 0x80 : 0);
                 break;
             case 5:
-                result = (((this._collisionMask & 4390 & 2197) ? 0x40 : 0) |
-                    ((this._collisionMask & 4390 & 1099) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 4390 & 2197 ? 0x40 : 0) |
+                        (this._collisionMask & 4390 & 1099 ? 0x80 : 0);
                 break;
             case 7:
-                result = (((this._collisionMask & 8760 & 4390) ? 0x40 : 0) |
-                    ((this._collisionMask & 31744 & 17344) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 8760 & 4390 ? 0x40 : 0) |
+                        (this._collisionMask & 31744 & 17344 ? 0x80 : 0);
                 break;
             case 6:
-                result = (this._collisionMask & 2197 & 1099) ? 0x80 : 0;
+                result = this._collisionMask & 2197 & 1099 ? 0x80 : 0;
                 break;
             default:
                 result = lastDataBusValue;
                 break;
         }
-        return (result & 0xC0) | (lastDataBusValue & 0x3F);
+        return (result & 0xc0) | (lastDataBusValue & 0x3f);
     };
     Tia.prototype.peek = function (address) {
         return this.read(address);
     };
     Tia.prototype.write = function (address, value) {
         var v = 0;
-        switch (address & 0x3F) {
+        switch (address & 0x3f) {
             case 2:
                 this._cpu.halt();
                 break;
@@ -19537,16 +19977,16 @@ var Tia = (function () {
                 break;
             case 9:
                 this._flushLineCache();
-                this._colorBk = this._palette[(value & 0xFF) >>> 1];
+                this._colorBk = this._palette[(value & 0xff) >>> 1];
                 break;
             case 6:
-                v = this._palette[(value & 0xFF) >>> 1];
+                v = this._palette[(value & 0xff) >>> 1];
                 this._missile0.setColor(v);
                 this._player0.setColor(v);
                 this._playfield.setColorP0(v);
                 break;
             case 7:
-                v = this._palette[(value & 0xFF) >>> 1];
+                v = this._palette[(value & 0xff) >>> 1];
                 this._missile1.setColor(v);
                 this._player1.setColor(v);
                 this._playfield.setColorP1(v);
@@ -19567,7 +20007,7 @@ var Tia = (function () {
                 break;
             case 8:
                 this._flushLineCache();
-                v = this._palette[(value & 0xFF) >>> 1];
+                v = this._palette[(value & 0xff) >>> 1];
                 this._playfield.setColor(v);
                 this._ball.color = v;
                 break;
@@ -19646,9 +20086,9 @@ var Tia = (function () {
         }
     };
     Tia.prototype.getDebugState = function () {
-        return '' +
+        return ('' +
             ("hclock: " + this._hctr + "   line: " + this._frameManager.getCurrentLine() + "\n") +
-            this._frameManager.getDebugState();
+            this._frameManager.getDebugState());
     };
     Tia.prototype.setBus = function (bus) {
         this._bus = bus;
@@ -19771,7 +20211,7 @@ var Tia = (function () {
         if (linesTotal < self._maxLinesTotal) {
             var buffer = surface.getBuffer(), base = 160 * linesTotal, boundary = self._maxLinesTotal * 160;
             for (var i = base; i < boundary; i++) {
-                buffer[i] = 0xFF000000;
+                buffer[i] = 0xff000000;
             }
         }
         self.newFrame.dispatch(surface);
@@ -19858,13 +20298,13 @@ var Tia = (function () {
         }
     };
     Tia.prototype._getClockFreq = function (config) {
-        return (config.tvMode === 0) ?
-            60 * 228 * 262 :
-            50 * 228 * 312;
+        return config.tvMode === 0
+            ? 60 * 228 * 262
+            : 50 * 228 * 312;
     };
     Tia.prototype._renderPixel = function (x, y) {
         if (this._frameManager.vblank) {
-            this._frameManager.surfaceBuffer[y * 160 + x] = 0xFF000000;
+            this._frameManager.surfaceBuffer[y * 160 + x] = 0xff000000;
             return;
         }
         var color = this._colorBk;
@@ -19899,25 +20339,26 @@ var Tia = (function () {
         this._frameManager.surfaceBuffer[y * 160 + x] = color;
     };
     Tia.prototype._updateCollision = function () {
-        this._collisionMask |= (~this._player0.collision &
-            ~this._player1.collision &
-            ~this._missile0.collision &
-            ~this._missile1.collision &
-            ~this._ball.collision &
-            ~this._playfield.collision);
+        this._collisionMask |=
+            ~this._player0.collision &
+                ~this._player1.collision &
+                ~this._missile0.collision &
+                ~this._missile1.collision &
+                ~this._ball.collision &
+                ~this._playfield.collision;
     };
     Tia.prototype._clearHmoveComb = function () {
         if (this._frameManager.isRendering() && this._hstate === 0) {
             var offset = this._frameManager.getCurrentLine() * 160;
             for (var i = 0; i < 8; i++) {
-                this._frameManager.surfaceBuffer[offset + i] = 0xFF000000;
+                this._frameManager.surfaceBuffer[offset + i] = 0xff000000;
             }
         }
     };
     Tia.prototype._resxCounter = function () {
-        return this._hstate === 0 ?
-            (this._hctr >= 73 ? 158 : 159) :
-            157;
+        return this._hstate === 0
+            ? this._hctr >= 73 ? 158 : 159
+            : 157;
     };
     Tia.prototype._rsync = function () {
         var x = this._hctr > 68 ? this._hctr - 68 : 0;
@@ -19925,14 +20366,13 @@ var Tia = (function () {
         if (this._frameManager.isRendering()) {
             var y = this._frameManager.getCurrentLine(), base = y * 160 + x, boundary = base + (y + 1) * 160;
             for (var i = base; i < boundary; i++) {
-                this._frameManager.surfaceBuffer[i] = 0xFF000000;
+                this._frameManager.surfaceBuffer[i] = 0xff000000;
             }
         }
         this._hctr = 225;
     };
     Tia.prototype._setPriority = function (value) {
-        var priority = (value & 0x04) ? 1 :
-            ((value & 0x02) ? 2 : 0);
+        var priority = value & 0x04 ? 1 : value & 0x02 ? 2 : 0;
         if (priority !== this._priority) {
             this._flushLineCache();
             this._priority = priority;
@@ -19968,57 +20408,423 @@ var Tia = (function () {
 })(Tia || (Tia = {}));
 exports.default = Tia;
 
-},{"../Config":46,"./Audio":77,"./Ball":78,"./DelayQueue":79,"./FrameManager":80,"./LatchedInput":81,"./Missile":82,"./PaddleReader":83,"./Player":84,"./Playfield":85,"./palette":89,"microevent.ts":7}],87:[function(require,module,exports){
+},{"../Config":45,"./Audio":76,"./Ball":77,"./DelayQueue":78,"./FrameManager":79,"./LatchedInput":80,"./Missile":81,"./PaddleReader":82,"./Player":83,"./Playfield":84,"./palette":88,"microevent.ts":6}],86:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../Config");
 var AudioOutputBuffer_1 = require("../../../tools/AudioOutputBuffer");
-var FREQUENCY_DIVISIORS = new Int8Array([
-    1, 1, 15, 1,
-    1, 1, 1, 1,
-    1, 1, 1, 1,
-    3, 3, 3, 1
-]);
+var FREQUENCY_DIVISIORS = new Int8Array([1, 1, 15, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 1]);
 var POLY0 = new Int8Array([1]);
 var POLY1 = new Int8Array([1, 1]);
 var POLY2 = new Int8Array([16, 15]);
 var POLY4 = new Int8Array([1, 2, 2, 1, 1, 1, 4, 3]);
 var POLY5 = new Int8Array([1, 2, 1, 1, 2, 2, 5, 4, 2, 1, 3, 1, 1, 1, 1, 4]);
 var POLY9 = new Int8Array([
-    1, 4, 1, 3, 2, 4, 1, 2, 3, 2, 1, 1, 1, 1, 1, 1,
-    2, 4, 2, 1, 4, 1, 1, 2, 2, 1, 3, 2, 1, 3, 1, 1,
-    1, 4, 1, 1, 1, 1, 2, 1, 1, 2, 6, 1, 2, 2, 1, 2,
-    1, 2, 1, 1, 2, 1, 6, 2, 1, 2, 2, 1, 1, 1, 1, 2,
-    2, 2, 2, 7, 2, 3, 2, 2, 1, 1, 1, 3, 2, 1, 1, 2,
-    1, 1, 7, 1, 1, 3, 1, 1, 2, 3, 3, 1, 1, 1, 2, 2,
-    1, 1, 2, 2, 4, 3, 5, 1, 3, 1, 1, 5, 2, 1, 1, 1,
-    2, 1, 2, 1, 3, 1, 2, 5, 1, 1, 2, 1, 1, 1, 5, 1,
-    1, 1, 1, 1, 1, 1, 1, 6, 1, 1, 1, 2, 1, 1, 1, 1,
-    4, 2, 1, 1, 3, 1, 3, 6, 3, 2, 3, 1, 1, 2, 1, 2,
-    4, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 2, 1, 4, 2, 2,
-    3, 4, 1, 1, 4, 1, 2, 1, 2, 2, 2, 1, 1, 4, 3, 1,
-    4, 4, 9, 5, 4, 1, 5, 3, 1, 1, 3, 2, 2, 2, 1, 5,
-    1, 2, 1, 1, 1, 2, 3, 1, 2, 1, 1, 3, 4, 2, 5, 2,
-    2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 3, 3, 3, 2, 1,
-    2, 1, 1, 1, 1, 1, 3, 3, 1, 2, 2, 3, 1, 3, 1, 8
+    1,
+    4,
+    1,
+    3,
+    2,
+    4,
+    1,
+    2,
+    3,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    4,
+    2,
+    1,
+    4,
+    1,
+    1,
+    2,
+    2,
+    1,
+    3,
+    2,
+    1,
+    3,
+    1,
+    1,
+    1,
+    4,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    1,
+    2,
+    6,
+    1,
+    2,
+    2,
+    1,
+    2,
+    1,
+    2,
+    1,
+    1,
+    2,
+    1,
+    6,
+    2,
+    1,
+    2,
+    2,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    7,
+    2,
+    3,
+    2,
+    2,
+    1,
+    1,
+    1,
+    3,
+    2,
+    1,
+    1,
+    2,
+    1,
+    1,
+    7,
+    1,
+    1,
+    3,
+    1,
+    1,
+    2,
+    3,
+    3,
+    1,
+    1,
+    1,
+    2,
+    2,
+    1,
+    1,
+    2,
+    2,
+    4,
+    3,
+    5,
+    1,
+    3,
+    1,
+    1,
+    5,
+    2,
+    1,
+    1,
+    1,
+    2,
+    1,
+    2,
+    1,
+    3,
+    1,
+    2,
+    5,
+    1,
+    1,
+    2,
+    1,
+    1,
+    1,
+    5,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    6,
+    1,
+    1,
+    1,
+    2,
+    1,
+    1,
+    1,
+    1,
+    4,
+    2,
+    1,
+    1,
+    3,
+    1,
+    3,
+    6,
+    3,
+    2,
+    3,
+    1,
+    1,
+    2,
+    1,
+    2,
+    4,
+    1,
+    1,
+    1,
+    3,
+    1,
+    1,
+    1,
+    1,
+    3,
+    1,
+    2,
+    1,
+    4,
+    2,
+    2,
+    3,
+    4,
+    1,
+    1,
+    4,
+    1,
+    2,
+    1,
+    2,
+    2,
+    2,
+    1,
+    1,
+    4,
+    3,
+    1,
+    4,
+    4,
+    9,
+    5,
+    4,
+    1,
+    5,
+    3,
+    1,
+    1,
+    3,
+    2,
+    2,
+    2,
+    1,
+    5,
+    1,
+    2,
+    1,
+    1,
+    1,
+    2,
+    3,
+    1,
+    2,
+    1,
+    1,
+    3,
+    4,
+    2,
+    5,
+    2,
+    2,
+    1,
+    2,
+    3,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    3,
+    3,
+    3,
+    2,
+    1,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    3,
+    3,
+    1,
+    2,
+    2,
+    3,
+    1,
+    3,
+    1,
+    8
 ]);
 var POLY68 = new Int8Array([5, 6, 4, 5, 10, 5, 3, 7, 4, 10, 6, 3, 6, 4, 9, 6]);
 var POLY465 = new Int8Array([
-    2, 3, 2, 1, 4, 1, 6, 10, 2, 4, 2, 1, 1, 4, 5,
-    9, 3, 3, 4, 1, 1, 1, 8, 5, 5, 5, 4, 1, 1, 1,
-    8, 4, 2, 8, 3, 3, 1, 1, 7, 4, 2, 7, 5, 1, 3,
-    1, 7, 4, 1, 4, 8, 2, 1, 3, 4, 7, 1, 3, 7, 3,
-    2, 1, 6, 6, 2, 2, 4, 5, 3, 2, 6, 6, 1, 3, 3,
-    2, 5, 3, 7, 3, 4, 3, 2, 2, 2, 5, 9, 3, 1, 5,
-    3, 1, 2, 2, 11, 5, 1, 5, 3, 1, 1, 2, 12, 5, 1,
-    2, 5, 2, 1, 1, 12, 6, 1, 2, 5, 1, 2, 1, 10, 6,
-    3, 2, 2, 4, 1, 2, 6, 10
+    2,
+    3,
+    2,
+    1,
+    4,
+    1,
+    6,
+    10,
+    2,
+    4,
+    2,
+    1,
+    1,
+    4,
+    5,
+    9,
+    3,
+    3,
+    4,
+    1,
+    1,
+    1,
+    8,
+    5,
+    5,
+    5,
+    4,
+    1,
+    1,
+    1,
+    8,
+    4,
+    2,
+    8,
+    3,
+    3,
+    1,
+    1,
+    7,
+    4,
+    2,
+    7,
+    5,
+    1,
+    3,
+    1,
+    7,
+    4,
+    1,
+    4,
+    8,
+    2,
+    1,
+    3,
+    4,
+    7,
+    1,
+    3,
+    7,
+    3,
+    2,
+    1,
+    6,
+    6,
+    2,
+    2,
+    4,
+    5,
+    3,
+    2,
+    6,
+    6,
+    1,
+    3,
+    3,
+    2,
+    5,
+    3,
+    7,
+    3,
+    4,
+    3,
+    2,
+    2,
+    2,
+    5,
+    9,
+    3,
+    1,
+    5,
+    3,
+    1,
+    2,
+    2,
+    11,
+    5,
+    1,
+    5,
+    3,
+    1,
+    1,
+    2,
+    12,
+    5,
+    1,
+    2,
+    5,
+    2,
+    1,
+    1,
+    12,
+    6,
+    1,
+    2,
+    5,
+    1,
+    2,
+    1,
+    10,
+    6,
+    3,
+    2,
+    2,
+    4,
+    1,
+    2,
+    6,
+    10
 ]);
 var POLYS = [
-    POLY0, POLY4, POLY4, POLY465,
-    POLY1, POLY1, POLY2, POLY5,
-    POLY9, POLY5, POLY2, POLY0,
-    POLY1, POLY1, POLY2, POLY68
+    POLY0,
+    POLY4,
+    POLY4,
+    POLY465,
+    POLY1,
+    POLY1,
+    POLY2,
+    POLY5,
+    POLY9,
+    POLY5,
+    POLY2,
+    POLY0,
+    POLY1,
+    POLY1,
+    POLY2,
+    POLY68
 ];
 var ToneGenerator = (function () {
     function ToneGenerator(_config) {
@@ -20031,7 +20837,7 @@ var ToneGenerator = (function () {
         return (tone << 5) | frequency;
     };
     ToneGenerator.prototype.getBuffer = function (key) {
-        var tone = (key >>> 5) & 0x0F, frequency = key & 0x1F;
+        var tone = (key >>> 5) & 0x0f, frequency = key & 0x1f;
         var poly = POLYS[tone];
         var length = 0;
         for (var i = 0; i < poly.length; i++) {
@@ -20058,7 +20864,7 @@ var ToneGenerator = (function () {
                 }
                 state = !(offset & 0x01);
             }
-            content[i] = (state ? 1 : -1);
+            content[i] = state ? 1 : -1;
         }
         return new AudioOutputBuffer_1.default(content, sampleRate);
     };
@@ -20066,7 +20872,7 @@ var ToneGenerator = (function () {
 }());
 exports.default = ToneGenerator;
 
-},{"../../../tools/AudioOutputBuffer":92,"../Config":46}],88:[function(require,module,exports){
+},{"../../../tools/AudioOutputBuffer":91,"../Config":45}],87:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160);
@@ -20090,14 +20896,7 @@ exports.decodesPlayer = [
     decodes6,
     decodes0
 ];
-[
-    decodes0,
-    decodes1,
-    decodes2,
-    decodes3,
-    decodes4,
-    decodes6
-].forEach(function (decodes) {
+[decodes0, decodes1, decodes2, decodes3, decodes4, decodes6].forEach(function (decodes) {
     for (var i = 0; i < 160; i++) {
         decodes[i] = 0;
     }
@@ -20109,7 +20908,7 @@ decodes3[12] = decodes3[28] = 1;
 decodes4[60] = 1;
 decodes6[28] = decodes6[60] = 1;
 
-},{}],89:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NTSC = new Uint32Array([
@@ -20240,7 +21039,7 @@ exports.NTSC = new Uint32Array([
     0xff479fbb,
     0xff56b6d2,
     0xff63cce8,
-    0xff70e0fc,
+    0xff70e0fc
 ]);
 exports.PAL = new Uint32Array([
     0xff000000,
@@ -20370,7 +21169,7 @@ exports.PAL = new Uint32Array([
     0xff979797,
     0xffb6b6b6,
     0xffd2d2d2,
-    0xffececec,
+    0xffececec
 ]);
 exports.SECAM = new Uint32Array([
     0xff000000,
@@ -20500,10 +21299,10 @@ exports.SECAM = new Uint32Array([
     0xff00ff7f,
     0xffffff7f,
     0xff3fffff,
-    0xffffffff,
+    0xffffffff
 ]);
 
-},{}],90:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -20526,7 +21325,7 @@ var Board = (function () {
         };
         this.cpuClock = this.clock;
         this._bus = this._createBus();
-        if (typeof (cpuFactory) === 'undefined') {
+        if (typeof cpuFactory === 'undefined') {
             cpuFactory = function (bus) { return new Cpu_1.default(bus); };
         }
         this._cpu = cpuFactory(this._bus);
@@ -20630,7 +21429,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../board/BoardInterface":36,"../cpu/Cpu":37,"../cpu/CpuInterface":38,"./Memory":91,"microevent.ts":7}],91:[function(require,module,exports){
+},{"../board/BoardInterface":35,"../cpu/Cpu":36,"../cpu/CpuInterface":37,"./Memory":90,"microevent.ts":6}],90:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Memory = (function () {
@@ -20651,7 +21450,7 @@ var Memory = (function () {
         return this._data[address];
     };
     Memory.prototype.readWord = function (address) {
-        return this._data[address] + (this._data[(address + 1) & 0xFFFF] << 8);
+        return this._data[address] + (this._data[(address + 1) & 0xffff] << 8);
     };
     Memory.prototype.write = function (address, value) {
         this._data[address] = value;
@@ -20663,7 +21462,7 @@ var Memory = (function () {
 }());
 exports.default = Memory;
 
-},{}],92:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var AudioOutputBuffer = (function () {
@@ -20684,7 +21483,7 @@ var AudioOutputBuffer = (function () {
 }());
 exports.default = AudioOutputBuffer;
 
-},{}],93:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -20745,12 +21544,12 @@ var ClockProbe = (function () {
 }());
 exports.default = ClockProbe;
 
-},{"microevent.ts":7}],94:[function(require,module,exports){
+},{"microevent.ts":6}],93:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encode(value, width) {
     var result = Math.abs(value).toString(2);
-    if (typeof (width) !== 'undefined') {
+    if (typeof width !== 'undefined') {
         while (result.length < width) {
             result = '0' + result;
         }
@@ -20759,18 +21558,20 @@ function encode(value, width) {
 }
 exports.encode = encode;
 
-},{}],95:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encodeWithPrefix(value, width, signed, prefix) {
     if (signed === void 0) { signed = true; }
     if (prefix === void 0) { prefix = ''; }
     if (!signed && value < 0) {
-        return encodeWithPrefix(value >>> 16, (width && width > 8) ? width - 4 : 4, false, prefix) +
-            encodeWithPrefix(value & 0xFFFF, 4);
+        return (encodeWithPrefix(value >>> 16, width && width > 8 ? width - 4 : 4, false, prefix) +
+            encodeWithPrefix(value & 0xffff, 4));
     }
-    var result = Math.abs(value).toString(16).toUpperCase();
-    if (typeof (width) !== 'undefined') {
+    var result = Math.abs(value)
+        .toString(16)
+        .toUpperCase();
+    if (typeof width !== 'undefined') {
         while (result.length < width) {
             result = '0' + result;
         }
@@ -20798,7 +21599,7 @@ function decode(value) {
 }
 exports.decode = decode;
 
-},{}],96:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember = (function () {
@@ -20819,7 +21620,7 @@ var InducedMember = (function () {
 }());
 exports.default = InducedMember;
 
-},{}],97:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember_1 = require("./InducedMember");
@@ -20838,7 +21639,7 @@ var InducedPool = (function () {
 }());
 exports.default = InducedPool;
 
-},{"./InducedMember":96}],98:[function(require,module,exports){
+},{"./InducedMember":95}],97:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -20858,7 +21659,9 @@ var Pool = (function () {
         var member;
         if (this._poolSize === 0) {
             var newItem = this._factory();
-            member = newItem && new PoolMember_1.default(newItem, function (victim) { return _this._releaseMember(victim); }, function (victim) { return _this._disposeMember(victim); });
+            member =
+                newItem &&
+                    new PoolMember_1.default(newItem, function (victim) { return _this._releaseMember(victim); }, function (victim) { return _this._disposeMember(victim); });
         }
         else {
             member = this._pool[--this._poolSize];
@@ -20896,7 +21699,7 @@ var Pool = (function () {
 }());
 exports.default = Pool;
 
-},{"./PoolMember":99,"microevent.ts":7}],99:[function(require,module,exports){
+},{"./PoolMember":98,"microevent.ts":6}],98:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PoolMember = (function () {
@@ -20923,7 +21726,7 @@ var PoolMember = (function () {
 }());
 exports.default = PoolMember;
 
-},{}],100:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var SeedrandomGenerator = (function () {
@@ -20949,7 +21752,7 @@ var SeedrandomGenerator = (function () {
 }());
 exports.default = SeedrandomGenerator;
 
-},{}],101:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var seedrandom = require("seedrandom");
@@ -20970,7 +21773,7 @@ function restoreRng(state) {
 }
 exports.restoreRng = restoreRng;
 
-},{"./SeedrandomGenerator":100,"seedrandom":11}],102:[function(require,module,exports){
+},{"./SeedrandomGenerator":99,"seedrandom":10}],101:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var setImmediate_1 = require("./setImmediate");
@@ -20988,14 +21791,14 @@ var ImmediateScheduler = (function () {
         }
         setImmediate_1.setImmediate(handler);
         return {
-            stop: function () { return terminate = true; }
+            stop: function () { return (terminate = true); }
         };
     };
     return ImmediateScheduler;
 }());
 exports.default = ImmediateScheduler;
 
-},{"./setImmediate":106}],103:[function(require,module,exports){
+},{"./setImmediate":105}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler = (function () {
@@ -21021,22 +21824,22 @@ var PeriodicScheduler = (function () {
         };
         setTimeout(handler, this._period);
         return {
-            stop: function () { return terminate = true; }
+            stop: function () { return (terminate = true); }
         };
     };
     return PeriodicScheduler;
 }());
 exports.default = PeriodicScheduler;
 
-},{}],104:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var getTimestamp = (self.performance && self.performance.now) ?
-    function () { return self.performance.now(); } :
-    function () { return Date.now(); };
+var getTimestamp = self.performance && self.performance.now
+    ? function () { return self.performance.now(); }
+    : function () { return Date.now(); };
 exports.default = getTimestamp;
 
-},{}],105:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -21054,7 +21857,7 @@ var ConstantCyclesScheduler = (function () {
             var timestamp0 = getTimestamp_1.default(), targetDuration = worker(context) || 0, timestamp1 = getTimestamp_1.default();
             var delay = targetDuration - timestamp1 + timestamp0;
             if (targetSleepInterval >= 0) {
-                accumulatedDelta += (targetSleepInterval - timestamp0 + lastYieldTimestamp);
+                accumulatedDelta += targetSleepInterval - timestamp0 + lastYieldTimestamp;
             }
             if (accumulatedDelta > MAX_ACCUMULATED_DELTA) {
                 accumulatedDelta = MAX_ACCUMULATED_DELTA;
@@ -21081,14 +21884,14 @@ var ConstantCyclesScheduler = (function () {
         }
         setImmediate_1.setImmediate(handler);
         return {
-            stop: function () { return terminate = true; }
+            stop: function () { return (terminate = true); }
         };
     };
     return ConstantCyclesScheduler;
 }());
 exports.default = ConstantCyclesScheduler;
 
-},{"../getTimestamp":104,"../setImmediate":106}],106:[function(require,module,exports){
+},{"../getTimestamp":103,"../setImmediate":105}],105:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var polyfill = require("setimmediate2");
@@ -21104,7 +21907,7 @@ function setImmediate(callback) {
 }
 exports.setImmediate = setImmediate;
 
-},{"setimmediate2":19}],107:[function(require,module,exports){
+},{"setimmediate2":18}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -21142,10 +21945,10 @@ var FrameMergeProcessor = (function () {
         var buffer0 = this._framesOnHold[0].get().getBuffer(), buffer1 = this._framesOnHold[1].get().getBuffer();
         for (var i = 0; i < this._width * this._height; i++) {
             buffer0[i] =
-                0xFF000000 |
-                    ((((buffer0[i] & 0xFF0000) + (buffer1[i] & 0xFF0000)) >>> 1) & 0xFF0000) |
-                    ((((buffer0[i] & 0xFF00) + (buffer1[i] & 0xFF00)) >>> 1) & 0xFF00) |
-                    ((((buffer0[i] & 0xFF) + (buffer1[i] & 0xFF)) >>> 1) & 0xFF);
+                0xff000000 |
+                    ((((buffer0[i] & 0xff0000) + (buffer1[i] & 0xff0000)) >>> 1) & 0xff0000) |
+                    ((((buffer0[i] & 0xff00) + (buffer1[i] & 0xff00)) >>> 1) & 0xff00) |
+                    ((((buffer0[i] & 0xff) + (buffer1[i] & 0xff)) >>> 1) & 0xff);
         }
         this.emit.dispatch(this._framesOnHold[0]);
         this._framesOnHold[1].release();
@@ -21155,7 +21958,7 @@ var FrameMergeProcessor = (function () {
 }());
 exports.default = FrameMergeProcessor;
 
-},{"microevent.ts":7}],108:[function(require,module,exports){
+},{"microevent.ts":6}],107:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -21172,7 +21975,7 @@ var PassthroughProcessor = (function () {
 }());
 exports.default = PassthroughProcessor;
 
-},{"microevent.ts":7}],109:[function(require,module,exports){
+},{"microevent.ts":6}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config = require("./config");
@@ -21195,7 +21998,7 @@ var ProcessorFactory = (function () {
 }());
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":107,"./PassthroughProcessor":108,"./config":111}],110:[function(require,module,exports){
+},{"./FrameMergeProcessor":106,"./PassthroughProcessor":107,"./config":110}],109:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ProcessorFactory_1 = require("./ProcessorFactory");
@@ -21229,11 +22032,11 @@ var ProcessorPipeline = (function () {
 }());
 exports.default = ProcessorPipeline;
 
-},{"./ProcessorFactory":109}],111:[function(require,module,exports){
+},{"./ProcessorFactory":108}],110:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
-},{}],112:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface = (function () {
@@ -21243,7 +22046,7 @@ var ArrayBufferSurface = (function () {
         this._buffer = null;
     }
     ArrayBufferSurface.createFromArrayBuffer = function (width, height, buffer) {
-        return (new ArrayBufferSurface()).replaceUnderlyingBuffer(width, height, buffer);
+        return new ArrayBufferSurface().replaceUnderlyingBuffer(width, height, buffer);
     };
     ArrayBufferSurface.prototype.replaceUnderlyingBuffer = function (width, height, buffer) {
         if (width * height * 4 !== buffer.byteLength) {
@@ -21285,7 +22088,7 @@ var ArrayBufferSurface = (function () {
 }());
 exports.default = ArrayBufferSurface;
 
-},{}],113:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var screenfull = require("screenfull");
@@ -21350,7 +22153,7 @@ var FullscreenVideoDriver = (function () {
 }());
 exports.default = FullscreenVideoDriver;
 
-},{"screenfull":10}],114:[function(require,module,exports){
+},{"screenfull":9}],113:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var MouseAsPaddleDriver = (function () {
@@ -21392,7 +22195,7 @@ var MouseAsPaddleDriver = (function () {
 }());
 exports.default = MouseAsPaddleDriver;
 
-},{}],115:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -21419,7 +22222,7 @@ var SimpleCanvasVideo = (function () {
         this._renderContext = this._renderCanvas.getContext('2d');
     }
     SimpleCanvasVideo.prototype.resize = function (width, height) {
-        if (typeof (width) === 'undefined' || typeof (height) === 'undefined') {
+        if (typeof width === 'undefined' || typeof height === 'undefined') {
             width = this._canvas.clientWidth;
             height = this._canvas.clientHeight;
         }
@@ -21574,7 +22377,7 @@ var SimpleCanvasVideo = (function () {
 }());
 exports.default = SimpleCanvasVideo;
 
-},{"tslib":20}],116:[function(require,module,exports){
+},{"tslib":19}],115:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -21597,14 +22400,18 @@ var VideoEndpoint = (function () {
             var poolMember = _this._pool.get(), imageData = poolMember.get();
             if (!_this._surfaces.has(imageData)) {
                 var newSurface = ArrayBufferSurface_1.default.createFromArrayBuffer(imageData.width, imageData.height, imageData.data.buffer);
-                _this._surfaces.set(imageData, newSurface.fill(0xFF000000));
+                _this._surfaces.set(imageData, newSurface.fill(0xff000000));
             }
             var surface = _this._surfaces.get(imageData);
             _this._poolMembers.set(surface, poolMember);
             return surface;
         });
-        this._video.newFrame.addHandler(function (imageData) { return _this._videoProcessor.processSurface(_this._surfacePool.get(_this._poolMembers.get(imageData))); });
-        this._videoProcessor.emit.addHandler(function (wrappedSurface) { return _this.newFrame.dispatch(_this._poolMembers.get(wrappedSurface.get())); });
+        this._video.newFrame.addHandler(function (imageData) {
+            return _this._videoProcessor.processSurface(_this._surfacePool.get(_this._poolMembers.get(imageData)));
+        });
+        this._videoProcessor.emit.addHandler(function (wrappedSurface) {
+            return _this.newFrame.dispatch(_this._poolMembers.get(wrappedSurface.get()));
+        });
     }
     VideoEndpoint.prototype.getWidth = function () {
         return this._video.getWidth();
@@ -21616,7 +22423,7 @@ var VideoEndpoint = (function () {
 }());
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":97,"../../tools/pool/Pool":98,"../../video/processing/ProcessorPipeline":110,"../../video/surface/ArrayBufferSurface":112,"microevent.ts":7}],117:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":96,"../../tools/pool/Pool":97,"../../video/processing/ProcessorPipeline":109,"../../video/surface/ArrayBufferSurface":111,"microevent.ts":6}],116:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebAudioDriver = (function () {
@@ -21752,7 +22559,7 @@ var Channel = (function () {
     return Channel;
 }());
 
-},{}],118:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -21798,14 +22605,14 @@ var KeyboardIO = (function () {
             if (!_this._compiledMappings.has(e.keyCode)) {
                 return;
             }
-            var modifiers = ((e.shiftKey ? 4 : 0) |
+            var modifiers = (e.shiftKey ? 4 : 0) |
                 (e.ctrlKey ? 1 : 0) |
-                (e.altKey ? 2 : 0));
+                (e.altKey ? 2 : 0);
             if (!_this._compiledMappings.get(e.keyCode).get(modifiers)) {
                 return;
             }
             var action = _this._compiledMappings.get(e.keyCode).get(modifiers);
-            if (typeof (action) !== 'undefined') {
+            if (typeof action !== 'undefined') {
                 e.preventDefault();
                 var dispatch = _this._dispatchTable[action];
                 switch (dispatch.type) {
@@ -21877,9 +22684,7 @@ var KeyboardIO = (function () {
     KeyboardIO.prototype._compileMappings = function (mappings) {
         var _this = this;
         var compileMapping = function (action, keycode, modifiers) {
-            if ((modifiers & ~(4 |
-                1 |
-                2)) !== 0) {
+            if ((modifiers & ~(4 | 1 | 2)) !== 0) {
                 throw new Error("invalid modifier set " + modifiers);
             }
             if (!_this._compiledMappings.has(keycode)) {
@@ -21889,7 +22694,9 @@ var KeyboardIO = (function () {
         };
         mappings.forEach(function (mapping) {
             var action = mapping.action, specs = Array.isArray(mapping.spec) ? mapping.spec : [mapping.spec];
-            specs.forEach(function (spec) { return compileMapping(action, typeof (spec) === 'object' ? spec.keycode : spec, typeof (spec) === 'object' ? spec.modifiers : 0); });
+            specs.forEach(function (spec) {
+                return compileMapping(action, typeof spec === 'object' ? spec.keycode : spec, typeof spec === 'object' ? spec.modifiers : 0);
+            });
         });
     };
     return KeyboardIO;
@@ -21902,67 +22709,81 @@ var KeyboardIO = (function () {
                 keycode: 32,
                 modifiers: 4
             }
-        }, {
+        },
+        {
             action: 1,
             spec: {
                 keycode: 13,
                 modifiers: 4
             }
-        }, {
+        },
+        {
             action: 2,
             spec: [
                 65,
                 37
             ]
-        }, {
+        },
+        {
             action: 3,
             spec: [
                 68,
                 39
             ]
-        }, {
+        },
+        {
             action: 4,
             spec: [
                 87,
                 38
             ]
-        }, {
+        },
+        {
             action: 5,
             spec: [
                 83,
                 40
             ]
-        }, {
+        },
+        {
             action: 10,
             spec: [
                 32,
                 86
             ]
-        }, {
+        },
+        {
             action: 6,
             spec: 74
-        }, {
+        },
+        {
             action: 7,
             spec: 76
-        }, {
+        },
+        {
             action: 8,
             spec: 73
-        }, {
+        },
+        {
             action: 9,
             spec: 75
-        }, {
+        },
+        {
             action: 11,
             spec: 66
-        }, {
+        },
+        {
             action: 12,
             spec: 13
-        }, {
+        },
+        {
             action: 13,
             spec: {
                 keycode: 82,
                 modifiers: 4
             }
-        }, {
+        },
+        {
             action: 14,
             spec: 80
         }
@@ -21970,7 +22791,7 @@ var KeyboardIO = (function () {
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"microevent.ts":7,"tslib":20}],119:[function(require,module,exports){
+},{"microevent.ts":6,"tslib":19}],118:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebAudio_1 = require("../../driver/WebAudio");
@@ -22004,7 +22825,7 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":117}],"stellaCLI":[function(require,module,exports){
+},{"../../driver/WebAudio":116}],"stellaCLI":[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var StellaCLI_1 = require("../cli/stella/StellaCLI");
@@ -22057,12 +22878,11 @@ function run(_a) {
 }
 exports.run = run;
 function setupCartridgeReader(cli, cartridgeFileInput, cartridgeFileInputLabel) {
-    var onCliStateChange = cartridgeFileInputLabel ?
-        function () { return (cli.getState() === 0 ?
-            cartridgeFileInputLabel.show() :
-            cartridgeFileInputLabel.hide()); }
-        :
-            function () { return undefined; };
+    var onCliStateChange = cartridgeFileInputLabel
+        ? function () {
+            return cli.getState() === 0 ? cartridgeFileInputLabel.show() : cartridgeFileInputLabel.hide();
+        }
+        : function () { return undefined; };
     cli.events.stateChanged.addHandler(onCliStateChange);
     onCliStateChange();
     cartridgeFileInput.change(function (e) {
@@ -22106,5 +22926,5 @@ function setupPaddles(paddle0) {
     paddleDriver.bind(paddle0);
 }
 
-},{"../cli/JqtermCLIRunner":29,"../cli/stella/StellaCLI":31,"../fs/PrepackagedFilesystemProvider":34,"./driver/FullscreenVideo":113,"./driver/MouseAsPaddle":114,"./driver/SimpleCanvasVideo":115,"./driver/VideoEndpoint":116,"./stella/driver/KeyboardIO":118,"./stella/driver/WebAudio":119}]},{},[])
+},{"../cli/JqtermCLIRunner":28,"../cli/stella/StellaCLI":30,"../fs/PrepackagedFilesystemProvider":33,"./driver/FullscreenVideo":112,"./driver/MouseAsPaddle":113,"./driver/SimpleCanvasVideo":114,"./driver/VideoEndpoint":115,"./stella/driver/KeyboardIO":117,"./stella/driver/WebAudio":118}]},{},[])
 //# sourceMappingURL=stellaCLI.js.map

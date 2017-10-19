@@ -1982,56 +1982,58 @@ var InterruptCheck;
     InterruptCheck[InterruptCheck["beforeOp"] = 1] = "beforeOp";
 })(InterruptCheck || (InterruptCheck = {}));
 function restoreFlagsFromStack(state, bus) {
-    state.s = (state.s + 0x01) & 0xFF;
-    state.flags = (bus.read(0x0100 + state.s) | 32) & (~16);
+    state.s = (state.s + 0x01) & 0xff;
+    state.flags = (bus.read(0x0100 + state.s) | 32) & ~16;
 }
 function setFlagsNZ(state, operand) {
-    state.flags = (state.flags & ~(128 | 2)) |
-        (operand & 0x80) |
-        (operand ? 0 : 2);
+    state.flags =
+        (state.flags & ~(128 | 2)) |
+            (operand & 0x80) |
+            (operand ? 0 : 2);
 }
 function dispatchInterrupt(state, bus, vector) {
     var nextOpAddr = state.p;
     if (state.nmi) {
-        vector = 0xFFFA;
+        vector = 0xfffa;
     }
     state.nmi = state.irq = false;
-    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, state.flags & (~16));
-    state.s = (state.s + 0xFF) & 0xFF;
+    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, nextOpAddr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, state.flags & ~16);
+    state.s = (state.s + 0xff) & 0xff;
     state.flags |= 4;
-    state.p = (bus.readWord(vector));
+    state.p = bus.readWord(vector);
 }
 function opIrq(state, bus) {
-    dispatchInterrupt(state, bus, 0xFFFE);
+    dispatchInterrupt(state, bus, 0xfffe);
 }
 function opNmi(state, bus) {
-    dispatchInterrupt(state, bus, 0xFFFA);
+    dispatchInterrupt(state, bus, 0xfffa);
 }
 function opBoot(state, bus) {
-    state.p = bus.readWord(0xFFFC);
+    state.p = bus.readWord(0xfffc);
 }
 function opAdc(state, bus, operand) {
     if (state.flags & 8) {
-        var d0 = (operand & 0x0F) + (state.a & 0x0F) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
+        var d0 = (operand & 0x0f) + (state.a & 0x0f) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
         state.a = (d0 % 10) | ((d1 % 10) << 4);
-        state.flags = (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (d1 > 9 ? 1 : 0);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 > 9 ? 1 : 0);
     }
     else {
-        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
         state.flags =
             (state.flags &
                 ~(128 | 2 | 1 | 64)) |
                 (result & 0x80) |
                 (result ? 0 : 2) |
                 (sum >>> 8) |
-                (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
         state.a = result;
     }
 }
@@ -2041,42 +2043,44 @@ function opAnd(state, bus, operand) {
 }
 function opAslAcc(state) {
     var old = state.a;
-    state.a = (state.a << 1) & 0xFF;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old >>> 7);
+    state.a = (state.a << 1) & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
 }
 function opAslMem(state, bus, operand) {
-    var old = bus.read(operand), value = (old << 1) & 0xFF;
+    var old = bus.read(operand), value = (old << 1) & 0xff;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old >>> 7);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old >>> 7);
 }
 function opBit(state, bus, operand) {
     state.flags =
         (state.flags & ~(128 | 64 | 2)) |
             (operand & (128 | 64)) |
-            ((operand & state.a) ? 0 : 2);
+            (operand & state.a ? 0 : 2);
 }
 function opBrk(state, bus) {
-    var nextOpAddr = (state.p + 1) & 0xFFFF;
-    var vector = 0xFFFE;
+    var nextOpAddr = (state.p + 1) & 0xffff;
+    var vector = 0xfffe;
     if (state.nmi) {
-        vector = 0xFFFA;
+        vector = 0xfffa;
         state.nmi = false;
     }
     state.nmi = state.irq = false;
-    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(state.s + 0x0100, nextOpAddr & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
+    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, nextOpAddr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
     bus.write(state.s + 0x0100, state.flags | 16);
-    state.s = (state.s + 0xFF) & 0xFF;
+    state.s = (state.s + 0xff) & 0xff;
     state.flags |= 4;
-    state.p = (bus.readWord(vector));
+    state.p = bus.readWord(vector);
 }
 function opClc(state) {
     state.flags &= ~1;
@@ -2091,33 +2095,36 @@ function opClv(state) {
     state.flags &= ~64;
 }
 function opCmp(state, bus, operand) {
-    var diff = state.a + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.a + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opCpx(state, bus, operand) {
-    var diff = state.x + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.x + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opCpy(state, bus, operand) {
-    var diff = state.y + (~operand & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.y + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opDec(state, bus, operand) {
-    var value = (bus.read(operand) + 0xFF) & 0xFF;
+    var value = (bus.read(operand) + 0xff) & 0xff;
     bus.write(operand, value);
     setFlagsNZ(state, value);
 }
 function opDex(state) {
-    state.x = (state.x + 0xFF) & 0xFF;
+    state.x = (state.x + 0xff) & 0xff;
     setFlagsNZ(state, state.x);
 }
 function opEor(state, bus, operand) {
@@ -2125,33 +2132,33 @@ function opEor(state, bus, operand) {
     setFlagsNZ(state, state.a);
 }
 function opDey(state) {
-    state.y = (state.y + 0xFF) & 0xFF;
+    state.y = (state.y + 0xff) & 0xff;
     setFlagsNZ(state, state.y);
 }
 function opInc(state, bus, operand) {
-    var value = (bus.read(operand) + 1) & 0xFF;
+    var value = (bus.read(operand) + 1) & 0xff;
     bus.write(operand, value);
     setFlagsNZ(state, value);
 }
 function opInx(state) {
-    state.x = (state.x + 0x01) & 0xFF;
+    state.x = (state.x + 0x01) & 0xff;
     setFlagsNZ(state, state.x);
 }
 function opIny(state) {
-    state.y = (state.y + 0x01) & 0xFF;
+    state.y = (state.y + 0x01) & 0xff;
     setFlagsNZ(state, state.y);
 }
 function opJmp(state, bus, operand) {
     state.p = operand;
 }
 function opJsr(state, bus, operand) {
-    var returnPtr = (state.p + 1) & 0xFFFF, addrLo = bus.read(state.p);
+    var returnPtr = (state.p + 1) & 0xffff, addrLo = bus.read(state.p);
     bus.read(0x0100 + state.s);
     bus.write(0x0100 + state.s, returnPtr >>> 8);
-    state.s = (state.s + 0xFF) & 0xFF;
-    bus.write(0x0100 + state.s, returnPtr & 0xFF);
-    state.s = (state.s + 0xFF) & 0xFF;
-    state.p = addrLo | (bus.read((state.p + 1) & 0xFFFF) << 8);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(0x0100 + state.s, returnPtr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    state.p = addrLo | (bus.read((state.p + 1) & 0xffff) << 8);
 }
 function opLda(state, bus, operand, addressingMode) {
     state.a = addressingMode === 1 ? operand : bus.read(operand);
@@ -2168,18 +2175,20 @@ function opLdy(state, bus, operand, addressingMode) {
 function opLsrAcc(state) {
     var old = state.a;
     state.a = state.a >>> 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
 }
 function opLsrMem(state, bus, operand) {
     var old = bus.read(operand), value = old >>> 1;
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old & 1);
 }
 function opNop() { }
 function opOra(state, bus, operand) {
@@ -2188,88 +2197,94 @@ function opOra(state, bus, operand) {
 }
 function opPhp(state, bus) {
     bus.write(0x0100 + state.s, state.flags | 16);
-    state.s = (state.s + 0xFF) & 0xFF;
+    state.s = (state.s + 0xff) & 0xff;
 }
 function opPlp(state, bus) {
     restoreFlagsFromStack(state, bus);
 }
 function opPha(state, bus) {
     bus.write(0x0100 + state.s, state.a);
-    state.s = (state.s + 0xFF) & 0xFF;
+    state.s = (state.s + 0xff) & 0xff;
 }
 function opPla(state, bus) {
-    state.s = (state.s + 0x01) & 0xFF;
+    state.s = (state.s + 0x01) & 0xff;
     state.a = bus.read(0x0100 + state.s);
     setFlagsNZ(state, state.a);
 }
 function opRolAcc(state) {
     var old = state.a;
-    state.a = ((state.a << 1) & 0xFF) | (state.flags & 1);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old >>> 7);
+    state.a = ((state.a << 1) & 0xff) | (state.flags & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
 }
 function opRolMem(state, bus, operand) {
-    var old = bus.read(operand), value = ((old << 1) & 0xFF) | (state.flags & 1);
+    var old = bus.read(operand), value = ((old << 1) & 0xff) | (state.flags & 1);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old >>> 7);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old >>> 7);
 }
 function opRorAcc(state) {
     var old = state.a;
     state.a = (state.a >>> 1) | ((state.flags & 1) << 7);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
 }
 function opRorMem(state, bus, operand) {
     var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
     bus.write(operand, value);
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (value & 0x80) |
-        (value ? 0 : 2) |
-        (old & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old & 1);
 }
 function opRti(state, bus) {
     var returnPtr;
     restoreFlagsFromStack(state, bus);
-    state.s = (state.s + 1) & 0xFF;
+    state.s = (state.s + 1) & 0xff;
     returnPtr = bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xFF;
-    returnPtr |= (bus.read(0x0100 + state.s) << 8);
+    state.s = (state.s + 1) & 0xff;
+    returnPtr |= bus.read(0x0100 + state.s) << 8;
     state.p = returnPtr;
 }
 function opRts(state, bus) {
     var returnPtr;
     bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xFF;
+    state.s = (state.s + 1) & 0xff;
     returnPtr = bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xFF;
-    returnPtr += (bus.read(0x0100 + state.s) << 8);
-    state.p = (returnPtr + 1) & 0xFFFF;
+    state.s = (state.s + 1) & 0xff;
+    returnPtr += bus.read(0x0100 + state.s) << 8;
+    state.p = (returnPtr + 1) & 0xffff;
 }
 function opSbc(state, bus, operand) {
     if (state.flags & 8) {
-        var d0 = ((state.a & 0x0F) - (operand & 0x0F) - (~state.flags & 1)), d1 = ((state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0));
+        var d0 = (state.a & 0x0f) - (operand & 0x0f) - (~state.flags & 1), d1 = (state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0);
         state.a = (d0 < 0 ? 10 + d0 : d0) | ((d1 < 0 ? 10 + d1 : d1) << 4);
-        state.flags = (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (d1 < 0 ? 0 : 1);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 < 0 ? 0 : 1);
     }
     else {
-        operand = (~operand & 0xFF);
-        var sum = state.a + operand + (state.flags & 1), result = sum & 0xFF;
-        state.flags = (state.flags &
-            ~(128 | 2 | 1 | 64)) |
-            (result & 0x80) |
-            (result ? 0 : 2) |
-            (sum >>> 8) |
-            (((~(operand ^ state.a) & (result ^ operand)) & 0x80) >>> 1);
+        operand = ~operand & 0xff;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
+        state.flags =
+            (state.flags &
+                ~(128 | 2 | 1 | 64)) |
+                (result & 0x80) |
+                (result ? 0 : 2) |
+                (sum >>> 8) |
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
         state.a = result;
     }
 }
@@ -2317,27 +2332,30 @@ function opTya(state) {
 function opAlr(state, bus, operand) {
     var i = state.a & operand;
     state.a = i >>> 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.a & 0x80) |
-        (state.a ? 0 : 2) |
-        (i & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (i & 1);
 }
 function opAxs(state, bus, operand) {
-    var value = (state.a & state.x) + (~operand & 0xFF) + 1;
-    state.x = value & 0xFF;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (state.x & 0x80) |
-        ((state.x & 0xFF) ? 0 : 2) |
-        (value >>> 8);
+    var value = (state.a & state.x) + (~operand & 0xff) + 1;
+    state.x = value & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.x & 0x80) |
+            (state.x & 0xff ? 0 : 2) |
+            (value >>> 8);
 }
 function opDcp(state, bus, operand) {
-    var value = (bus.read(operand) + 0xFF) & 0xFF;
+    var value = (bus.read(operand) + 0xff) & 0xff;
     bus.write(operand, value);
-    var diff = state.a + (~value & 0xFF) + 1;
-    state.flags = (state.flags & ~(128 | 2 | 1)) |
-        (diff & 0x80) |
-        ((diff & 0xFF) ? 0 : 2) |
-        (diff >>> 8);
+    var diff = state.a + (~value & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
 }
 function opLax(state, bus, operand) {
     state.a = operand;
@@ -2345,7 +2363,7 @@ function opLax(state, bus, operand) {
     setFlagsNZ(state, operand);
 }
 function opArr(state, bus, operand) {
-    state.a = ((state.a & operand) >>> 1) | ((state.flags & 1) ? 0x80 : 0);
+    state.a = ((state.a & operand) >>> 1) | (state.flags & 1 ? 0x80 : 0);
     state.flags =
         (state.flags & ~(1 | 128 | 2 | 64)) |
             ((state.a & 0x40) >>> 6) |
@@ -2355,7 +2373,7 @@ function opArr(state, bus, operand) {
 }
 function opSlo(state, bus, operand) {
     var value = bus.read(operand);
-    state.flags = state.flags & ~1 | value >>> 7;
+    state.flags = (state.flags & ~1) | (value >>> 7);
     value = value << 1;
     bus.write(operand, value);
     state.a = state.a | value;
@@ -2378,7 +2396,7 @@ function opIsc(state, bus, operand) {
 function opAac(state, bus, operand) {
     state.a &= operand;
     setFlagsNZ(state, state.a);
-    state.flags = (state.flags & (~1)) | ((state.a & 0x80) >>> 7);
+    state.flags = (state.flags & ~1) | ((state.a & 0x80) >>> 7);
 }
 function opAtx(state, bus, operand) {
     state.a &= operand;
@@ -2436,13 +2454,13 @@ var Cpu = (function () {
         return this._lastInstructionPointer;
     };
     Cpu.prototype.reset = function () {
-        this.state.a = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.x = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.y = this._rng ? this._rng.int(0xFF) : 0;
-        this.state.s = 0xFD;
-        this.state.p = this._rng ? this._rng.int(0xFFFF) : 0;
-        this.state.flags = (this._rng ? this._rng.int(0xFF) : 0) |
-            4 | 32 | 16;
+        this.state.a = this._rng ? this._rng.int(0xff) : 0;
+        this.state.x = this._rng ? this._rng.int(0xff) : 0;
+        this.state.y = this._rng ? this._rng.int(0xff) : 0;
+        this.state.s = 0xfd;
+        this.state.p = this._rng ? this._rng.int(0xffff) : 0;
+        this.state.flags =
+            (this._rng ? this._rng.int(0xff) : 0) | 4 | 32 | 16;
         this.state.irq = false;
         this.state.nmi = false;
         this.executionState = 0;
@@ -2524,7 +2542,7 @@ var Cpu = (function () {
                 if (this.state.flags & 1) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -2540,7 +2558,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -2552,7 +2570,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -2569,7 +2587,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -2577,7 +2595,7 @@ var Cpu = (function () {
                 if (this.state.flags & 2) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -2589,7 +2607,7 @@ var Cpu = (function () {
                 if (this.state.flags & 128) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -2601,7 +2619,7 @@ var Cpu = (function () {
                 if (this.state.flags & 64) {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
@@ -2617,7 +2635,7 @@ var Cpu = (function () {
                 else {
                     addressingMode = 0;
                     this._instructionCallback = opNop;
-                    this.state.p = (this.state.p + 1) & 0xFFFF;
+                    this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
@@ -2893,102 +2911,102 @@ var Cpu = (function () {
                 }
                 return;
         }
-        this.state.p = (this.state.p + 1) & 0xFFFF;
+        this.state.p = (this.state.p + 1) & 0xffff;
         var value, base;
         switch (addressingMode) {
             case 1:
                 this._operand = this._bus.read(this.state.p);
                 dereference = false;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles++;
                 break;
             case 2:
                 this._operand = this._bus.read(this.state.p);
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles++;
                 break;
             case 3:
                 this._operand = this._bus.readWord(this.state.p);
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 this._opCycles += 2;
                 break;
             case 4:
                 value = this._bus.readWord(this.state.p);
-                if ((value & 0xFF) === 0xFF) {
-                    this._operand = this._bus.read(value) + (this._bus.read(value & 0xFF00) << 8);
+                if ((value & 0xff) === 0xff) {
+                    this._operand = this._bus.read(value) + (this._bus.read(value & 0xff00) << 8);
                 }
                 else {
                     this._operand = this._bus.readWord(value);
                 }
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 this._opCycles += 4;
                 break;
             case 5:
                 value = this._bus.read(this.state.p);
-                value = (value & 0x80) ? -(~(value - 1) & 0xFF) : value;
-                this._operand = (this.state.p + value + 0x10001) & 0xFFFF;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
-                this._opCycles += (((this._operand & 0xFF00) !== (this.state.p & 0xFF00)) ? 3 : 2);
+                value = value & 0x80 ? -(~(value - 1) & 0xff) : value;
+                this._operand = (this.state.p + value + 0x10001) & 0xffff;
+                this.state.p = (this.state.p + 1) & 0xffff;
+                this._opCycles += (this._operand & 0xff00) !== (this.state.p & 0xff00) ? 3 : 2;
                 break;
             case 6:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
-                this._operand = (base + this.state.x) & 0xFF;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this._operand = (base + this.state.x) & 0xff;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles += 2;
                 break;
             case 7:
                 value = this._bus.readWord(this.state.p);
-                this._operand = (value + this.state.x) & 0xFFFF;
-                if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
-                    this._bus.read((value & 0xFF00) | (this._operand & 0xFF));
+                this._operand = (value + this.state.x) & 0xffff;
+                if ((this._operand & 0xff00) !== (value & 0xff00)) {
+                    this._bus.read((value & 0xff00) | (this._operand & 0xff));
                 }
-                this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this._opCycles += slowIndexedAccess || (this._operand & 0xff00) !== (value & 0xff00) ? 3 : 2;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 break;
             case 9:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
-                this._operand = (base + this.state.y) & 0xFF;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this._operand = (base + this.state.y) & 0xff;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 this._opCycles += 2;
                 break;
             case 10:
                 value = this._bus.readWord(this.state.p);
-                this._operand = (value + this.state.y) & 0xFFFF;
-                if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
-                    this._bus.read((value & 0xFF00) | (this._operand & 0xFF));
+                this._operand = (value + this.state.y) & 0xffff;
+                if ((this._operand & 0xff00) !== (value & 0xff00)) {
+                    this._bus.read((value & 0xff00) | (this._operand & 0xff));
                 }
-                this._opCycles += ((slowIndexedAccess || (this._operand & 0xFF00) !== (value & 0xFF00)) ? 3 : 2);
-                this.state.p = (this.state.p + 2) & 0xFFFF;
+                this._opCycles += slowIndexedAccess || (this._operand & 0xff00) !== (value & 0xff00) ? 3 : 2;
+                this.state.p = (this.state.p + 2) & 0xffff;
                 break;
             case 8:
                 base = this._bus.read(this.state.p);
                 this._bus.read(base);
-                value = (base + this.state.x) & 0xFF;
-                if (value === 0xFF) {
-                    this._operand = this._bus.read(0xFF) + (this._bus.read(0x00) << 8);
+                value = (base + this.state.x) & 0xff;
+                if (value === 0xff) {
+                    this._operand = this._bus.read(0xff) + (this._bus.read(0x00) << 8);
                 }
                 else {
                     this._operand = this._bus.readWord(value);
                 }
                 this._opCycles += 4;
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 break;
             case 11:
                 value = this._bus.read(this.state.p);
-                if (value === 0xFF) {
-                    value = this._bus.read(0xFF) + (this._bus.read(0x00) << 8);
+                if (value === 0xff) {
+                    value = this._bus.read(0xff) + (this._bus.read(0x00) << 8);
                 }
                 else {
                     value = this._bus.readWord(value);
                 }
-                this._operand = (value + this.state.y) & 0xFFFF;
-                if ((this._operand & 0xFF00) !== (value & 0xFF00)) {
-                    this._bus.read((value & 0xFF00) | (this._operand & 0xFF));
+                this._operand = (value + this.state.y) & 0xffff;
+                if ((this._operand & 0xff00) !== (value & 0xff00)) {
+                    this._bus.read((value & 0xff00) | (this._operand & 0xff));
                 }
-                this._opCycles += ((slowIndexedAccess || (value & 0xFF00) !== (this._operand & 0xFF00)) ? 4 : 3);
-                this.state.p = (this.state.p + 1) & 0xFFFF;
+                this._opCycles += slowIndexedAccess || (value & 0xff00) !== (this._operand & 0xff00) ? 4 : 3;
+                this.state.p = (this.state.p + 1) & 0xffff;
                 break;
         }
         if (dereference) {
@@ -3324,67 +3342,67 @@ exports.default = Instruction;
             Instruction.opcodes[_opcode].addressingMode = _addressingMode;
         }
         set(0x06, 2, 2);
-        set(0x0A, 2, 0);
-        set(0x0E, 2, 3);
+        set(0x0a, 2, 0);
+        set(0x0e, 2, 3);
         set(0x16, 2, 6);
-        set(0x1E, 2, 7);
+        set(0x1e, 2, 7);
         set(0x26, 39, 2);
-        set(0x2A, 39, 0);
-        set(0x2E, 39, 3);
+        set(0x2a, 39, 0);
+        set(0x2e, 39, 3);
         set(0x36, 39, 6);
-        set(0x3E, 39, 7);
+        set(0x3e, 39, 7);
         set(0x46, 32, 2);
-        set(0x4A, 32, 0);
-        set(0x4E, 32, 3);
+        set(0x4a, 32, 0);
+        set(0x4e, 32, 3);
         set(0x56, 32, 6);
-        set(0x5E, 32, 7);
+        set(0x5e, 32, 7);
         set(0x66, 40, 2);
-        set(0x6A, 40, 0);
-        set(0x6E, 40, 3);
+        set(0x6a, 40, 0);
+        set(0x6e, 40, 3);
         set(0x76, 40, 6);
-        set(0x7E, 40, 7);
+        set(0x7e, 40, 7);
         set(0x86, 48, 2);
-        set(0x8E, 48, 3);
+        set(0x8e, 48, 3);
         set(0x96, 48, 9);
-        set(0xA2, 30, 1);
-        set(0xA6, 30, 2);
-        set(0xAE, 30, 3);
-        set(0xB6, 30, 9);
-        set(0xBE, 30, 10);
-        set(0xC6, 20, 2);
-        set(0xCE, 20, 3);
-        set(0xD6, 20, 6);
-        set(0xDE, 20, 7);
-        set(0xE6, 24, 2);
-        set(0xEE, 24, 3);
-        set(0xF6, 24, 6);
-        set(0xFE, 24, 7);
+        set(0xa2, 30, 1);
+        set(0xa6, 30, 2);
+        set(0xae, 30, 3);
+        set(0xb6, 30, 9);
+        set(0xbe, 30, 10);
+        set(0xc6, 20, 2);
+        set(0xce, 20, 3);
+        set(0xd6, 20, 6);
+        set(0xde, 20, 7);
+        set(0xe6, 24, 2);
+        set(0xee, 24, 3);
+        set(0xf6, 24, 6);
+        set(0xfe, 24, 7);
         set(0x24, 6, 2);
-        set(0x2C, 6, 3);
-        set(0x4C, 27, 3);
-        set(0x6C, 27, 4);
+        set(0x2c, 6, 3);
+        set(0x4c, 27, 3);
+        set(0x6c, 27, 4);
         set(0x84, 49, 2);
-        set(0x8C, 49, 3);
+        set(0x8c, 49, 3);
         set(0x94, 49, 6);
-        set(0xA0, 31, 1);
-        set(0xA4, 31, 2);
-        set(0xAC, 31, 3);
-        set(0xB4, 31, 6);
-        set(0xBC, 31, 7);
-        set(0xC0, 19, 1);
-        set(0xC4, 19, 2);
-        set(0xCC, 19, 3);
-        set(0xE0, 18, 1);
-        set(0xE4, 18, 2);
-        set(0xEC, 18, 3);
+        set(0xa0, 31, 1);
+        set(0xa4, 31, 2);
+        set(0xac, 31, 3);
+        set(0xb4, 31, 6);
+        set(0xbc, 31, 7);
+        set(0xc0, 19, 1);
+        set(0xc4, 19, 2);
+        set(0xcc, 19, 3);
+        set(0xe0, 18, 1);
+        set(0xe4, 18, 2);
+        set(0xec, 18, 3);
         set(0x10, 9, 5);
         set(0x30, 7, 5);
         set(0x50, 11, 5);
         set(0x70, 12, 5);
         set(0x90, 3, 5);
-        set(0xB0, 4, 5);
-        set(0xD0, 8, 5);
-        set(0xF0, 5, 5);
+        set(0xb0, 4, 5);
+        set(0xd0, 8, 5);
+        set(0xf0, 5, 5);
         set(0x00, 10, 0);
         set(0x20, 28, 0);
         set(0x40, 41, 0);
@@ -3394,29 +3412,29 @@ exports.default = Instruction;
         set(0x48, 35, 0);
         set(0x68, 37, 0);
         set(0x88, 22, 0);
-        set(0xA8, 51, 0);
-        set(0xC8, 26, 0);
-        set(0xE8, 25, 0);
+        set(0xa8, 51, 0);
+        set(0xc8, 26, 0);
+        set(0xe8, 25, 0);
         set(0x18, 13, 0);
         set(0x38, 44, 0);
         set(0x58, 15, 0);
         set(0x78, 46, 0);
         set(0x98, 55, 0);
-        set(0xB8, 16, 0);
-        set(0xD8, 14, 0);
-        set(0xF8, 45, 0);
-        set(0x8A, 53, 0);
-        set(0x9A, 54, 0);
-        set(0xAA, 50, 0);
-        set(0xBA, 52, 0);
-        set(0xCA, 21, 0);
-        set(0xEA, 33, 0);
-        set(0x1A, 33, 0);
-        set(0x3A, 33, 0);
-        set(0x5A, 33, 0);
-        set(0x7A, 33, 0);
-        set(0xDA, 33, 0);
-        set(0xFA, 33, 0);
+        set(0xb8, 16, 0);
+        set(0xd8, 14, 0);
+        set(0xf8, 45, 0);
+        set(0x8a, 53, 0);
+        set(0x9a, 54, 0);
+        set(0xaa, 50, 0);
+        set(0xba, 52, 0);
+        set(0xca, 21, 0);
+        set(0xea, 33, 0);
+        set(0x1a, 33, 0);
+        set(0x3a, 33, 0);
+        set(0x5a, 33, 0);
+        set(0x7a, 33, 0);
+        set(0xda, 33, 0);
+        set(0xfa, 33, 0);
         set(0x04, 56, 2);
         set(0x14, 56, 6);
         set(0x34, 56, 6);
@@ -3427,56 +3445,56 @@ exports.default = Instruction;
         set(0x80, 56, 1);
         set(0x82, 56, 1);
         set(0x89, 56, 1);
-        set(0xC2, 56, 1);
-        set(0xD4, 56, 6);
-        set(0xE2, 56, 1);
-        set(0xF4, 56, 6);
-        set(0x0C, 57, 3);
-        set(0x1C, 57, 7);
-        set(0x3C, 57, 7);
-        set(0x5C, 57, 7);
-        set(0x7C, 57, 7);
-        set(0xDC, 57, 7);
-        set(0xFC, 57, 7);
-        set(0xEB, 43, 1);
-        set(0x4B, 58, 1);
-        set(0xCB, 59, 1);
-        set(0xC7, 60, 2);
-        set(0xD7, 60, 6);
-        set(0xCF, 60, 3);
-        set(0xDF, 60, 7);
-        set(0xDB, 60, 10);
-        set(0xC3, 60, 8);
-        set(0xD3, 60, 11);
-        set(0xA7, 61, 2);
-        set(0xB7, 61, 9);
-        set(0xAF, 61, 3);
-        set(0xBF, 61, 10);
-        set(0xA3, 61, 8);
-        set(0xB3, 61, 11);
-        set(0x6B, 62, 1);
+        set(0xc2, 56, 1);
+        set(0xd4, 56, 6);
+        set(0xe2, 56, 1);
+        set(0xf4, 56, 6);
+        set(0x0c, 57, 3);
+        set(0x1c, 57, 7);
+        set(0x3c, 57, 7);
+        set(0x5c, 57, 7);
+        set(0x7c, 57, 7);
+        set(0xdc, 57, 7);
+        set(0xfc, 57, 7);
+        set(0xeb, 43, 1);
+        set(0x4b, 58, 1);
+        set(0xcb, 59, 1);
+        set(0xc7, 60, 2);
+        set(0xd7, 60, 6);
+        set(0xcf, 60, 3);
+        set(0xdf, 60, 7);
+        set(0xdb, 60, 10);
+        set(0xc3, 60, 8);
+        set(0xd3, 60, 11);
+        set(0xa7, 61, 2);
+        set(0xb7, 61, 9);
+        set(0xaf, 61, 3);
+        set(0xbf, 61, 10);
+        set(0xa3, 61, 8);
+        set(0xb3, 61, 11);
+        set(0x6b, 62, 1);
         set(0x07, 63, 2);
         set(0x17, 63, 6);
-        set(0x0F, 63, 3);
-        set(0x1F, 63, 7);
-        set(0x1B, 63, 10);
+        set(0x0f, 63, 3);
+        set(0x1f, 63, 7);
+        set(0x1b, 63, 10);
         set(0x03, 63, 8);
         set(0x13, 63, 11);
         set(0x87, 64, 2);
         set(0x97, 64, 9);
         set(0x83, 64, 8);
-        set(0x8F, 64, 3);
-        set(0xBB, 65, 10);
-        set(0xE7, 66, 2);
-        set(0xF7, 66, 6);
-        set(0xEF, 66, 3);
-        set(0xFF, 66, 7);
-        set(0xFB, 66, 10);
-        set(0xE3, 66, 8);
-        set(0xF3, 66, 11);
-        set(0x0B, 67, 1);
-        set(0x2B, 67, 1);
-        set(0xAB, 68, 1);
+        set(0x8f, 64, 3);
+        set(0xbb, 65, 10);
+        set(0xe7, 66, 2);
+        set(0xf7, 66, 6);
+        set(0xef, 66, 3);
+        set(0xff, 66, 7);
+        set(0xfb, 66, 10);
+        set(0xe3, 66, 8);
+        set(0xf3, 66, 11);
+        set(0x0b, 67, 1);
+        set(0x2b, 67, 1);
+        set(0xab, 68, 1);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
 
@@ -3603,7 +3621,7 @@ var Board = (function () {
         this._rng = factory_1.createRng(_config.randomSeed < 0 ? Math.random() : _config.randomSeed);
         cartridge.randomize(this._rng);
         var bus = new Bus_1.default();
-        if (typeof (cpuFactory) === 'undefined') {
+        if (typeof cpuFactory === 'undefined') {
             cpuFactory = function (_bus, rng) { return new Cpu_1.default(_bus, rng); };
         }
         var controlPanel = new ControlPanel_1.default(), joystick0 = new DigitalJoystick_1.default(), joystick1 = new DigitalJoystick_1.default(), paddles = new Array(4);
@@ -3614,12 +3632,8 @@ var Board = (function () {
         var pia = new Pia_1.default(controlPanel, joystick0, joystick1, this._rng);
         var tia = new Tia_1.default(_config, joystick0, joystick1, paddles);
         cpu.setInvalidInstructionCallback(function () { return _this._onInvalidInstruction(); });
-        tia
-            .setCpu(cpu)
-            .setBus(bus);
-        cartridge
-            .setCpu(cpu)
-            .setBus(bus);
+        tia.setCpu(cpu).setBus(bus);
+        cartridge.setCpu(cpu).setBus(bus);
         pia.setBus(bus);
         bus
             .setTia(tia)
@@ -3634,7 +3648,9 @@ var Board = (function () {
         this._joystick0 = joystick0;
         this._joystick1 = joystick1;
         this._paddles = paddles;
-        this._bus.event.trap.addHandler(function (payload) { return _this.triggerTrap(1, payload.message); });
+        this._bus.event.trap.addHandler(function (payload) {
+            return _this.triggerTrap(1, payload.message);
+        });
         this._clockMhz = Config_1.default.getClockMhz(_config);
         this._sliceSize = 228 * (_config.tvMode === 0 ? 262 : 312);
         this.reset();
@@ -3724,13 +3740,15 @@ var Board = (function () {
     };
     Board.prototype.getBoardStateDebug = function () {
         var sep = '============';
-        return 'TIA:\n' +
-            sep + '\n' +
-            this._tia.getDebugState() + '\n' +
+        return ('TIA:\n' +
+            sep +
+            '\n' +
+            this._tia.getDebugState() +
+            '\n' +
             "\n" +
             "PIA:\n" +
             (sep + "\n") +
-            (this._pia.getDebugState() + "\n");
+            (this._pia.getDebugState() + "\n"));
     };
     Board.prototype.setClockMode = function (clockMode) {
         this._clockMode = clockMode;
@@ -3846,11 +3864,11 @@ var Bus = (function () {
         return this;
     };
     Bus.prototype.readWord = function (address) {
-        return this.read(address) | ((this.read((address + 1) & 0xFFFF)) << 8);
+        return this.read(address) | (this.read((address + 1) & 0xffff) << 8);
     };
     Bus.prototype.read = function (address) {
         this._lastAddressBusValue = address;
-        address &= 0x1FFF;
+        address &= 0x1fff;
         if (address & 0x1000) {
             this._lastDataBusValue = this._cartridge.read(address);
             this.event.read.dispatch(2);
@@ -3868,7 +3886,7 @@ var Bus = (function () {
     Bus.prototype.write = function (address, value) {
         this._lastDataBusValue = value;
         this._lastAddressBusValue = address;
-        address &= 0x1FFF;
+        address &= 0x1fff;
         if (address & 0x1000) {
             this._cartridge.write(address, value);
             this.event.write.dispatch(2);
@@ -3883,7 +3901,7 @@ var Bus = (function () {
         }
     };
     Bus.prototype.peek = function (address) {
-        address &= 0x1FFF;
+        address &= 0x1fff;
         if (address & 0x1000) {
             return this._cartridge.peek(address);
         }
@@ -3938,29 +3956,16 @@ exports.default = Bus;
 
 },{"microevent.ts":5}],28:[function(require,module,exports){
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var Config = (function () {
-    function Config(tvMode, enableAudio, randomSeed, emulatePaddles) {
-        if (tvMode === void 0) { tvMode = 0; }
-        if (enableAudio === void 0) { enableAudio = true; }
-        if (randomSeed === void 0) { randomSeed = -1; }
-        if (emulatePaddles === void 0) { emulatePaddles = true; }
-        this.tvMode = tvMode;
-        this.enableAudio = enableAudio;
-        this.randomSeed = randomSeed;
-        this.emulatePaddles = emulatePaddles;
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
     }
-    Config.getClockMhz = function (config) {
-        switch (config.tvMode) {
-            case 0:
-                return 3.579545;
-            case 1:
-            case 2:
-                return 3.546894;
-        }
-    };
-    return Config;
-}());
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var Config;
 (function (Config) {
     var TvMode;
     (function (TvMode) {
@@ -3968,6 +3973,21 @@ var Config = (function () {
         TvMode[TvMode["pal"] = 1] = "pal";
         TvMode[TvMode["secam"] = 2] = "secam";
     })(TvMode = Config.TvMode || (Config.TvMode = {}));
+    function create(config) {
+        if (config === void 0) { config = {}; }
+        return __assign({ tvMode: 0, enableAudio: true, randomSeed: -1, emulatePaddles: true, frameStart: -1 }, config);
+    }
+    Config.create = create;
+    function getClockMhz(config) {
+        switch (config.tvMode) {
+            case 0:
+                return 3.579545;
+            case 1:
+            case 2:
+                return 3.546894;
+        }
+    }
+    Config.getClockMhz = getClockMhz;
 })(Config || (Config = {}));
 exports.default = Config;
 
@@ -4025,13 +4045,13 @@ var Pia = (function () {
     }
     Pia.prototype.reset = function () {
         for (var i = 0; i < 128; i++) {
-            this.ram[i] = this._rng ? this._rng.int(0xFF) : 0;
+            this.ram[i] = this._rng ? this._rng.int(0xff) : 0;
         }
         this._interruptFlag = 0;
         this._flagSetDuringThisCycle = false;
         this._timerDivide = 1024;
         this._subTimer = 0;
-        this._rng.int(0xFF);
+        this._rng.int(0xff);
         this._timerValue = 0;
         this._timerWrapped = false;
     };
@@ -4045,7 +4065,7 @@ var Pia = (function () {
             }
         }
         else {
-            return this.ram[address & 0x7F];
+            return this.ram[address & 0x7f];
         }
     };
     Pia.prototype.peek = function (address) {
@@ -4058,7 +4078,7 @@ var Pia = (function () {
             }
         }
         else {
-            return this.ram[address & 0x7F];
+            return this.ram[address & 0x7f];
         }
     };
     Pia.prototype.write = function (address, value) {
@@ -4071,7 +4091,7 @@ var Pia = (function () {
             }
         }
         else {
-            this.ram[address & 0x7F] = value;
+            this.ram[address & 0x7f] = value;
         }
     };
     Pia.prototype.cycle = function () {
@@ -4084,8 +4104,7 @@ var Pia = (function () {
         this._bus = bus;
         return this;
     };
-    Pia.prototype._writeIo = function (address, value) {
-    };
+    Pia.prototype._writeIo = function (address, value) { };
     Pia.prototype._writeTimer = function (address, value) {
         this._interruptFlag = 0;
         switch (address & 0x0297) {
@@ -4139,17 +4158,17 @@ var Pia = (function () {
         }
     };
     Pia.prototype._peekTimer = function (address) {
-        return (address & 0x01) ? (this._interruptFlag & 0x80) : this._timerValue;
+        return address & 0x01 ? this._interruptFlag & 0x80 : this._timerValue;
     };
     Pia.prototype._cycleTimer = function () {
         this._flagSetDuringThisCycle = false;
         if (this._timerWrapped) {
-            this._timerValue = (this._timerValue + 0xFF) & 0xFF;
+            this._timerValue = (this._timerValue + 0xff) & 0xff;
         }
         else if (this._subTimer === 0 && --this._timerValue < 0) {
-            this._timerValue = 0xFF;
+            this._timerValue = 0xff;
             this._flagSetDuringThisCycle = true;
-            this._interruptFlag = 0xFF;
+            this._interruptFlag = 0xff;
             this._timerWrapped = true;
         }
         if (++this._subTimer === this._timerDivide) {
@@ -4206,8 +4225,7 @@ var AbstractCartridge = (function () {
     AbstractCartridge.prototype.peek = function (address) {
         return this.read(address);
     };
-    AbstractCartridge.prototype.write = function (address, value) {
-    };
+    AbstractCartridge.prototype.write = function (address, value) { };
     AbstractCartridge.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.unknown;
     };
@@ -4217,10 +4235,8 @@ var AbstractCartridge = (function () {
     AbstractCartridge.prototype.setBus = function (bus) {
         return this;
     };
-    AbstractCartridge.prototype.notifyCpuCycleComplete = function () {
-    };
-    AbstractCartridge.prototype.randomize = function (rng) {
-    };
+    AbstractCartridge.prototype.notifyCpuCycleComplete = function () { };
+    AbstractCartridge.prototype.randomize = function (rng) { };
     AbstractCartridge.prototype.triggerTrap = function (reason, message) {
         if (this.trap.hasHandlers) {
             this.trap.dispatch(new CartridgeInterface_1.default.TrapPayload(reason, this, message));
@@ -4257,12 +4273,12 @@ var Cartridge2k = (function (_super) {
             throw new Error("buffer is not a 2k cartridge image: wrong length " + buffer.length);
         }
         for (var i = 0; i < buffer.length && i < 0x0800; i++) {
-            _this._rom[0x07FF - i] = buffer[buffer.length - 1 - i];
+            _this._rom[0x07ff - i] = buffer[buffer.length - 1 - i];
         }
         return _this;
     }
     Cartridge2k.prototype.read = function (address) {
-        return this._rom[address & 0x07FF];
+        return this._rom[address & 0x07ff];
     };
     Cartridge2k.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.vanilla_2k;
@@ -4295,7 +4311,7 @@ var Cartridge3E = (function (_super) {
         _this._ramSelect = false;
         _this._ramBanks = new Array(0x0100);
         _this._bus = null;
-        if ((buffer.length & 0x07FF) !== 0) {
+        if ((buffer.length & 0x07ff) !== 0) {
             throw new Error("buffer length " + buffer.length + " is not a multiple of 2k");
         }
         var bankCount = buffer.length >>> 11;
@@ -4306,7 +4322,7 @@ var Cartridge3E = (function (_super) {
         for (var i = 0; i < bankCount; i++) {
             _this._banks[i] = new Uint8Array(0x0800);
         }
-        for (var i = 0; i <= 0xFF; i++) {
+        for (var i = 0; i <= 0xff; i++) {
             _this._ramBanks[i] = new Uint8Array(0x0400);
         }
         _this._ramBank = _this._ramBanks[0];
@@ -4320,7 +4336,7 @@ var Cartridge3E = (function (_super) {
         return _this;
     }
     Cartridge3E.matchesBuffer = function (buffer) {
-        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3E, 0xA9, 0x00]]);
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3e, 0xa9, 0x00]]);
         return signatureCounts[0] >= 1;
     };
     Cartridge3E.prototype.reset = function () {
@@ -4329,7 +4345,7 @@ var Cartridge3E = (function (_super) {
     Cartridge3E.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ramBanks.length; i++) {
             for (var j = 0; j < 0x0400; j++) {
-                this._ramBanks[i][j] = rng.int(0xFF);
+                this._ramBanks[i][j] = rng.int(0xff);
             }
         }
     };
@@ -4339,20 +4355,20 @@ var Cartridge3E = (function (_super) {
         return this;
     };
     Cartridge3E.prototype.read = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._ramSelect) {
             if (address < 0x0400) {
                 return this._ramBank[address];
             }
             if (address < 0x0800) {
-                return this._ramBank[address & 0x03FF] = this._bus.getLastDataBusValue();
+                return (this._ramBank[address & 0x03ff] = this._bus.getLastDataBusValue());
             }
-            return this._bank1[address & 0x07FF];
+            return this._bank1[address & 0x07ff];
         }
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     Cartridge3E.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._ramSelect) {
             if (address < 0x0400) {
                 return this._ramBank[address];
@@ -4360,17 +4376,17 @@ var Cartridge3E = (function (_super) {
             if (address < 0x0800) {
                 return this._bus.getLastDataBusValue();
             }
-            return this._bank1[address & 0x07FF];
+            return this._bank1[address & 0x07ff];
         }
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     Cartridge3E.prototype.write = function (address, value) {
         if (!this._ramSelect) {
             return;
         }
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address >= 0x0400 && address < 0x0800) {
-            this._ramBank[address & 0x03FF] = value;
+            this._ramBank[address & 0x03ff] = value;
         }
     };
     Cartridge3E.prototype.getType = function () {
@@ -4378,11 +4394,11 @@ var Cartridge3E = (function (_super) {
     };
     Cartridge3E._onBusAccess = function (accessType, self) {
         switch (self._bus.getLastAddresBusValue()) {
-            case 0x003F:
+            case 0x003f:
                 self._ramSelect = false;
                 self._bank0 = self._banks[self._bus.getLastDataBusValue() % self._banks.length];
                 break;
-            case 0x003E:
+            case 0x003e:
                 self._ramSelect = true;
                 self._ramBank = self._ramBanks[self._bus.getLastDataBusValue() % 32];
                 break;
@@ -4430,7 +4446,7 @@ var Cartridge3F = (function (_super) {
         return _this;
     }
     Cartridge3F.matchesBuffer = function (buffer) {
-        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3F]]);
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x85, 0x3f]]);
         return signatureCounts[0] >= 2;
     };
     Cartridge3F.prototype.reset = function () {
@@ -4443,14 +4459,14 @@ var Cartridge3F = (function (_super) {
         return this;
     };
     Cartridge3F.prototype.read = function (address) {
-        address &= 0x0FFF;
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        address &= 0x0fff;
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     Cartridge3F.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_3F;
     };
     Cartridge3F._onBusAccess = function (accessType, self) {
-        if (self._bus.getLastAddresBusValue() === 0x003F) {
+        if (self._bus.getLastAddresBusValue() === 0x003f) {
             self._bank0 = self._banks[self._bus.getLastDataBusValue() & 0x03];
         }
     };
@@ -4483,12 +4499,12 @@ var Cartridge4k = (function (_super) {
         }
         var len = Math.min(0x1000, buffer.length);
         for (var i = 0; i < 0x1000 && i < buffer.length; i++) {
-            _this._rom[0x0FFF - i] = buffer[len - 1 - i];
+            _this._rom[0x0fff - i] = buffer[len - 1 - i];
         }
         return _this;
     }
     Cartridge4k.prototype.read = function (address) {
-        return this._rom[address & 0x0FFF];
+        return this._rom[address & 0x0fff];
     };
     Cartridge4k.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.vanilla_4k;
@@ -4553,19 +4569,19 @@ var CartridgeDPC = (function (_super) {
         return this._access(address, this._bus.getLastDataBusValue());
     };
     CartridgeDPC.prototype.peek = function (address) {
-        return this._bank[address & 0x0FFF];
+        return this._bank[address & 0x0fff];
     };
     CartridgeDPC.prototype.write = function (address, value) {
         this._access(address, value);
     };
     CartridgeDPC.prototype._access = function (address, value) {
-        address &= 0x0FFF;
-        if (address > 0x7F) {
+        address &= 0x0fff;
+        if (address > 0x7f) {
             switch (address) {
-                case 0x0FF8:
+                case 0x0ff8:
                     this._bank = this._bank0;
                     break;
-                case 0x0FF9:
+                case 0x0ff9:
                     this._bank = this._bank1;
                     break;
                 default:
@@ -4574,11 +4590,11 @@ var CartridgeDPC = (function (_super) {
             return this._bank[address];
         }
         if (address < 0x08) {
-            return (address & 0x04) ? 0 : this._randomNext();
+            return address & 0x04 ? 0 : this._randomNext();
         }
         if (address < 0x40) {
             var fetcher = this._fetchers[(address - 8) & 0x07], mask = fetcher.mask;
-            var fetchedData = this._fetcherData[0x07FF - fetcher.pointer];
+            var fetchedData = this._fetcherData[0x07ff - fetcher.pointer];
             fetcher.next();
             switch ((address - 8) >>> 3) {
                 case 0:
@@ -4587,17 +4603,17 @@ var CartridgeDPC = (function (_super) {
                     return fetchedData & mask;
                 case 2:
                     fetchedData &= mask;
-                    return ((fetchedData << 4) | (fetchedData >>> 4)) & 0xFF;
+                    return ((fetchedData << 4) | (fetchedData >>> 4)) & 0xff;
                 case 3:
                     fetchedData &= mask;
-                    return ((fetchedData & 0x01) << 7) |
+                    return (((fetchedData & 0x01) << 7) |
                         ((fetchedData & 0x02) << 5) |
                         ((fetchedData & 0x04) << 3) |
                         ((fetchedData & 0x08) << 1) |
                         ((fetchedData & 0x10) >>> 1) |
                         ((fetchedData & 0x20) >>> 3) |
                         ((fetchedData & 0x40) >>> 5) |
-                        ((fetchedData & 0x80) >>> 7);
+                        ((fetchedData & 0x80) >>> 7));
                 case 4:
                     return (fetchedData & mask) >>> 1;
                 case 5:
@@ -4620,7 +4636,7 @@ var CartridgeDPC = (function (_super) {
                     break;
                 case 3:
                     fetcher.setHigh(value);
-                    if (address > 0x5C) {
+                    if (address > 0x5c) {
                         fetcher.setMusicMode(value);
                     }
                     break;
@@ -4637,8 +4653,8 @@ var CartridgeDPC = (function (_super) {
         var oldRng = this._rng;
         this._rng =
             ((this._rng << 1) |
-                (~(((this._rng >>> 7) ^ (this._rng >>> 5)) ^ ((this._rng >>> 4) ^ (this._rng >>> 3))) & 0x01)) &
-                0xFF;
+                (~((this._rng >>> 7) ^ (this._rng >>> 5) ^ ((this._rng >>> 4) ^ (this._rng >>> 3))) & 0x01)) &
+                0xff;
         return oldRng;
     };
     return CartridgeDPC;
@@ -4659,7 +4675,7 @@ var Fetcher = (function () {
         this.musicMode = false;
     };
     Fetcher.prototype.next = function () {
-        this.pointer = (this.pointer + 0x07FF) & 0x07FF;
+        this.pointer = (this.pointer + 0x07ff) & 0x07ff;
         this._updateMask();
     };
     Fetcher.prototype.setStart = function (start) {
@@ -4676,17 +4692,17 @@ var Fetcher = (function () {
         this._updateMask();
     };
     Fetcher.prototype.setHigh = function (value) {
-        this.pointer = (this.pointer & 0xFF) | ((value & 0x07) << 8);
+        this.pointer = (this.pointer & 0xff) | ((value & 0x07) << 8);
         this._updateMask();
     };
     Fetcher.prototype.setMusicMode = function (value) {
         this.musicMode = (value & 0x10) !== 0;
     };
     Fetcher.prototype._updateMask = function () {
-        if ((this.pointer & 0xFF) === this.start) {
-            this.mask = 0xFF;
+        if ((this.pointer & 0xff) === this.start) {
+            this.mask = 0xff;
         }
-        if ((this.pointer & 0xFF) === this.end) {
+        if ((this.pointer & 0xff) === this.end) {
             this.mask = 0x00;
         }
     };
@@ -4738,7 +4754,7 @@ var CartridgeDPCPlus = (function (_super) {
                     _this.triggerTrap(2, "unaligned 16 bit ARM read from " + hex_1.encode(address, 8, false));
                     return 0;
                 }
-                var region = address >>> 28, addr = address & 0x0FFFFFFF;
+                var region = address >>> 28, addr = address & 0x0fffffff;
                 switch (region) {
                     case 0x0:
                         if (addr < 0x8000) {
@@ -4750,9 +4766,9 @@ var CartridgeDPCPlus = (function (_super) {
                             return _this._ram16[addr >>> 1];
                         }
                         break;
-                    case 0xE:
+                    case 0xe:
                         switch (addr) {
-                            case 0x001FC000:
+                            case 0x001fc000:
                                 return _this._armMamcr;
                         }
                         break;
@@ -4765,7 +4781,7 @@ var CartridgeDPCPlus = (function (_super) {
                     _this.triggerTrap(2, "unaligned 32 bit ARM read from " + hex_1.encode(address, 8, false));
                     return 0;
                 }
-                var region = address >>> 28, addr = address & 0x0FFFFFFF;
+                var region = address >>> 28, addr = address & 0x0fffffff;
                 switch (region) {
                     case 0x0:
                         if (addr < 0x8000) {
@@ -4777,7 +4793,7 @@ var CartridgeDPCPlus = (function (_super) {
                             return _this._ram32[addr >>> 2];
                         }
                         break;
-                    case 0xE:
+                    case 0xe:
                         switch (addr) {
                             case 0x8004:
                             case 0x8008:
@@ -4793,17 +4809,17 @@ var CartridgeDPCPlus = (function (_super) {
                     _this.triggerTrap(2, "unaligned 16 bit ARM write: " + hex_1.encode(value, 4) + " -> " + hex_1.encode(address, 8, false));
                     return;
                 }
-                var region = address >>> 28, addr = address & 0x0FFFFFFF;
+                var region = address >>> 28, addr = address & 0x0fffffff;
                 switch (region) {
                     case 0x04:
                         if (addr < 0x2000) {
-                            _this._ram16[addr >>> 1] = value & 0xFFFF;
+                            _this._ram16[addr >>> 1] = value & 0xffff;
                             return;
                         }
                         break;
-                    case 0xE:
+                    case 0xe:
                         switch (addr) {
-                            case 0x001FC000:
+                            case 0x001fc000:
                                 _this._armMamcr = value;
                                 return;
                         }
@@ -4816,14 +4832,14 @@ var CartridgeDPCPlus = (function (_super) {
                     _this.triggerTrap(2, "unaligned 32 bit ARM write: " + hex_1.encode(value, 8, false) + " -> " + hex_1.encode(address, 8, false));
                     return;
                 }
-                var region = address >>> 28, addr = address & 0x0FFFFFFF;
+                var region = address >>> 28, addr = address & 0x0fffffff;
                 switch (region) {
                     case 0x4:
                         if (addr < 0x2000) {
                             _this._ram32[addr >>> 2] = value;
                             return;
                         }
-                    case 0xE:
+                    case 0xe:
                         switch (addr) {
                             case 0x8004:
                             case 0x8008:
@@ -4836,7 +4852,7 @@ var CartridgeDPCPlus = (function (_super) {
         };
         _this._armMamcr = 0;
         _this._thumbulator = new Thumbulator_1.default(_this._thumbulatorBus, {
-            trapOnInstructionFetch: function (address) { return address === 0x8004 ? 255 : 0; }
+            trapOnInstructionFetch: function (address) { return (address === 0x8004 ? 255 : 0); }
         });
         if (buffer.length < 28 * 0x0400 || buffer.length > 0x8000) {
             throw new Error("not a DPC+ image: invalid lenght " + buffer.length);
@@ -4847,12 +4863,12 @@ var CartridgeDPCPlus = (function (_super) {
         _this._imageRom = new Uint8Array(_this._romBuffer, 0x8000 - 0x1400, 0x1000);
         _this._frequencyRom = new Uint8Array(_this._romBuffer, 0x8000 - 0x0400);
         for (var i = 0; i < 6; i++) {
-            _this._banks[i] = new Uint8Array(_this._romBuffer, 0x0C00 + i * 0x1000, 0x1000);
+            _this._banks[i] = new Uint8Array(_this._romBuffer, 0x0c00 + i * 0x1000, 0x1000);
         }
         _this._ram8 = new Uint8Array(_this._ramBuffer);
         _this._ram16 = new Uint16Array(_this._ramBuffer);
         _this._ram32 = new Uint32Array(_this._ramBuffer);
-        _this._imageRam = new Uint8Array(_this._ramBuffer, 0x0C00, 0x1000);
+        _this._imageRam = new Uint8Array(_this._ramBuffer, 0x0c00, 0x1000);
         _this._frequencyRam = new Uint8Array(_this._ramBuffer, 0x2000 - 0x0400);
         var rom8 = new Uint8Array(_this._romBuffer), offset = 0x8000 - buffer.length;
         for (var i = 0; i < buffer.length; i++) {
@@ -4883,7 +4899,7 @@ var CartridgeDPCPlus = (function (_super) {
         }
         this._parameterIndex = 0;
         this._fastFetch = this._ldaPending = false;
-        this._rng = 0x2B435044;
+        this._rng = 0x2b435044;
     };
     CartridgeDPCPlus.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_dpc_plus;
@@ -4896,15 +4912,15 @@ var CartridgeDPCPlus = (function (_super) {
         return this._access(address, this._bus.getLastDataBusValue());
     };
     CartridgeDPCPlus.prototype.peek = function (address) {
-        return this._currentBank[address & 0x0FFF];
+        return this._currentBank[address & 0x0fff];
     };
     CartridgeDPCPlus.prototype.write = function (address, value) {
         this._access(address, value);
     };
     CartridgeDPCPlus.prototype._access = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         var readResult = this._currentBank[address];
-        if (this._fastFetch && this._ldaPending && address > 0x7F && address < 0x0FF6 && readResult < 0x28) {
+        if (this._fastFetch && this._ldaPending && address > 0x7f && address < 0x0ff6 && readResult < 0x28) {
             address = readResult;
         }
         this._ldaPending = false;
@@ -4916,16 +4932,16 @@ var CartridgeDPCPlus = (function (_super) {
                     switch (idx) {
                         case 0x00:
                             this._advanceRng();
-                            return this._rng & 0xFF;
+                            return this._rng & 0xff;
                         case 0x01:
                             this._rewindRng();
-                            return this._rng & 0xFF;
+                            return this._rng & 0xff;
                         case 0x02:
-                            return (this._rng >>> 8) & 0xFF;
+                            return (this._rng >>> 8) & 0xff;
                         case 0x03:
-                            return (this._rng >>> 16) & 0xFF;
+                            return (this._rng >>> 16) & 0xff;
                         case 0x04:
-                            return (this._rng >>> 24) & 0xFF;
+                            return (this._rng >>> 24) & 0xff;
                     }
                     return 0;
                 case 0x01:
@@ -4941,14 +4957,14 @@ var CartridgeDPCPlus = (function (_super) {
                     fractionalFetcher.increment();
                     return result;
                 case 0x04:
-                    return (idx < 4) ? fetcher.mask() : 0;
+                    return idx < 4 ? fetcher.mask() : 0;
                 default:
                     return 0;
             }
         }
         else if (address < 0x80) {
             var idx = address & 0x07, fetcher = this._fetchers[idx], fractionalFetcher = this._fractionalFetchers[idx];
-            switch (((address - 0x28) >>> 3) & 0x0F) {
+            switch (((address - 0x28) >>> 3) & 0x0f) {
                 case 0x00:
                     fractionalFetcher.setPointerLo(value);
                     break;
@@ -4970,7 +4986,7 @@ var CartridgeDPCPlus = (function (_super) {
                 case 0x06:
                     switch (idx) {
                         case 0x00:
-                            this._fastFetch = (value === 0);
+                            this._fastFetch = value === 0;
                             break;
                         case 0x01:
                             if (this._parameterIndex < 8) {
@@ -4992,23 +5008,23 @@ var CartridgeDPCPlus = (function (_super) {
                 case 0x09:
                     switch (idx) {
                         case 0x00:
-                            this._rng = 0x2B435044;
+                            this._rng = 0x2b435044;
                             break;
                         case 0x01:
-                            this._rng = (this._rng & 0xFFFFFF00) | value;
+                            this._rng = (this._rng & 0xffffff00) | value;
                             break;
                         case 0x02:
-                            this._rng = (this._rng & 0xFFFF00FF) | (value << 8);
+                            this._rng = (this._rng & 0xffff00ff) | (value << 8);
                             break;
                         case 0x03:
-                            this._rng = (this._rng & 0xFF00FFFF) | (value << 16);
+                            this._rng = (this._rng & 0xff00ffff) | (value << 16);
                             break;
                         case 0x04:
-                            this._rng = (this._rng & 0x00FFFFFF) | (value << 24);
+                            this._rng = (this._rng & 0x00ffffff) | (value << 24);
                             break;
                     }
                     break;
-                case 0x0A:
+                case 0x0a:
                     this._imageRam[fetcher.pointer] = value;
                     fetcher.increment();
                     break;
@@ -5016,11 +5032,11 @@ var CartridgeDPCPlus = (function (_super) {
                     break;
             }
         }
-        else if (address > 0x0FF5 && address < 0x0FFC) {
-            this._currentBank = this._banks[address - 0x0FF6];
+        else if (address > 0x0ff5 && address < 0x0ffc) {
+            this._currentBank = this._banks[address - 0x0ff6];
         }
-        if (this._fastFetch && address > 0x7F && address < 0x0FF6) {
-            this._ldaPending = (readResult === 0xA9);
+        if (this._fastFetch && address > 0x7f && address < 0x0ff6) {
+            this._ldaPending = readResult === 0xa9;
         }
         return readResult;
     };
@@ -5032,13 +5048,13 @@ var CartridgeDPCPlus = (function (_super) {
                 break;
             case 1:
                 for (var i = 0; i < this._parameters[3]; i++) {
-                    this._ram8[0x0C00 + ((this._fetchers[this._parameters[2] & 0x07].pointer + i) & 0x0FFF)] = this._rom8[0x0C00 + ((romBase + i) % 0x7400)];
+                    this._ram8[0x0c00 + ((this._fetchers[this._parameters[2] & 0x07].pointer + i) & 0x0fff)] = this._rom8[0x0c00 + (romBase + i) % 0x7400];
                 }
                 this._parameterIndex = 0;
                 break;
             case 2:
                 for (var i = 0; i < this._parameters[3]; i++) {
-                    this._ram8[0x0C00 + ((this._fetchers[this._parameters[2] & 0x07].pointer + i) & 0x0FFF)] = this._parameters[0];
+                    this._ram8[0x0c00 + ((this._fetchers[this._parameters[2] & 0x07].pointer + i) & 0x0fff)] = this._parameters[0];
                 }
                 this._parameterIndex = 0;
                 break;
@@ -5054,9 +5070,9 @@ var CartridgeDPCPlus = (function (_super) {
         for (var i = 0; i <= 12; i++) {
             this._thumbulator.writeRegister(i, 0);
         }
-        this._thumbulator.writeRegister(13, 0x40001FB4);
+        this._thumbulator.writeRegister(13, 0x40001fb4);
         this._thumbulator.writeRegister(14, 32772 - 1);
-        this._thumbulator.writeRegister(15, 0x0C0B);
+        this._thumbulator.writeRegister(15, 0x0c0b);
         this._armMamcr = 0;
         var trap = this._thumbulator.run(500000);
         if (trap !== 255) {
@@ -5064,13 +5080,13 @@ var CartridgeDPCPlus = (function (_super) {
         }
     };
     CartridgeDPCPlus.prototype._advanceRng = function () {
-        this._rng = ((this._rng & (1 << 10)) ? 0x10adab1e : 0x00) ^
-            ((this._rng >>> 11) | (this._rng << 21));
+        this._rng = (this._rng & (1 << 10) ? 0x10adab1e : 0x00) ^ ((this._rng >>> 11) | (this._rng << 21));
     };
     CartridgeDPCPlus.prototype._rewindRng = function () {
-        this._rng = ((this._rng & (1 << 31)) ?
-            ((0x10adab1e ^ this._rng) << 11) | ((0x10adab1e ^ this._rng) >>> 21) :
-            (this._rng << 11) | (this._rng >>> 21));
+        this._rng =
+            this._rng & (1 << 31)
+                ? ((0x10adab1e ^ this._rng) << 11) | ((0x10adab1e ^ this._rng) >>> 21)
+                : (this._rng << 11) | (this._rng >>> 21);
     };
     return CartridgeDPCPlus;
 }(AbstractCartridge_1.default));
@@ -5087,19 +5103,19 @@ var Fetcher = (function () {
         this.pointer = this.top = this.bottom = 0;
     };
     Fetcher.prototype.setPointerHi = function (value) {
-        this.pointer = (this.pointer & 0xFF) | ((value & 0x0F) << 8);
+        this.pointer = (this.pointer & 0xff) | ((value & 0x0f) << 8);
     };
     Fetcher.prototype.setPointerLo = function (value) {
-        this.pointer = (this.pointer & 0x0F00) | (value & 0xFF);
+        this.pointer = (this.pointer & 0x0f00) | (value & 0xff);
     };
     Fetcher.prototype.increment = function () {
-        this.pointer = (this.pointer + 1) & 0xFFF;
+        this.pointer = (this.pointer + 1) & 0xfff;
     };
     Fetcher.prototype.decrement = function () {
-        this.pointer = (this.pointer + 0xFFF) & 0xFFF;
+        this.pointer = (this.pointer + 0xfff) & 0xfff;
     };
     Fetcher.prototype.mask = function () {
-        return ((this.top - (this.pointer & 0xFF)) & 0xFF) > ((this.top - this.bottom) & 0xFF) ? 0xFF : 0;
+        return ((this.top - (this.pointer & 0xff)) & 0xff) > ((this.top - this.bottom) & 0xff) ? 0xff : 0;
     };
     return Fetcher;
 }());
@@ -5115,17 +5131,17 @@ var FractionalFetcher = (function () {
         this.pointer = this.fraction = 0;
     };
     FractionalFetcher.prototype.setPointerHi = function (value) {
-        this.pointer = (this.pointer & 0x00FFFF) | ((value & 0x0F) << 16);
+        this.pointer = (this.pointer & 0x00ffff) | ((value & 0x0f) << 16);
     };
     FractionalFetcher.prototype.setPointerLo = function (value) {
-        this.pointer = (this.pointer & 0x0F00FF) | ((value & 0xFF) << 8);
+        this.pointer = (this.pointer & 0x0f00ff) | ((value & 0xff) << 8);
     };
     FractionalFetcher.prototype.setFraction = function (value) {
         this.fraction = value;
-        this.pointer &= 0x0FFF00;
+        this.pointer &= 0x0fff00;
     };
     FractionalFetcher.prototype.increment = function () {
-        this.pointer = (this.pointer + this.fraction) & 0x0FFFFF;
+        this.pointer = (this.pointer + this.fraction) & 0x0fffff;
     };
     return FractionalFetcher;
 }());
@@ -5264,14 +5280,14 @@ var CartridgeE0 = (function (_super) {
     }
     CartridgeE0.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0x8D, 0xE0, 0x1F],
-            [0x8D, 0xE0, 0x5F],
-            [0x8D, 0xE9, 0xFF],
-            [0x0C, 0xE0, 0x1F],
-            [0xAD, 0xE0, 0x1F],
-            [0xAD, 0xE9, 0xFF],
-            [0xAD, 0xED, 0xFF],
-            [0xAD, 0xF3, 0xBF]
+            [0x8d, 0xe0, 0x1f],
+            [0x8d, 0xe0, 0x5f],
+            [0x8d, 0xe9, 0xff],
+            [0x0c, 0xe0, 0x1f],
+            [0xad, 0xe0, 0x1f],
+            [0xad, 0xe9, 0xff],
+            [0xad, 0xed, 0xff],
+            [0xad, 0xf3, 0xbf]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -5286,19 +5302,19 @@ var CartridgeE0 = (function (_super) {
         }
     };
     CartridgeE0.prototype.read = function (address) {
-        address &= 0x0FFF;
-        if (address >= 0x0FE0 && address < 0x0FF8) {
+        address &= 0x0fff;
+        if (address >= 0x0fe0 && address < 0x0ff8) {
             this._handleBankswitch(address);
         }
-        return this._activeBanks[(address >> 10)][address & 0x03FF];
+        return this._activeBanks[address >> 10][address & 0x03ff];
     };
     CartridgeE0.prototype.peek = function (address) {
-        address &= 0x0FFF;
-        return this._activeBanks[(address >> 10)][address & 0x03FF];
+        address &= 0x0fff;
+        return this._activeBanks[address >> 10][address & 0x03ff];
     };
     CartridgeE0.prototype.write = function (address, value) {
-        var addressMasked = address & 0x0FFF;
-        if (addressMasked >= 0x0FE0 && addressMasked < 0x0FF8) {
+        var addressMasked = address & 0x0fff;
+        if (addressMasked >= 0x0fe0 && addressMasked < 0x0ff8) {
             this._handleBankswitch(addressMasked);
         }
         return _super.prototype.write.call(this, address, value);
@@ -5307,14 +5323,14 @@ var CartridgeE0 = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_E0;
     };
     CartridgeE0.prototype._handleBankswitch = function (address) {
-        if (address < 0x0FE8) {
-            this._activeBanks[0] = this._banks[address - 0x0FE0];
+        if (address < 0x0fe8) {
+            this._activeBanks[0] = this._banks[address - 0x0fe0];
         }
-        else if (address < 0x0FF0) {
-            this._activeBanks[1] = this._banks[address - 0x0FE8];
+        else if (address < 0x0ff0) {
+            this._activeBanks[1] = this._banks[address - 0x0fe8];
         }
         else {
-            this._activeBanks[2] = this._banks[address - 0x0FF0];
+            this._activeBanks[2] = this._banks[address - 0x0ff0];
         }
     };
     return CartridgeE0;
@@ -5364,13 +5380,13 @@ var CartrdigeE7 = (function (_super) {
     }
     CartrdigeE7.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0xAD, 0xE2, 0xFF],
-            [0xAD, 0xE5, 0xFF],
-            [0xAD, 0xE5, 0x1F],
-            [0xAD, 0xE7, 0x1F],
-            [0x0C, 0xE7, 0x1F],
-            [0x8D, 0xE7, 0xFF],
-            [0x8D, 0xE7, 0x1F]
+            [0xad, 0xe2, 0xff],
+            [0xad, 0xe5, 0xff],
+            [0xad, 0xe5, 0x1f],
+            [0xad, 0xe7, 0x1f],
+            [0x0c, 0xe7, 0x1f],
+            [0x8d, 0xe7, 0xff],
+            [0x8d, 0xe7, 0x1f]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -5385,11 +5401,11 @@ var CartrdigeE7 = (function (_super) {
         this._ram0Enabled = false;
     };
     CartrdigeE7.prototype.read = function (address) {
-        this._handleBankswitch(address & 0x0FFF);
+        this._handleBankswitch(address & 0x0fff);
         return this.peek(address);
     };
     CartrdigeE7.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x0800) {
             if (this._ram0Enabled) {
                 return address >= 0x0400 ? this._ram0[address - 0x0400] : 0;
@@ -5398,13 +5414,13 @@ var CartrdigeE7 = (function (_super) {
                 return this._bank0[address];
             }
         }
-        if (address <= 0x09FF) {
+        if (address <= 0x09ff) {
             return address >= 0x0900 ? this._ram1[address - 0x0900] : 0;
         }
-        return this._banks[7][0x07FF - (0x0FFF - address)];
+        return this._banks[7][0x07ff - (0x0fff - address)];
     };
     CartrdigeE7.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         this._handleBankswitch(address);
         if (address < 0x0400) {
             if (this._ram0Enabled) {
@@ -5417,7 +5433,7 @@ var CartrdigeE7 = (function (_super) {
         else if (address < 0x0800) {
             _super.prototype.write.call(this, address, value);
         }
-        else if (address < 0x08FF) {
+        else if (address < 0x08ff) {
             this._ram1[address - 0x0800] = value;
         }
         else {
@@ -5430,26 +5446,26 @@ var CartrdigeE7 = (function (_super) {
     CartrdigeE7.prototype.randomize = function (rng) {
         for (var i = 0; i < 4; i++) {
             for (var j = 0; j < this._ram1Banks[i].length; j++) {
-                this._ram1Banks[i][j] = rng.int(0xFF);
+                this._ram1Banks[i][j] = rng.int(0xff);
             }
         }
         for (var i = 0; i < this._ram0.length; i++) {
-            this._ram0[i] = rng.int(0xFF);
+            this._ram0[i] = rng.int(0xff);
         }
     };
     CartrdigeE7.prototype._handleBankswitch = function (address) {
-        if (address < 0x0FE0) {
+        if (address < 0x0fe0) {
             return;
         }
-        if (address <= 0x0FE6) {
-            this._bank0 = this._banks[address & 0x000F];
+        if (address <= 0x0fe6) {
+            this._bank0 = this._banks[address & 0x000f];
             this._ram0Enabled = false;
         }
-        else if (address === 0x0FE7) {
+        else if (address === 0x0fe7) {
             this._ram0Enabled = true;
         }
-        else if (address <= 0x0FEB) {
-            this._ram1 = this._ram1Banks[address - 0x0FE8];
+        else if (address <= 0x0feb) {
+            this._ram1 = this._ram1Banks[address - 0x0fe8];
         }
     };
     return CartrdigeE7;
@@ -5500,7 +5516,7 @@ var CartridgeEF = (function (_super) {
         var matchMagic = function (magicString) {
             var magic = magicString.split('').map(function (x) { return x.charCodeAt(0); });
             for (var i = 0; i < magic.length; i++) {
-                if (magic[i] !== buffer[0xFFF8 + i]) {
+                if (magic[i] !== buffer[0xfff8 + i]) {
                     return false;
                 }
             }
@@ -5513,10 +5529,10 @@ var CartridgeEF = (function (_super) {
             return true;
         }
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0x0C, 0xE0, 0xFF],
-            [0xAD, 0xE0, 0xFF],
-            [0x0C, 0xE0, 0x1F],
-            [0xAD, 0xE0, 0x1F]
+            [0x0c, 0xe0, 0xff],
+            [0xad, 0xe0, 0xff],
+            [0x0c, 0xe0, 0x1f],
+            [0xad, 0xe0, 0x1f]
         ]);
         for (var i = 0; i < 4; i++) {
             if (signatureCounts[i] > 0) {
@@ -5534,7 +5550,7 @@ var CartridgeEF = (function (_super) {
     };
     CartridgeEF.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ram.length; i++) {
-            this._ram[i] = rng.int(0xFF);
+            this._ram[i] = rng.int(0xff);
         }
     };
     CartridgeEF.prototype.setBus = function (bus) {
@@ -5542,11 +5558,11 @@ var CartridgeEF = (function (_super) {
         return this;
     };
     CartridgeEF.prototype.read = function (address) {
-        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this._access(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeEF.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._ram[address - 0x80];
         }
@@ -5555,7 +5571,7 @@ var CartridgeEF = (function (_super) {
         }
     };
     CartridgeEF.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x80 && this._supportSC) {
             this._hasSC = true;
         }
@@ -5566,8 +5582,8 @@ var CartridgeEF = (function (_super) {
             this._ram[address] = value;
             return;
         }
-        if (address >= 0x0FE0 && address <= 0x0FEF) {
-            this._bank = this._banks[address - 0x0FE0];
+        if (address >= 0x0fe0 && address <= 0x0fef) {
+            this._bank = this._banks[address - 0x0fe0];
         }
     };
     return CartridgeEF;
@@ -5614,15 +5630,15 @@ var CartridgeF0 = (function (_super) {
         this._currentBank = this._banks[this._bankIdx];
     };
     CartridgeF0.prototype.read = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         this._handleBankswitch(address);
         return this._currentBank[address];
     };
     CartridgeF0.prototype.peek = function (address) {
-        return this._currentBank[address & 0x0FFF];
+        return this._currentBank[address & 0x0fff];
     };
     CartridgeF0.prototype.write = function (address, value) {
-        address &= 0xFFF;
+        address &= 0xfff;
         this._handleBankswitch(address);
         _super.prototype.write.call(this, address, value);
     };
@@ -5630,8 +5646,8 @@ var CartridgeF0 = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_64k_F0;
     };
     CartridgeF0.prototype._handleBankswitch = function (address) {
-        if (address === 0x0FF0) {
-            this._bankIdx = (this._bankIdx + 1) & 0x0F;
+        if (address === 0x0ff0) {
+            this._bankIdx = (this._bankIdx + 1) & 0x0f;
             this._currentBank = this._banks[this._bankIdx];
         }
     };
@@ -5687,7 +5703,7 @@ var CartridgeF4 = (function (_super) {
     };
     CartridgeF4.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ram.length; i++) {
-            this._ram[i] = rng.int(0xFF);
+            this._ram[i] = rng.int(0xff);
         }
     };
     CartridgeF4.prototype.setBus = function (bus) {
@@ -5695,11 +5711,11 @@ var CartridgeF4 = (function (_super) {
         return this;
     };
     CartridgeF4.prototype.read = function (address) {
-        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this._access(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeF4.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._ram[address - 0x80];
         }
@@ -5708,7 +5724,7 @@ var CartridgeF4 = (function (_super) {
         }
     };
     CartridgeF4.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x80 && this._supportSC) {
             this._hasSC = true;
         }
@@ -5719,8 +5735,8 @@ var CartridgeF4 = (function (_super) {
             this._ram[address] = value;
             return;
         }
-        if (address >= 0x0FF4 && address <= 0x0FFB) {
-            this._bank = this._banks[address - 0x0FF4];
+        if (address >= 0x0ff4 && address <= 0x0ffb) {
+            this._bank = this._banks[address - 0x0ff4];
         }
     };
     return CartridgeF4;
@@ -5773,18 +5789,18 @@ var CartridgeF6 = (function (_super) {
         this._hasSC = false;
     };
     CartridgeF6.prototype.read = function (address) {
-        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this._access(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeF6.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._saraRAM[address - 0x80];
         }
         return this._bank[address];
     };
     CartridgeF6.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x80 && this._supportSC) {
             this._hasSC = true;
         }
@@ -5795,7 +5811,7 @@ var CartridgeF6 = (function (_super) {
     };
     CartridgeF6.prototype.randomize = function (rng) {
         for (var i = 0; i < this._saraRAM.length; i++) {
-            this._saraRAM[i] = rng.int(0xFF);
+            this._saraRAM[i] = rng.int(0xff);
         }
     };
     CartridgeF6.prototype.setBus = function (bus) {
@@ -5804,20 +5820,20 @@ var CartridgeF6 = (function (_super) {
     };
     CartridgeF6.prototype._access = function (address, value) {
         if (address < 0x80 && this._hasSC) {
-            this._saraRAM[address] = value & 0xFF;
+            this._saraRAM[address] = value & 0xff;
             return;
         }
         switch (address) {
-            case 0x0FF6:
+            case 0x0ff6:
                 this._bank = this._bank0;
                 break;
-            case 0x0FF7:
+            case 0x0ff7:
                 this._bank = this._bank1;
                 break;
-            case 0x0FF8:
+            case 0x0ff8:
                 this._bank = this._bank2;
                 break;
-            case 0x0FF9:
+            case 0x0ff9:
                 this._bank = this._bank3;
                 break;
         }
@@ -5865,7 +5881,7 @@ var CartridgeF8 = (function (_super) {
         return _this;
     }
     CartridgeF8.matchesBuffer = function (buffer) {
-        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x8D, 0xF9, 0x1F]]);
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [[0x8d, 0xf9, 0x1f]]);
         return signatureCounts[0] >= 2;
     };
     CartridgeF8.prototype.reset = function () {
@@ -5873,18 +5889,18 @@ var CartridgeF8 = (function (_super) {
         this._hasSC = false;
     };
     CartridgeF8.prototype.read = function (address) {
-        this._access(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this._access(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeF8.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._hasSC && address >= 0x0080 && address < 0x0100) {
             return this._saraRAM[address - 0x80];
         }
         return this._bank[address];
     };
     CartridgeF8.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address < 0x80 && this._supportSC) {
             this._hasSC = true;
         }
@@ -5895,7 +5911,7 @@ var CartridgeF8 = (function (_super) {
     };
     CartridgeF8.prototype.randomize = function (rng) {
         for (var i = 0; i < this._saraRAM.length; i++) {
-            this._saraRAM[i] = rng.int(0xFF);
+            this._saraRAM[i] = rng.int(0xff);
         }
     };
     CartridgeF8.prototype.setBus = function (bus) {
@@ -5904,14 +5920,14 @@ var CartridgeF8 = (function (_super) {
     };
     CartridgeF8.prototype._access = function (address, value) {
         if (address < 0x80 && this._hasSC) {
-            this._saraRAM[address] = value & 0xFF;
+            this._saraRAM[address] = value & 0xff;
             return;
         }
         switch (address) {
-            case 0x0FF8:
+            case 0x0ff8:
                 this._bank = this._bank0;
                 break;
-            case 0x0FF9:
+            case 0x0ff9:
                 this._bank = this._bank1;
                 break;
         }
@@ -5959,27 +5975,27 @@ var CartridgeFA = (function (_super) {
     };
     CartridgeFA.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ram.length; i++) {
-            this._ram[i] = rng.int(0xFF);
+            this._ram[i] = rng.int(0xff);
         }
     };
     CartridgeFA.prototype.read = function (address) {
-        this._handleBankswitch(address & 0x0FFF);
+        this._handleBankswitch(address & 0x0fff);
         return this.peek(address);
     };
     CartridgeFA.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address >= 0x0100 && address < 0x0200) {
-            return this._ram[address & 0xFF];
+            return this._ram[address & 0xff];
         }
         else {
             return this._bank[address];
         }
     };
     CartridgeFA.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         this._handleBankswitch(address);
         if (address < 0x0100) {
-            this._ram[address] = value & 0xFF;
+            this._ram[address] = value & 0xff;
         }
         else {
             _super.prototype.write.call(this, address, value);
@@ -5990,13 +6006,13 @@ var CartridgeFA = (function (_super) {
     };
     CartridgeFA.prototype._handleBankswitch = function (address) {
         switch (address) {
-            case 0x0FF8:
+            case 0x0ff8:
                 this._bank = this._bank0;
                 break;
-            case 0x0FF9:
+            case 0x0ff9:
                 this._bank = this._bank1;
                 break;
-            case 0x0FFA:
+            case 0x0ffa:
                 this._bank = this._bank2;
                 break;
         }
@@ -6052,10 +6068,10 @@ var CartridgeFA2 = (function (_super) {
     }
     CartridgeFA2.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0xA0, 0xC1, 0x1F, 0xE0],
-            [0x00, 0x80, 0x02, 0xE0]
+            [0xa0, 0xc1, 0x1f, 0xe0],
+            [0x00, 0x80, 0x02, 0xe0]
         ]);
-        return (signatureCounts[0] > 0 || signatureCounts[1] > 0);
+        return signatureCounts[0] > 0 || signatureCounts[1] > 0;
     };
     CartridgeFA2.prototype.reset = function () {
         this._accessCounter = 0;
@@ -6067,7 +6083,7 @@ var CartridgeFA2 = (function (_super) {
     };
     CartridgeFA2.prototype.randomize = function (rng) {
         for (var i = 0; i < this._ram.length; i++) {
-            this._ram[i] = rng.int(0xFF);
+            this._ram[i] = rng.int(0xff);
         }
     };
     CartridgeFA2.prototype.setBus = function (bus) {
@@ -6075,48 +6091,50 @@ var CartridgeFA2 = (function (_super) {
         return this;
     };
     CartridgeFA2.prototype.read = function (address) {
-        this.write(address & 0x0FFF, this._bus.getLastDataBusValue());
+        this.write(address & 0x0fff, this._bus.getLastDataBusValue());
         return this.peek(address);
     };
     CartridgeFA2.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address >= 0x0100 && address < 0x0200) {
             return this._ram[address - 0x0100];
         }
-        else if (address === 0x0FF4) {
-            return this._accessCounter >= this._accessCounterLimit ?
-                (this._bank[address] & ~0x40) :
-                (this._bank[address] | 0x40);
+        else if (address === 0x0ff4) {
+            return this._accessCounter >= this._accessCounterLimit
+                ?
+                    this._bank[address] & ~0x40
+                :
+                    this._bank[address] | 0x40;
         }
         else {
             return this._bank[address];
         }
     };
     CartridgeFA2.prototype.write = function (address, value) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         this._accessCounter++;
         if (address < 0x0100) {
             this._ram[address] = value;
             return;
         }
-        if (address === 0x0FF4) {
+        if (address === 0x0ff4) {
             return this._handleIo();
         }
-        if (address >= 0x0FF5 && address <= 0x0FFB) {
-            this._bank = this._banks[address - 0x0FF5];
+        if (address >= 0x0ff5 && address <= 0x0ffb) {
+            this._bank = this._banks[address - 0x0ff5];
         }
     };
     CartridgeFA2.prototype._handleIo = function () {
         if (this._accessCounter < this._accessCounterLimit) {
             return;
         }
-        if (this._ram[0xFF] === 1) {
+        if (this._ram[0xff] === 1) {
             for (var i = 0; i < 0x100; i++) {
                 this._ram[i] = this._savedRam[i];
             }
             this._accessCounterLimit = 10;
         }
-        else if (this._ram[0xFF] === 2) {
+        else if (this._ram[0xff] === 2) {
             for (var i = 0; i < 0x100; i++) {
                 this._savedRam[i] = this._ram[i];
             }
@@ -6126,7 +6144,7 @@ var CartridgeFA2 = (function (_super) {
             return;
         }
         this._accessCounter = 0;
-        this._ram[0xFF] = 0;
+        this._ram[0xff] = 0;
     };
     return CartridgeFA2;
 }(AbstractCartridge_1.default));
@@ -6168,10 +6186,10 @@ var CartridgeFE = (function (_super) {
     }
     CartridgeFE.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0x20, 0x00, 0xD0, 0xC6, 0xC5],
-            [0x20, 0xC3, 0xF8, 0xA5, 0x82],
-            [0xD0, 0xFB, 0x20, 0x73, 0xFE],
-            [0x20, 0x00, 0xF0, 0x84, 0xD6]
+            [0x20, 0x00, 0xd0, 0xc6, 0xc5],
+            [0x20, 0xc3, 0xf8, 0xa5, 0x82],
+            [0xd0, 0xfb, 0x20, 0x73, 0xfe],
+            [0x20, 0x00, 0xf0, 0x84, 0xd6]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -6186,7 +6204,7 @@ var CartridgeFE = (function (_super) {
         this._lastAddressBusValue = -1;
     };
     CartridgeFE.prototype.read = function (address) {
-        return this._bank[address & 0x0FFF];
+        return this._bank[address & 0x0fff];
     };
     CartridgeFE.prototype.write = function (address, value) {
         _super.prototype.write.call(this, address, value);
@@ -6213,7 +6231,7 @@ var CartridgeFE = (function (_super) {
         if (self._lastAccessWasFE) {
             self._bank = (self._bus.getLastDataBusValue() & 0x20) > 0 ? self._bank0 : self._bank1;
         }
-        self._lastAccessWasFE = self._bus.getLastAddresBusValue() === 0x01FE;
+        self._lastAccessWasFE = self._bus.getLastAddresBusValue() === 0x01fe;
     };
     return CartridgeFE;
 }(AbstractCartridge_1.default));
@@ -6246,7 +6264,7 @@ var CartridgeFactory = (function () {
     function CartridgeFactory() {
     }
     CartridgeFactory.prototype.createCartridge = function (buffer, cartridgeType) {
-        if (typeof (cartridgeType) === 'undefined') {
+        if (typeof cartridgeType === 'undefined') {
             var detector = new CartridgeDetector_1.default();
             cartridgeType = detector.detectCartridgeType(buffer);
         }
@@ -6498,7 +6516,7 @@ var CartridgeSupercharger = (function (_super) {
         return this;
     };
     CartridgeSupercharger.prototype.read = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (address === 0x0850 && this._bank1Type === 1) {
             this._loadIntoRam(this._bus.peek(0x80));
         }
@@ -6506,14 +6524,14 @@ var CartridgeSupercharger = (function (_super) {
         if (value >= 0) {
             return value;
         }
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     CartridgeSupercharger.prototype.peek = function (address) {
-        address &= 0x0FFF;
+        address &= 0x0fff;
         if (this._pendingWrite && this._writeRamEnabled && this._transitionCount === 5) {
             return this._pendingWriteData;
         }
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07FF];
+        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     CartridgeSupercharger.prototype.write = function (address, value) {
         this._access(address, value);
@@ -6531,14 +6549,14 @@ var CartridgeSupercharger = (function (_super) {
         }
     };
     CartridgeSupercharger.prototype._access = function (address, value) {
-        address &= 0x0FFF;
-        if ((address & 0x0F00) === 0 && (!this._pendingWrite || !this._writeRamEnabled)) {
-            this._pendingWriteData = address & 0x00FF;
+        address &= 0x0fff;
+        if ((address & 0x0f00) === 0 && (!this._pendingWrite || !this._writeRamEnabled)) {
+            this._pendingWriteData = address & 0x00ff;
             this._transitionCount = 0;
             this._pendingWrite = true;
             return -1;
         }
-        if (address === 0x0FF8) {
+        if (address === 0x0ff8) {
             this._setBankswitchMode((this._pendingWriteData & 28) >>> 2);
             this._writeRamEnabled = (this._pendingWriteData & 0x02) > 0;
             this._pendingWrite = false;
@@ -6549,7 +6567,7 @@ var CartridgeSupercharger = (function (_super) {
                 this._bank0[address] = this._pendingWriteData;
             }
             else if (this._bank1Type === 0) {
-                this._bank1[address & 0x07FF] = this._pendingWriteData;
+                this._bank1[address & 0x07ff] = this._pendingWriteData;
             }
             this._pendingWrite = false;
             return this._pendingWriteData;
@@ -6588,9 +6606,9 @@ var CartridgeSupercharger = (function (_super) {
         for (var i = 0; i < 0x0800; i++) {
             this._rom[i] = i < blob_1.bios.length ? blob_1.bios[i] : 0x02;
         }
-        this._rom[109] = this._showLoadingBars ? 0 : 0xFF;
-        this._rom[0x07FF] = this._rom[0x07FD] = 0xF8;
-        this._rom[0x07FE] = this._rom[0x07FC] = 0x0A;
+        this._rom[109] = this._showLoadingBars ? 0 : 0xff;
+        this._rom[0x07ff] = this._rom[0x07fd] = 0xf8;
+        this._rom[0x07fe] = this._rom[0x07fc] = 0x0a;
     };
     CartridgeSupercharger.prototype._loadIntoRam = function (loadId) {
         var loadIndex;
@@ -6616,7 +6634,7 @@ var CartridgeSupercharger = (function (_super) {
                 checksum += load[256 * blockIdx + i];
                 this._ramBanks[bank][base + i] = load[256 * blockIdx + i];
             }
-            if ((checksum & 0xFF) !== 0x55) {
+            if ((checksum & 0xff) !== 0x55) {
                 console.log("load " + loadIndex + ", block " + blockIdx + ": invalid checksum");
             }
         }
@@ -6664,9 +6682,9 @@ var CartridgeUA = (function (_super) {
     }
     CartridgeUA.matchesBuffer = function (buffer) {
         var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
-            [0x8D, 0x40, 0x02],
-            [0xAD, 0x40, 0x02],
-            [0xBD, 0x1F, 0x02]
+            [0x8d, 0x40, 0x02],
+            [0xad, 0x40, 0x02],
+            [0xbd, 0x1f, 0x02]
         ]);
         for (var i = 0; i < signatureCounts.length; i++) {
             if (signatureCounts[i] > 0) {
@@ -6679,7 +6697,7 @@ var CartridgeUA = (function (_super) {
         this._bank = this._bank0;
     };
     CartridgeUA.prototype.read = function (address) {
-        return this._bank[address & 0x0FFF];
+        return this._bank[address & 0x0fff];
     };
     CartridgeUA.prototype.setBus = function (bus) {
         this._bus = bus;
@@ -6735,7 +6753,7 @@ var Header = (function () {
             this.multiloadId +
             this.progressBarSpeedLow +
             this.progressBarSpeedHigh;
-        return (checksum & 0xFF) === 0x55;
+        return (checksum & 0xff) === 0x55;
     };
     return Header;
 }());
@@ -6745,77 +6763,558 @@ exports.default = Header;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bios = new Uint8Array([
-    0xa5, 0xfa, 0x85, 0x80, 0x4c, 0x18, 0xf8, 0xff,
-    0xff, 0xff, 0x78, 0xd8, 0xa0, 0x00, 0xa2, 0x00,
-    0x94, 0x00, 0xe8, 0xd0, 0xfb, 0x4c, 0x50, 0xf8,
-    0xa2, 0x00, 0xbd, 0x06, 0xf0, 0xad, 0xf8, 0xff,
-    0xa2, 0x00, 0xad, 0x00, 0xf0, 0xea, 0xbd, 0x00,
-    0xf7, 0xca, 0xd0, 0xf6, 0x4c, 0x50, 0xf8, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xa2, 0x03, 0xbc, 0x22, 0xf9, 0x94, 0xfa, 0xca,
-    0x10, 0xf8, 0xa0, 0x00, 0xa2, 0x28, 0x94, 0x04,
-    0xca, 0x10, 0xfb, 0xa2, 0x1c, 0x94, 0x81, 0xca,
-    0x10, 0xfb, 0xa9, 0xff, 0xc9, 0x00, 0xd0, 0x03,
-    0x4c, 0x13, 0xf9, 0xa9, 0x00, 0x85, 0x1b, 0x85,
-    0x1c, 0x85, 0x1d, 0x85, 0x1e, 0x85, 0x1f, 0x85,
-    0x19, 0x85, 0x1a, 0x85, 0x08, 0x85, 0x01, 0xa9,
-    0x10, 0x85, 0x21, 0x85, 0x02, 0xa2, 0x07, 0xca,
-    0xca, 0xd0, 0xfd, 0xa9, 0x00, 0x85, 0x20, 0x85,
-    0x10, 0x85, 0x11, 0x85, 0x02, 0x85, 0x2a, 0xa9,
-    0x05, 0x85, 0x0a, 0xa9, 0xff, 0x85, 0x0d, 0x85,
-    0x0e, 0x85, 0x0f, 0x85, 0x84, 0x85, 0x85, 0xa9,
-    0xf0, 0x85, 0x83, 0xa9, 0x74, 0x85, 0x09, 0xa9,
-    0x0c, 0x85, 0x15, 0xa9, 0x1f, 0x85, 0x17, 0x85,
-    0x82, 0xa9, 0x07, 0x85, 0x19, 0xa2, 0x08, 0xa0,
-    0x00, 0x85, 0x02, 0x88, 0xd0, 0xfb, 0x85, 0x02,
-    0x85, 0x02, 0xa9, 0x02, 0x85, 0x02, 0x85, 0x00,
-    0x85, 0x02, 0x85, 0x02, 0x85, 0x02, 0xa9, 0x00,
-    0x85, 0x00, 0xca, 0x10, 0xe4, 0x06, 0x83, 0x66,
-    0x84, 0x26, 0x85, 0xa5, 0x83, 0x85, 0x0d, 0xa5,
-    0x84, 0x85, 0x0e, 0xa5, 0x85, 0x85, 0x0f, 0xa6,
-    0x82, 0xca, 0x86, 0x82, 0x86, 0x17, 0xe0, 0x0a,
-    0xd0, 0xc3, 0xa9, 0x02, 0x85, 0x01, 0xa2, 0x1c,
-    0xa0, 0x00, 0x84, 0x19, 0x84, 0x09, 0x94, 0x81,
-    0xca, 0x10, 0xfb, 0xa6, 0x80, 0xdd, 0x00, 0xf0,
-    0xa9, 0x9a, 0xa2, 0xff, 0xa0, 0x00, 0x9a, 0x4c,
-    0xfa, 0x00, 0xcd, 0xf8, 0xff, 0x4c
+    0xa5,
+    0xfa,
+    0x85,
+    0x80,
+    0x4c,
+    0x18,
+    0xf8,
+    0xff,
+    0xff,
+    0xff,
+    0x78,
+    0xd8,
+    0xa0,
+    0x00,
+    0xa2,
+    0x00,
+    0x94,
+    0x00,
+    0xe8,
+    0xd0,
+    0xfb,
+    0x4c,
+    0x50,
+    0xf8,
+    0xa2,
+    0x00,
+    0xbd,
+    0x06,
+    0xf0,
+    0xad,
+    0xf8,
+    0xff,
+    0xa2,
+    0x00,
+    0xad,
+    0x00,
+    0xf0,
+    0xea,
+    0xbd,
+    0x00,
+    0xf7,
+    0xca,
+    0xd0,
+    0xf6,
+    0x4c,
+    0x50,
+    0xf8,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xa2,
+    0x03,
+    0xbc,
+    0x22,
+    0xf9,
+    0x94,
+    0xfa,
+    0xca,
+    0x10,
+    0xf8,
+    0xa0,
+    0x00,
+    0xa2,
+    0x28,
+    0x94,
+    0x04,
+    0xca,
+    0x10,
+    0xfb,
+    0xa2,
+    0x1c,
+    0x94,
+    0x81,
+    0xca,
+    0x10,
+    0xfb,
+    0xa9,
+    0xff,
+    0xc9,
+    0x00,
+    0xd0,
+    0x03,
+    0x4c,
+    0x13,
+    0xf9,
+    0xa9,
+    0x00,
+    0x85,
+    0x1b,
+    0x85,
+    0x1c,
+    0x85,
+    0x1d,
+    0x85,
+    0x1e,
+    0x85,
+    0x1f,
+    0x85,
+    0x19,
+    0x85,
+    0x1a,
+    0x85,
+    0x08,
+    0x85,
+    0x01,
+    0xa9,
+    0x10,
+    0x85,
+    0x21,
+    0x85,
+    0x02,
+    0xa2,
+    0x07,
+    0xca,
+    0xca,
+    0xd0,
+    0xfd,
+    0xa9,
+    0x00,
+    0x85,
+    0x20,
+    0x85,
+    0x10,
+    0x85,
+    0x11,
+    0x85,
+    0x02,
+    0x85,
+    0x2a,
+    0xa9,
+    0x05,
+    0x85,
+    0x0a,
+    0xa9,
+    0xff,
+    0x85,
+    0x0d,
+    0x85,
+    0x0e,
+    0x85,
+    0x0f,
+    0x85,
+    0x84,
+    0x85,
+    0x85,
+    0xa9,
+    0xf0,
+    0x85,
+    0x83,
+    0xa9,
+    0x74,
+    0x85,
+    0x09,
+    0xa9,
+    0x0c,
+    0x85,
+    0x15,
+    0xa9,
+    0x1f,
+    0x85,
+    0x17,
+    0x85,
+    0x82,
+    0xa9,
+    0x07,
+    0x85,
+    0x19,
+    0xa2,
+    0x08,
+    0xa0,
+    0x00,
+    0x85,
+    0x02,
+    0x88,
+    0xd0,
+    0xfb,
+    0x85,
+    0x02,
+    0x85,
+    0x02,
+    0xa9,
+    0x02,
+    0x85,
+    0x02,
+    0x85,
+    0x00,
+    0x85,
+    0x02,
+    0x85,
+    0x02,
+    0x85,
+    0x02,
+    0xa9,
+    0x00,
+    0x85,
+    0x00,
+    0xca,
+    0x10,
+    0xe4,
+    0x06,
+    0x83,
+    0x66,
+    0x84,
+    0x26,
+    0x85,
+    0xa5,
+    0x83,
+    0x85,
+    0x0d,
+    0xa5,
+    0x84,
+    0x85,
+    0x0e,
+    0xa5,
+    0x85,
+    0x85,
+    0x0f,
+    0xa6,
+    0x82,
+    0xca,
+    0x86,
+    0x82,
+    0x86,
+    0x17,
+    0xe0,
+    0x0a,
+    0xd0,
+    0xc3,
+    0xa9,
+    0x02,
+    0x85,
+    0x01,
+    0xa2,
+    0x1c,
+    0xa0,
+    0x00,
+    0x84,
+    0x19,
+    0x84,
+    0x09,
+    0x94,
+    0x81,
+    0xca,
+    0x10,
+    0xfb,
+    0xa6,
+    0x80,
+    0xdd,
+    0x00,
+    0xf0,
+    0xa9,
+    0x9a,
+    0xa2,
+    0xff,
+    0xa0,
+    0x00,
+    0x9a,
+    0x4c,
+    0xfa,
+    0x00,
+    0xcd,
+    0xf8,
+    0xff,
+    0x4c
 ]);
 exports.defaultHeader = new Uint8Array([
-    0xac, 0xfa, 0x0f, 0x18, 0x62, 0x00, 0x24, 0x02,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0x00, 0x04, 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c,
-    0x01, 0x05, 0x09, 0x0d, 0x11, 0x15, 0x19, 0x1d,
-    0x02, 0x06, 0x0a, 0x0e, 0x12, 0x16, 0x1a, 0x1e,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00
+    0xac,
+    0xfa,
+    0x0f,
+    0x18,
+    0x62,
+    0x00,
+    0x24,
+    0x02,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0x00,
+    0x04,
+    0x08,
+    0x0c,
+    0x10,
+    0x14,
+    0x18,
+    0x1c,
+    0x01,
+    0x05,
+    0x09,
+    0x0d,
+    0x11,
+    0x15,
+    0x19,
+    0x1d,
+    0x02,
+    0x06,
+    0x0a,
+    0x0e,
+    0x12,
+    0x16,
+    0x1a,
+    0x1e,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0x00
 ]);
 
 },{}],56:[function(require,module,exports){
@@ -6857,9 +7356,10 @@ var Thumbulator = (function () {
             printErr: printer,
             trapOnInstructionFetch: options.trapOnInstructionFetch || (function () { return 0; }),
             busRead16: bus.read16,
-            busRead32: bus.read32 || (function (address) { return (bus.read16(address) & 0xFFFF) | (bus.read16(address + 2) << 16); }),
+            busRead32: bus.read32 || (function (address) { return (bus.read16(address) & 0xffff) | (bus.read16(address + 2) << 16); }),
             busWrite16: bus.write16,
-            busWrite32: bus.write32 || (function (address, value) { return (bus.write16(address, value & 0xFFFF), bus.write16(address + 2, value >>> 16)); })
+            busWrite32: bus.write32 ||
+                (function (address, value) { return (bus.write16(address, value & 0xffff), bus.write16(address + 2, value >>> 16)); })
         };
     };
     return Thumbulator;
@@ -14542,7 +15042,7 @@ var Audio = (function () {
         this._frequency = -1;
     };
     Audio.prototype.audc = function (value) {
-        value &= 0x0F;
+        value &= 0x0f;
         if (value === this._tone) {
             return;
         }
@@ -14550,7 +15050,7 @@ var Audio = (function () {
         this._dispatchBufferChanged();
     };
     Audio.prototype.audf = function (value) {
-        value &= 0x1F;
+        value &= 0x1f;
         if (value === this._frequency) {
             return;
         }
@@ -14558,7 +15058,7 @@ var Audio = (function () {
         this._dispatchBufferChanged();
     };
     Audio.prototype.audv = function (value) {
-        value &= 0x0F;
+        value &= 0x0f;
         if (value === this._volume) {
             return;
         }
@@ -14603,7 +15103,7 @@ var Ball = (function () {
     function Ball(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
         this._flushLineCache = _flushLineCache;
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._enabledOld = false;
         this._enabledNew = false;
@@ -14621,7 +15121,7 @@ var Ball = (function () {
         this.reset();
     }
     Ball.prototype.reset = function () {
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._width = 1;
         this._enabledOld = false;
@@ -14681,7 +15181,7 @@ var Ball = (function () {
         return this._moving;
     };
     Ball.prototype.tick = function (isReceivingHclock) {
-        this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
+        this.collision = this._rendering && this._renderCounter >= 0 && this._enabled ? 0 : this._collisionMask;
         var starfieldEffect = this._moving && isReceivingHclock;
         if (this._counter === 156) {
             var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
@@ -14740,7 +15240,7 @@ var DelayQueue = (function () {
     function DelayQueue(_length, size) {
         this._length = _length;
         this._nextIndex = 0;
-        this._indices = new Uint8Array(0xFF);
+        this._indices = new Uint8Array(0xff);
         this._queue = new Array(this._length);
         for (var i = 0; i < this._length; i++) {
             this._queue[i] = new QueueEntry(size);
@@ -14769,7 +15269,7 @@ var DelayQueue = (function () {
         this._nextIndex = (this._nextIndex + 1) % this._length;
         for (var i = 0; i < entry.nextIndex; i++) {
             handler(entry.addresses[i], entry.values[i], scope);
-            this._indices[entry.addresses[i]] = 0xFF;
+            this._indices[entry.addresses[i]] = 0xff;
         }
         entry.nextIndex = 0;
     };
@@ -14851,6 +15351,7 @@ var FrameManager = (function () {
         this._lineInState = 0;
         this._surfaceFactory = null;
         this._surface = null;
+        this._frameStart = -1;
         switch (this._config.tvMode) {
             case 0:
                 this._vblankLines = 40;
@@ -14868,6 +15369,7 @@ var FrameManager = (function () {
         }
         this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines + 3;
         this._maxLinesWithoutVsync = this._frameLines * 50;
+        this._frameStart = this._config.frameStart;
         this.reset();
     }
     FrameManager.prototype.reset = function () {
@@ -14894,14 +15396,14 @@ var FrameManager = (function () {
                 }
                 break;
             case 2:
-                if (this._waitForVsync) {
-                    if (this._lineInState >=
-                        (this.vblank ? this._vblankLines : this._vblankLines - 10)) {
+                if (this._frameStart >= 0) {
+                    if (this._lineInState > this._frameStart) {
                         this._startFrame();
                     }
                 }
                 else {
-                    if (!this.vblank) {
+                    if (this._lineInState >=
+                        (this.vblank ? this._vblankLines : this._vblankLines - 10)) {
                         this._startFrame();
                     }
                 }
@@ -14965,8 +15467,8 @@ var FrameManager = (function () {
         return this._state === 3 ? this._lineInState : 0;
     };
     FrameManager.prototype.getDebugState = function () {
-        return this._getReadableState() + ", line = " + this._lineInState + ", " +
-            ("vblank = " + (this.vblank ? '1' : '0') + ", " + (this._waitForVsync ? '' : 'given up on vsync'));
+        return (this._getReadableState() + ", line = " + this._lineInState + ", " +
+            ("vblank = " + (this.vblank ? '1' : '0') + ", " + (this._waitForVsync ? '' : 'given up on vsync')));
     };
     FrameManager.prototype._getReadableState = function () {
         switch (this._state) {
@@ -15049,7 +15551,7 @@ var Missile = (function () {
     function Missile(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
         this._flushLineCache = _flushLineCache;
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._enabled = false;
         this._enam = false;
@@ -15066,7 +15568,7 @@ var Missile = (function () {
         this.reset();
     }
     Missile.prototype.reset = function () {
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this._width = 1;
         this._enabled = false;
         this._counter = 0;
@@ -15081,7 +15583,7 @@ var Missile = (function () {
         this._lastMovementTick = 0;
     };
     Missile.prototype.enam = function (value) {
-        var enam = (value & 2) > 0, enabled = enam && (this._resmp === 0);
+        var enam = (value & 2) > 0, enabled = enam && this._resmp === 0;
         if (enam !== this._enam || enabled !== this._enabled) {
             this._flushLineCache();
         }
@@ -15100,7 +15602,7 @@ var Missile = (function () {
             else {
                 switch (this._width) {
                     case 8:
-                        this._renderCounter = (counter - 157) + ((this._renderCounter >= 4) ? 4 : 0);
+                        this._renderCounter = counter - 157 + (this._renderCounter >= 4 ? 4 : 0);
                         break;
                     case 4:
                         this._renderCounter = counter - 157;
@@ -15158,7 +15660,7 @@ var Missile = (function () {
         return this._moving;
     };
     Missile.prototype.tick = function (isReceivingHclock) {
-        this.collision = (this._rendering && this._renderCounter >= 0 && this._enabled) ? 0 : this._collisionMask;
+        this.collision = this._rendering && this._renderCounter >= 0 && this._enabled ? 0 : this._collisionMask;
         var starfieldEffect = this._moving && isReceivingHclock;
         if (this._decodes[this._counter] && !this._resmp) {
             var starfieldDelta = (this._counter - this._lastMovementTick + 160) % 4;
@@ -15248,8 +15750,11 @@ var PaddleReader = (function () {
             return;
         }
         var timestamp = this._timestampRef();
-        this._u = U * (1 - (1 - this._u / U) *
-            Math.exp(-(timestamp - this._timestamp) / (this._value * RPOT + R0) / C / this._clockFreq));
+        this._u =
+            U *
+                (1 -
+                    (1 - this._u / U) *
+                        Math.exp(-(timestamp - this._timestamp) / (this._value * RPOT + R0) / C / this._clockFreq));
         this._timestamp = timestamp;
     };
     return PaddleReader;
@@ -15268,7 +15773,7 @@ var Player = (function () {
     function Player(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
         this._flushLineCache = _flushLineCache;
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._hmmClocks = 0;
         this._counter = 0;
@@ -15288,7 +15793,7 @@ var Player = (function () {
         this.reset();
     }
     Player.prototype.reset = function () {
-        this.color = 0xFFFFFFFF;
+        this.color = 0xffffffff;
         this.collision = 0;
         this._hmmClocks = 0;
         this._counter = 0;
@@ -15335,7 +15840,7 @@ var Player = (function () {
         this._decodes = drawCounterDecodes_1.decodesPlayer[masked];
         if (this._decodes !== oldDecodes &&
             this._rendering &&
-            (this._renderCounter - -5) < 2 &&
+            this._renderCounter - -5 < 2 &&
             !this._decodes[(this._counter - this._renderCounter + -5 + 159) % 160]) {
             this._rendering = false;
         }
@@ -15347,7 +15852,7 @@ var Player = (function () {
             return;
         }
         var delta = this._renderCounter - -5;
-        switch (this._divider << 4 | this._dividerPending) {
+        switch ((this._divider << 4) | this._dividerPending) {
             case 0x12:
             case 0x14:
                 if (hblank) {
@@ -15355,7 +15860,7 @@ var Player = (function () {
                         this._setDivider(this._dividerPending);
                     }
                     else {
-                        this._dividerChangeCounter = (delta < 5 ? 1 : 0);
+                        this._dividerChangeCounter = delta < 5 ? 1 : 0;
                     }
                 }
                 else {
@@ -15377,16 +15882,16 @@ var Player = (function () {
                     this._renderCounter--;
                 }
                 else {
-                    this._dividerChangeCounter = (hblank ? 0 : 1);
+                    this._dividerChangeCounter = hblank ? 0 : 1;
                 }
                 break;
             case 0x42:
             case 0x24:
-                if (this._renderCounter < 1 || (hblank && (this._renderCounter % this._divider === 1))) {
+                if (this._renderCounter < 1 || (hblank && this._renderCounter % this._divider === 1)) {
                     this._setDivider(this._dividerPending);
                 }
                 else {
-                    this._dividerChangeCounter = (this._divider - (this._renderCounter - 1) % this._divider);
+                    this._dividerChangeCounter = this._divider - (this._renderCounter - 1) % this._divider;
                 }
                 break;
             default:
@@ -15395,7 +15900,7 @@ var Player = (function () {
     };
     Player.prototype.resp = function (counter) {
         this._counter = counter;
-        if (this._rendering && (this._renderCounter - -5) < 4) {
+        if (this._rendering && this._renderCounter - -5 < 4) {
             this._renderCounter = -5 + (counter - 157);
         }
     };
@@ -15428,9 +15933,12 @@ var Player = (function () {
         return this._moving;
     };
     Player.prototype.tick = function () {
-        this.collision = (this._rendering &&
-            this._renderCounter >= this._renderCounterTripPoint &&
-            (this._pattern & (1 << this._sampleCounter))) ? 0 : this._collisionMask;
+        this.collision =
+            this._rendering &&
+                this._renderCounter >= this._renderCounterTripPoint &&
+                this._pattern & (1 << this._sampleCounter)
+                ? 0
+                : this._collisionMask;
         if (this._decodes[this._counter]) {
             this._rendering = true;
             this._renderCounter = -5;
@@ -15450,7 +15958,7 @@ var Player = (function () {
                     }
                     break;
                 default:
-                    if (this._renderCounter > 1 && ((this._renderCounter - 1) % this._divider) === 0) {
+                    if (this._renderCounter > 1 && (this._renderCounter - 1) % this._divider === 0) {
                         this._sampleCounter++;
                     }
                     if (this._renderCounter > 0 &&
@@ -15561,12 +16069,12 @@ var Playfield = (function () {
         this._applyColors();
     };
     Playfield.prototype.pf0 = function (value) {
-        if (this._pf0 === (value >>> 4)) {
+        if (this._pf0 === value >>> 4) {
             return;
         }
         this._flushLineCache();
         this._pf0 = value >>> 4;
-        this._pattern = (this._pattern & 0x000FFFF0) | this._pf0;
+        this._pattern = (this._pattern & 0x000ffff0) | this._pf0;
     };
     Playfield.prototype.pf1 = function (value) {
         if (this._pf1 === value) {
@@ -15574,15 +16082,16 @@ var Playfield = (function () {
         }
         this._flushLineCache();
         this._pf1 = value;
-        this._pattern = (this._pattern & 0x000FF00F)
-            | ((value & 0x80) >>> 3)
-            | ((value & 0x40) >>> 1)
-            | ((value & 0x20) << 1)
-            | ((value & 0x10) << 3)
-            | ((value & 0x08) << 5)
-            | ((value & 0x04) << 7)
-            | ((value & 0x02) << 9)
-            | ((value & 0x01) << 11);
+        this._pattern =
+            (this._pattern & 0x000ff00f) |
+                ((value & 0x80) >>> 3) |
+                ((value & 0x40) >>> 1) |
+                ((value & 0x20) << 1) |
+                ((value & 0x10) << 3) |
+                ((value & 0x08) << 5) |
+                ((value & 0x04) << 7) |
+                ((value & 0x02) << 9) |
+                ((value & 0x01) << 11);
     };
     Playfield.prototype.pf2 = function (value) {
         if (this._pf2 === value) {
@@ -15590,7 +16099,7 @@ var Playfield = (function () {
         }
         this._flushLineCache();
         this._pf2 = value;
-        this._pattern = (this._pattern & 0x00000FFF) | ((value & 0xFF) << 12);
+        this._pattern = (this._pattern & 0x00000fff) | ((value & 0xff) << 12);
     };
     Playfield.prototype.ctrlpf = function (value) {
         var reflected = (value & 0x01) > 0, colorMode = (value & 0x06) === 0x02 ? 1 : 0;
@@ -15747,10 +16256,10 @@ var Tia = (function () {
         this._movementInProgress = false;
         this._extendedHblank = false;
         this._xDelta = 0;
-        this._clock = 0.;
+        this._clock = 0;
         this._linesSinceChange = 0;
         this._maxLinesTotal = 0;
-        this._colorBk = 0xFF000000;
+        this._colorBk = 0xff000000;
         this._priority = 0;
         this._collisionMask = 0;
         this._player0 = new Player_1.default(31744, function () { return _this._flushLineCache(); });
@@ -15782,10 +16291,10 @@ var Tia = (function () {
         this._priority = 0;
         this._hstate = 0;
         this._collisionMask = 0;
-        this._colorBk = 0xFF000000;
+        this._colorBk = 0xff000000;
         this._linesSinceChange = 0;
         this._collisionUpdateRequired = false;
-        this._clock = 0.;
+        this._clock = 0;
         this._maxLinesTotal = 0;
         this._xDelta = 0;
         this._delayQueue.reset();
@@ -15834,7 +16343,7 @@ var Tia = (function () {
     Tia.prototype.read = function (address) {
         var lastDataBusValue = this._bus.getLastDataBusValue();
         var result;
-        switch (address & 0x0F) {
+        switch (address & 0x0f) {
             case 8:
                 result = this._config.emulatePaddles ? this._paddles[0].inpt() : 0;
                 break;
@@ -15854,48 +16363,55 @@ var Tia = (function () {
                 result = this._input1.inpt();
                 break;
             case 0:
-                result = (((this._collisionMask & 8760 & 31744) ? 0x40 : 0) |
-                    ((this._collisionMask & 8760 & 17344) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 8760 & 31744 ? 0x40 : 0) |
+                        (this._collisionMask & 8760 & 17344 ? 0x80 : 0);
                 break;
             case 1:
-                result = (((this._collisionMask & 4390 & 17344) ? 0x40 : 0) |
-                    ((this._collisionMask & 4390 & 31744) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 4390 & 17344 ? 0x40 : 0) |
+                        (this._collisionMask & 4390 & 31744 ? 0x80 : 0);
                 break;
             case 2:
-                result = (((this._collisionMask & 31744 & 2197) ? 0x40 : 0) |
-                    ((this._collisionMask & 31744 & 1099) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 31744 & 2197 ? 0x40 : 0) |
+                        (this._collisionMask & 31744 & 1099 ? 0x80 : 0);
                 break;
             case 3:
-                result = (((this._collisionMask & 17344 & 2197) ? 0x40 : 0) |
-                    ((this._collisionMask & 17344 & 1099) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 17344 & 2197 ? 0x40 : 0) |
+                        (this._collisionMask & 17344 & 1099 ? 0x80 : 0);
                 break;
             case 4:
-                result = (((this._collisionMask & 8760 & 2197) ? 0x40 : 0) |
-                    ((this._collisionMask & 8760 & 1099) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 8760 & 2197 ? 0x40 : 0) |
+                        (this._collisionMask & 8760 & 1099 ? 0x80 : 0);
                 break;
             case 5:
-                result = (((this._collisionMask & 4390 & 2197) ? 0x40 : 0) |
-                    ((this._collisionMask & 4390 & 1099) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 4390 & 2197 ? 0x40 : 0) |
+                        (this._collisionMask & 4390 & 1099 ? 0x80 : 0);
                 break;
             case 7:
-                result = (((this._collisionMask & 8760 & 4390) ? 0x40 : 0) |
-                    ((this._collisionMask & 31744 & 17344) ? 0x80 : 0));
+                result =
+                    (this._collisionMask & 8760 & 4390 ? 0x40 : 0) |
+                        (this._collisionMask & 31744 & 17344 ? 0x80 : 0);
                 break;
             case 6:
-                result = (this._collisionMask & 2197 & 1099) ? 0x80 : 0;
+                result = this._collisionMask & 2197 & 1099 ? 0x80 : 0;
                 break;
             default:
                 result = lastDataBusValue;
                 break;
         }
-        return (result & 0xC0) | (lastDataBusValue & 0x3F);
+        return (result & 0xc0) | (lastDataBusValue & 0x3f);
     };
     Tia.prototype.peek = function (address) {
         return this.read(address);
     };
     Tia.prototype.write = function (address, value) {
         var v = 0;
-        switch (address & 0x3F) {
+        switch (address & 0x3f) {
             case 2:
                 this._cpu.halt();
                 break;
@@ -15958,16 +16474,16 @@ var Tia = (function () {
                 break;
             case 9:
                 this._flushLineCache();
-                this._colorBk = this._palette[(value & 0xFF) >>> 1];
+                this._colorBk = this._palette[(value & 0xff) >>> 1];
                 break;
             case 6:
-                v = this._palette[(value & 0xFF) >>> 1];
+                v = this._palette[(value & 0xff) >>> 1];
                 this._missile0.setColor(v);
                 this._player0.setColor(v);
                 this._playfield.setColorP0(v);
                 break;
             case 7:
-                v = this._palette[(value & 0xFF) >>> 1];
+                v = this._palette[(value & 0xff) >>> 1];
                 this._missile1.setColor(v);
                 this._player1.setColor(v);
                 this._playfield.setColorP1(v);
@@ -15988,7 +16504,7 @@ var Tia = (function () {
                 break;
             case 8:
                 this._flushLineCache();
-                v = this._palette[(value & 0xFF) >>> 1];
+                v = this._palette[(value & 0xff) >>> 1];
                 this._playfield.setColor(v);
                 this._ball.color = v;
                 break;
@@ -16067,9 +16583,9 @@ var Tia = (function () {
         }
     };
     Tia.prototype.getDebugState = function () {
-        return '' +
+        return ('' +
             ("hclock: " + this._hctr + "   line: " + this._frameManager.getCurrentLine() + "\n") +
-            this._frameManager.getDebugState();
+            this._frameManager.getDebugState());
     };
     Tia.prototype.setBus = function (bus) {
         this._bus = bus;
@@ -16192,7 +16708,7 @@ var Tia = (function () {
         if (linesTotal < self._maxLinesTotal) {
             var buffer = surface.getBuffer(), base = 160 * linesTotal, boundary = self._maxLinesTotal * 160;
             for (var i = base; i < boundary; i++) {
-                buffer[i] = 0xFF000000;
+                buffer[i] = 0xff000000;
             }
         }
         self.newFrame.dispatch(surface);
@@ -16279,13 +16795,13 @@ var Tia = (function () {
         }
     };
     Tia.prototype._getClockFreq = function (config) {
-        return (config.tvMode === 0) ?
-            60 * 228 * 262 :
-            50 * 228 * 312;
+        return config.tvMode === 0
+            ? 60 * 228 * 262
+            : 50 * 228 * 312;
     };
     Tia.prototype._renderPixel = function (x, y) {
         if (this._frameManager.vblank) {
-            this._frameManager.surfaceBuffer[y * 160 + x] = 0xFF000000;
+            this._frameManager.surfaceBuffer[y * 160 + x] = 0xff000000;
             return;
         }
         var color = this._colorBk;
@@ -16320,25 +16836,26 @@ var Tia = (function () {
         this._frameManager.surfaceBuffer[y * 160 + x] = color;
     };
     Tia.prototype._updateCollision = function () {
-        this._collisionMask |= (~this._player0.collision &
-            ~this._player1.collision &
-            ~this._missile0.collision &
-            ~this._missile1.collision &
-            ~this._ball.collision &
-            ~this._playfield.collision);
+        this._collisionMask |=
+            ~this._player0.collision &
+                ~this._player1.collision &
+                ~this._missile0.collision &
+                ~this._missile1.collision &
+                ~this._ball.collision &
+                ~this._playfield.collision;
     };
     Tia.prototype._clearHmoveComb = function () {
         if (this._frameManager.isRendering() && this._hstate === 0) {
             var offset = this._frameManager.getCurrentLine() * 160;
             for (var i = 0; i < 8; i++) {
-                this._frameManager.surfaceBuffer[offset + i] = 0xFF000000;
+                this._frameManager.surfaceBuffer[offset + i] = 0xff000000;
             }
         }
     };
     Tia.prototype._resxCounter = function () {
-        return this._hstate === 0 ?
-            (this._hctr >= 73 ? 158 : 159) :
-            157;
+        return this._hstate === 0
+            ? this._hctr >= 73 ? 158 : 159
+            : 157;
     };
     Tia.prototype._rsync = function () {
         var x = this._hctr > 68 ? this._hctr - 68 : 0;
@@ -16346,14 +16863,13 @@ var Tia = (function () {
         if (this._frameManager.isRendering()) {
             var y = this._frameManager.getCurrentLine(), base = y * 160 + x, boundary = base + (y + 1) * 160;
             for (var i = base; i < boundary; i++) {
-                this._frameManager.surfaceBuffer[i] = 0xFF000000;
+                this._frameManager.surfaceBuffer[i] = 0xff000000;
             }
         }
         this._hctr = 225;
     };
     Tia.prototype._setPriority = function (value) {
-        var priority = (value & 0x04) ? 1 :
-            ((value & 0x02) ? 2 : 0);
+        var priority = value & 0x04 ? 1 : value & 0x02 ? 2 : 0;
         if (priority !== this._priority) {
             this._flushLineCache();
             this._priority = priority;
@@ -16464,52 +16980,418 @@ exports.default = Tia;
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../Config");
 var AudioOutputBuffer_1 = require("../../../tools/AudioOutputBuffer");
-var FREQUENCY_DIVISIORS = new Int8Array([
-    1, 1, 15, 1,
-    1, 1, 1, 1,
-    1, 1, 1, 1,
-    3, 3, 3, 1
-]);
+var FREQUENCY_DIVISIORS = new Int8Array([1, 1, 15, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 1]);
 var POLY0 = new Int8Array([1]);
 var POLY1 = new Int8Array([1, 1]);
 var POLY2 = new Int8Array([16, 15]);
 var POLY4 = new Int8Array([1, 2, 2, 1, 1, 1, 4, 3]);
 var POLY5 = new Int8Array([1, 2, 1, 1, 2, 2, 5, 4, 2, 1, 3, 1, 1, 1, 1, 4]);
 var POLY9 = new Int8Array([
-    1, 4, 1, 3, 2, 4, 1, 2, 3, 2, 1, 1, 1, 1, 1, 1,
-    2, 4, 2, 1, 4, 1, 1, 2, 2, 1, 3, 2, 1, 3, 1, 1,
-    1, 4, 1, 1, 1, 1, 2, 1, 1, 2, 6, 1, 2, 2, 1, 2,
-    1, 2, 1, 1, 2, 1, 6, 2, 1, 2, 2, 1, 1, 1, 1, 2,
-    2, 2, 2, 7, 2, 3, 2, 2, 1, 1, 1, 3, 2, 1, 1, 2,
-    1, 1, 7, 1, 1, 3, 1, 1, 2, 3, 3, 1, 1, 1, 2, 2,
-    1, 1, 2, 2, 4, 3, 5, 1, 3, 1, 1, 5, 2, 1, 1, 1,
-    2, 1, 2, 1, 3, 1, 2, 5, 1, 1, 2, 1, 1, 1, 5, 1,
-    1, 1, 1, 1, 1, 1, 1, 6, 1, 1, 1, 2, 1, 1, 1, 1,
-    4, 2, 1, 1, 3, 1, 3, 6, 3, 2, 3, 1, 1, 2, 1, 2,
-    4, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 2, 1, 4, 2, 2,
-    3, 4, 1, 1, 4, 1, 2, 1, 2, 2, 2, 1, 1, 4, 3, 1,
-    4, 4, 9, 5, 4, 1, 5, 3, 1, 1, 3, 2, 2, 2, 1, 5,
-    1, 2, 1, 1, 1, 2, 3, 1, 2, 1, 1, 3, 4, 2, 5, 2,
-    2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 3, 3, 3, 2, 1,
-    2, 1, 1, 1, 1, 1, 3, 3, 1, 2, 2, 3, 1, 3, 1, 8
+    1,
+    4,
+    1,
+    3,
+    2,
+    4,
+    1,
+    2,
+    3,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    4,
+    2,
+    1,
+    4,
+    1,
+    1,
+    2,
+    2,
+    1,
+    3,
+    2,
+    1,
+    3,
+    1,
+    1,
+    1,
+    4,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    1,
+    2,
+    6,
+    1,
+    2,
+    2,
+    1,
+    2,
+    1,
+    2,
+    1,
+    1,
+    2,
+    1,
+    6,
+    2,
+    1,
+    2,
+    2,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    7,
+    2,
+    3,
+    2,
+    2,
+    1,
+    1,
+    1,
+    3,
+    2,
+    1,
+    1,
+    2,
+    1,
+    1,
+    7,
+    1,
+    1,
+    3,
+    1,
+    1,
+    2,
+    3,
+    3,
+    1,
+    1,
+    1,
+    2,
+    2,
+    1,
+    1,
+    2,
+    2,
+    4,
+    3,
+    5,
+    1,
+    3,
+    1,
+    1,
+    5,
+    2,
+    1,
+    1,
+    1,
+    2,
+    1,
+    2,
+    1,
+    3,
+    1,
+    2,
+    5,
+    1,
+    1,
+    2,
+    1,
+    1,
+    1,
+    5,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    6,
+    1,
+    1,
+    1,
+    2,
+    1,
+    1,
+    1,
+    1,
+    4,
+    2,
+    1,
+    1,
+    3,
+    1,
+    3,
+    6,
+    3,
+    2,
+    3,
+    1,
+    1,
+    2,
+    1,
+    2,
+    4,
+    1,
+    1,
+    1,
+    3,
+    1,
+    1,
+    1,
+    1,
+    3,
+    1,
+    2,
+    1,
+    4,
+    2,
+    2,
+    3,
+    4,
+    1,
+    1,
+    4,
+    1,
+    2,
+    1,
+    2,
+    2,
+    2,
+    1,
+    1,
+    4,
+    3,
+    1,
+    4,
+    4,
+    9,
+    5,
+    4,
+    1,
+    5,
+    3,
+    1,
+    1,
+    3,
+    2,
+    2,
+    2,
+    1,
+    5,
+    1,
+    2,
+    1,
+    1,
+    1,
+    2,
+    3,
+    1,
+    2,
+    1,
+    1,
+    3,
+    4,
+    2,
+    5,
+    2,
+    2,
+    1,
+    2,
+    3,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    3,
+    3,
+    3,
+    2,
+    1,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    3,
+    3,
+    1,
+    2,
+    2,
+    3,
+    1,
+    3,
+    1,
+    8
 ]);
 var POLY68 = new Int8Array([5, 6, 4, 5, 10, 5, 3, 7, 4, 10, 6, 3, 6, 4, 9, 6]);
 var POLY465 = new Int8Array([
-    2, 3, 2, 1, 4, 1, 6, 10, 2, 4, 2, 1, 1, 4, 5,
-    9, 3, 3, 4, 1, 1, 1, 8, 5, 5, 5, 4, 1, 1, 1,
-    8, 4, 2, 8, 3, 3, 1, 1, 7, 4, 2, 7, 5, 1, 3,
-    1, 7, 4, 1, 4, 8, 2, 1, 3, 4, 7, 1, 3, 7, 3,
-    2, 1, 6, 6, 2, 2, 4, 5, 3, 2, 6, 6, 1, 3, 3,
-    2, 5, 3, 7, 3, 4, 3, 2, 2, 2, 5, 9, 3, 1, 5,
-    3, 1, 2, 2, 11, 5, 1, 5, 3, 1, 1, 2, 12, 5, 1,
-    2, 5, 2, 1, 1, 12, 6, 1, 2, 5, 1, 2, 1, 10, 6,
-    3, 2, 2, 4, 1, 2, 6, 10
+    2,
+    3,
+    2,
+    1,
+    4,
+    1,
+    6,
+    10,
+    2,
+    4,
+    2,
+    1,
+    1,
+    4,
+    5,
+    9,
+    3,
+    3,
+    4,
+    1,
+    1,
+    1,
+    8,
+    5,
+    5,
+    5,
+    4,
+    1,
+    1,
+    1,
+    8,
+    4,
+    2,
+    8,
+    3,
+    3,
+    1,
+    1,
+    7,
+    4,
+    2,
+    7,
+    5,
+    1,
+    3,
+    1,
+    7,
+    4,
+    1,
+    4,
+    8,
+    2,
+    1,
+    3,
+    4,
+    7,
+    1,
+    3,
+    7,
+    3,
+    2,
+    1,
+    6,
+    6,
+    2,
+    2,
+    4,
+    5,
+    3,
+    2,
+    6,
+    6,
+    1,
+    3,
+    3,
+    2,
+    5,
+    3,
+    7,
+    3,
+    4,
+    3,
+    2,
+    2,
+    2,
+    5,
+    9,
+    3,
+    1,
+    5,
+    3,
+    1,
+    2,
+    2,
+    11,
+    5,
+    1,
+    5,
+    3,
+    1,
+    1,
+    2,
+    12,
+    5,
+    1,
+    2,
+    5,
+    2,
+    1,
+    1,
+    12,
+    6,
+    1,
+    2,
+    5,
+    1,
+    2,
+    1,
+    10,
+    6,
+    3,
+    2,
+    2,
+    4,
+    1,
+    2,
+    6,
+    10
 ]);
 var POLYS = [
-    POLY0, POLY4, POLY4, POLY465,
-    POLY1, POLY1, POLY2, POLY5,
-    POLY9, POLY5, POLY2, POLY0,
-    POLY1, POLY1, POLY2, POLY68
+    POLY0,
+    POLY4,
+    POLY4,
+    POLY465,
+    POLY1,
+    POLY1,
+    POLY2,
+    POLY5,
+    POLY9,
+    POLY5,
+    POLY2,
+    POLY0,
+    POLY1,
+    POLY1,
+    POLY2,
+    POLY68
 ];
 var ToneGenerator = (function () {
     function ToneGenerator(_config) {
@@ -16522,7 +17404,7 @@ var ToneGenerator = (function () {
         return (tone << 5) | frequency;
     };
     ToneGenerator.prototype.getBuffer = function (key) {
-        var tone = (key >>> 5) & 0x0F, frequency = key & 0x1F;
+        var tone = (key >>> 5) & 0x0f, frequency = key & 0x1f;
         var poly = POLYS[tone];
         var length = 0;
         for (var i = 0; i < poly.length; i++) {
@@ -16549,7 +17431,7 @@ var ToneGenerator = (function () {
                 }
                 state = !(offset & 0x01);
             }
-            content[i] = (state ? 1 : -1);
+            content[i] = state ? 1 : -1;
         }
         return new AudioOutputBuffer_1.default(content, sampleRate);
     };
@@ -16581,14 +17463,7 @@ exports.decodesPlayer = [
     decodes6,
     decodes0
 ];
-[
-    decodes0,
-    decodes1,
-    decodes2,
-    decodes3,
-    decodes4,
-    decodes6
-].forEach(function (decodes) {
+[decodes0, decodes1, decodes2, decodes3, decodes4, decodes6].forEach(function (decodes) {
     for (var i = 0; i < 160; i++) {
         decodes[i] = 0;
     }
@@ -16731,7 +17606,7 @@ exports.NTSC = new Uint32Array([
     0xff479fbb,
     0xff56b6d2,
     0xff63cce8,
-    0xff70e0fc,
+    0xff70e0fc
 ]);
 exports.PAL = new Uint32Array([
     0xff000000,
@@ -16861,7 +17736,7 @@ exports.PAL = new Uint32Array([
     0xff979797,
     0xffb6b6b6,
     0xffd2d2d2,
-    0xffececec,
+    0xffececec
 ]);
 exports.SECAM = new Uint32Array([
     0xff000000,
@@ -16991,7 +17866,7 @@ exports.SECAM = new Uint32Array([
     0xff00ff7f,
     0xffffff7f,
     0xff3fffff,
-    0xffffffff,
+    0xffffffff
 ]);
 
 },{}],72:[function(require,module,exports){
@@ -17083,11 +17958,13 @@ function encodeWithPrefix(value, width, signed, prefix) {
     if (signed === void 0) { signed = true; }
     if (prefix === void 0) { prefix = ''; }
     if (!signed && value < 0) {
-        return encodeWithPrefix(value >>> 16, (width && width > 8) ? width - 4 : 4, false, prefix) +
-            encodeWithPrefix(value & 0xFFFF, 4);
+        return (encodeWithPrefix(value >>> 16, width && width > 8 ? width - 4 : 4, false, prefix) +
+            encodeWithPrefix(value & 0xffff, 4));
     }
-    var result = Math.abs(value).toString(16).toUpperCase();
-    if (typeof (width) !== 'undefined') {
+    var result = Math.abs(value)
+        .toString(16)
+        .toUpperCase();
+    if (typeof width !== 'undefined') {
         while (result.length < width) {
             result = '0' + result;
         }
@@ -17175,7 +18052,9 @@ var Pool = (function () {
         var member;
         if (this._poolSize === 0) {
             var newItem = this._factory();
-            member = newItem && new PoolMember_1.default(newItem, function (victim) { return _this._releaseMember(victim); }, function (victim) { return _this._disposeMember(victim); });
+            member =
+                newItem &&
+                    new PoolMember_1.default(newItem, function (victim) { return _this._releaseMember(victim); }, function (victim) { return _this._disposeMember(victim); });
         }
         else {
             member = this._pool[--this._poolSize];
@@ -17366,7 +18245,7 @@ var ImmediateScheduler = (function () {
         }
         setImmediate_1.setImmediate(handler);
         return {
-            stop: function () { return terminate = true; }
+            stop: function () { return (terminate = true); }
         };
     };
     return ImmediateScheduler;
@@ -17399,7 +18278,7 @@ var PeriodicScheduler = (function () {
         };
         setTimeout(handler, this._period);
         return {
-            stop: function () { return terminate = true; }
+            stop: function () { return (terminate = true); }
         };
     };
     return PeriodicScheduler;
@@ -17409,9 +18288,9 @@ exports.default = PeriodicScheduler;
 },{}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var getTimestamp = (self.performance && self.performance.now) ?
-    function () { return self.performance.now(); } :
-    function () { return Date.now(); };
+var getTimestamp = self.performance && self.performance.now
+    ? function () { return self.performance.now(); }
+    : function () { return Date.now(); };
 exports.default = getTimestamp;
 
 },{}],85:[function(require,module,exports){
@@ -17447,7 +18326,7 @@ var ConstantTimesliceScheduler = (function () {
             }
         }
         setImmediate_1.setImmediate(handler);
-        return { stop: function () { return running = false; } };
+        return { stop: function () { return (running = false); } };
     };
     return ConstantTimesliceScheduler;
 }());
@@ -17471,7 +18350,7 @@ var ConstantCyclesScheduler = (function () {
             var timestamp0 = getTimestamp_1.default(), targetDuration = worker(context) || 0, timestamp1 = getTimestamp_1.default();
             var delay = targetDuration - timestamp1 + timestamp0;
             if (targetSleepInterval >= 0) {
-                accumulatedDelta += (targetSleepInterval - timestamp0 + lastYieldTimestamp);
+                accumulatedDelta += targetSleepInterval - timestamp0 + lastYieldTimestamp;
             }
             if (accumulatedDelta > MAX_ACCUMULATED_DELTA) {
                 accumulatedDelta = MAX_ACCUMULATED_DELTA;
@@ -17498,7 +18377,7 @@ var ConstantCyclesScheduler = (function () {
         }
         setImmediate_1.setImmediate(handler);
         return {
-            stop: function () { return terminate = true; }
+            stop: function () { return (terminate = true); }
         };
     };
     return ConstantCyclesScheduler;
@@ -17538,7 +18417,7 @@ var ConstantTimesliceScheduler = (function () {
             }
         }
         setImmediate_1.setImmediate(handler);
-        return { stop: function () { return running = false; } };
+        return { stop: function () { return (running = false); } };
     };
     return ConstantTimesliceScheduler;
 }());
@@ -17602,10 +18481,10 @@ var FrameMergeProcessor = (function () {
         var buffer0 = this._framesOnHold[0].get().getBuffer(), buffer1 = this._framesOnHold[1].get().getBuffer();
         for (var i = 0; i < this._width * this._height; i++) {
             buffer0[i] =
-                0xFF000000 |
-                    ((((buffer0[i] & 0xFF0000) + (buffer1[i] & 0xFF0000)) >>> 1) & 0xFF0000) |
-                    ((((buffer0[i] & 0xFF00) + (buffer1[i] & 0xFF00)) >>> 1) & 0xFF00) |
-                    ((((buffer0[i] & 0xFF) + (buffer1[i] & 0xFF)) >>> 1) & 0xFF);
+                0xff000000 |
+                    ((((buffer0[i] & 0xff0000) + (buffer1[i] & 0xff0000)) >>> 1) & 0xff0000) |
+                    ((((buffer0[i] & 0xff00) + (buffer1[i] & 0xff00)) >>> 1) & 0xff00) |
+                    ((((buffer0[i] & 0xff) + (buffer1[i] & 0xff)) >>> 1) & 0xff);
         }
         this.emit.dispatch(this._framesOnHold[0]);
         this._framesOnHold[1].release();
@@ -17784,7 +18663,7 @@ var ArrayBufferSurface = (function () {
         this._buffer = null;
     }
     ArrayBufferSurface.createFromArrayBuffer = function (width, height, buffer) {
-        return (new ArrayBufferSurface()).replaceUnderlyingBuffer(width, height, buffer);
+        return new ArrayBufferSurface().replaceUnderlyingBuffer(width, height, buffer);
     };
     ArrayBufferSurface.prototype.replaceUnderlyingBuffer = function (width, height, buffer) {
         if (width * height * 4 !== buffer.byteLength) {
@@ -17849,14 +18728,18 @@ var VideoEndpoint = (function () {
             var poolMember = _this._pool.get(), imageData = poolMember.get();
             if (!_this._surfaces.has(imageData)) {
                 var newSurface = ArrayBufferSurface_1.default.createFromArrayBuffer(imageData.width, imageData.height, imageData.data.buffer);
-                _this._surfaces.set(imageData, newSurface.fill(0xFF000000));
+                _this._surfaces.set(imageData, newSurface.fill(0xff000000));
             }
             var surface = _this._surfaces.get(imageData);
             _this._poolMembers.set(surface, poolMember);
             return surface;
         });
-        this._video.newFrame.addHandler(function (imageData) { return _this._videoProcessor.processSurface(_this._surfacePool.get(_this._poolMembers.get(imageData))); });
-        this._videoProcessor.emit.addHandler(function (wrappedSurface) { return _this.newFrame.dispatch(_this._poolMembers.get(wrappedSurface.get())); });
+        this._video.newFrame.addHandler(function (imageData) {
+            return _this._videoProcessor.processSurface(_this._surfacePool.get(_this._poolMembers.get(imageData)));
+        });
+        this._videoProcessor.emit.addHandler(function (wrappedSurface) {
+            return _this.newFrame.dispatch(_this._poolMembers.get(wrappedSurface.get()));
+        });
     }
     VideoEndpoint.prototype.getWidth = function () {
         return this._video.getWidth();
@@ -17922,15 +18805,17 @@ var DriverManager = (function () {
     };
     DriverManager.prototype._shouldBindDrivers = function (state) {
         if (state === void 0) { state = this._emulationService ? this._emulationService.getState() : undefined; }
-        return this._emulationService && (state === EmulationServiceInterface_1.default.State.running ||
-            state === EmulationServiceInterface_1.default.State.paused);
+        return (this._emulationService &&
+            (state === EmulationServiceInterface_1.default.State.running || state === EmulationServiceInterface_1.default.State.paused));
     };
     DriverManager.prototype._bindDrivers = function () {
         var _this = this;
         if (this._driversBound) {
             return;
         }
-        this._drivers.forEach(function (driverContext) { return driverContext.binder(_this._emulationService.getEmulationContext(), driverContext.driver); });
+        this._drivers.forEach(function (driverContext) {
+            return driverContext.binder(_this._emulationService.getEmulationContext(), driverContext.driver);
+        });
         this._driversBound = true;
     };
     DriverManager.prototype._unbindDrivers = function () {
@@ -18062,8 +18947,7 @@ var EmulationService = (function () {
                 _this._board = board;
                 _this._board.trap.addHandler(EmulationService._trapHandler, _this);
                 _this._context = new EmulationContext_1.default(board, videoProcessing);
-                _this._clockProbe
-                    .attach(_this._board.clock);
+                _this._clockProbe.attach(_this._board.clock);
                 _this._setState(EmulationServiceInterface_1.default.State.paused);
             }
             catch (e) {
@@ -18175,9 +19059,7 @@ var EmulationService = (function () {
                 this._board.getTimer().stop();
                 this._board.suspend();
                 this._board.trap.removeHandler(EmulationService._trapHandler, this);
-                this._clockProbe
-                    .stop()
-                    .detach();
+                this._clockProbe.stop().detach();
             }
             this._board = null;
             this._context = null;
@@ -18209,9 +19091,9 @@ var EmulationService = (function () {
         return this._state;
     };
     EmulationService.prototype._updateScheduler = function () {
-        this._scheduler = this._enforceRateLimit ?
-            this._schedulerFactory.createLimitingScheduler() :
-            this._schedulerFactory.createImmediateScheduler();
+        this._scheduler = this._enforceRateLimit
+            ? this._schedulerFactory.createLimitingScheduler()
+            : this._schedulerFactory.createImmediateScheduler();
     };
     return EmulationService;
 }());
@@ -18280,8 +19162,7 @@ var ControlDriver = (function () {
         this._emulationContext = null;
     }
     ControlDriver.prototype.init = function () {
-        this._rpc
-            .registerSignalHandler(messages_1.SIGNAL_TYPE.controlStateUpdate, this._onControlStateUpdate.bind(this));
+        this._rpc.registerSignalHandler(messages_1.SIGNAL_TYPE.controlStateUpdate, this._onControlStateUpdate.bind(this));
     };
     ControlDriver.prototype.bind = function (emulationContext) {
         if (this._active) {
@@ -18363,7 +19244,9 @@ var EmulationBackend = (function () {
         this._videoDriver = videoDriver;
         controlDriver.init();
         driverManager
-            .addDriver(videoDriver, function (context, driver) { return driver.bind(context.getRawVideo()); })
+            .addDriver(videoDriver, function (context, driver) {
+            return driver.bind(context.getRawVideo());
+        })
             .addDriver(controlDriver, function (context, driver) { return driver.bind(context); })
             .bind(this._service);
         var _loop_1 = function (i) {
@@ -18412,10 +19295,7 @@ var EmulationBackend = (function () {
         return Promise.resolve({
             width: video ? video.getWidth() : 0,
             height: video ? video.getHeight() : 0,
-            volume: [
-                audio.channel0.getVolume(),
-                audio.channel1.getVolume()
-            ]
+            volume: [audio.channel0.getVolume(), audio.channel1.getVolume()]
         });
     };
     return EmulationBackend;
@@ -18484,7 +19364,9 @@ var VideoDriver = (function () {
     }
     VideoDriver.prototype.init = function (videoPipelinePort) {
         this._rpc.registerSignalHandler(messages_1.SIGNAL_TYPE.videoReturnSurface, this._onReturnSurfaceFromHost.bind(this));
-        var videoPipelineRpc = new worker_rpc_1.RpcProvider(function (data, transfer) { return videoPipelinePort.postMessage(data, transfer); });
+        var videoPipelineRpc = new worker_rpc_1.RpcProvider(function (data, transfer) {
+            return videoPipelinePort.postMessage(data, transfer);
+        });
         videoPipelinePort.onmessage = function (e) { return videoPipelineRpc.dispatch(e.data); };
         this._videoPipelineClient = new PipelineClient_1.default(videoPipelineRpc);
         this._videoPipelineClient.emit.addHandler(VideoDriver._onEmitFromPipeline, this);
@@ -18545,7 +19427,9 @@ var VideoDriver = (function () {
                         this._width = video.getWidth();
                         this._height = video.getHeight();
                         this._video = video;
-                        this._surfacePool = new Pool_1.default(function () { return ArrayBufferSurface_1.default.createFromArrayBuffer(_this._width, _this._height, new ArrayBuffer(4 * _this._width * _this._height)); });
+                        this._surfacePool = new Pool_1.default(function () {
+                            return ArrayBufferSurface_1.default.createFromArrayBuffer(_this._width, _this._height, new ArrayBuffer(4 * _this._width * _this._height));
+                        });
                         this._managedSurfacesById = new Map();
                         this._managedSurfaces = new WeakMap();
                         this._ids = new WeakMap();
@@ -18560,13 +19444,12 @@ var VideoDriver = (function () {
                                 _this._ids.set(managedSurface, id);
                                 _this._managedSurfacesById.set(id, managedSurface);
                                 _this._managedSurfaces.set(surface, managedSurface);
-                                surface.fill(0xFF000000);
+                                surface.fill(0xff000000);
                             }
                             return managedSurface.get();
                         });
                         this._video.newFrame.addHandler(VideoDriver._onNewFrame, this);
-                        this._bypassProcessingPipeline =
-                            !this._videoProcessingConfig || this._videoProcessingConfig.length === 0;
+                        this._bypassProcessingPipeline = !this._videoProcessingConfig || this._videoProcessingConfig.length === 0;
                         this._active = true;
                         return [2];
                 }
