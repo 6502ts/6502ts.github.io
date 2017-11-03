@@ -7513,11 +7513,12 @@ var Board = (function () {
         this.clock = new microevent_ts_1.Event();
         this.cpuClock = new microevent_ts_1.Event();
         this._clockMode = 1;
+        this._cpuCycles = 0;
         this._trap = false;
         this._audioEnabled = true;
         this._suspended = true;
         this._subClock = 0;
-        this._clockMhz = 0;
+        this._clockHz = 0;
         this._sliceSize = 0;
         this._timer = {
             tick: function (clocks) { return _this._tick(clocks); },
@@ -7539,8 +7540,14 @@ var Board = (function () {
         var pia = new Pia_1.default(controlPanel, joystick0, joystick1, this._rng);
         var tia = new Tia_1.default(_config, joystick0, joystick1, paddles);
         cpu.setInvalidInstructionCallback(function () { return _this._onInvalidInstruction(); });
-        tia.setCpu(cpu).setBus(bus);
-        cartridge.setCpu(cpu).setBus(bus);
+        tia
+            .setCpu(cpu)
+            .setBus(bus)
+            .setCpuTimeProvider(function () { return _this.getCpuTime(); });
+        cartridge
+            .setCpu(cpu)
+            .setBus(bus)
+            .setCpuTimeProvider(function () { return _this.getCpuTime(); });
         pia.setBus(bus);
         bus
             .setTia(tia)
@@ -7558,7 +7565,7 @@ var Board = (function () {
         this._bus.event.trap.addHandler(function (payload) {
             return _this.triggerTrap(1, payload.message);
         });
-        this._clockMhz = Config_1.default.getClockMhz(_config);
+        this._clockHz = Config_1.default.getClockHz(_config);
         this._sliceSize = 228 * (_config.tvMode === 0 ? 262 : 312);
         this.reset();
     }
@@ -7596,6 +7603,7 @@ var Board = (function () {
         this._controlPanel.getDifficultySwitchP0().toggle(true);
         this._controlPanel.getDifficultySwitchP1().toggle(true);
         this._subClock = 0;
+        this._cpuCycles = 0;
         return this;
     };
     Board.prototype.boot = function () {
@@ -7669,9 +7677,12 @@ var Board = (function () {
     Board.prototype.getPaddle = function (idx) {
         return this._paddles[idx];
     };
+    Board.prototype.getCpuTime = function () {
+        return this._cpuCycles / Config_1.default.getClockHz(this._config) * 3;
+    };
     Board._executeSlice = function (board, _timeSlice) {
-        var slice = _timeSlice ? Math.round(_timeSlice * board._clockMhz * 1000) : board._sliceSize;
-        return board._tick(slice) / board._clockMhz / 1000;
+        var slice = _timeSlice ? Math.round(_timeSlice * board._clockHz / 1000) : board._sliceSize;
+        return board._tick(slice) / board._clockHz * 1000;
     };
     Board.prototype._updateAudioState = function () {
         this._tia.setAudioEnabled(this._audioEnabled && !this._suspended);
@@ -7692,6 +7703,7 @@ var Board = (function () {
             cycles++;
             if (this._subClock === 0) {
                 cpuCycles++;
+                this._cpuCycles++;
             }
             if (lastExecutionState !== this._cpu.executionState) {
                 lastExecutionState = this._cpu.executionState;
@@ -7865,16 +7877,16 @@ var Config;
         return tslib_1.__assign({ tvMode: 0, enableAudio: true, randomSeed: -1, emulatePaddles: true, frameStart: -1, pcmAudio: false }, config);
     }
     Config.create = create;
-    function getClockMhz(config) {
+    function getClockHz(config) {
         switch (config.tvMode) {
             case 0:
-                return 262 * 228 * 60 / 1000000;
+                return 262 * 228 * 60;
             case 1:
             case 2:
-                return 312 * 228 * 50 / 1000000;
+                return 312 * 228 * 50;
         }
     }
-    Config.getClockMhz = getClockMhz;
+    Config.getClockHz = getClockHz;
 })(Config || (Config = {}));
 exports.default = Config;
 
@@ -8104,6 +8116,7 @@ var AbstractCartridge = (function () {
     AbstractCartridge.prototype.setBus = function (bus) {
         return this;
     };
+    AbstractCartridge.prototype.setCpuTimeProvider = function (provider) { };
     AbstractCartridge.prototype.notifyCpuCycleComplete = function () { };
     AbstractCartridge.prototype.randomize = function (rng) { };
     AbstractCartridge.prototype.triggerTrap = function (reason, message) {
@@ -8352,6 +8365,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
+var mixerTable = new Uint8Array([0x0, 0x4, 0x5, 0x9, 0x6, 0xa, 0xb, 0xf]);
 var CartridgeDPC = (function (_super) {
     tslib_1.__extends(CartridgeDPC, _super);
     function CartridgeDPC(buffer) {
@@ -8361,6 +8375,9 @@ var CartridgeDPC = (function (_super) {
         _this._fetcherData = new Uint8Array(0x0800);
         _this._fetchers = new Array(8);
         _this._rng = 1;
+        _this._cpuTimeProvider = null;
+        _this._lastCpuTime = 0;
+        _this._clockAccumulator = 0;
         if (buffer.length < 0x2800) {
             throw new Error("buffer is not a DPC image: too small " + buffer.length);
         }
@@ -8381,6 +8398,8 @@ var CartridgeDPC = (function (_super) {
         this._bank = this._bank1;
         this._rng = 1;
         this._fetchers.forEach(function (fetcher) { return fetcher.reset(); });
+        this._lastCpuTime = 0;
+        this._clockAccumulator = 0;
     };
     CartridgeDPC.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_DPC;
@@ -8388,6 +8407,9 @@ var CartridgeDPC = (function (_super) {
     CartridgeDPC.prototype.setBus = function (bus) {
         this._bus = bus;
         return this;
+    };
+    CartridgeDPC.prototype.setCpuTimeProvider = function (provider) {
+        this._cpuTimeProvider = provider;
     };
     CartridgeDPC.prototype.read = function (address) {
         return this._access(address, this._bus.getLastDataBusValue());
@@ -8414,7 +8436,13 @@ var CartridgeDPC = (function (_super) {
             return this._bank[address];
         }
         if (address < 0x08) {
-            return address & 0x04 ? 0 : this._randomNext();
+            if (address & 0x04) {
+                this._clockMusicFetchers();
+                return mixerTable[(this._fetchers[5].mask & 0x4) | (this._fetchers[6].mask & 0x2) | (this._fetchers[7].mask & 0x1)];
+            }
+            else {
+                return this._randomNext();
+            }
         }
         if (address < 0x40) {
             var fetcher = this._fetchers[(address - 8) & 0x07], mask = fetcher.mask;
@@ -8450,9 +8478,11 @@ var CartridgeDPC = (function (_super) {
             var fetcher = this._fetchers[(address - 0x40) & 0x07];
             switch ((address - 0x40) >>> 3) {
                 case 0:
+                    this._clockMusicFetchers();
                     fetcher.setStart(value);
                     break;
                 case 1:
+                    this._clockMusicFetchers();
                     fetcher.setEnd(value);
                     break;
                 case 2:
@@ -8481,6 +8511,19 @@ var CartridgeDPC = (function (_super) {
                 0xff;
         return oldRng;
     };
+    CartridgeDPC.prototype._clockMusicFetchers = function () {
+        var cpuTime = this._cpuTimeProvider();
+        this._clockAccumulator += (cpuTime - this._lastCpuTime) * 21000;
+        this._lastCpuTime = cpuTime;
+        var clocks = Math.floor(this._clockAccumulator);
+        this._clockAccumulator -= clocks;
+        if (clocks === 0) {
+            return;
+        }
+        for (var i = 5; i < 8; i++) {
+            this._fetchers[i].forwardClock(clocks);
+        }
+    };
     return CartridgeDPC;
 }(AbstractCartridge_1.default));
 var Fetcher = (function () {
@@ -8499,6 +8542,9 @@ var Fetcher = (function () {
         this.musicMode = false;
     };
     Fetcher.prototype.next = function () {
+        if (this.musicMode) {
+            return;
+        }
         this.pointer = (this.pointer + 0x07ff) & 0x07ff;
         this._updateMask();
     };
@@ -8521,6 +8567,14 @@ var Fetcher = (function () {
     };
     Fetcher.prototype.setMusicMode = function (value) {
         this.musicMode = (value & 0x10) !== 0;
+    };
+    Fetcher.prototype.forwardClock = function (clocks) {
+        if (!this.musicMode) {
+            return;
+        }
+        var period = this.start + 1, newPointerLow = ((this.pointer & 0xff) + period - clocks % period) % period, distanceStart = (256 + this.start - newPointerLow) & 0xff, distanceEnd = (256 + this.end - newPointerLow) & 0xff;
+        this.pointer = (this.pointer & 0x0700) | newPointerLow;
+        this.mask = distanceStart > distanceEnd ? 0 : 0xff;
     };
     Fetcher.prototype._updateMask = function () {
         if ((this.pointer & 0xff) === this.start) {
@@ -18920,8 +18974,6 @@ var FrameManager = (function () {
         this._kernelLines = 0;
         this._overscanLines = 0;
         this._frameLines = 0;
-        this._maxLinesWithoutVsync = 0;
-        this._waitForVsync = true;
         this._linesWithoutVsync = 0;
         this._state = 0;
         this._vsync = false;
@@ -18945,14 +18997,12 @@ var FrameManager = (function () {
                 throw new Error("invalid tv mode " + this._config.tvMode);
         }
         this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines + 3;
-        this._maxLinesWithoutVsync = this._frameLines * 50;
         this._frameStart = this._config.frameStart;
         this.reset();
     }
     FrameManager.prototype.reset = function () {
         this.vblank = false;
         this.surfaceBuffer = null;
-        this._waitForVsync = true;
         this._linesWithoutVsync = 0;
         this._state = 0;
         this._vsync = false;
@@ -18967,8 +19017,7 @@ var FrameManager = (function () {
         switch (this._state) {
             case 0:
             case 1:
-                if (this._linesWithoutVsync > this._maxLinesWithoutVsync) {
-                    this._waitForVsync = false;
+                if (++this._linesWithoutVsync > 10) {
                     this._setState(2);
                 }
                 break;
@@ -18992,12 +19041,9 @@ var FrameManager = (function () {
                 break;
             case 4:
                 if (this._lineInState >= this._overscanLines - 20) {
-                    this._setState(this._waitForVsync ? 0 : 2);
+                    this._setState(0);
                 }
                 break;
-        }
-        if (this._waitForVsync) {
-            this._linesWithoutVsync++;
         }
     };
     FrameManager.prototype.isRendering = function () {
@@ -19009,12 +19055,13 @@ var FrameManager = (function () {
         }
     };
     FrameManager.prototype.setVsync = function (vsync) {
-        if (!this._surfaceFactory || !this._waitForVsync || vsync === this._vsync) {
+        if (!this._surfaceFactory || vsync === this._vsync) {
             return;
         }
         this._vsync = vsync;
         switch (this._state) {
             case 0:
+                this._linesWithoutVsync = 0;
             case 2:
             case 4:
                 if (vsync) {
@@ -19024,7 +19071,6 @@ var FrameManager = (function () {
             case 1:
                 if (!vsync) {
                     this._setState(2);
-                    this._linesWithoutVsync = 0;
                 }
                 break;
             case 3:
@@ -19044,8 +19090,7 @@ var FrameManager = (function () {
         return this._state === 3 ? this._lineInState : 0;
     };
     FrameManager.prototype.getDebugState = function () {
-        return (this._getReadableState() + ", line = " + this._lineInState + ", " +
-            ("vblank = " + (this.vblank ? '1' : '0') + ", " + (this._waitForVsync ? '' : 'given up on vsync')));
+        return this._getReadableState() + ", line = " + this._lineInState + ", " + ("vblank = " + (this.vblank ? '1' : '0'));
     };
     FrameManager.prototype._getReadableState = function () {
         switch (this._state) {
@@ -19388,28 +19433,31 @@ exports.default = PCMAudio;
 Object.defineProperty(exports, "__esModule", { value: true });
 var C = 68e-9, RPOT = 1e6, R0 = 1.8e3, U = 5, LINES_FULL = 380;
 var PaddleReader = (function () {
-    function PaddleReader(_clockFreq, _timestampRef, _paddle) {
+    function PaddleReader(clockFreq, _paddle) {
         var _this = this;
-        this._clockFreq = _clockFreq;
-        this._timestampRef = _timestampRef;
         this._paddle = _paddle;
         this._uThresh = 0;
         this._u = 0;
         this._dumped = false;
         this._value = 0.5;
         this._timestamp = 0;
-        this._uThresh = U * (1 - Math.exp(-LINES_FULL * 228 / this._clockFreq / (RPOT + R0) / C));
+        this._cpuTimeProvider = null;
+        this._uThresh = U * (1 - Math.exp(-LINES_FULL * 228 / clockFreq / (RPOT + R0) / C));
         this._paddle.valueChanged.addHandler(function (value) {
             _this._updateValue();
             _this._value = value;
         });
         this.reset();
     }
+    PaddleReader.prototype.setCpuTimeProvider = function (provider) {
+        this._cpuTimeProvider = provider;
+        this._timestamp = this._cpuTimeProvider();
+    };
     PaddleReader.prototype.reset = function () {
         this._u = 0;
         this._value = this._paddle.getValue();
         this._dumped = false;
-        this._timestamp = this._timestampRef();
+        this._timestamp = this._cpuTimeProvider ? this._cpuTimeProvider() : 0;
     };
     PaddleReader.prototype.vblank = function (value) {
         var oldValue = this._dumped;
@@ -19419,7 +19467,7 @@ var PaddleReader = (function () {
         }
         else if (oldValue) {
             this._dumped = false;
-            this._timestamp = this._timestampRef();
+            this._timestamp = this._cpuTimeProvider();
         }
     };
     PaddleReader.prototype.inpt = function () {
@@ -19431,12 +19479,9 @@ var PaddleReader = (function () {
         if (this._dumped) {
             return;
         }
-        var timestamp = this._timestampRef();
+        var timestamp = this._cpuTimeProvider();
         this._u =
-            U *
-                (1 -
-                    (1 - this._u / U) *
-                        Math.exp(-(timestamp - this._timestamp) / (this._value * RPOT + R0) / C / this._clockFreq));
+            U * (1 - (1 - this._u / U) * Math.exp(-(timestamp - this._timestamp) / (this._value * RPOT + R0) / C));
         this._timestamp = timestamp;
     };
     return PaddleReader;
@@ -19882,7 +19927,6 @@ var Tia = (function () {
         this._movementInProgress = false;
         this._extendedHblank = false;
         this._xDelta = 0;
-        this._clock = 0;
         this._linesSinceChange = 0;
         this._maxLinesTotal = 0;
         this._colorBk = 0xff000000;
@@ -19910,7 +19954,7 @@ var Tia = (function () {
         var clockFreq = this._getClockFreq(this._config);
         this._paddles = new Array(4);
         for (var i = 0; i < 4; i++) {
-            this._paddles[i] = new PaddleReader_1.default(clockFreq, function () { return _this._clock; }, paddles[i]);
+            this._paddles[i] = new PaddleReader_1.default(clockFreq, paddles[i]);
         }
         this.reset();
     }
@@ -19926,7 +19970,6 @@ var Tia = (function () {
         this._colorBk = 0xff000000;
         this._linesSinceChange = 0;
         this._collisionUpdateRequired = false;
-        this._clock = 0;
         this._maxLinesTotal = 0;
         this._xDelta = 0;
         this._delayQueue.reset();
@@ -19950,6 +19993,12 @@ var Tia = (function () {
     };
     Tia.prototype.setCpu = function (cpu) {
         this._cpu = cpu;
+        return this;
+    };
+    Tia.prototype.setCpuTimeProvider = function (provider) {
+        for (var i = 0; i < 4; i++) {
+            this._paddles[i].setCpuTimeProvider(provider);
+        }
         return this;
     };
     Tia.prototype.getWidth = function () {
@@ -20250,7 +20299,6 @@ var Tia = (function () {
             this._pcmAudio[0].tick();
             this._pcmAudio[1].tick();
         }
-        this._clock++;
     };
     Tia._delayedWrite = function (address, value, self) {
         switch (address) {
@@ -20602,7 +20650,7 @@ var ToneGenerator = (function () {
         }
         length = length * FREQUENCY_DIVISIORS[tone] * (frequency + 1);
         var content = new Float32Array(length);
-        var sampleRate = Config_1.default.getClockMhz(this._config) * 1000000 / 114;
+        var sampleRate = Config_1.default.getClockHz(this._config) / 114;
         var f = 0;
         var count = 0;
         var offset = 0;
@@ -22539,10 +22587,51 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"./audio/PCMChannel":124,"./audio/WaveformChannel":125,"async-mutex":2,"tslib":21}],124:[function(require,module,exports){
+},{"./audio/PCMChannel":125,"./audio/WaveformChannel":126,"async-mutex":2,"tslib":21}],124:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var LinearReasmpler = (function () {
+    function LinearReasmpler() {
+        this._buffer = new Float32Array(2);
+        this._fractionalIndex = 0;
+        this._needsData = false;
+        this._ratio = 0;
+        this.reset(1, 1);
+    }
+    LinearReasmpler.prototype.reset = function (sourceRate, targetRate) {
+        this._ratio = sourceRate / targetRate;
+        this._needsData = false;
+        this._fractionalIndex = 0;
+        for (var i = 0; i < 2; i++) {
+            this._buffer[i] = 0;
+        }
+    };
+    LinearReasmpler.prototype.get = function () {
+        var x = (1 - this._fractionalIndex) * this._buffer[0] + this._fractionalIndex * this._buffer[1];
+        this._fractionalIndex += this._ratio;
+        if (this._fractionalIndex > 1) {
+            this._fractionalIndex -= 1;
+            this._needsData = true;
+        }
+        return x;
+    };
+    LinearReasmpler.prototype.push = function (sample) {
+        this._buffer[0] = this._buffer[1];
+        this._buffer[1] = sample;
+        this._needsData = false;
+    };
+    LinearReasmpler.prototype.needsData = function () {
+        return this._needsData;
+    };
+    return LinearReasmpler;
+}());
+exports.default = LinearReasmpler;
+
+},{}],125:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RingBuffer_1 = require("../../../tools/RingBuffer");
+var LinearResampler_1 = require("./LinearResampler");
 var PCMChannel = (function () {
     function PCMChannel(_hostFragmentSize) {
         if (_hostFragmentSize === void 0) { _hostFragmentSize = 1024; }
@@ -22558,6 +22647,7 @@ var PCMChannel = (function () {
         this._fragmentIndex = 0;
         this._currentFragment = null;
         this._lastFragment = null;
+        this._resampler = new LinearResampler_1.default();
     }
     PCMChannel.prototype.init = function (context, target) {
         var _this = this;
@@ -22581,6 +22671,7 @@ var PCMChannel = (function () {
         this._lastFragment = null;
         this._fragmentRing = new RingBuffer_1.default(Math.ceil(2 * this._bufferSize / this._outputSampleRate / this._fragmentSize * this._inputSampleRate));
         this._audio.newFrame.addHandler(PCMChannel._onNewFragment, this);
+        this._resampler.reset(this._inputSampleRate, this._outputSampleRate);
     };
     PCMChannel.prototype.unbind = function () {
         if (!this._audio) {
@@ -22618,38 +22709,41 @@ var PCMChannel = (function () {
         var outputBuffer = e.outputBuffer.getChannelData(0);
         var fragmentBuffer = this._currentFragment && this._currentFragment.get(), bufferIndex = 0;
         while (bufferIndex < this._bufferSize && this._currentFragment) {
-            outputBuffer[bufferIndex++] = fragmentBuffer[Math.floor(this._fragmentIndex)] * this._volume;
-            this._fragmentIndex += this._inputSampleRate / this._outputSampleRate;
-            if (this._fragmentIndex >= this._fragmentSize) {
-                this._fragmentIndex -= this._fragmentSize;
-                if (this._lastFragment) {
-                    this._lastFragment.release();
+            if (this._resampler.needsData()) {
+                this._resampler.push(fragmentBuffer[this._fragmentIndex++] * this._volume);
+                if (this._fragmentIndex >= this._fragmentSize) {
+                    this._fragmentIndex = 0;
+                    if (this._lastFragment) {
+                        this._lastFragment.release();
+                    }
+                    this._lastFragment = this._currentFragment;
+                    this._currentFragment = this._fragmentRing.pop();
+                    fragmentBuffer = this._currentFragment && this._currentFragment.get();
                 }
-                this._lastFragment = this._currentFragment;
-                this._currentFragment = this._fragmentRing.pop();
-                fragmentBuffer = this._currentFragment && this._currentFragment.get();
             }
+            outputBuffer[bufferIndex++] = this._resampler.get();
         }
         if (bufferIndex < this._bufferSize && this._audio.isPaused()) {
             console.log("audio underrun: " + (this._bufferSize - bufferIndex));
         }
         var previousFragmentBuffer = this._lastFragment && this._lastFragment.get();
         while (bufferIndex < this._bufferSize) {
-            outputBuffer[bufferIndex++] =
-                (this._audio && this._audio.isPaused()) || !previousFragmentBuffer
+            if (this._resampler.needsData()) {
+                this._resampler.push((this._audio && this._audio.isPaused()) || !previousFragmentBuffer
                     ? 0
-                    : previousFragmentBuffer[Math.floor(this._fragmentIndex)] * this._volume;
-            this._fragmentIndex += this._inputSampleRate / this._outputSampleRate;
-            if (this._fragmentIndex >= this._fragmentSize) {
-                this._fragmentIndex -= this._fragmentSize;
+                    : previousFragmentBuffer[this._fragmentIndex++] * this._volume);
+                if (this._fragmentIndex >= this._fragmentSize) {
+                    this._fragmentIndex = 0;
+                }
             }
+            outputBuffer[bufferIndex++] = this._resampler.get();
         }
     };
     return PCMChannel;
 }());
 exports.default = PCMChannel;
 
-},{"../../../tools/RingBuffer":96}],125:[function(require,module,exports){
+},{"../../../tools/RingBuffer":96,"./LinearResampler":124}],126:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WaveformChannel = (function () {
@@ -22728,7 +22822,7 @@ var WaveformChannel = (function () {
 }());
 exports.default = WaveformChannel;
 
-},{}],126:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -22960,7 +23054,7 @@ var KeyboardIO = (function () {
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"microevent.ts":8,"tslib":21}],127:[function(require,module,exports){
+},{"microevent.ts":8,"tslib":21}],128:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -23162,5 +23256,5 @@ function setupPaddles(paddle0) {
     paddleDriver.bind(paddle0);
 }
 
-},{"../cli/JqtermCLIRunner":30,"../cli/stella/StellaCLI":32,"../fs/PrepackagedFilesystemProvider":35,"./driver/FullscreenVideo":118,"./driver/MouseAsPaddle":119,"./driver/PCMAudioEndpoint":120,"./driver/SimpleCanvasVideo":121,"./driver/VideoEndpoint":122,"./stella/driver/KeyboardIO":126,"./stella/driver/WebAudio":127}]},{},[])
+},{"../cli/JqtermCLIRunner":30,"../cli/stella/StellaCLI":32,"../fs/PrepackagedFilesystemProvider":35,"./driver/FullscreenVideo":118,"./driver/MouseAsPaddle":119,"./driver/PCMAudioEndpoint":120,"./driver/SimpleCanvasVideo":121,"./driver/VideoEndpoint":122,"./stella/driver/KeyboardIO":127,"./stella/driver/WebAudio":128}]},{},[])
 //# sourceMappingURL=stellaCLI.js.map
