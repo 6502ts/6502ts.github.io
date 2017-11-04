@@ -4694,7 +4694,7 @@ var CartridgeDPC = (function (_super) {
     };
     CartridgeDPC.prototype._clockMusicFetchers = function () {
         var cpuTime = this._cpuTimeProvider();
-        this._clockAccumulator += (cpuTime - this._lastCpuTime) * 21000;
+        this._clockAccumulator += (cpuTime - this._lastCpuTime) * 20000;
         this._lastCpuTime = cpuTime;
         var clocks = Math.floor(this._clockAccumulator);
         this._clockAccumulator -= clocks;
@@ -4802,11 +4802,15 @@ var CartridgeDPCPlus = (function (_super) {
         _this._ramBuffer = new ArrayBuffer(0x2000);
         _this._fetchers = new Array(8);
         _this._fractionalFetchers = new Array(8);
+        _this._musicFetchers = new Array(3);
         _this._parameters = new Uint8Array(8);
         _this._parameterIndex = 0;
         _this._rng = 0;
+        _this._clockAccumulator = 0;
+        _this._lastCpuTime = 0;
         _this._fastFetch = false;
         _this._ldaPending = false;
+        _this._cpuTimeProvider = null;
         _this._thumbulatorBus = {
             read16: function (address) {
                 if (address & 0x01) {
@@ -4937,6 +4941,9 @@ var CartridgeDPCPlus = (function (_super) {
             _this._fetchers[i] = new Fetcher();
             _this._fractionalFetchers[i] = new FractionalFetcher();
         }
+        for (var i = 0; i < 3; i++) {
+            _this._musicFetchers[i] = new MusicFetcher();
+        }
         _this.reset();
         return _this;
     }
@@ -4956,9 +4963,18 @@ var CartridgeDPCPlus = (function (_super) {
         for (var i = 0; i < 8; i++) {
             this._parameters[i] = 0;
         }
+        for (var i = 0; i < 8; i++) {
+            this._fetchers[i].reset();
+            this._fractionalFetchers[i].reset();
+        }
+        for (var i = 0; i < 3; i++) {
+            this._musicFetchers[i].reset();
+        }
         this._parameterIndex = 0;
         this._fastFetch = this._ldaPending = false;
         this._rng = 0x2b435044;
+        this._lastCpuTime = 0;
+        this._clockAccumulator = 0;
     };
     CartridgeDPCPlus.prototype.getType = function () {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_dpc_plus;
@@ -4966,6 +4982,9 @@ var CartridgeDPCPlus = (function (_super) {
     CartridgeDPCPlus.prototype.setBus = function (bus) {
         this._bus = bus;
         return this;
+    };
+    CartridgeDPCPlus.prototype.setCpuTimeProvider = function (provider) {
+        this._cpuTimeProvider = provider;
     };
     CartridgeDPCPlus.prototype.read = function (address) {
         return this._access(address, this._bus.getLastDataBusValue());
@@ -5001,6 +5020,14 @@ var CartridgeDPCPlus = (function (_super) {
                             return (this._rng >>> 16) & 0xff;
                         case 0x04:
                             return (this._rng >>> 24) & 0xff;
+                        case 0x05: {
+                            this._clockMusicFetchers();
+                            var acc = 0;
+                            for (var i = 0; i < 3; i++) {
+                                acc += this._imageRam[(this._musicFetchers[i].waveform << 5) + this._musicFetchers[i].waveformSample];
+                            }
+                            return acc & 0xff;
+                        }
                     }
                     return 0;
                 case 0x01:
@@ -5055,6 +5082,11 @@ var CartridgeDPCPlus = (function (_super) {
                         case 0x02:
                             this._dispatchFunction(value);
                             break;
+                        case 0x05:
+                        case 0x06:
+                        case 0x07:
+                            this._musicFetchers[idx - 0x05].waveform = value & 0x7f;
+                            break;
                     }
                     break;
                 case 0x07:
@@ -5081,6 +5113,15 @@ var CartridgeDPCPlus = (function (_super) {
                         case 0x04:
                             this._rng = (this._rng & 0x00ffffff) | (value << 24);
                             break;
+                        case 0x05:
+                        case 0x06:
+                        case 0x07:
+                            this._musicFetchers[idx - 0x05].frequency =
+                                this._frequencyRam[value << 2] +
+                                    (this._frequencyRam[(value << 2) + 1] << 8) +
+                                    (this._frequencyRam[(value << 2) + 2] << 16) +
+                                    (this._frequencyRam[(value << 2) + 3] << 24);
+                            break;
                     }
                     break;
                 case 0x0a:
@@ -5098,6 +5139,19 @@ var CartridgeDPCPlus = (function (_super) {
             this._ldaPending = readResult === 0xa9;
         }
         return readResult;
+    };
+    CartridgeDPCPlus.prototype._clockMusicFetchers = function () {
+        var cpuTime = this._cpuTimeProvider();
+        this._clockAccumulator += (cpuTime - this._lastCpuTime) * 20000;
+        this._lastCpuTime = cpuTime;
+        var clocks = Math.floor(this._clockAccumulator);
+        this._clockAccumulator -= clocks;
+        if (clocks === 0) {
+            return;
+        }
+        for (var i = 0; i < 3; i++) {
+            this._musicFetchers[i].increment(clocks);
+        }
     };
     CartridgeDPCPlus.prototype._dispatchFunction = function (index) {
         var romBase = this._parameters[0] + (this._parameters[1] << 8);
@@ -5203,6 +5257,28 @@ var FractionalFetcher = (function () {
         this.pointer = (this.pointer + this.fraction) & 0x0fffff;
     };
     return FractionalFetcher;
+}());
+var MusicFetcher = (function () {
+    function MusicFetcher() {
+        this.frequency = 0;
+        this.waveformSample = 0;
+        this.waveform = 0;
+        this.counter = 0;
+        this.reset();
+    }
+    MusicFetcher.prototype.reset = function () {
+        this.frequency = 0;
+        this.waveformSample = 0;
+        this.waveform = 0;
+        this.counter = 0;
+    };
+    MusicFetcher.prototype.increment = function (clocks) {
+        this.counter += clocks * this.frequency;
+        this.waveformSample += this.counter >>> 27;
+        this.waveformSample &= 0x1f;
+        this.counter &= 0x7ffffff;
+    };
+    return MusicFetcher;
 }());
 exports.default = CartridgeDPCPlus;
 
