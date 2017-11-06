@@ -21096,7 +21096,6 @@ var RingBuffer = (function () {
         this._capacity = _capacity;
         this._size = 0;
         this._index = 0;
-        console.log(this._capacity);
         this._buffer = new Array(this._capacity);
         for (var i = 0; i < this._capacity; i++) {
             this._buffer[i] = null;
