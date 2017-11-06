@@ -3675,9 +3675,8 @@ var Board = (function () {
         var _this = this;
         return [0, 1].map(function (i) { return _this._tia.getWaveformChannel(i); });
     };
-    Board.prototype.getPCMChannels = function () {
-        var _this = this;
-        return [0, 1].map(function (i) { return _this._tia.getPCMChannel(i); });
+    Board.prototype.getPCMChannel = function () {
+        return this._tia.getPCMChannel();
     };
     Board.prototype.getTimer = function () {
         return this._timer;
@@ -3839,7 +3838,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../../tools/rng/factory":82,"../board/BoardInterface":19,"../cpu/Cpu":20,"../cpu/CpuInterface":21,"../io/DigitalJoystick":23,"../io/Paddle":24,"./Bus":27,"./Config":28,"./ControlPanel":29,"./Pia":30,"./tia/Tia":68,"microevent.ts":5}],27:[function(require,module,exports){
+},{"../../tools/rng/factory":83,"../board/BoardInterface":19,"../cpu/Cpu":20,"../cpu/CpuInterface":21,"../io/DigitalJoystick":23,"../io/Paddle":24,"./Bus":27,"./Config":28,"./ControlPanel":29,"./Pia":30,"./tia/Tia":69,"microevent.ts":5}],27:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -5318,7 +5317,7 @@ var MusicFetcher = (function () {
 }());
 exports.default = CartridgeDPCPlus;
 
-},{"../../../tools/hex":76,"./AbstractCartridge":31,"./CartridgeInfo":50,"./CartridgeInterface":51,"./thumbulator/Thumbulator":56,"./util":58}],38:[function(require,module,exports){
+},{"../../../tools/hex":77,"./AbstractCartridge":31,"./CartridgeInfo":50,"./CartridgeInterface":51,"./thumbulator/Thumbulator":56,"./util":58}],38:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo_1 = require("./CartridgeInfo");
@@ -15294,77 +15293,70 @@ var Missile = (function () {
 }());
 exports.default = Missile;
 
-},{"./drawCounterDecodes":71}],64:[function(require,module,exports){
+},{"./drawCounterDecodes":72}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var ToneGenerator_1 = require("./ToneGenerator");
 var Config_1 = require("../Config");
+var PCMChannel_1 = require("./PCMChannel");
 var PCMAudio = (function () {
     function PCMAudio(_config) {
         this._config = _config;
         this.newFrame = new microevent_ts_1.Event();
         this.togglePause = new microevent_ts_1.Event();
-        this._patterns = new Map();
-        this._currentPattern = null;
+        this._patternCache = new Map();
         this._currentOutputBuffer = null;
-        this._frequency = 0;
-        this._volume = 0;
-        this._tone = 0;
-        this._patternIndex = 0;
         this._bufferIndex = 0;
         this._sampleRate = 0;
         this._counter = 0;
         this._isActive = false;
+        this._channel0 = null;
+        this._channel1 = null;
         this._toneGenerator = new ToneGenerator_1.default(this._config);
+        this._channel0 = new PCMChannel_1.default(this._patternCache, this._toneGenerator);
+        this._channel1 = new PCMChannel_1.default(this._patternCache, this._toneGenerator);
         this._sampleRate = (this._config.tvMode === 0 ? 60 * 262 : 50 * 312) * 2;
-        this._frameSize = (this._config.tvMode === 0 ? 262 : 312) * 2;
+        this._frameSize = (this._config.tvMode === 0 ? 262 : 312) * 4;
         this.reset();
     }
+    PCMAudio.prototype.getChannels = function () {
+        var _this = this;
+        return [
+            {
+                audv: function (value) { return _this._channel0.audv(value); },
+                audc: function (value) { return _this._channel0.audc(value); },
+                audf: function (value) { return _this._channel0.audf(value); },
+                reset: function () { return _this.reset(); },
+                setActive: function (active) { return _this.setActive(active); }
+            },
+            {
+                audv: function (value) { return _this._channel1.audv(value); },
+                audc: function (value) { return _this._channel1.audc(value); },
+                audf: function (value) { return _this._channel1.audf(value); },
+                reset: function () { return undefined; },
+                setActive: function () { return undefined; }
+            }
+        ];
+    };
     PCMAudio.prototype.reset = function () {
         this._bufferIndex = 0;
-        this._tone = 0;
-        this._frequency = 0;
-        this._tone = 0;
         this._counter = 0;
-        this._updatePattern();
+        this._channel0.reset();
+        this._channel1.reset();
     };
     PCMAudio.prototype.tick = function () {
-        if (this._isActive && this._currentOutputBuffer && (this._counter === 0 || this._counter === 113)) {
+        if (this._isActive && this._currentOutputBuffer && this._counter++ === 113) {
             this._currentOutputBuffer.getContent()[this._bufferIndex++] =
-                this._currentPattern[this._patternIndex++] * this._volume;
+                0.5 * (this._channel0.nextSample() + this._channel1.nextSample());
             if (this._bufferIndex === this._currentOutputBuffer.getLength()) {
                 this._dispatchBuffer();
             }
-            if (this._patternIndex === this._currentPattern.length) {
-                this._patternIndex = 0;
-            }
-        }
-        if (++this._counter === 228) {
             this._counter = 0;
         }
     };
     PCMAudio.prototype.isPaused = function () {
         return !this._isActive;
-    };
-    PCMAudio.prototype.audc = function (value) {
-        value &= 0x0f;
-        if (value === this._tone) {
-            return;
-        }
-        this._tone = value;
-        this._updatePattern();
-    };
-    PCMAudio.prototype.audf = function (value) {
-        value &= 0x1f;
-        if (value === this._frequency) {
-            return;
-        }
-        this._frequency = value;
-        this._updatePattern();
-    };
-    PCMAudio.prototype.audv = function (value) {
-        this._volume = (value & 0x0f) / 15;
     };
     PCMAudio.prototype.setActive = function (isActive) {
         if (isActive === this._isActive) {
@@ -15391,19 +15383,71 @@ var PCMAudio = (function () {
         this._currentOutputBuffer = this._bufferFactory ? this._bufferFactory() : null;
         this._bufferIndex = 0;
     };
-    PCMAudio.prototype._updatePattern = function () {
-        var key = this._toneGenerator.getKey(this._tone, this._frequency);
-        if (!this._patterns.has(key)) {
-            this._patterns.set(key, this._toneGenerator.getBuffer(key).getContent());
-        }
-        this._currentPattern = this._patterns.get(key);
-        this._patternIndex = 0;
-    };
     return PCMAudio;
 }());
 exports.default = PCMAudio;
 
-},{"../Config":28,"./ToneGenerator":69,"microevent.ts":5}],65:[function(require,module,exports){
+},{"../Config":28,"./PCMChannel":65,"./ToneGenerator":70,"microevent.ts":5}],65:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var PCMChannel = (function () {
+    function PCMChannel(_patternCache, _toneGenerator) {
+        this._patternCache = _patternCache;
+        this._toneGenerator = _toneGenerator;
+        this._currentPattern = null;
+        this._frequency = 0;
+        this._volume = 0;
+        this._tone = 0;
+        this._patternIndex = 0;
+        this._bufferIndex = 0;
+        this.reset();
+    }
+    PCMChannel.prototype.reset = function () {
+        this._bufferIndex = 0;
+        this._tone = 0;
+        this._frequency = 0;
+        this._tone = 0;
+        this._updatePattern();
+    };
+    PCMChannel.prototype.nextSample = function () {
+        var sample = this._currentPattern[this._patternIndex++] * this._volume;
+        if (this._patternIndex === this._currentPattern.length) {
+            this._patternIndex = 0;
+        }
+        return sample;
+    };
+    PCMChannel.prototype.audc = function (value) {
+        value &= 0x0f;
+        if (value === this._tone) {
+            return;
+        }
+        this._tone = value;
+        this._updatePattern();
+    };
+    PCMChannel.prototype.audf = function (value) {
+        value &= 0x1f;
+        if (value === this._frequency) {
+            return;
+        }
+        this._frequency = value;
+        this._updatePattern();
+    };
+    PCMChannel.prototype.audv = function (value) {
+        this._volume = (value & 0x0f) / 15;
+    };
+    PCMChannel.prototype._updatePattern = function () {
+        var key = this._toneGenerator.getKey(this._tone, this._frequency);
+        if (!this._patternCache.has(key)) {
+            this._patternCache.set(key, this._toneGenerator.getBuffer(key).getContent());
+        }
+        this._currentPattern = this._patternCache.get(key);
+        this._patternIndex = 0;
+    };
+    return PCMChannel;
+}());
+exports.default = PCMChannel;
+
+},{}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var C = 68e-9, RPOT = 1e6, R0 = 1.8e3, U = 5, LINES_FULL = 380;
@@ -15463,7 +15507,7 @@ var PaddleReader = (function () {
 }());
 exports.default = PaddleReader;
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -15729,7 +15773,7 @@ var Player = (function () {
 }());
 exports.default = Player;
 
-},{"./drawCounterDecodes":71}],67:[function(require,module,exports){
+},{"./drawCounterDecodes":72}],68:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ColorMode;
@@ -15878,7 +15922,7 @@ var Playfield = (function () {
 }());
 exports.default = Playfield;
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -15971,17 +16015,18 @@ var Tia = (function () {
         this._playfield = new Playfield_1.default(1099, function () { return _this._flushLineCache(); });
         this._ball = new Ball_1.default(2197, function () { return _this._flushLineCache(); });
         this._waveformAudio = new Array(2);
-        this._pcmAudio = new Array(2);
+        this._pcmAudio = null;
         this._audio = new Array(2);
         this._frameManager = new FrameManager_1.default(this._config);
         this._frameManager.newFrame.addHandler(Tia._onNewFrame, this);
         this._palette = this._getPalette(this._config);
         this._input0 = new LatchedInput_1.default(joystick0.getFire());
         this._input1 = new LatchedInput_1.default(joystick1.getFire());
+        this._pcmAudio = new PCMAudio_1.default(this._config);
+        var pcmChannels = this._pcmAudio.getChannels();
         for (var i = 0; i < 2; i++) {
-            this._pcmAudio[i] = new PCMAudio_1.default(this._config);
             this._waveformAudio[i] = new WaveformAudio_1.default(this._config);
-            this._audio[i] = this._config.pcmAudio ? this._pcmAudio[i] : this._waveformAudio[i];
+            this._audio[i] = this._config.pcmAudio ? pcmChannels[i] : this._waveformAudio[i];
         }
         var clockFreq = this._getClockFreq(this._config);
         this._paddles = new Array(4);
@@ -16046,8 +16091,8 @@ var Tia = (function () {
     Tia.prototype.getWaveformChannel = function (i) {
         return this._waveformAudio[i];
     };
-    Tia.prototype.getPCMChannel = function (i) {
-        return this._pcmAudio[i];
+    Tia.prototype.getPCMChannel = function () {
+        return this._pcmAudio;
     };
     Tia.prototype.setAudioEnabled = function (state) {
         this._audio[0].setActive(state && this._config.enableAudio);
@@ -16327,9 +16372,8 @@ var Tia = (function () {
         if (++this._hctr >= 228) {
             this._nextLine();
         }
-        if (this._pcmAudio) {
-            this._pcmAudio[0].tick();
-            this._pcmAudio[1].tick();
+        if (this._config.pcmAudio) {
+            this._pcmAudio.tick();
         }
     };
     Tia._delayedWrite = function (address, value, self) {
@@ -16691,7 +16735,7 @@ var Tia = (function () {
 })(Tia || (Tia = {}));
 exports.default = Tia;
 
-},{"../Config":28,"./Ball":59,"./DelayQueue":60,"./FrameManager":61,"./LatchedInput":62,"./Missile":63,"./PCMAudio":64,"./PaddleReader":65,"./Player":66,"./Playfield":67,"./WaveformAudio":70,"./palette":72,"microevent.ts":5}],69:[function(require,module,exports){
+},{"../Config":28,"./Ball":59,"./DelayQueue":60,"./FrameManager":61,"./LatchedInput":62,"./Missile":63,"./PCMAudio":64,"./PaddleReader":66,"./Player":67,"./Playfield":68,"./WaveformAudio":71,"./palette":73,"microevent.ts":5}],70:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../Config");
@@ -16779,7 +16823,7 @@ var ToneGenerator = (function () {
 }());
 exports.default = ToneGenerator;
 
-},{"../../../tools/AudioOutputBuffer":73,"../../../tools/base64":75,"../Config":28}],70:[function(require,module,exports){
+},{"../../../tools/AudioOutputBuffer":74,"../../../tools/base64":76,"../Config":28}],71:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -16854,7 +16898,7 @@ var WaveformAudio = (function () {
 }());
 exports.default = WaveformAudio;
 
-},{"./ToneGenerator":69,"microevent.ts":5}],71:[function(require,module,exports){
+},{"./ToneGenerator":70,"microevent.ts":5}],72:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160);
@@ -16890,7 +16934,7 @@ decodes3[12] = decodes3[28] = 1;
 decodes4[60] = 1;
 decodes6[28] = decodes6[60] = 1;
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NTSC = new Uint32Array([
@@ -17284,7 +17328,7 @@ exports.SECAM = new Uint32Array([
     0xffffffff
 ]);
 
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var AudioOutputBuffer = (function () {
@@ -17308,7 +17352,7 @@ var AudioOutputBuffer = (function () {
 }());
 exports.default = AudioOutputBuffer;
 
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -17369,7 +17413,7 @@ var ClockProbe = (function () {
 }());
 exports.default = ClockProbe;
 
-},{"microevent.ts":5}],75:[function(require,module,exports){
+},{"microevent.ts":5}],76:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var encodingsString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', encodings = new Uint8Array(256);
@@ -17420,7 +17464,7 @@ function decode(data) {
 }
 exports.decode = decode;
 
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encodeWithPrefix(value, width, signed, prefix) {
@@ -17461,7 +17505,7 @@ function decode(value) {
 }
 exports.decode = decode;
 
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember = (function () {
@@ -17486,7 +17530,7 @@ var InducedMember = (function () {
 }());
 exports.default = InducedMember;
 
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember_1 = require("./InducedMember");
@@ -17509,7 +17553,7 @@ var InducedPool = (function () {
 }());
 exports.default = InducedPool;
 
-},{"./InducedMember":77}],79:[function(require,module,exports){
+},{"./InducedMember":78}],80:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -17567,7 +17611,7 @@ var Pool = (function () {
 }());
 exports.default = Pool;
 
-},{"./PoolMember":80,"microevent.ts":5}],80:[function(require,module,exports){
+},{"./PoolMember":81,"microevent.ts":5}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PoolMember = (function () {
@@ -17594,7 +17638,7 @@ var PoolMember = (function () {
 }());
 exports.default = PoolMember;
 
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var SeedrandomGenerator = (function () {
@@ -17620,7 +17664,7 @@ var SeedrandomGenerator = (function () {
 }());
 exports.default = SeedrandomGenerator;
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var seedrandom = require("seedrandom");
@@ -17641,7 +17685,7 @@ function restoreRng(state) {
 }
 exports.restoreRng = restoreRng;
 
-},{"./SeedrandomGenerator":81,"seedrandom":8}],83:[function(require,module,exports){
+},{"./SeedrandomGenerator":82,"seedrandom":8}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler_1 = require("./PeriodicScheduler");
@@ -17702,7 +17746,7 @@ var Factory = (function () {
 })(Factory || (Factory = {}));
 exports.default = Factory;
 
-},{"./ImmedateScheduler":84,"./PeriodicScheduler":85,"./limiting/BusyWait":87,"./limiting/ConstantCycles":88,"./limiting/ConstantTimeslice":89}],84:[function(require,module,exports){
+},{"./ImmedateScheduler":85,"./PeriodicScheduler":86,"./limiting/BusyWait":88,"./limiting/ConstantCycles":89,"./limiting/ConstantTimeslice":90}],85:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var setImmediate_1 = require("./setImmediate");
@@ -17727,7 +17771,7 @@ var ImmediateScheduler = (function () {
 }());
 exports.default = ImmediateScheduler;
 
-},{"./setImmediate":90}],85:[function(require,module,exports){
+},{"./setImmediate":91}],86:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler = (function () {
@@ -17760,7 +17804,7 @@ var PeriodicScheduler = (function () {
 }());
 exports.default = PeriodicScheduler;
 
-},{}],86:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp = self.performance && self.performance.now
@@ -17768,7 +17812,7 @@ var getTimestamp = self.performance && self.performance.now
     : function () { return Date.now(); };
 exports.default = getTimestamp;
 
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -17807,7 +17851,7 @@ var ConstantTimesliceScheduler = (function () {
 }());
 exports.default = ConstantTimesliceScheduler;
 
-},{"../getTimestamp":86,"../setImmediate":90}],88:[function(require,module,exports){
+},{"../getTimestamp":87,"../setImmediate":91}],89:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -17859,7 +17903,7 @@ var ConstantCyclesScheduler = (function () {
 }());
 exports.default = ConstantCyclesScheduler;
 
-},{"../getTimestamp":86,"../setImmediate":90}],89:[function(require,module,exports){
+},{"../getTimestamp":87,"../setImmediate":91}],90:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -17898,7 +17942,7 @@ var ConstantTimesliceScheduler = (function () {
 }());
 exports.default = ConstantTimesliceScheduler;
 
-},{"../getTimestamp":86,"../setImmediate":90}],90:[function(require,module,exports){
+},{"../getTimestamp":87,"../setImmediate":91}],91:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var polyfill = require("setimmediate2");
@@ -17918,7 +17962,7 @@ function setImmediate(callback) {
 }
 exports.setImmediate = setImmediate;
 
-},{"setimmediate2":16}],91:[function(require,module,exports){
+},{"setimmediate2":16}],92:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -17969,7 +18013,7 @@ var FrameMergeProcessor = (function () {
 }());
 exports.default = FrameMergeProcessor;
 
-},{"microevent.ts":5}],92:[function(require,module,exports){
+},{"microevent.ts":5}],93:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -17986,7 +18030,7 @@ var PassthroughProcessor = (function () {
 }());
 exports.default = PassthroughProcessor;
 
-},{"microevent.ts":5}],93:[function(require,module,exports){
+},{"microevent.ts":5}],94:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config = require("./config");
@@ -18009,7 +18053,7 @@ var ProcessorFactory = (function () {
 }());
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":91,"./PassthroughProcessor":92,"./config":95}],94:[function(require,module,exports){
+},{"./FrameMergeProcessor":92,"./PassthroughProcessor":93,"./config":96}],95:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ProcessorFactory_1 = require("./ProcessorFactory");
@@ -18043,7 +18087,7 @@ var ProcessorPipeline = (function () {
 }());
 exports.default = ProcessorPipeline;
 
-},{"./ProcessorFactory":93}],95:[function(require,module,exports){
+},{"./ProcessorFactory":94}],96:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Type;
@@ -18052,7 +18096,7 @@ var Type;
     Type[Type["merge"] = 1] = "merge";
 })(Type = exports.Type || (exports.Type = {}));
 
-},{}],96:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
@@ -18116,7 +18160,7 @@ var PipelineClient = (function () {
 }());
 exports.default = PipelineClient;
 
-},{"./messages":97,"microevent.ts":5,"worker-rpc":18}],97:[function(require,module,exports){
+},{"./messages":98,"microevent.ts":5,"worker-rpc":18}],98:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.messageIds = {
@@ -18128,7 +18172,7 @@ exports.messageIds = {
 };
 Object.freeze(exports.messageIds);
 
-},{}],98:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface = (function () {
@@ -18180,7 +18224,7 @@ var ArrayBufferSurface = (function () {
 }());
 exports.default = ArrayBufferSurface;
 
-},{}],99:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -18223,7 +18267,7 @@ var PCMAudioEndpoint = (function () {
 }());
 exports.default = PCMAudioEndpoint;
 
-},{"../../tools/AudioOutputBuffer":73,"../../tools/pool/InducedPool":78,"../../tools/pool/Pool":79,"microevent.ts":5}],100:[function(require,module,exports){
+},{"../../tools/AudioOutputBuffer":74,"../../tools/pool/InducedPool":79,"../../tools/pool/Pool":80,"microevent.ts":5}],101:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -18269,7 +18313,7 @@ var VideoEndpoint = (function () {
 }());
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":78,"../../tools/pool/Pool":79,"../../video/processing/ProcessorPipeline":94,"../../video/surface/ArrayBufferSurface":98,"microevent.ts":5}],101:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":79,"../../tools/pool/Pool":80,"../../video/processing/ProcessorPipeline":95,"../../video/surface/ArrayBufferSurface":99,"microevent.ts":5}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -18357,7 +18401,7 @@ var DriverManager = (function () {
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":102}],102:[function(require,module,exports){
+},{"./EmulationServiceInterface":103}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -18372,7 +18416,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var VideoEndpoint_1 = require("../../../driver/VideoEndpoint");
@@ -18382,7 +18426,7 @@ var EmulationContext = (function () {
         this._board = _board;
         this._videoProcessing = _videoProcessing;
         this._videoEndpoint = null;
-        this._audioEndpoints = null;
+        this._audioEndpoint = null;
     }
     EmulationContext.prototype.getConfig = function () {
         return this._board.getConfig();
@@ -18417,11 +18461,11 @@ var EmulationContext = (function () {
     EmulationContext.prototype.getWaveformChannels = function () {
         return this._board.getWaveformChannels();
     };
-    EmulationContext.prototype.getPCMChannels = function () {
-        if (!this._audioEndpoints) {
-            this._audioEndpoints = this._board.getPCMChannels().map(function (channel) { return new PCMAudioEndpoint_1.default(channel); });
+    EmulationContext.prototype.getPCMChannel = function () {
+        if (!this._audioEndpoint) {
+            this._audioEndpoint = new PCMAudioEndpoint_1.default(this._board.getPCMChannel());
         }
-        return this._audioEndpoints;
+        return this._audioEndpoint;
     };
     EmulationContext.prototype.getRawVideo = function () {
         if (this._videoEndpoint) {
@@ -18433,7 +18477,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{"../../../driver/PCMAudioEndpoint":99,"../../../driver/VideoEndpoint":100}],104:[function(require,module,exports){
+},{"../../../driver/PCMAudioEndpoint":100,"../../../driver/VideoEndpoint":101}],105:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -18633,7 +18677,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":26,"../../../../machine/stella/cartridge/CartridgeFactory":49,"../../../../tools/ClockProbe":74,"../../../../tools/scheduler/Factory":83,"../../../../tools/scheduler/PeriodicScheduler":85,"../EmulationServiceInterface":102,"./EmulationContext":103,"async-mutex":2,"microevent.ts":5}],105:[function(require,module,exports){
+},{"../../../../machine/stella/Board":26,"../../../../machine/stella/cartridge/CartridgeFactory":49,"../../../../tools/ClockProbe":75,"../../../../tools/scheduler/Factory":84,"../../../../tools/scheduler/PeriodicScheduler":86,"../EmulationServiceInterface":103,"./EmulationContext":104,"async-mutex":2,"microevent.ts":5}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -18694,7 +18738,7 @@ var ControlDriver = (function () {
 }());
 exports.default = ControlDriver;
 
-},{"./messages":110}],106:[function(require,module,exports){
+},{"./messages":111}],107:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationService_1 = require("../vanilla/EmulationService");
@@ -18723,7 +18767,7 @@ var EmulationBackend = (function () {
             .registerRpcHandler(messages_1.RPC_TYPE.emulationStop, this._onEmulationStop.bind(this));
         this._service.frequencyUpdate.addHandler(EmulationBackend._onFrequencyUpdate, this);
         this._service.emulationError.addHandler(EmulationBackend._onEmulationError, this);
-        var driverManager = new DriverManager_1.default(), videoDriver = new VideoDriver_1.default(this._rpc), controlDriver = new ControlDriver_1.default(this._rpc), waveformAduioDrivers = [0, 1].map(function (i) { return new WaveformAudioDriver_1.default(i, _this._rpc); }), pcmAudioDriver = [0, 1].map(function (i) { return new PCMAudioDriver_1.default(i, _this._rpc); });
+        var driverManager = new DriverManager_1.default(), videoDriver = new VideoDriver_1.default(this._rpc), controlDriver = new ControlDriver_1.default(this._rpc), waveformAduioDrivers = [0, 1].map(function (i) { return new WaveformAudioDriver_1.default(i, _this._rpc); }), pcmAudioDriver = new PCMAudioDriver_1.default(0, this._rpc);
         this._videoDriver = videoDriver;
         controlDriver.init();
         driverManager
@@ -18731,14 +18775,13 @@ var EmulationBackend = (function () {
             return driver.bind(context.getRawVideo());
         })
             .addDriver(controlDriver, function (context, driver) { return driver.bind(context); })
+            .addDriver(pcmAudioDriver, function (context, driver) {
+            return driver.bind(context.getPCMChannel());
+        })
             .bind(this._service);
         var _loop_1 = function (i) {
-            driverManager
-                .addDriver(waveformAduioDrivers[i], function (context, driver) {
+            driverManager.addDriver(waveformAduioDrivers[i], function (context, driver) {
                 return driver.bind(context.getWaveformChannels()[i]);
-            })
-                .addDriver(pcmAudioDriver[i], function (context, driver) {
-                return driver.bind(context.getPCMChannels()[i]);
             });
         };
         for (var i = 0; i < 2; i++) {
@@ -18781,7 +18824,7 @@ var EmulationBackend = (function () {
 }());
 exports.default = EmulationBackend;
 
-},{"../DriverManager":101,"../vanilla/EmulationService":104,"./ControlDriver":105,"./PCMAudioDriver":107,"./VideoDriver":108,"./WaveformAudioDriver":109,"./messages":110}],107:[function(require,module,exports){
+},{"../DriverManager":102,"../vanilla/EmulationService":105,"./ControlDriver":106,"./PCMAudioDriver":108,"./VideoDriver":109,"./WaveformAudioDriver":110,"./messages":111}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -18862,7 +18905,7 @@ var PCMAudioDriver = (function () {
 }());
 exports.default = PCMAudioDriver;
 
-},{"./messages":110}],108:[function(require,module,exports){
+},{"./messages":111}],109:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -19064,7 +19107,7 @@ var VideoDriver = (function () {
 }());
 exports.default = VideoDriver;
 
-},{"../../../../tools/pool/Pool":79,"../../../../video/processing/worker/PipelineClient":96,"../../../../video/surface/ArrayBufferSurface":98,"./messages":110,"async-mutex":2,"worker-rpc":18}],109:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":80,"../../../../video/processing/worker/PipelineClient":97,"../../../../video/surface/ArrayBufferSurface":99,"./messages":111,"async-mutex":2,"worker-rpc":18}],110:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -19115,7 +19158,7 @@ var WaveformAudioDriver = (function () {
 }());
 exports.default = WaveformAudioDriver;
 
-},{"./messages":110}],110:[function(require,module,exports){
+},{"./messages":111}],111:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {
@@ -19147,7 +19190,7 @@ exports.SIGNAL_TYPE = {
 };
 Object.freeze(exports.SIGNAL_TYPE);
 
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var rpc_1 = require("../rpc");
@@ -19155,7 +19198,7 @@ var EmulationBackend_1 = require("../../../src/web/stella/service/worker/Emulati
 var emulationBackend = new EmulationBackend_1.default(rpc_1.getRpc());
 emulationBackend.startup();
 
-},{"../../../src/web/stella/service/worker/EmulationBackend":106,"../rpc":112}],112:[function(require,module,exports){
+},{"../../../src/web/stella/service/worker/EmulationBackend":107,"../rpc":113}],113:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
@@ -19192,5 +19235,5 @@ function getRpc() {
 }
 exports.getRpc = getRpc;
 
-},{"worker-rpc":18}]},{},[111])
+},{"worker-rpc":18}]},{},[112])
 //# sourceMappingURL=stella.js.map
