@@ -94025,6 +94025,7 @@ var PCMChannel = (function () {
         this._volume = 1;
         this._gain = null;
         this._processor = null;
+        this._bufferUnderrun = false;
         this._fragmentRing = null;
         this._fragmentSize = 0;
         this._inputSampleRate = 0;
@@ -94053,6 +94054,7 @@ var PCMChannel = (function () {
         this._inputSampleRate = audio.getSampleRate();
         this._fragmentIndex = 0;
         this._lastFragment = null;
+        this._bufferUnderrun = true;
         this._fragmentRing = new RingBuffer_1.default(Math.ceil(4 * this._bufferSize / this._outputSampleRate / this._fragmentSize * this._inputSampleRate));
         this._audio.newFrame.addHandler(PCMChannel._onNewFragment, this);
         this._resampler.reset(this._inputSampleRate, this._outputSampleRate);
@@ -94087,11 +94089,31 @@ var PCMChannel = (function () {
         }
     };
     PCMChannel.prototype._processAudio = function (e) {
+        var _this = this;
         if (!this._audio) {
             return;
         }
         var outputBuffer = e.outputBuffer.getChannelData(0);
-        var fragmentBuffer = this._currentFragment && this._currentFragment.get(), bufferIndex = 0;
+        var bufferIndex = 0;
+        var fillBuffer = function (until) {
+            var previousFragmentBuffer = _this._lastFragment && _this._lastFragment.get();
+            while (bufferIndex < until) {
+                if (_this._resampler.needsData()) {
+                    _this._resampler.push((_this._audio && _this._audio.isPaused()) || !previousFragmentBuffer
+                        ? 0
+                        : previousFragmentBuffer[_this._fragmentIndex++] * _this._volume);
+                    if (_this._fragmentIndex >= _this._fragmentSize) {
+                        _this._fragmentIndex = 0;
+                    }
+                }
+                outputBuffer[bufferIndex++] = _this._resampler.get();
+            }
+        };
+        if (this._currentFragment && this._bufferUnderrun) {
+            fillBuffer(this._bufferSize >>> 1);
+            this._bufferUnderrun = false;
+        }
+        var fragmentBuffer = this._currentFragment && this._currentFragment.get();
         while (bufferIndex < this._bufferSize && this._currentFragment) {
             if (this._resampler.needsData()) {
                 this._resampler.push(fragmentBuffer[this._fragmentIndex++] * this._volume);
@@ -94107,21 +94129,10 @@ var PCMChannel = (function () {
             }
             outputBuffer[bufferIndex++] = this._resampler.get();
         }
-        if (bufferIndex < this._bufferSize && this._audio.isPaused()) {
-            console.log("audio underrun: " + (this._bufferSize - bufferIndex));
+        if (bufferIndex < this._bufferSize) {
+            this._bufferUnderrun = true;
         }
-        var previousFragmentBuffer = this._lastFragment && this._lastFragment.get();
-        while (bufferIndex < this._bufferSize) {
-            if (this._resampler.needsData()) {
-                this._resampler.push((this._audio && this._audio.isPaused()) || !previousFragmentBuffer
-                    ? 0
-                    : previousFragmentBuffer[this._fragmentIndex++] * this._volume);
-                if (this._fragmentIndex >= this._fragmentSize) {
-                    this._fragmentIndex = 0;
-                }
-            }
-            outputBuffer[bufferIndex++] = this._resampler.get();
-        }
+        fillBuffer(this._bufferSize);
     };
     return PCMChannel;
 }());
