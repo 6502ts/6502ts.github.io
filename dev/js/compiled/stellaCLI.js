@@ -18939,14 +18939,13 @@ exports.default = Missile;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
-var ToneGenerator_1 = require("./ToneGenerator");
 var Config_1 = require("../Config");
 var PCMChannel_1 = require("./PCMChannel");
 var mixingTable = new Float32Array(32);
 var __init;
 (function (__init) {
     for (var i = 0; i < 32; i++) {
-        mixingTable[i] = 2 * i * (30000 / 0x1f + 1) / (30000 + i) - 1;
+        mixingTable[i] = 2 * i / 0x01f * (30 + 0x01f) / (30 + i) - 1;
     }
 })(__init = exports.__init || (exports.__init = {}));
 var PCMAudio = (function () {
@@ -18954,17 +18953,13 @@ var PCMAudio = (function () {
         this._config = _config;
         this.newFrame = new microevent_ts_1.Event();
         this.togglePause = new microevent_ts_1.Event();
-        this._patternCache = new Map();
         this._currentOutputBuffer = null;
         this._bufferIndex = 0;
         this._sampleRate = 0;
         this._counter = 0;
         this._isActive = false;
-        this._channel0 = null;
-        this._channel1 = null;
-        this._toneGenerator = new ToneGenerator_1.default(this._config);
-        this._channel0 = new PCMChannel_1.default(this._patternCache, this._toneGenerator);
-        this._channel1 = new PCMChannel_1.default(this._patternCache, this._toneGenerator);
+        this._channel0 = new PCMChannel_1.default();
+        this._channel1 = new PCMChannel_1.default();
         this._sampleRate = (this._config.tvMode === 0 ? 60 * 262 : 50 * 312) * 2;
         this._frameSize = (this._config.tvMode === 0 ? 262 : 312) * 4;
         this.reset();
@@ -18995,12 +18990,22 @@ var PCMAudio = (function () {
         this._channel1.reset();
     };
     PCMAudio.prototype.tick = function () {
-        if (this._isActive && this._currentOutputBuffer && this._counter++ === 113) {
-            this._currentOutputBuffer.getContent()[this._bufferIndex++] =
-                mixingTable[this._channel0.nextSample() + this._channel1.nextSample()];
-            if (this._bufferIndex === this._currentOutputBuffer.getLength()) {
-                this._dispatchBuffer();
-            }
+        switch (this._counter) {
+            case 9:
+            case 81:
+                this._channel0.phase0();
+                this._channel1.phase0();
+                break;
+            case 37:
+            case 149:
+                this._currentOutputBuffer.getContent()[this._bufferIndex++] =
+                    mixingTable[this._channel0.phase1() + this._channel1.phase1()];
+                if (this._bufferIndex === this._currentOutputBuffer.getLength()) {
+                    this._dispatchBuffer();
+                }
+                break;
+        }
+        if (++this._counter === 228) {
             this._counter = 0;
         }
     };
@@ -19036,61 +19041,111 @@ var PCMAudio = (function () {
 }());
 exports.default = PCMAudio;
 
-},{"../Config":47,"./PCMChannel":84,"./ToneGenerator":89,"microevent.ts":8}],84:[function(require,module,exports){
+},{"../Config":47,"./PCMChannel":84,"microevent.ts":8}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PCMChannel = (function () {
-    function PCMChannel(_patternCache, _toneGenerator) {
-        this._patternCache = _patternCache;
-        this._toneGenerator = _toneGenerator;
-        this._currentPattern = null;
-        this._frequency = 0;
-        this._volume = 0;
-        this._tone = 0;
-        this._patternIndex = 0;
-        this._bufferIndex = 0;
+    function PCMChannel() {
+        this._audv = 0;
+        this._audc = 0;
+        this._audf = 0;
+        this._clkEnable = false;
+        this._noiseFeedback = false;
+        this._noiseCounterBit4 = false;
+        this._pulseCounterHold = false;
+        this._divCounter = 0;
+        this._noiseCounter = 0;
+        this._pulseCounter = 0;
         this.reset();
     }
     PCMChannel.prototype.reset = function () {
-        this._bufferIndex = 0;
-        this._tone = 0;
-        this._frequency = 0;
-        this._tone = 0;
-        this._updatePattern();
+        this._audc = this._audf = this._audv = 0;
+        this._clkEnable = false;
+        this._noiseFeedback = false;
+        this._noiseCounterBit4 = false;
+        this._pulseCounterHold = false;
+        this._divCounter = 0;
+        this._noiseCounter = 0;
+        this._pulseCounter = 0;
     };
-    PCMChannel.prototype.nextSample = function () {
-        var sample = this._currentPattern[this._patternIndex++] * this._volume;
-        if (this._patternIndex === this._currentPattern.length) {
-            this._patternIndex = 0;
+    PCMChannel.prototype.phase0 = function () {
+        if (this._clkEnable) {
+            this._noiseCounterBit4 = !!(this._noiseCounter & 0x01);
+            switch (this._audc & 0x03) {
+                case 0x00:
+                case 0x01:
+                    this._pulseCounterHold = false;
+                    break;
+                case 0x02:
+                    this._pulseCounterHold = (this._noiseCounter & 0x1e) !== 0x02;
+                    break;
+                case 0x03:
+                    this._pulseCounterHold = !this._noiseCounterBit4;
+                    break;
+            }
+            switch (this._audc & 0x03) {
+                case 0x00:
+                    this._noiseFeedback =
+                        !!((this._pulseCounter ^ this._noiseCounter) & 0x01) ||
+                            !(this._noiseCounter !== 0 || this._pulseCounter !== 0x0a) ||
+                            !(this._audc & 0x0c);
+                    break;
+                default:
+                    this._noiseFeedback =
+                        !!((this._noiseCounter & 0x04 ? 1 : 0) ^ (this._noiseCounter & 0x01)) ||
+                            this._noiseCounter === 0;
+                    break;
+            }
         }
-        return sample;
+        this._clkEnable = this._divCounter === this._audf;
+        if (this._divCounter === this._audf || this._divCounter === 0x1f) {
+            this._divCounter = 0;
+        }
+        else {
+            this._divCounter++;
+        }
+    };
+    PCMChannel.prototype.phase1 = function () {
+        var pulseFeedback = false;
+        if (this._clkEnable) {
+            switch (this._audc >>> 2) {
+                case 0x00:
+                    pulseFeedback =
+                        !!((this._pulseCounter & 0x02 ? 1 : 0) ^ (this._pulseCounter & 0x01)) &&
+                            this._pulseCounter !== 0x0a &&
+                            !!(this._audc & 0x03);
+                    break;
+                case 0x01:
+                    pulseFeedback = !(this._pulseCounter & 0x08);
+                    break;
+                case 0x02:
+                    pulseFeedback = !this._noiseCounterBit4;
+                    break;
+                case 0x03:
+                    pulseFeedback = !(!!(this._pulseCounter & 0x02) || !(this._pulseCounter & 0x0e));
+                    break;
+            }
+            this._noiseCounter >>>= 1;
+            if (this._noiseFeedback) {
+                this._noiseCounter |= 0x10;
+            }
+            if (!this._pulseCounterHold) {
+                this._pulseCounter = ~(this._pulseCounter >>> 1) & 0x07;
+                if (pulseFeedback) {
+                    this._pulseCounter |= 0x08;
+                }
+            }
+        }
+        return (this._pulseCounter & 0x01) * this._audv;
     };
     PCMChannel.prototype.audc = function (value) {
-        value &= 0x0f;
-        if (value === this._tone) {
-            return;
-        }
-        this._tone = value;
-        this._updatePattern();
+        this._audc = value & 0x0f;
     };
     PCMChannel.prototype.audf = function (value) {
-        value &= 0x1f;
-        if (value === this._frequency) {
-            return;
-        }
-        this._frequency = value;
-        this._updatePattern();
+        this._audf = value & 0x1f;
     };
     PCMChannel.prototype.audv = function (value) {
-        this._volume = value & 0x0f;
-    };
-    PCMChannel.prototype._updatePattern = function () {
-        var key = this._toneGenerator.getKey(this._tone, this._frequency);
-        if (!this._patternCache.has(key)) {
-            this._patternCache.set(key, this._toneGenerator.getSquareWave(key));
-        }
-        this._currentPattern = this._patternCache.get(key);
-        this._patternIndex = 0;
+        this._audv = value & 0x0f;
     };
     return PCMChannel;
 }());
@@ -20309,7 +20364,7 @@ var ToneGenerator = (function () {
         }
         return (tone << 5) | frequency;
     };
-    ToneGenerator.prototype.getSquareWave = function (key) {
+    ToneGenerator.prototype.getBuffer = function (key) {
         var tone = (key >>> 5) & 0x0f, frequency = key & 0x1f;
         var poly = POLYS[tone];
         var length = 0;
@@ -20317,7 +20372,8 @@ var ToneGenerator = (function () {
             length += poly[i];
         }
         length = length * FREQUENCY_DIVISIORS[tone] * (frequency + 1);
-        var content = new Uint8Array(length);
+        var content = new Float32Array(length);
+        var sampleRate = Config_1.default.getClockHz(this._config) / 114;
         var f = 0;
         var count = 0;
         var offset = 0;
@@ -20336,14 +20392,7 @@ var ToneGenerator = (function () {
                 }
                 state = !(offset & 0x01);
             }
-            content[i] = state ? 1 : 0;
-        }
-        return content;
-    };
-    ToneGenerator.prototype.getBuffer = function (key) {
-        var squareWave = this.getSquareWave(key), content = new Float32Array(squareWave.length), sampleRate = Config_1.default.getClockHz(this._config) / 114;
-        for (var i = 0; i < squareWave.length; i++) {
-            content[i] = 2 * squareWave[i] - 1;
+            content[i] = state ? 1 : -1;
         }
         return new AudioOutputBuffer_1.default(content, sampleRate);
     };
