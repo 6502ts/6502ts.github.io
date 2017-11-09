@@ -22834,7 +22834,7 @@ var WebAudioDriver = (function () {
     };
     WebAudioDriver.prototype.setMasterVolume = function (volume) {
         this._volume = volume;
-        if (this._driver) {
+        if (this._channels) {
             for (var i = 0; i < this._channels.length; i++) {
                 this._driver.setMasterVolume(i, this._volume);
             }
