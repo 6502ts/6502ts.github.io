@@ -18942,6 +18942,13 @@ var microevent_ts_1 = require("microevent.ts");
 var ToneGenerator_1 = require("./ToneGenerator");
 var Config_1 = require("../Config");
 var PCMChannel_1 = require("./PCMChannel");
+var mixingTable = new Float32Array(32);
+var __init;
+(function (__init) {
+    for (var i = 0; i < 32; i++) {
+        mixingTable[i] = 2 * i * (30000 / 0x1f + 1) / (30000 + i) - 1;
+    }
+})(__init = exports.__init || (exports.__init = {}));
 var PCMAudio = (function () {
     function PCMAudio(_config) {
         this._config = _config;
@@ -18990,7 +18997,7 @@ var PCMAudio = (function () {
     PCMAudio.prototype.tick = function () {
         if (this._isActive && this._currentOutputBuffer && this._counter++ === 113) {
             this._currentOutputBuffer.getContent()[this._bufferIndex++] =
-                0.5 * (this._channel0.nextSample() + this._channel1.nextSample());
+                mixingTable[this._channel0.nextSample() + this._channel1.nextSample()];
             if (this._bufferIndex === this._currentOutputBuffer.getLength()) {
                 this._dispatchBuffer();
             }
@@ -19075,12 +19082,12 @@ var PCMChannel = (function () {
         this._updatePattern();
     };
     PCMChannel.prototype.audv = function (value) {
-        this._volume = (value & 0x0f) / 15;
+        this._volume = value & 0x0f;
     };
     PCMChannel.prototype._updatePattern = function () {
         var key = this._toneGenerator.getKey(this._tone, this._frequency);
         if (!this._patternCache.has(key)) {
-            this._patternCache.set(key, this._toneGenerator.getBuffer(key).getContent());
+            this._patternCache.set(key, this._toneGenerator.getSquareWave(key));
         }
         this._currentPattern = this._patternCache.get(key);
         this._patternIndex = 0;
@@ -20302,7 +20309,7 @@ var ToneGenerator = (function () {
         }
         return (tone << 5) | frequency;
     };
-    ToneGenerator.prototype.getBuffer = function (key) {
+    ToneGenerator.prototype.getSquareWave = function (key) {
         var tone = (key >>> 5) & 0x0f, frequency = key & 0x1f;
         var poly = POLYS[tone];
         var length = 0;
@@ -20310,8 +20317,7 @@ var ToneGenerator = (function () {
             length += poly[i];
         }
         length = length * FREQUENCY_DIVISIORS[tone] * (frequency + 1);
-        var content = new Float32Array(length);
-        var sampleRate = Config_1.default.getClockHz(this._config) / 114;
+        var content = new Uint8Array(length);
         var f = 0;
         var count = 0;
         var offset = 0;
@@ -20330,7 +20336,14 @@ var ToneGenerator = (function () {
                 }
                 state = !(offset & 0x01);
             }
-            content[i] = state ? 1 : -1;
+            content[i] = state ? 1 : 0;
+        }
+        return content;
+    };
+    ToneGenerator.prototype.getBuffer = function (key) {
+        var squareWave = this.getSquareWave(key), content = new Float32Array(squareWave.length), sampleRate = Config_1.default.getClockHz(this._config) / 114;
+        for (var i = 0; i < squareWave.length; i++) {
+            content[i] = 2 * squareWave[i] - 1;
         }
         return new AudioOutputBuffer_1.default(content, sampleRate);
     };
