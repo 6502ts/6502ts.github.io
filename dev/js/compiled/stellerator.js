@@ -90492,11 +90492,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var Config_1 = require("../Config");
 var PCMChannel_1 = require("./PCMChannel");
-var mixingTable = new Float32Array(32);
+var mixingTable = new Float32Array(0x1f);
 var __init;
 (function (__init) {
-    for (var i = 0; i < 31; i++) {
-        mixingTable[i] = i / 0x01e * (30 + 0x01f) / (30 + i);
+    for (var i = 0; i < 0x1f; i++) {
+        mixingTable[i] = i / 0x1e * (30 + 0x1e) / (30 + i);
     }
 })(__init = exports.__init || (exports.__init = {}));
 var PCMAudio = (function () {
