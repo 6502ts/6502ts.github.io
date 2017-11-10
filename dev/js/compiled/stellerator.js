@@ -90142,7 +90142,6 @@ var FrameManager = (function () {
         this._vblankLines = 0;
         this._kernelLines = 0;
         this._overscanLines = 0;
-        this._frameLines = 0;
         this._linesWithoutVsync = 0;
         this._state = 0;
         this._vsync = false;
@@ -90165,7 +90164,6 @@ var FrameManager = (function () {
             default:
                 throw new Error("invalid tv mode " + this._config.tvMode);
         }
-        this._frameLines = this._vblankLines + this._kernelLines + this._overscanLines + 3;
         this._frameStart = this._config.frameStart;
         this.reset();
     }
@@ -90186,7 +90184,7 @@ var FrameManager = (function () {
         switch (this._state) {
             case 0:
             case 1:
-                if (++this._linesWithoutVsync > 10) {
+                if (++this._linesWithoutVsync > 150) {
                     this._setState(2);
                 }
                 break;
