@@ -4837,12 +4837,6 @@ function opSbc(state, bus, operand) {
         state.a = result;
     }
 }
-function opRra(state, bus, operand) {
-    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
-    bus.write(operand, value);
-    state.flags = (state.flags & ~1) | (old & 1);
-    opAdc(state, bus, value);
-}
 function opSec(state) {
     state.flags |= 1;
 }
@@ -4957,6 +4951,18 @@ function opAtx(state, bus, operand) {
     state.a &= operand;
     state.x = state.a;
     setFlagsNZ(state, state.a);
+}
+function opRra(state, bus, operand) {
+    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
+    bus.write(operand, value);
+    state.flags = (state.flags & ~1) | (old & 1);
+    opAdc(state, bus, value);
+}
+function opRla(state, bus, operand) {
+    var old = bus.read(operand), value = ((old << 1) & 0xff) | (state.flags & 1);
+    bus.write(operand, value);
+    state.flags = (state.flags & ~1) | (old >>> 7);
+    opAnd(state, bus, value);
 }
 var Cpu = (function () {
     function Cpu(_bus, _rng) {
@@ -5466,6 +5472,12 @@ var Cpu = (function () {
                 slowIndexedAccess = true;
                 this._instructionCallback = opRra;
                 break;
+            case 70:
+                this._opCycles = 3;
+                dereference = false;
+                slowIndexedAccess = true;
+                this._instructionCallback = opRla;
+                break;
             default:
                 if (this._invalidInstructionCallback) {
                     this._invalidInstructionCallback(this);
@@ -5783,7 +5795,8 @@ var Instruction = (function () {
         OperationMap[OperationMap["aac"] = 67] = "aac";
         OperationMap[OperationMap["atx"] = 68] = "atx";
         OperationMap[OperationMap["rra"] = 69] = "rra";
-        OperationMap[OperationMap["invalid"] = 70] = "invalid";
+        OperationMap[OperationMap["rla"] = 70] = "rla";
+        OperationMap[OperationMap["invalid"] = 71] = "invalid";
     })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
     Instruction.opcodes = new Array(256);
 })(Instruction || (Instruction = {}));
@@ -5792,7 +5805,7 @@ exports.default = Instruction;
     var __init;
     (function (__init) {
         for (var i = 0; i < 256; i++) {
-            Instruction.opcodes[i] = new Instruction(70, 12);
+            Instruction.opcodes[i] = new Instruction(71, 12);
         }
         var operation, addressingMode, opcode;
         for (var i = 0; i < 8; i++) {
@@ -5852,7 +5865,7 @@ exports.default = Instruction;
                 if (operation === 47 && addressingMode === 1) {
                     addressingMode = 12;
                 }
-                if (operation !== 70 && addressingMode !== 12) {
+                if (operation !== 71 && addressingMode !== 12) {
                     opcode = (i << 5) | (j << 2) | 1;
                     Instruction.opcodes[opcode].operation = operation;
                     Instruction.opcodes[opcode].addressingMode = addressingMode;
@@ -5860,7 +5873,7 @@ exports.default = Instruction;
             }
         }
         function set(_opcode, _operation, _addressingMode) {
-            if (Instruction.opcodes[_opcode].operation !== 70) {
+            if (Instruction.opcodes[_opcode].operation !== 71) {
                 throw new Error('entry for opcode ' + _opcode + ' already exists');
             }
             Instruction.opcodes[_opcode].operation = _operation;
@@ -6027,6 +6040,13 @@ exports.default = Instruction;
         set(0x7b, 69, 10);
         set(0x63, 69, 8);
         set(0x73, 69, 11);
+        set(0x27, 70, 2);
+        set(0x37, 70, 6);
+        set(0x2f, 70, 3);
+        set(0x3f, 70, 7);
+        set(0x3b, 70, 10);
+        set(0x23, 70, 8);
+        set(0x33, 70, 11);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
 
