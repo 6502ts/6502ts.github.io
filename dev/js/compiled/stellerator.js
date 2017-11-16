@@ -77854,6 +77854,12 @@ function opSbc(state, bus, operand) {
         state.a = result;
     }
 }
+function opRra(state, bus, operand) {
+    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
+    bus.write(operand, value);
+    state.flags = (state.flags & ~1) | (old & 1);
+    opAdc(state, bus, value);
+}
 function opSec(state) {
     state.flags |= 1;
 }
@@ -78471,6 +78477,12 @@ var Cpu = (function () {
                 this._opCycles = 0;
                 this._instructionCallback = opAtx;
                 break;
+            case 69:
+                this._opCycles = 3;
+                dereference = false;
+                slowIndexedAccess = true;
+                this._instructionCallback = opRra;
+                break;
             default:
                 if (this._invalidInstructionCallback) {
                     this._invalidInstructionCallback(this);
@@ -78718,7 +78730,8 @@ var Instruction = (function () {
         OperationMap[OperationMap["isc"] = 66] = "isc";
         OperationMap[OperationMap["aac"] = 67] = "aac";
         OperationMap[OperationMap["atx"] = 68] = "atx";
-        OperationMap[OperationMap["invalid"] = 69] = "invalid";
+        OperationMap[OperationMap["rra"] = 69] = "rra";
+        OperationMap[OperationMap["invalid"] = 70] = "invalid";
     })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
     Instruction.opcodes = new Array(256);
 })(Instruction || (Instruction = {}));
@@ -78727,7 +78740,7 @@ exports.default = Instruction;
     var __init;
     (function (__init) {
         for (var i = 0; i < 256; i++) {
-            Instruction.opcodes[i] = new Instruction(69, 12);
+            Instruction.opcodes[i] = new Instruction(70, 12);
         }
         var operation, addressingMode, opcode;
         for (var i = 0; i < 8; i++) {
@@ -78787,7 +78800,7 @@ exports.default = Instruction;
                 if (operation === 47 && addressingMode === 1) {
                     addressingMode = 12;
                 }
-                if (operation !== 69 && addressingMode !== 12) {
+                if (operation !== 70 && addressingMode !== 12) {
                     opcode = (i << 5) | (j << 2) | 1;
                     Instruction.opcodes[opcode].operation = operation;
                     Instruction.opcodes[opcode].addressingMode = addressingMode;
@@ -78795,7 +78808,7 @@ exports.default = Instruction;
             }
         }
         function set(_opcode, _operation, _addressingMode) {
-            if (Instruction.opcodes[_opcode].operation !== 69) {
+            if (Instruction.opcodes[_opcode].operation !== 70) {
                 throw new Error('entry for opcode ' + _opcode + ' already exists');
             }
             Instruction.opcodes[_opcode].operation = _operation;
@@ -78955,6 +78968,13 @@ exports.default = Instruction;
         set(0x0b, 67, 1);
         set(0x2b, 67, 1);
         set(0xab, 68, 1);
+        set(0x67, 69, 2);
+        set(0x77, 69, 6);
+        set(0x6f, 69, 3);
+        set(0x7f, 69, 7);
+        set(0x7b, 69, 10);
+        set(0x63, 69, 8);
+        set(0x73, 69, 11);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
 
@@ -90492,11 +90512,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var Config_1 = require("../Config");
 var PCMChannel_1 = require("./PCMChannel");
-var mixingTable = new Float32Array(0x1f);
+var R_MAX = 30;
+var R = 1;
+var VOL_MAX = 0x1e;
+var mixingTable = new Float32Array(VOL_MAX + 1);
 var __init;
 (function (__init) {
-    for (var i = 0; i < 0x1f; i++) {
-        mixingTable[i] = i / 0x1e * (30 + 0x1e) / (30 + i);
+    for (var vol = 0; vol <= VOL_MAX; vol++) {
+        mixingTable[vol] = vol / VOL_MAX * (R_MAX + R * VOL_MAX) / (R_MAX + R * vol);
     }
 })(__init = exports.__init || (exports.__init = {}));
 var PCMAudio = (function () {
@@ -95358,14 +95381,14 @@ var async_mutex_1 = require("async-mutex");
 var messages_1 = require("./messages");
 var CONTROL_PROXY_UPDATE_INTERVAL = 25;
 var EmulationService = (function () {
-    function EmulationService(_workerUrl) {
-        this._workerUrl = _workerUrl;
+    function EmulationService(_stellaWorkerUri, _videoWorkerUri) {
+        this._stellaWorkerUri = _stellaWorkerUri;
+        this._videoWorkerUri = _videoWorkerUri;
         this.stateChanged = new microevent_ts_1.Event();
         this.frequencyUpdate = new microevent_ts_1.Event();
         this._rateLimitEnforced = true;
         this._mutex = new async_mutex_1.Mutex();
         this._worker = null;
-        this._videoProcessingWorker = null;
         this._rpc = null;
         this._state = EmulationServiceInterface_1.default.State.stopped;
         this._lastError = null;
@@ -95380,7 +95403,7 @@ var EmulationService = (function () {
     }
     EmulationService.prototype.init = function () {
         var _this = this;
-        this._worker = new Worker(this._workerUrl + "/stella.js");
+        this._worker = new Worker(this._stellaWorkerUri);
         this._rpc = new worker_rpc_1.RpcProvider(function (message, transfer) { return _this._worker.postMessage(message, transfer); });
         this._pcmChannel = new PCMAudioProxy_1.default(0, this._rpc).init();
         for (var i = 0; i < 2; i++) {
@@ -95605,14 +95628,28 @@ var EmulationService = (function () {
         }
     };
     EmulationService.prototype._startVideoProcessingPipeline = function () {
-        var _this = this;
-        var channel = new MessageChannel(), worker = new Worker(this._workerUrl + "/video-pipeline.js"), rpc = new worker_rpc_1.RpcProvider(function (payload, transfer) { return worker.postMessage(payload, transfer); });
-        worker.onmessage = function (e) { return rpc.dispatch(e.data); };
-        this._videoProcessingWorker = worker;
-        return rpc.rpc('/use-port', channel.port1, [channel.port1]).then(function () {
-            return _this._rpc.rpc(messages_1.RPC_TYPE.setup, {
-                videoProcessorPort: channel.port2
-            }, [channel.port2]);
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var channel, worker_1, rpc_1;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        channel = null;
+                        if (!this._videoWorkerUri) return [3, 2];
+                        channel = new MessageChannel();
+                        worker_1 = new Worker(this._videoWorkerUri), rpc_1 = new worker_rpc_1.RpcProvider(function (payload, transfer) { return worker_1.postMessage(payload, transfer); });
+                        worker_1.onmessage = function (e) { return rpc_1.dispatch(e.data); };
+                        return [4, rpc_1.rpc('/use-port', channel.port1, [channel.port1])];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [4, this._rpc.rpc(messages_1.RPC_TYPE.setup, {
+                            videoProcessorPort: channel && channel.port2
+                        }, channel ? [channel.port2] : [])];
+                    case 3:
+                        _a.sent();
+                        return [2];
+                }
+            });
         });
     };
     return EmulationService;
@@ -98662,7 +98699,9 @@ var EmulationProvider = (function () {
             return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        this._service = workerUrl ? new EmulationService_1.default(workerUrl) : new EmulationService_2.default();
+                        this._service = workerUrl
+                            ? new EmulationService_1.default(workerUrl + "/stella.js", workerUrl + "/video-pipeline.js")
+                            : new EmulationService_2.default();
                         return [4, this._service.init()];
                     case 1:
                         _a.sent();

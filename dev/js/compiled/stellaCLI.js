@@ -6232,6 +6232,12 @@ function opSbc(state, bus, operand) {
         state.a = result;
     }
 }
+function opRra(state, bus, operand) {
+    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
+    bus.write(operand, value);
+    state.flags = (state.flags & ~1) | (old & 1);
+    opAdc(state, bus, value);
+}
 function opSec(state) {
     state.flags |= 1;
 }
@@ -6849,6 +6855,12 @@ var Cpu = (function () {
                 this._opCycles = 0;
                 this._instructionCallback = opAtx;
                 break;
+            case 69:
+                this._opCycles = 3;
+                dereference = false;
+                slowIndexedAccess = true;
+                this._instructionCallback = opRra;
+                break;
             default:
                 if (this._invalidInstructionCallback) {
                     this._invalidInstructionCallback(this);
@@ -7165,7 +7177,8 @@ var Instruction = (function () {
         OperationMap[OperationMap["isc"] = 66] = "isc";
         OperationMap[OperationMap["aac"] = 67] = "aac";
         OperationMap[OperationMap["atx"] = 68] = "atx";
-        OperationMap[OperationMap["invalid"] = 69] = "invalid";
+        OperationMap[OperationMap["rra"] = 69] = "rra";
+        OperationMap[OperationMap["invalid"] = 70] = "invalid";
     })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
     Instruction.opcodes = new Array(256);
 })(Instruction || (Instruction = {}));
@@ -7174,7 +7187,7 @@ exports.default = Instruction;
     var __init;
     (function (__init) {
         for (var i = 0; i < 256; i++) {
-            Instruction.opcodes[i] = new Instruction(69, 12);
+            Instruction.opcodes[i] = new Instruction(70, 12);
         }
         var operation, addressingMode, opcode;
         for (var i = 0; i < 8; i++) {
@@ -7234,7 +7247,7 @@ exports.default = Instruction;
                 if (operation === 47 && addressingMode === 1) {
                     addressingMode = 12;
                 }
-                if (operation !== 69 && addressingMode !== 12) {
+                if (operation !== 70 && addressingMode !== 12) {
                     opcode = (i << 5) | (j << 2) | 1;
                     Instruction.opcodes[opcode].operation = operation;
                     Instruction.opcodes[opcode].addressingMode = addressingMode;
@@ -7242,7 +7255,7 @@ exports.default = Instruction;
             }
         }
         function set(_opcode, _operation, _addressingMode) {
-            if (Instruction.opcodes[_opcode].operation !== 69) {
+            if (Instruction.opcodes[_opcode].operation !== 70) {
                 throw new Error('entry for opcode ' + _opcode + ' already exists');
             }
             Instruction.opcodes[_opcode].operation = _operation;
@@ -7402,6 +7415,13 @@ exports.default = Instruction;
         set(0x0b, 67, 1);
         set(0x2b, 67, 1);
         set(0xab, 68, 1);
+        set(0x67, 69, 2);
+        set(0x77, 69, 6);
+        set(0x6f, 69, 3);
+        set(0x7f, 69, 7);
+        set(0x7b, 69, 10);
+        set(0x63, 69, 8);
+        set(0x73, 69, 11);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
 
@@ -18939,11 +18959,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var Config_1 = require("../Config");
 var PCMChannel_1 = require("./PCMChannel");
-var mixingTable = new Float32Array(0x1f);
+var R_MAX = 30;
+var R = 1;
+var VOL_MAX = 0x1e;
+var mixingTable = new Float32Array(VOL_MAX + 1);
 var __init;
 (function (__init) {
-    for (var i = 0; i < 0x1f; i++) {
-        mixingTable[i] = i / 0x1e * (30 + 0x1e) / (30 + i);
+    for (var vol = 0; vol <= VOL_MAX; vol++) {
+        mixingTable[vol] = vol / VOL_MAX * (R_MAX + R * VOL_MAX) / (R_MAX + R * vol);
     }
 })(__init = exports.__init || (exports.__init = {}));
 var PCMAudio = (function () {
