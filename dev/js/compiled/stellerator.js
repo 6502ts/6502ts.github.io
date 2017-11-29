@@ -80127,9 +80127,6 @@ var CartridgeCDF = (function (_super) {
         }
         _this._soc = new Soc_1.default(_this._version > 0 ? _this._handleBxCDF1 : _this._handleBxCDF0);
         _this._soc.trap.addHandler(function (message) { return _this.triggerTrap(2, message); });
-        if (buffer.length !== 0x8000) {
-            throw new Error("not a CDF image: invalid lenght " + buffer.length);
-        }
         _this._rom = _this._soc.getRom();
         for (var i = 0; i < 0x8000; i++) {
             _this._rom[i] = buffer[i];
