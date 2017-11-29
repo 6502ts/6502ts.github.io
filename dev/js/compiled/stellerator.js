@@ -80080,7 +80080,7 @@ var CartridgeCDF = (function (_super) {
                     _this._musicStreams[r2 % 3].waveformSize = r3;
                     return 0;
             }
-            return 2;
+            return 3;
         };
         _this._handleBxCDF1 = function (address) {
             var thumbulator = _this._soc.getThumbulator(), r2 = thumbulator.readRegister(2), r3 = thumbulator.readRegister(3);
@@ -80098,7 +80098,7 @@ var CartridgeCDF = (function (_super) {
                     _this._musicStreams[r2 % 3].waveformSize = r3;
                     return 0;
             }
-            return 2;
+            return 3;
         };
         _this._version = 1;
         _this._banks = new Array(7);
@@ -80118,6 +80118,13 @@ var CartridgeCDF = (function (_super) {
         _this._ldaOperandAddress = 0;
         _this._bus = null;
         _this._cpuTimeProvider = null;
+        _this._version = CartridgeCDF.getVersion(buffer);
+        if (buffer.length !== 0x8000) {
+            throw new Error("not a CDF image: invalid lenght " + buffer.length);
+        }
+        if (_this._version < 0) {
+            throw new Error('not a CDF image: missing signature');
+        }
         _this._soc = new Soc_1.default(_this._version > 0 ? _this._handleBxCDF1 : _this._handleBxCDF0);
         _this._soc.trap.addHandler(function (message) { return _this.triggerTrap(2, message); });
         if (buffer.length !== 0x8000) {
@@ -80138,9 +80145,15 @@ var CartridgeCDF = (function (_super) {
         _this.reset();
         return _this;
     }
+    CartridgeCDF.getVersion = function (buffer) {
+        var sig = 'CDF'.split('').map(function (x) { return x.charCodeAt(0); }), startAddress = cartridgeUtil.searchForSignature(buffer, tslib_1.__spread(sig, [-1], sig, [-1], sig));
+        if (startAddress < 0) {
+            return -1;
+        }
+        return buffer[startAddress + 3] > 0 ? 1 : 0;
+    };
     CartridgeCDF.matchesBuffer = function (buffer) {
-        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, ['CDF'.split('').map(function (x) { return x.charCodeAt(0); })]);
-        return signatureCounts[0] === 3;
+        return CartridgeCDF.getVersion(buffer) >= 0;
     };
     CartridgeCDF.prototype.reset = function () {
         for (var i = 0; i < 0x0200; i++) {
@@ -83213,6 +83226,17 @@ function searchForSignatures(buffer, signatures) {
     return counts;
 }
 exports.searchForSignatures = searchForSignatures;
+function searchForSignature(buffer, signature) {
+    for (var i = 0; i < buffer.length; i++) {
+        var j = void 0;
+        for (j = 0; j < signature.length && (buffer[i + j] === signature[j] || signature[j] < 0); j++) { }
+        if (j === signature.length) {
+            return i;
+        }
+    }
+    return -1;
+}
+exports.searchForSignature = searchForSignature;
 
 },{}],595:[function(require,module,exports){
 "use strict";
