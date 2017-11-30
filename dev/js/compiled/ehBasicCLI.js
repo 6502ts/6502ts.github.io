@@ -3548,6 +3548,7 @@ exports.default = AbstractCLI;
 },{"microevent.ts":5}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var CommandInterpreter = (function () {
     function CommandInterpreter(commandTable) {
         this._commandTable = {};
@@ -3561,12 +3562,21 @@ var CommandInterpreter = (function () {
         Object.keys(commandTable).forEach(function (command) { return (_this._commandTable[command] = commandTable[command]); });
     };
     CommandInterpreter.prototype.execute = function (cmd) {
-        cmd = cmd.replace(/;.*/, '');
-        if (cmd.match(/^\s*$/)) {
-            return '';
-        }
-        var components = cmd.split(/\s+/).filter(function (value) { return !!value; }), commandName = components.shift();
-        return this._locateCommand(commandName).call(this, components, cmd);
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var components, commandName;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        cmd = cmd.replace(/;.*/, '');
+                        if (cmd.match(/^\s*$/)) {
+                            return [2, ''];
+                        }
+                        components = cmd.split(/\s+/).filter(function (value) { return !!value; }), commandName = components.shift();
+                        return [4, this._locateCommand(commandName).call(this, components, cmd)];
+                    case 1: return [2, _a.sent()];
+                }
+            });
+        });
     };
     CommandInterpreter.prototype.getCommands = function () {
         return Object.keys(this._commandTable);
@@ -3592,7 +3602,7 @@ var CommandInterpreter = (function () {
 }());
 exports.default = CommandInterpreter;
 
-},{}],15:[function(require,module,exports){
+},{"tslib":9}],15:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var pathlib = require("path");
@@ -3888,13 +3898,20 @@ var EhBasicCLI = (function (_super) {
                 }
                 return '';
             },
-            'run-script': function (args) {
-                if (!args.length) {
-                    throw new Error('filename required');
-                }
-                _this.runDebuggerScript(args[0]);
-                return 'script executed';
-            },
+            'run-script': function (args) { return tslib_1.__awaiter(_this, void 0, void 0, function () {
+                return tslib_1.__generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (!args.length) {
+                                throw new Error('filename required');
+                            }
+                            return [4, this.runDebuggerScript(args[0])];
+                        case 1:
+                            _a.sent();
+                            return [2, 'script executed'];
+                    }
+                });
+            }); },
             'read-program': function (args) {
                 if (!args.length) {
                     throw new Error('filename required');
@@ -3907,7 +3924,6 @@ var EhBasicCLI = (function (_super) {
             .getSerialIO()
             .setOutCallback(function (value) { return _this._serialOutHandler(value); })
             .setInCallback(function () { return _this._serialInHandler(); });
-        _this._commands = commandInterpreter.getCommands();
         _this._board = board;
         _this._commandInterpreter = commandInterpreter;
         _this._scheduler = new ImmedateScheduler_1.default();
@@ -3916,21 +3932,52 @@ var EhBasicCLI = (function (_super) {
         return _this;
     }
     EhBasicCLI.prototype.runDebuggerScript = function (filename) {
-        var _this = this;
-        this._fsProvider.pushd(path.dirname(filename));
-        try {
-            this._fsProvider
-                .readTextFileSync(path.basename(filename))
-                .split('\n')
-                .forEach(function (line) {
-                _this.pushInput(line);
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _a, _b, line, e_1_1, e_2, e_1, _c;
+            return tslib_1.__generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0:
+                        this._fsProvider.pushd(path.dirname(filename));
+                        _d.label = 1;
+                    case 1:
+                        _d.trys.push([1, 10, , 11]);
+                        _d.label = 2;
+                    case 2:
+                        _d.trys.push([2, 7, 8, 9]);
+                        _a = tslib_1.__values(this._fsProvider.readTextFileSync(path.basename(filename)).split('\n')), _b = _a.next();
+                        _d.label = 3;
+                    case 3:
+                        if (!!_b.done) return [3, 6];
+                        line = _b.value;
+                        return [4, this.pushInput(line)];
+                    case 4:
+                        _d.sent();
+                        _d.label = 5;
+                    case 5:
+                        _b = _a.next();
+                        return [3, 3];
+                    case 6: return [3, 9];
+                    case 7:
+                        e_1_1 = _d.sent();
+                        e_1 = { error: e_1_1 };
+                        return [3, 9];
+                    case 8:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_1) throw e_1.error; }
+                        return [7];
+                    case 9: return [3, 11];
+                    case 10:
+                        e_2 = _d.sent();
+                        this._fsProvider.popd();
+                        throw e_2;
+                    case 11:
+                        this._fsProvider.popd();
+                        return [2];
+                }
             });
-        }
-        catch (e) {
-            this._fsProvider.popd();
-            throw e;
-        }
-        this._fsProvider.popd();
+        });
     };
     EhBasicCLI.prototype.readBasicProgram = function (filename) {
         var _this = this;
@@ -3983,24 +4030,42 @@ var EhBasicCLI = (function (_super) {
         return !!this._cliOutputBuffer;
     };
     EhBasicCLI.prototype.pushInput = function (data) {
-        switch (this._state) {
-            case 1:
-                var size = data.length;
-                for (var i = 0; i < size; i++) {
-                    this._inputBuffer.push(data.charCodeAt(i) & 0xff);
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _a, size, i, _b, e_3;
+            return tslib_1.__generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        _a = this._state;
+                        switch (_a) {
+                            case 1: return [3, 1];
+                            case 0: return [3, 2];
+                        }
+                        return [3, 6];
+                    case 1:
+                        size = data.length;
+                        for (i = 0; i < size; i++) {
+                            this._inputBuffer.push(data.charCodeAt(i) & 0xff);
+                        }
+                        this._inputBuffer.push(0x0d);
+                        return [3, 6];
+                    case 2:
+                        _c.trys.push([2, 4, , 5]);
+                        _b = this._outputLine;
+                        return [4, this._commandInterpreter.execute(data)];
+                    case 3:
+                        _b.apply(this, [_c.sent()]);
+                        return [3, 5];
+                    case 4:
+                        e_3 = _c.sent();
+                        this._outputLine('ERROR: ' + e_3.message);
+                        return [3, 5];
+                    case 5:
+                        this._prompt();
+                        return [3, 6];
+                    case 6: return [2];
                 }
-                this._inputBuffer.push(0x0d);
-                break;
-            case 0:
-                try {
-                    this._outputLine(this._commandInterpreter.execute(data));
-                }
-                catch (e) {
-                    this._outputLine('ERROR: ' + e.message);
-                }
-                this._prompt();
-                break;
-        }
+            });
+        });
     };
     EhBasicCLI.prototype.allowQuit = function (toggle) {
         this._allowQuit = toggle;

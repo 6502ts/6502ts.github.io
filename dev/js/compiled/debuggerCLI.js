@@ -3286,6 +3286,7 @@ exports.default = AbstractCLI;
 },{"microevent.ts":5}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var CommandInterpreter = (function () {
     function CommandInterpreter(commandTable) {
         this._commandTable = {};
@@ -3299,12 +3300,21 @@ var CommandInterpreter = (function () {
         Object.keys(commandTable).forEach(function (command) { return (_this._commandTable[command] = commandTable[command]); });
     };
     CommandInterpreter.prototype.execute = function (cmd) {
-        cmd = cmd.replace(/;.*/, '');
-        if (cmd.match(/^\s*$/)) {
-            return '';
-        }
-        var components = cmd.split(/\s+/).filter(function (value) { return !!value; }), commandName = components.shift();
-        return this._locateCommand(commandName).call(this, components, cmd);
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var components, commandName;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        cmd = cmd.replace(/;.*/, '');
+                        if (cmd.match(/^\s*$/)) {
+                            return [2, ''];
+                        }
+                        components = cmd.split(/\s+/).filter(function (value) { return !!value; }), commandName = components.shift();
+                        return [4, this._locateCommand(commandName).call(this, components, cmd)];
+                    case 1: return [2, _a.sent()];
+                }
+            });
+        });
     };
     CommandInterpreter.prototype.getCommands = function () {
         return Object.keys(this._commandTable);
@@ -3330,7 +3340,7 @@ var CommandInterpreter = (function () {
 }());
 exports.default = CommandInterpreter;
 
-},{}],14:[function(require,module,exports){
+},{"tslib":8}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var pathlib = require("path");
@@ -3424,21 +3434,52 @@ var DebuggerCLI = (function (_super) {
         return _this;
     }
     DebuggerCLI.prototype.runDebuggerScript = function (filename) {
-        var _this = this;
-        this._fsProvider.pushd(path.dirname(filename));
-        try {
-            this._fsProvider
-                .readTextFileSync(path.basename(filename))
-                .split('\n')
-                .forEach(function (line) {
-                _this.pushInput(line);
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _a, _b, line, e_1_1, e_2, e_1, _c;
+            return tslib_1.__generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0:
+                        this._fsProvider.pushd(path.dirname(filename));
+                        _d.label = 1;
+                    case 1:
+                        _d.trys.push([1, 10, , 11]);
+                        _d.label = 2;
+                    case 2:
+                        _d.trys.push([2, 7, 8, 9]);
+                        _a = tslib_1.__values(this._fsProvider.readTextFileSync(path.basename(filename)).split('\n')), _b = _a.next();
+                        _d.label = 3;
+                    case 3:
+                        if (!!_b.done) return [3, 6];
+                        line = _b.value;
+                        return [4, this.pushInput(line)];
+                    case 4:
+                        _d.sent();
+                        _d.label = 5;
+                    case 5:
+                        _b = _a.next();
+                        return [3, 3];
+                    case 6: return [3, 9];
+                    case 7:
+                        e_1_1 = _d.sent();
+                        e_1 = { error: e_1_1 };
+                        return [3, 9];
+                    case 8:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_1) throw e_1.error; }
+                        return [7];
+                    case 9: return [3, 11];
+                    case 10:
+                        e_2 = _d.sent();
+                        this._fsProvider.popd();
+                        throw e_2;
+                    case 11:
+                        this._fsProvider.popd();
+                        return [2];
+                }
             });
-        }
-        catch (e) {
-            this._fsProvider.popd();
-            throw e;
-        }
-        this._fsProvider.popd();
+        });
     };
     DebuggerCLI.prototype.startup = function () {
         this._initialize();
@@ -3446,12 +3487,25 @@ var DebuggerCLI = (function (_super) {
     };
     DebuggerCLI.prototype.shutdown = function () { };
     DebuggerCLI.prototype.pushInput = function (input) {
-        try {
-            this._outputLine(this._getCommandInterpreter().execute(input));
-        }
-        catch (e) {
-            this._outputLine('ERROR: ' + e.message);
-        }
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _a, e_3;
+            return tslib_1.__generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _b.trys.push([0, 2, , 3]);
+                        _a = this._outputLine;
+                        return [4, this._getCommandInterpreter().execute(input)];
+                    case 1:
+                        _a.apply(this, [_b.sent()]);
+                        return [3, 3];
+                    case 2:
+                        e_3 = _b.sent();
+                        this._outputLine('ERROR: ' + e_3.message);
+                        return [3, 3];
+                    case 3: return [2];
+                }
+            });
+        });
     };
     DebuggerCLI.prototype.interrupt = function () {
         this._quit();
@@ -3490,13 +3544,20 @@ var DebuggerCLI = (function (_super) {
                 _this._quit();
                 return 'bye';
             },
-            'run-script': function (args) {
-                if (!args.length) {
-                    throw new Error('filename required');
-                }
-                _this.runDebuggerScript(args[0]);
-                return 'script executed';
-            }
+            'run-script': function (args) { return tslib_1.__awaiter(_this, void 0, void 0, function () {
+                return tslib_1.__generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (!args.length) {
+                                throw new Error('filename required');
+                            }
+                            return [4, this.runDebuggerScript(args[0])];
+                        case 1:
+                            _a.sent();
+                            return [2, 'script executed'];
+                    }
+                });
+            }); }
         });
     };
     DebuggerCLI.prototype._prompt = function () {
