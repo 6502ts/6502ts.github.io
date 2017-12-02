@@ -87377,11 +87377,21 @@ var WebAudioDriver = (function () {
     };
     WebAudioDriver.prototype.pause = function () {
         var _this = this;
-        return this._mutex.runExclusive(function () { return _this._context.suspend(); });
+        return this._mutex.runExclusive(function () {
+            return new Promise(function (resolve) {
+                _this._context.suspend().then(resolve, resolve);
+                setTimeout(resolve, 200);
+            });
+        });
     };
     WebAudioDriver.prototype.resume = function () {
         var _this = this;
-        return this._mutex.runExclusive(function () { return _this._context.resume(); });
+        return this._mutex.runExclusive(function () {
+            return new Promise(function (resolve) {
+                _this._context.resume().then(resolve, resolve);
+                setTimeout(resolve, 200);
+            });
+        });
     };
     WebAudioDriver.prototype.close = function () {
         var _this = this;
