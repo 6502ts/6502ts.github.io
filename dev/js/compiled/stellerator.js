@@ -86849,7 +86849,7 @@ var GamepadDriver = (function () {
         var gamepads = navigator.getGamepads();
         for (var i = 0; i < gamepads.length; i++) {
             var gamepad = gamepads[i];
-            if (!gamepad || gamepad.mapping !== 'standard') {
+            if (!gamepad) {
                 continue;
             }
             gamepadCount++;
@@ -86883,16 +86883,16 @@ var GamepadDriver = (function () {
             var mapping = standardMappings[button];
             joystick[button].toggle(this._readState(mapping, gamepad));
         }
-        if (gamepad.axes[0] < -0.5 || gamepad.axes[1] < -0.5) {
+        if (gamepad.axes[0] < -0.5 || gamepad.axes[2] < -0.5) {
             joystick[1].toggle(true);
         }
-        if (gamepad.axes[0] > 0.5 || gamepad.axes[1] > 0.5) {
+        if (gamepad.axes[0] > 0.5 || gamepad.axes[2] > 0.5) {
             joystick[2].toggle(true);
         }
-        if (gamepad.axes[2] < -0.5 || gamepad.axes[3] < -0.5) {
+        if (gamepad.axes[1] < -0.5 || gamepad.axes[3] < -0.5) {
             joystick[3].toggle(true);
         }
-        if (gamepad.axes[2] > 0.5 || gamepad.axes[3] > 0.5) {
+        if (gamepad.axes[1] > 0.5 || gamepad.axes[3] > 0.5) {
             joystick[4].toggle(true);
         }
     };
@@ -86936,7 +86936,7 @@ var GamepadDriver = (function () {
         var cnt = 0;
         var gamepads = navigator.getGamepads();
         for (var i = 0; i < gamepads.length; i++) {
-            if (gamepads[i] && gamepads[i].mapping === 'standard') {
+            if (gamepads[i]) {
                 cnt++;
             }
         }
