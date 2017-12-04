@@ -86747,16 +86747,17 @@ exports.default = FullscreenVideoDriver;
 },{"screenfull":497}],637:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var microevent_ts_1 = require("microevent.ts");
 var MIN_POLL_INTERVAL = 50;
 var standardMappings = (_a = {},
-    _a[3] = [12],
-    _a[4] = [13],
-    _a[1] = [14],
-    _a[2] = [15],
-    _a[5] = [0, 1, 2, 3, 10, 11],
-    _a[7] = [8],
-    _a[6] = [9],
+    _a["up"] = [12],
+    _a["down"] = [13],
+    _a["left"] = [14],
+    _a["right"] = [15],
+    _a["fire"] = [0, 1, 2, 3, 10, 11],
+    _a["select"] = [8],
+    _a["start"] = [9],
     _a);
 var GamepadDriver = (function () {
     function GamepadDriver() {
@@ -86788,51 +86789,31 @@ var GamepadDriver = (function () {
         window.removeEventListener('gamepaddisconnected', this._onGamepadDisconnect);
     };
     GamepadDriver.prototype.bind = function (_a) {
+        var _this = this;
         var _b = _a.joysticks, joysticks = _b === void 0 ? null : _b, _c = _a.start, start = _c === void 0 ? null : _c, _d = _a.select, select = _d === void 0 ? null : _d;
         if (this._bound) {
             return;
         }
-        this._joysticks = joysticks;
+        this._joysticks = joysticks || [];
         this._start = start;
         this._select = select;
         this._bound = true;
-        this._joysticksShadow = null;
-        this._startShadow = null;
-        this._selectShadow = null;
-        if (this._joysticks) {
-            this._joysticksShadow = new Array(this._joysticks.length);
-            for (var i = 0; i < this._joysticks.length; i++) {
-                var joystick = this._joysticks[i];
-                joystick.getLeft().beforeRead.addHandler(GamepadDriver._onBeforeSwitchRead, this);
-                this._joysticksShadow[i] = createShadowJoystick();
-            }
-        }
-        if (this._select) {
-            this._select.beforeRead.addHandler(GamepadDriver._onBeforeSwitchRead, this);
-            this._selectShadow = new ShadowSwitch();
-        }
-        if (this._start) {
-            this._start.beforeRead.addHandler(GamepadDriver._onBeforeSwitchRead, this);
-            this._startShadow = new ShadowSwitch();
-        }
+        this._joysticksShadow = this._joysticks.map(function (x) { return createShadowJoystick(); });
+        this._startShadow = this._start ? new ShadowSwitch() : null;
+        this._selectShadow = this._select ? new ShadowSwitch() : null;
+        this._controlledSwitches().forEach(function (swtch) {
+            return swtch.beforeRead.addHandler(GamepadDriver._onBeforeSwitchRead, _this);
+        });
         this._initShadows();
     };
     GamepadDriver.prototype.unbind = function () {
+        var _this = this;
         if (!this._bound) {
             return;
         }
-        if (this._joysticks) {
-            for (var i = 0; i < this._joysticks.length; i++) {
-                var joystick = this._joysticks[i];
-                joystick.getLeft().beforeRead.removeHandler(GamepadDriver._onBeforeSwitchRead, this);
-            }
-        }
-        if (this._select) {
-            this._select.beforeRead.removeHandler(GamepadDriver._onBeforeSwitchRead, this);
-        }
-        if (this._start) {
-            this._start.beforeRead.removeHandler(GamepadDriver._onBeforeSwitchRead, this);
-        }
+        this._controlledSwitches().forEach(function (swtch) {
+            return swtch.beforeRead.removeHandler(GamepadDriver._onBeforeSwitchRead, _this);
+        });
         this._joysticks = this._start = this._select = null;
         this._bound = false;
     };
@@ -86854,8 +86835,8 @@ var GamepadDriver = (function () {
             }
             gamepadCount++;
             self._updateJoystickState(gamepad, joystickIndex++);
-            start = start || self._readState(standardMappings[6], gamepad);
-            select = select || self._readState(standardMappings[7], gamepad);
+            start = start || self._readState(standardMappings["start"], gamepad);
+            select = select || self._readState(standardMappings["select"], gamepad);
         }
         if (gamepadCount > 0) {
             if (self._start) {
@@ -86866,6 +86847,30 @@ var GamepadDriver = (function () {
             }
         }
         self._syncShadows();
+    };
+    GamepadDriver.prototype._controlledSwitches = function () {
+        var switches = [];
+        try {
+            for (var _a = tslib_1.__values(this._joysticks), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var joystick = _b.value;
+                switches.push(joystick.getLeft(), joystick.getRight(), joystick.getUp(), joystick.getDown(), joystick.getFire());
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        if (this._select) {
+            switches.push(this._select);
+        }
+        if (this._start) {
+            switches.push(this._start);
+        }
+        return switches;
+        var e_1, _c;
     };
     GamepadDriver.prototype._readState = function (mapping, gamepad) {
         var state = false;
@@ -86879,32 +86884,33 @@ var GamepadDriver = (function () {
             return;
         }
         var joystick = this._joysticksShadow[joystickIndex];
-        for (var button = 1; button <= 5; button++) {
-            var mapping = standardMappings[button];
-            joystick[button].toggle(this._readState(mapping, gamepad));
-        }
+        joystick["left"].toggle(this._readState(standardMappings["left"], gamepad));
+        joystick["right"].toggle(this._readState(standardMappings["right"], gamepad));
+        joystick["up"].toggle(this._readState(standardMappings["up"], gamepad));
+        joystick["down"].toggle(this._readState(standardMappings["down"], gamepad));
+        joystick["fire"].toggle(this._readState(standardMappings["fire"], gamepad));
         if (gamepad.axes[0] < -0.5 || gamepad.axes[2] < -0.5) {
-            joystick[1].toggle(true);
+            joystick["left"].toggle(true);
         }
         if (gamepad.axes[0] > 0.5 || gamepad.axes[2] > 0.5) {
-            joystick[2].toggle(true);
+            joystick["right"].toggle(true);
         }
         if (gamepad.axes[1] < -0.5 || gamepad.axes[3] < -0.5) {
-            joystick[3].toggle(true);
+            joystick["up"].toggle(true);
         }
         if (gamepad.axes[1] > 0.5 || gamepad.axes[3] > 0.5) {
-            joystick[4].toggle(true);
+            joystick["down"].toggle(true);
         }
     };
     GamepadDriver.prototype._initShadows = function () {
         if (this._joysticks) {
             for (var i = 0; i < this._joysticks.length; i++) {
                 var original = this._joysticks[i], shadow = this._joysticksShadow[i];
-                shadow[1].setState(original.getLeft().peek());
-                shadow[2].setState(original.getRight().peek());
-                shadow[3].setState(original.getUp().peek());
-                shadow[4].setState(original.getDown().peek());
-                shadow[5].setState(original.getFire().peek());
+                shadow["left"].setState(original.getLeft().peek());
+                shadow["right"].setState(original.getRight().peek());
+                shadow["up"].setState(original.getUp().peek());
+                shadow["down"].setState(original.getDown().peek());
+                shadow["fire"].setState(original.getFire().peek());
             }
         }
         if (this._start) {
@@ -86918,11 +86924,11 @@ var GamepadDriver = (function () {
         if (this._joysticks) {
             for (var i = 0; i < this._joysticks.length; i++) {
                 var original = this._joysticks[i], shadow = this._joysticksShadow[i];
-                shadow[1].sync(original.getLeft());
-                shadow[2].sync(original.getRight());
-                shadow[3].sync(original.getUp());
-                shadow[4].sync(original.getDown());
-                shadow[5].sync(original.getFire());
+                shadow["left"].sync(original.getLeft());
+                shadow["right"].sync(original.getRight());
+                shadow["up"].sync(original.getUp());
+                shadow["down"].sync(original.getDown());
+                shadow["fire"].sync(original.getFire());
             }
         }
         if (this._start) {
@@ -86974,17 +86980,17 @@ var ShadowSwitch = (function () {
 }());
 function createShadowJoystick() {
     return _a = {},
-        _a[1] = new ShadowSwitch(),
-        _a[2] = new ShadowSwitch(),
-        _a[3] = new ShadowSwitch(),
-        _a[4] = new ShadowSwitch(),
-        _a[5] = new ShadowSwitch(),
+        _a["left"] = new ShadowSwitch(),
+        _a["right"] = new ShadowSwitch(),
+        _a["up"] = new ShadowSwitch(),
+        _a["down"] = new ShadowSwitch(),
+        _a["fire"] = new ShadowSwitch(),
         _a;
     var _a;
 }
 var _a;
 
-},{"microevent.ts":271}],638:[function(require,module,exports){
+},{"microevent.ts":271,"tslib":546}],638:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var MouseAsPaddleDriver = (function () {
