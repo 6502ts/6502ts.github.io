@@ -86875,7 +86875,8 @@ var GamepadDriver = (function () {
     GamepadDriver.prototype._readState = function (mapping, gamepad) {
         var state = false;
         for (var i = 0; i < mapping.length; i++) {
-            state = state || gamepad.buttons[mapping[i]].pressed;
+            var button = gamepad.buttons[mapping[i]];
+            state = state || (typeof button === 'object' ? button.pressed : button >= 0.5);
         }
         return state;
     };
