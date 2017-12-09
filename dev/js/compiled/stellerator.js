@@ -87693,6 +87693,7 @@ var WebglVideoDriver = (function () {
         this._createTextureArrays();
     }
     WebglVideoDriver.prototype.init = function () {
+        this._gl.clearColor(0, 0, 0, 1);
         this._createProgram();
         this._createBuffers();
         this.resize();
@@ -87878,6 +87879,7 @@ var WebglVideoDriver = (function () {
             gl.uniform1i(this._getUniformLocation("u_Sampler" + i), (this._currentFrameIndex + this._numberOfFramesToCompose - i - 1) % this._numberOfFramesToCompose);
         }
         gl.uniform1f(this._getUniformLocation('u_Gamma'), this._gamma);
+        gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
     WebglVideoDriver.prototype._createProgram = function () {
