@@ -866,6 +866,7 @@ var CartridgeInfo;
         CartridgeType["bankswitch_8k_FE"] = "bankswitch_8k_FE";
         CartridgeType["bankswitch_8k_UA"] = "bankswitch_8k_UA";
         CartridgeType["bankswitch_8k_DPC"] = "bankswitch_8k_DPC";
+        CartridgeType["bankswitch_8k_econobanking"] = "bankswitch_8k_econobanking";
         CartridgeType["bankswitch_12k_FA"] = "bankswitch_12k_FA";
         CartridgeType["bankswitch_16k_F6"] = "bankswitch_16k_F6";
         CartridgeType["bankswitch_16k_E7"] = "bankswitch_16k_E7";
@@ -888,6 +889,7 @@ var CartridgeInfo;
             CartridgeType.bankswitch_8k_3F,
             CartridgeType.bankswitch_8k_FE,
             CartridgeType.bankswitch_8k_UA,
+            CartridgeType.bankswitch_8k_econobanking,
             CartridgeType.bankswitch_12k_FA,
             CartridgeType.bankswitch_8k_DPC,
             CartridgeType.bankswitch_16k_F6,
@@ -924,6 +926,8 @@ var CartridgeInfo;
                 return 'bankswitched 12k, FA (CBS) scheme';
             case CartridgeType.bankswitch_8k_DPC:
                 return 'bankswitched 8k + DPC';
+            case CartridgeType.bankswitch_8k_econobanking:
+                return 'bankswitched 8k, econobanking scheme';
             case CartridgeType.bankswitch_16k_F6:
                 return 'bankswitched 16k, F6 (Atari) scheme';
             case CartridgeType.bankswitch_16k_E7:
@@ -1319,6 +1323,253 @@ exports.default = FullscreenVideoDriver;
 },{"screenfull":5}],22:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var microevent_ts_1 = require("microevent.ts");
+var MIN_POLL_INTERVAL = 50;
+var standardMappings = (_a = {},
+    _a["up"] = [12],
+    _a["down"] = [13],
+    _a["left"] = [14],
+    _a["right"] = [15],
+    _a["fire"] = [0, 1, 2, 3, 10, 11],
+    _a["select"] = [8],
+    _a["start"] = [9],
+    _a);
+var GamepadDriver = (function () {
+    function GamepadDriver() {
+        var _this = this;
+        this._onGamepadConnect = function () { return _this._probeGamepads(); };
+        this._onGamepadDisconnect = function () { return _this._probeGamepads(); };
+        this.gamepadCountChanged = new microevent_ts_1.Event();
+        this._bound = false;
+        this._gamepadCount = 0;
+        this._lastPoll = 0;
+        this._joysticks = null;
+        this._start = null;
+        this._select = null;
+        this._joysticksShadow = null;
+        this._startShadow = null;
+        this._selectShadow = null;
+    }
+    GamepadDriver.prototype.init = function () {
+        if (!navigator.getGamepads) {
+            throw new Error("gamepad API not available");
+        }
+        this._probeGamepads();
+        window.addEventListener('gamepadconnected', this._onGamepadConnect);
+        window.addEventListener('gamepaddisconnected', this._onGamepadDisconnect);
+    };
+    GamepadDriver.prototype.deinit = function () {
+        this.unbind();
+        window.removeEventListener('gamepadconnected', this._onGamepadConnect);
+        window.removeEventListener('gamepaddisconnected', this._onGamepadDisconnect);
+    };
+    GamepadDriver.prototype.bind = function (_a) {
+        var _this = this;
+        var _b = _a.joysticks, joysticks = _b === void 0 ? null : _b, _c = _a.start, start = _c === void 0 ? null : _c, _d = _a.select, select = _d === void 0 ? null : _d;
+        if (this._bound) {
+            return;
+        }
+        this._joysticks = joysticks || [];
+        this._start = start;
+        this._select = select;
+        this._bound = true;
+        this._joysticksShadow = this._joysticks.map(function (x) { return createShadowJoystick(); });
+        this._startShadow = this._start ? new ShadowSwitch() : null;
+        this._selectShadow = this._select ? new ShadowSwitch() : null;
+        this._controlledSwitches().forEach(function (swtch) {
+            return swtch.beforeRead.addHandler(GamepadDriver._onBeforeSwitchRead, _this);
+        });
+        this._initShadows();
+    };
+    GamepadDriver.prototype.unbind = function () {
+        var _this = this;
+        if (!this._bound) {
+            return;
+        }
+        this._controlledSwitches().forEach(function (swtch) {
+            return swtch.beforeRead.removeHandler(GamepadDriver._onBeforeSwitchRead, _this);
+        });
+        this._joysticks = this._start = this._select = null;
+        this._bound = false;
+    };
+    GamepadDriver.prototype.getGamepadCount = function () {
+        return this._gamepadCount;
+    };
+    GamepadDriver._onBeforeSwitchRead = function (swtch, self) {
+        var now = Date.now();
+        if (self._gamepadCount === 0 || now - self._lastPoll < MIN_POLL_INTERVAL) {
+            return;
+        }
+        self._lastPoll = now;
+        var gamepadCount = 0, joystickIndex = 0, start = false, select = false;
+        var gamepads = navigator.getGamepads();
+        for (var i = 0; i < gamepads.length; i++) {
+            var gamepad = gamepads[i];
+            if (!gamepad) {
+                continue;
+            }
+            gamepadCount++;
+            self._updateJoystickState(gamepad, joystickIndex++);
+            start = start || self._readState(standardMappings["start"], gamepad);
+            select = select || self._readState(standardMappings["select"], gamepad);
+        }
+        if (gamepadCount > 0) {
+            if (self._start) {
+                self._startShadow.toggle(start);
+            }
+            if (self._select) {
+                self._selectShadow.toggle(select);
+            }
+        }
+        self._syncShadows();
+    };
+    GamepadDriver.prototype._controlledSwitches = function () {
+        var switches = [];
+        try {
+            for (var _a = tslib_1.__values(this._joysticks), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var joystick = _b.value;
+                switches.push(joystick.getLeft(), joystick.getRight(), joystick.getUp(), joystick.getDown(), joystick.getFire());
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        if (this._select) {
+            switches.push(this._select);
+        }
+        if (this._start) {
+            switches.push(this._start);
+        }
+        return switches;
+        var e_1, _c;
+    };
+    GamepadDriver.prototype._readState = function (mapping, gamepad) {
+        var state = false;
+        for (var i = 0; i < mapping.length; i++) {
+            var button = gamepad.buttons[mapping[i]];
+            state = state || (typeof button === 'object' ? button.pressed : button >= 0.5);
+        }
+        return state;
+    };
+    GamepadDriver.prototype._updateJoystickState = function (gamepad, joystickIndex) {
+        if (!this._joysticks || joystickIndex >= this._joysticks.length) {
+            return;
+        }
+        var joystick = this._joysticksShadow[joystickIndex];
+        joystick["left"].toggle(this._readState(standardMappings["left"], gamepad));
+        joystick["right"].toggle(this._readState(standardMappings["right"], gamepad));
+        joystick["up"].toggle(this._readState(standardMappings["up"], gamepad));
+        joystick["down"].toggle(this._readState(standardMappings["down"], gamepad));
+        joystick["fire"].toggle(this._readState(standardMappings["fire"], gamepad));
+        if (gamepad.axes[0] < -0.5 || gamepad.axes[2] < -0.5) {
+            joystick["left"].toggle(true);
+        }
+        if (gamepad.axes[0] > 0.5 || gamepad.axes[2] > 0.5) {
+            joystick["right"].toggle(true);
+        }
+        if (gamepad.axes[1] < -0.5 || gamepad.axes[3] < -0.5) {
+            joystick["up"].toggle(true);
+        }
+        if (gamepad.axes[1] > 0.5 || gamepad.axes[3] > 0.5) {
+            joystick["down"].toggle(true);
+        }
+    };
+    GamepadDriver.prototype._initShadows = function () {
+        if (this._joysticks) {
+            for (var i = 0; i < this._joysticks.length; i++) {
+                var original = this._joysticks[i], shadow = this._joysticksShadow[i];
+                shadow["left"].setState(original.getLeft().peek());
+                shadow["right"].setState(original.getRight().peek());
+                shadow["up"].setState(original.getUp().peek());
+                shadow["down"].setState(original.getDown().peek());
+                shadow["fire"].setState(original.getFire().peek());
+            }
+        }
+        if (this._start) {
+            this._startShadow.setState(this._start.peek());
+        }
+        if (this._select) {
+            this._selectShadow.setState(this._select.peek());
+        }
+    };
+    GamepadDriver.prototype._syncShadows = function () {
+        if (this._joysticks) {
+            for (var i = 0; i < this._joysticks.length; i++) {
+                var original = this._joysticks[i], shadow = this._joysticksShadow[i];
+                shadow["left"].sync(original.getLeft());
+                shadow["right"].sync(original.getRight());
+                shadow["up"].sync(original.getUp());
+                shadow["down"].sync(original.getDown());
+                shadow["fire"].sync(original.getFire());
+            }
+        }
+        if (this._start) {
+            this._startShadow.sync(this._start);
+        }
+        if (this._select) {
+            this._selectShadow.sync(this._select);
+        }
+    };
+    GamepadDriver.prototype._probeGamepads = function () {
+        var cnt = 0;
+        var gamepads = navigator.getGamepads();
+        for (var i = 0; i < gamepads.length; i++) {
+            if (gamepads[i]) {
+                cnt++;
+            }
+        }
+        if (cnt !== this._gamepadCount) {
+            this._gamepadCount = cnt;
+            this.gamepadCountChanged.dispatch(this._gamepadCount);
+        }
+    };
+    return GamepadDriver;
+}());
+exports.default = GamepadDriver;
+var ShadowSwitch = (function () {
+    function ShadowSwitch() {
+        this._state = false;
+        this._dirty = false;
+    }
+    ShadowSwitch.prototype.toggle = function (state) {
+        if (state === this._state) {
+            return;
+        }
+        this._state = state;
+        this._dirty = true;
+    };
+    ShadowSwitch.prototype.setState = function (state) {
+        this._state = state;
+        this._dirty = false;
+    };
+    ShadowSwitch.prototype.sync = function (swtch) {
+        if (this._dirty) {
+            swtch.toggle(this._state);
+            this._dirty = false;
+        }
+    };
+    return ShadowSwitch;
+}());
+function createShadowJoystick() {
+    return _a = {},
+        _a["left"] = new ShadowSwitch(),
+        _a["right"] = new ShadowSwitch(),
+        _a["up"] = new ShadowSwitch(),
+        _a["down"] = new ShadowSwitch(),
+        _a["fire"] = new ShadowSwitch(),
+        _a;
+    var _a;
+}
+var _a;
+
+},{"microevent.ts":4,"tslib":6}],23:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var MouseAsPaddleDriver = (function () {
     function MouseAsPaddleDriver() {
         this._x = -1;
@@ -1358,7 +1609,7 @@ var MouseAsPaddleDriver = (function () {
 }());
 exports.default = MouseAsPaddleDriver;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -1543,7 +1794,7 @@ var SimpleCanvasVideo = (function () {
 }());
 exports.default = SimpleCanvasVideo;
 
-},{"tslib":6}],24:[function(require,module,exports){
+},{"tslib":6}],25:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -1644,7 +1895,7 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"./audio/PCMChannel":26,"./audio/WaveformChannel":27,"async-mutex":2,"tslib":6}],25:[function(require,module,exports){
+},{"./audio/PCMChannel":27,"./audio/WaveformChannel":28,"async-mutex":2,"tslib":6}],26:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var LinearReasmpler = (function () {
@@ -1684,7 +1935,7 @@ var LinearReasmpler = (function () {
 }());
 exports.default = LinearReasmpler;
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RingBuffer_1 = require("../../../tools/RingBuffer");
@@ -1811,7 +2062,7 @@ var PCMChannel = (function () {
 }());
 exports.default = PCMChannel;
 
-},{"../../../tools/RingBuffer":17,"./LinearResampler":25}],27:[function(require,module,exports){
+},{"../../../tools/RingBuffer":17,"./LinearResampler":26}],28:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WaveformChannel = (function () {
@@ -1890,7 +2141,7 @@ var WaveformChannel = (function () {
 }());
 exports.default = WaveformChannel;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
@@ -2230,10 +2481,11 @@ var WebglVideoDriver = (function () {
 }());
 exports.default = WebglVideoDriver;
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
+var async_mutex_1 = require("async-mutex");
 var EmulationServiceInterface_1 = require("../../stella/service/EmulationServiceInterface");
 var EmulationService_1 = require("../../stella/service/worker/EmulationService");
 var DriverManager_1 = require("../../stella/service/DriverManager");
@@ -2242,6 +2494,7 @@ var WebglVideo_1 = require("../../driver/webgl/WebglVideo");
 var WebAudio_1 = require("../../stella/driver/WebAudio");
 var KeyboardIO_1 = require("../../stella/driver/KeyboardIO");
 var MouseAsPaddle_1 = require("../../driver/MouseAsPaddle");
+var Gamepad_1 = require("../../driver/Gamepad");
 var FullscreenVideo_1 = require("../../driver/FullscreenVideo");
 var CartridgeInfo_1 = require("../../../machine/stella/cartridge/CartridgeInfo");
 var Config_1 = require("../../../machine/stella/Config");
@@ -2258,8 +2511,11 @@ var Stellerator = (function () {
         this._audioDriver = null;
         this._keyboardIO = null;
         this._paddle = null;
+        this._gamepad = null;
+        this._state = Stellerator.State.stopped;
         this._driverManager = new DriverManager_1.default();
-        this._config = tslib_1.__assign({ smoothScaling: true, simulatePov: true, gamma: 1, audio: true, volume: 1, enableKeyboard: true, keyboardTarget: document, fullscreenViaKeyboard: true, paddleViaMouse: true }, config);
+        this._mutex = new async_mutex_1.Mutex();
+        this._config = tslib_1.__assign({ smoothScaling: true, simulatePov: true, gamma: 1, audio: true, volume: 1, enableKeyboard: true, keyboardTarget: document, fullscreenViaKeyboard: true, paddleViaMouse: true, pauseViaKeyboard: true, enableGamepad: true }, config);
         this._emulationService = new EmulationService_1.default(workerUrl);
         this._createDrivers();
     }
@@ -2312,11 +2568,15 @@ var Stellerator = (function () {
     Stellerator.prototype.getVolume = function () {
         return this._audioDriver ? this._audioDriver.getMasterVolume() : 0;
     };
+    Stellerator.prototype.getState = function () {
+        return this._state;
+    };
     Stellerator.prototype.start = function (cartridge, cartidgeType, config) {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var stellaConfig, _a;
-            return tslib_1.__generator(this, function (_b) {
-                switch (_b.label) {
+        var _this = this;
+        return this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () {
+            var stellaConfig, _a, _b;
+            return tslib_1.__generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
                         if (typeof cartridge === 'string') {
                             cartridge = base64_1.decode(cartridge);
@@ -2331,51 +2591,49 @@ var Stellerator = (function () {
                         if (typeof config.frameStart !== 'undefined') {
                             stellaConfig.frameStart = config.frameStart;
                         }
-                        _a = this._mapState;
+                        _a = this;
+                        _b = this._mapState;
                         return [4, this._emulationService.start(cartridge, stellaConfig, config.cartridgeType)];
-                    case 1: return [2, _a.apply(this, [_b.sent()])];
+                    case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
                 }
             });
-        });
+        }); });
     };
     Stellerator.prototype.pause = function () {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var _a;
-            return tslib_1.__generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = this._mapState;
-                        return [4, this._emulationService.pause()];
-                    case 1: return [2, _a.apply(this, [_b.sent()])];
-                }
-            });
-        });
+        var _this = this;
+        return this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    _a = this;
+                    _b = this._mapState;
+                    return [4, this._emulationService.pause()];
+                case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
+            }
+        }); }); });
     };
     Stellerator.prototype.resume = function () {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var _a;
-            return tslib_1.__generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = this._mapState;
-                        return [4, this._emulationService.resume()];
-                    case 1: return [2, _a.apply(this, [_b.sent()])];
-                }
-            });
-        });
+        var _this = this;
+        return this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    _a = this;
+                    _b = this._mapState;
+                    return [4, this._emulationService.resume()];
+                case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
+            }
+        }); }); });
     };
     Stellerator.prototype.stop = function () {
-        return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var _a;
-            return tslib_1.__generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = this._mapState;
-                        return [4, this._emulationService.stop()];
-                    case 1: return [2, _a.apply(this, [_b.sent()])];
-                }
-            });
-        });
+        var _this = this;
+        return this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    _a = this;
+                    _b = this._mapState;
+                    return [4, this._emulationService.stop()];
+                case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
+            }
+        }); }); });
     };
     Stellerator.prototype.lastError = function () {
         return this._emulationService.getLastError();
@@ -2415,6 +2673,28 @@ var Stellerator = (function () {
             if (this._config.fullscreenViaKeyboard) {
                 this._keyboardIO.toggleFullscreen.addHandler(function () { return _this._fullscreenVideo.toggle(); });
             }
+            if (this._config.pauseViaKeyboard) {
+                this._keyboardIO.togglePause.addHandler(function () {
+                    switch (_this._emulationService.getState()) {
+                        case EmulationServiceInterface_1.default.State.paused:
+                            _this.resume();
+                            break;
+                        case EmulationServiceInterface_1.default.State.running:
+                            _this.pause();
+                            break;
+                    }
+                });
+            }
+        }
+        if (this._config.enableGamepad) {
+            this._gamepad = new Gamepad_1.default();
+            this._driverManager.addDriver(this._gamepad, function (context) {
+                return _this._gamepad.bind({
+                    joysticks: [context.getJoystick(0), context.getJoystick(1)],
+                    start: context.getControlPanel().getResetButton(),
+                    select: context.getControlPanel().getSelectSwitch()
+                });
+            });
         }
         if (this._config.paddleViaMouse) {
             this._paddle = new MouseAsPaddle_1.default();
@@ -2457,14 +2737,14 @@ var Stellerator = (function () {
 })(Stellerator || (Stellerator = {}));
 exports.default = Stellerator;
 
-},{"../../../machine/stella/Config":12,"../../../machine/stella/cartridge/CartridgeInfo":14,"../../../tools/base64":18,"../../driver/FullscreenVideo":21,"../../driver/MouseAsPaddle":22,"../../driver/SimpleCanvasVideo":23,"../../driver/webgl/WebglVideo":28,"../../stella/driver/KeyboardIO":31,"../../stella/driver/WebAudio":32,"../../stella/service/DriverManager":33,"../../stella/service/EmulationServiceInterface":34,"../../stella/service/worker/EmulationService":37,"tslib":6}],30:[function(require,module,exports){
+},{"../../../machine/stella/Config":12,"../../../machine/stella/cartridge/CartridgeInfo":14,"../../../tools/base64":18,"../../driver/FullscreenVideo":21,"../../driver/Gamepad":22,"../../driver/MouseAsPaddle":23,"../../driver/SimpleCanvasVideo":24,"../../driver/webgl/WebglVideo":29,"../../stella/driver/KeyboardIO":32,"../../stella/driver/WebAudio":33,"../../stella/service/DriverManager":34,"../../stella/service/EmulationServiceInterface":35,"../../stella/service/worker/EmulationService":38,"async-mutex":2,"tslib":6}],31:[function(require,module,exports){
 "use strict";
 var Stellerator_1 = require("./Stellerator");
 module.exports = {
     Stellerator: Stellerator_1.default
 };
 
-},{"./Stellerator":29}],31:[function(require,module,exports){
+},{"./Stellerator":30}],32:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -2696,7 +2976,7 @@ var KeyboardIO = (function () {
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"microevent.ts":4,"tslib":6}],32:[function(require,module,exports){
+},{"microevent.ts":4,"tslib":6}],33:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -2785,7 +3065,7 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":24,"tslib":6}],33:[function(require,module,exports){
+},{"../../driver/WebAudio":25,"tslib":6}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -2873,7 +3153,7 @@ var DriverManager = (function () {
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":34}],34:[function(require,module,exports){
+},{"./EmulationServiceInterface":35}],35:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -2888,7 +3168,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DigitalJoystick_1 = require("../../../../machine/io/DigitalJoystick");
@@ -2958,7 +3238,7 @@ var ControlProxy = (function () {
 }());
 exports.default = ControlProxy;
 
-},{"../../../../machine/io/DigitalJoystick":9,"../../../../machine/io/Paddle":10,"../../../../machine/stella/ControlPanel":13,"./messages":41}],36:[function(require,module,exports){
+},{"../../../../machine/io/DigitalJoystick":9,"../../../../machine/io/Paddle":10,"../../../../machine/stella/ControlPanel":13,"./messages":42}],37:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationContext = (function () {
@@ -3003,7 +3283,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3294,7 +3574,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../EmulationServiceInterface":34,"./ControlProxy":35,"./EmulationContext":36,"./PCMAudioProxy":38,"./VideoProxy":39,"./WaveformAudioProxy":40,"./messages":41,"async-mutex":2,"microevent.ts":4,"tslib":6,"worker-rpc":8}],38:[function(require,module,exports){
+},{"../EmulationServiceInterface":35,"./ControlProxy":36,"./EmulationContext":37,"./PCMAudioProxy":39,"./VideoProxy":40,"./WaveformAudioProxy":41,"./messages":42,"async-mutex":2,"microevent.ts":4,"tslib":6,"worker-rpc":8}],39:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3385,7 +3665,7 @@ var PCMAudioProxy = (function () {
 }());
 exports.default = PCMAudioProxy;
 
-},{"../../../../tools/pool/Pool":19,"./messages":41,"microevent.ts":4,"tslib":6}],39:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":19,"./messages":42,"microevent.ts":4,"tslib":6}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3466,7 +3746,7 @@ var VideoProxy = (function () {
 }());
 exports.default = VideoProxy;
 
-},{"./messages":41,"microevent.ts":4,"tslib":6}],40:[function(require,module,exports){
+},{"./messages":42,"microevent.ts":4,"tslib":6}],41:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3535,7 +3815,7 @@ var WaveformAudioProxy = (function () {
 }());
 exports.default = WaveformAudioProxy;
 
-},{"../../../../machine/stella/tia/ToneGenerator":15,"./messages":41,"microevent.ts":4,"tslib":6}],41:[function(require,module,exports){
+},{"../../../../machine/stella/tia/ToneGenerator":15,"./messages":42,"microevent.ts":4,"tslib":6}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {
@@ -3567,6 +3847,6 @@ exports.SIGNAL_TYPE = {
 };
 Object.freeze(exports.SIGNAL_TYPE);
 
-},{}]},{},[30])(30)
+},{}]},{},[31])(31)
 });
 //# sourceMappingURL=stellerator_embedded.js.map

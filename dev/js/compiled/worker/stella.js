@@ -4209,7 +4209,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../../tools/rng/factory":87,"../board/BoardInterface":23,"../cpu/Cpu":24,"../cpu/CpuInterface":25,"../io/DigitalJoystick":27,"../io/Paddle":28,"./Bus":31,"./Config":32,"./ControlPanel":33,"./Pia":34,"./tia/Tia":73,"microevent.ts":6}],31:[function(require,module,exports){
+},{"../../tools/rng/factory":88,"../board/BoardInterface":23,"../cpu/Cpu":24,"../cpu/CpuInterface":25,"../io/DigitalJoystick":27,"../io/Paddle":28,"./Bus":31,"./Config":32,"./ControlPanel":33,"./Pia":34,"./tia/Tia":74,"microevent.ts":6}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -4677,7 +4677,91 @@ var AbstractCartridge = (function () {
 }());
 exports.default = AbstractCartridge;
 
-},{"./CartridgeInfo":55,"./CartridgeInterface":56,"microevent.ts":6}],36:[function(require,module,exports){
+},{"./CartridgeInfo":56,"./CartridgeInterface":57,"microevent.ts":6}],36:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var AbstractCartridge_1 = require("./AbstractCartridge");
+var CartridgeInfo_1 = require("./CartridgeInfo");
+var cartridgeUtil = require("./util");
+var Cartridge8040 = (function (_super) {
+    __extends(Cartridge8040, _super);
+    function Cartridge8040(buffer) {
+        var _this = _super.call(this) || this;
+        _this._bank = null;
+        _this._bank0 = new Uint8Array(0x1000);
+        _this._bank1 = new Uint8Array(0x1000);
+        _this._bus = null;
+        if (buffer.length !== 0x2000) {
+            throw new Error("buffer is not an 8k cartridge image: wrong length " + buffer.length);
+        }
+        for (var i = 0; i < 0x1000; i++) {
+            _this._bank0[i] = buffer[i];
+            _this._bank1[i] = buffer[0x1000 + i];
+        }
+        _this.reset();
+        return _this;
+    }
+    Cartridge8040.matchesBuffer = function (buffer) {
+        var signatureCounts = cartridgeUtil.searchForSignatures(buffer, [
+            [0xad, 0x00, 0x08],
+            [0xad, 0x40, 0x08],
+            [0x2c, 0x00, 0x08],
+            [0x0c, 0x00, 0x08, 0x4c],
+            [0x0c, 0xff, 0x0f, 0x4c]
+        ]);
+        for (var _i = 0, signatureCounts_1 = signatureCounts; _i < signatureCounts_1.length; _i++) {
+            var count = signatureCounts_1[_i];
+            if (count >= 2) {
+                return true;
+            }
+        }
+        return false;
+    };
+    Cartridge8040.prototype.reset = function () {
+        this._bank = this._bank0;
+    };
+    Cartridge8040.prototype.read = function (address) {
+        return this.peek(address);
+    };
+    Cartridge8040.prototype.peek = function (address) {
+        address &= 0x0fff;
+        return this._bank[address];
+    };
+    Cartridge8040.prototype.getType = function () {
+        return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_econobanking;
+    };
+    Cartridge8040.prototype.setBus = function (bus) {
+        this._bus = bus;
+        this._bus.event.read.addHandler(this._onBusAccess, this);
+        this._bus.event.write.addHandler(this._onBusAccess, this);
+        return this;
+    };
+    Cartridge8040.prototype._onBusAccess = function (accessType, self) {
+        var address = self._bus.getLastAddresBusValue() & 0x1840;
+        switch (address) {
+            case 0x0800:
+                self._bank = self._bank0;
+                break;
+            case 0x0840:
+                self._bank = self._bank1;
+                break;
+        }
+    };
+    return Cartridge8040;
+}(AbstractCartridge_1.default));
+exports.default = Cartridge8040;
+
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],37:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -4715,7 +4799,7 @@ var Cartridge2k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge2k;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55}],37:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56}],38:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -4779,6 +4863,7 @@ var Cartridge3E = (function (_super) {
     };
     Cartridge3E.prototype.setBus = function (bus) {
         this._bus = bus;
+        this._bus.event.read.addHandler(Cartridge3E._onBusAccess, this);
         this._bus.event.write.addHandler(Cartridge3E._onBusAccess, this);
         return this;
     };
@@ -4836,7 +4921,7 @@ var Cartridge3E = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3E;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./util":62}],38:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],39:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -4902,7 +4987,7 @@ var Cartridge3F = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3F;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./util":62}],39:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],40:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -4941,7 +5026,7 @@ var Cartridge4k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge4k;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55}],40:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56}],41:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -5243,7 +5328,7 @@ var MusicStream = (function () {
 }());
 exports.default = CartridgeCDF;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./CartridgeInterface":56,"./harmony/Soc":59,"./util":62,"thumbulator.ts":18}],41:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./CartridgeInterface":57,"./harmony/Soc":60,"./util":63,"thumbulator.ts":18}],42:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -5481,7 +5566,7 @@ var Fetcher = (function () {
 }());
 exports.default = CartridgeDPC;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55}],42:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56}],43:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -5861,7 +5946,7 @@ var MusicFetcher = (function () {
 }());
 exports.default = CartridgeDPCPlus;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./CartridgeInterface":56,"./harmony/Soc":59,"./util":62}],43:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./CartridgeInterface":57,"./harmony/Soc":60,"./util":63}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo_1 = require("./CartridgeInfo");
@@ -5876,6 +5961,7 @@ var CartridgeFA2_1 = require("./CartridgeFA2");
 var CartridgeEF_1 = require("./CartridgeEF");
 var CartridgeDPCPlus_1 = require("./CartridgeDPCPlus");
 var CartridgeCDF_1 = require("./CartridgeCDF");
+var Cartridge0840_1 = require("./Cartridge0840");
 var CartridgeDetector = (function () {
     function CartridgeDetector() {
     }
@@ -5924,6 +6010,9 @@ var CartridgeDetector = (function () {
         if (!f8Matches && CartridgeFE_1.default.matchesBuffer(buffer)) {
             return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_FE;
         }
+        if (Cartridge0840_1.default.matchesBuffer(buffer)) {
+            return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_econobanking;
+        }
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_F8;
     };
     CartridgeDetector.prototype._detect16k = function (buffer) {
@@ -5960,7 +6049,7 @@ var CartridgeDetector = (function () {
 }());
 exports.default = CartridgeDetector;
 
-},{"./Cartridge3E":37,"./Cartridge3F":38,"./CartridgeCDF":40,"./CartridgeDPCPlus":42,"./CartridgeE0":44,"./CartridgeE7":45,"./CartridgeEF":46,"./CartridgeF8":50,"./CartridgeFA2":52,"./CartridgeFE":53,"./CartridgeInfo":55,"./CartridgeUA":58}],44:[function(require,module,exports){
+},{"./Cartridge0840":36,"./Cartridge3E":38,"./Cartridge3F":39,"./CartridgeCDF":41,"./CartridgeDPCPlus":43,"./CartridgeE0":45,"./CartridgeE7":46,"./CartridgeEF":47,"./CartridgeF8":51,"./CartridgeFA2":53,"./CartridgeFE":54,"./CartridgeInfo":56,"./CartridgeUA":59}],45:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6055,7 +6144,7 @@ var CartridgeE0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeE0;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./util":62}],45:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],46:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6190,7 +6279,7 @@ var CartrdigeE7 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartrdigeE7;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./util":62}],46:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],47:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6308,7 +6397,7 @@ var CartridgeEF = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeEF;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./util":62}],47:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],48:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6373,7 +6462,7 @@ var CartridgeF0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF0;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55}],48:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56}],49:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6461,7 +6550,7 @@ var CartridgeF4 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF4;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55}],49:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56}],50:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6560,7 +6649,7 @@ var CartridgeF6 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF6;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55}],50:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56}],51:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6654,7 +6743,7 @@ var CartridgeF8 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF8;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./util":62}],51:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],52:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6739,7 +6828,7 @@ var CartridgeFA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55}],52:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56}],53:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6868,7 +6957,7 @@ var CartridgeFA2 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA2;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./util":62}],53:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],54:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -6955,7 +7044,7 @@ var CartridgeFE = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFE;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./util":62}],54:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],55:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -7012,6 +7101,7 @@ var CartridgeSupercharger_1 = require("./CartridgeSupercharger");
 var CartridgeDPC_1 = require("./CartridgeDPC");
 var CartridgeDPCPlus_1 = require("./CartridgeDPCPlus");
 var CartridgeCDF_1 = require("./CartridgeCDF");
+var Cartridge0840_1 = require("./Cartridge0840");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeDetector_1 = require("./CartridgeDetector");
 var CartridgeFactory = (function () {
@@ -7054,6 +7144,8 @@ var CartridgeFactory = (function () {
                 return new CartridgeUA_1.default(buffer);
             case CartridgeInfo_1.default.CartridgeType.bankswitch_8k_DPC:
                 return new CartridgeDPC_1.default(buffer);
+            case CartridgeInfo_1.default.CartridgeType.bankswitch_8k_econobanking:
+                return new Cartridge0840_1.default(buffer);
             case CartridgeInfo_1.default.CartridgeType.bankswitch_12k_FA:
                 return new CartridgeFA_1.default(buffer);
             case CartridgeInfo_1.default.CartridgeType.bankswitch_16k_F6:
@@ -7084,7 +7176,7 @@ var CartridgeFactory = (function () {
 }());
 exports.default = CartridgeFactory;
 
-},{"./Cartridge2k":36,"./Cartridge3E":37,"./Cartridge3F":38,"./Cartridge4k":39,"./CartridgeCDF":40,"./CartridgeDPC":41,"./CartridgeDPCPlus":42,"./CartridgeDetector":43,"./CartridgeE0":44,"./CartridgeE7":45,"./CartridgeEF":46,"./CartridgeF0":47,"./CartridgeF4":48,"./CartridgeF6":49,"./CartridgeF8":50,"./CartridgeFA":51,"./CartridgeFA2":52,"./CartridgeFE":53,"./CartridgeInfo":55,"./CartridgeSupercharger":57,"./CartridgeUA":58}],55:[function(require,module,exports){
+},{"./Cartridge0840":36,"./Cartridge2k":37,"./Cartridge3E":38,"./Cartridge3F":39,"./Cartridge4k":40,"./CartridgeCDF":41,"./CartridgeDPC":42,"./CartridgeDPCPlus":43,"./CartridgeDetector":44,"./CartridgeE0":45,"./CartridgeE7":46,"./CartridgeEF":47,"./CartridgeF0":48,"./CartridgeF4":49,"./CartridgeF6":50,"./CartridgeF8":51,"./CartridgeFA":52,"./CartridgeFA2":53,"./CartridgeFE":54,"./CartridgeInfo":56,"./CartridgeSupercharger":58,"./CartridgeUA":59}],56:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo;
@@ -7099,6 +7191,7 @@ var CartridgeInfo;
         CartridgeType["bankswitch_8k_FE"] = "bankswitch_8k_FE";
         CartridgeType["bankswitch_8k_UA"] = "bankswitch_8k_UA";
         CartridgeType["bankswitch_8k_DPC"] = "bankswitch_8k_DPC";
+        CartridgeType["bankswitch_8k_econobanking"] = "bankswitch_8k_econobanking";
         CartridgeType["bankswitch_12k_FA"] = "bankswitch_12k_FA";
         CartridgeType["bankswitch_16k_F6"] = "bankswitch_16k_F6";
         CartridgeType["bankswitch_16k_E7"] = "bankswitch_16k_E7";
@@ -7121,6 +7214,7 @@ var CartridgeInfo;
             CartridgeType.bankswitch_8k_3F,
             CartridgeType.bankswitch_8k_FE,
             CartridgeType.bankswitch_8k_UA,
+            CartridgeType.bankswitch_8k_econobanking,
             CartridgeType.bankswitch_12k_FA,
             CartridgeType.bankswitch_8k_DPC,
             CartridgeType.bankswitch_16k_F6,
@@ -7157,6 +7251,8 @@ var CartridgeInfo;
                 return 'bankswitched 12k, FA (CBS) scheme';
             case CartridgeType.bankswitch_8k_DPC:
                 return 'bankswitched 8k + DPC';
+            case CartridgeType.bankswitch_8k_econobanking:
+                return 'bankswitched 8k, econobanking scheme';
             case CartridgeType.bankswitch_16k_F6:
                 return 'bankswitched 16k, F6 (Atari) scheme';
             case CartridgeType.bankswitch_16k_E7:
@@ -7185,7 +7281,7 @@ var CartridgeInfo;
 })(CartridgeInfo || (CartridgeInfo = {}));
 exports.default = CartridgeInfo;
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInterface;
@@ -7208,7 +7304,7 @@ var CartridgeInterface;
 })(CartridgeInterface || (CartridgeInterface = {}));
 exports.default = CartridgeInterface;
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -7421,7 +7517,7 @@ var CartridgeSupercharger = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeSupercharger;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./supercharger/Header":60,"./supercharger/blob":61}],58:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./supercharger/Header":61,"./supercharger/blob":62}],59:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -7497,7 +7593,7 @@ var CartridgeUA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeUA;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":55,"./util":62}],59:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],60:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var thumbulator_ts_1 = require("thumbulator.ts");
@@ -7704,7 +7800,7 @@ var Soc = (function () {
 }());
 exports.default = Soc;
 
-},{"../../../../tools/hex":81,"microevent.ts":6,"thumbulator.ts":18}],60:[function(require,module,exports){
+},{"../../../../tools/hex":82,"microevent.ts":6,"thumbulator.ts":18}],61:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Header = (function () {
@@ -7741,7 +7837,7 @@ var Header = (function () {
 }());
 exports.default = Header;
 
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bios = new Uint8Array([
@@ -8299,7 +8395,7 @@ exports.defaultHeader = new Uint8Array([
     0x00
 ]);
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function searchForSignatures(buffer, signatures) {
@@ -8349,7 +8445,7 @@ function searchForSignature(buffer, signature) {
 }
 exports.searchForSignature = searchForSignature;
 
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Count;
@@ -8490,7 +8586,7 @@ var Ball = (function () {
 }());
 exports.default = Ball;
 
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DelayQueue = (function () {
@@ -8564,7 +8660,7 @@ var QueueEntry = (function () {
 }());
 exports.default = DelayQueue;
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -8750,7 +8846,7 @@ var FrameManager = (function () {
 }());
 exports.default = FrameManager;
 
-},{"../Config":32,"microevent.ts":6}],66:[function(require,module,exports){
+},{"../Config":32,"microevent.ts":6}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var LatchedInput = (function () {
@@ -8785,7 +8881,7 @@ var LatchedInput = (function () {
 }());
 exports.default = LatchedInput;
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -8947,7 +9043,7 @@ var Missile = (function () {
 }());
 exports.default = Missile;
 
-},{"./drawCounterDecodes":76}],68:[function(require,module,exports){
+},{"./drawCounterDecodes":77}],69:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -9056,7 +9152,7 @@ var PCMAudio = (function () {
 }());
 exports.default = PCMAudio;
 
-},{"../Config":32,"./PCMChannel":69,"microevent.ts":6}],69:[function(require,module,exports){
+},{"../Config":32,"./PCMChannel":70,"microevent.ts":6}],70:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PCMChannel = (function () {
@@ -9166,7 +9262,7 @@ var PCMChannel = (function () {
 }());
 exports.default = PCMChannel;
 
-},{}],70:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var C = 68e-9, RPOT = 1e6, R0 = 1.8e3, U = 5, LINES_FULL = 380;
@@ -9226,7 +9322,7 @@ var PaddleReader = (function () {
 }());
 exports.default = PaddleReader;
 
-},{}],71:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -9492,7 +9588,7 @@ var Player = (function () {
 }());
 exports.default = Player;
 
-},{"./drawCounterDecodes":76}],72:[function(require,module,exports){
+},{"./drawCounterDecodes":77}],73:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ColorMode;
@@ -9641,7 +9737,7 @@ var Playfield = (function () {
 }());
 exports.default = Playfield;
 
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -10454,7 +10550,7 @@ var Tia = (function () {
 })(Tia || (Tia = {}));
 exports.default = Tia;
 
-},{"../Config":32,"./Ball":63,"./DelayQueue":64,"./FrameManager":65,"./LatchedInput":66,"./Missile":67,"./PCMAudio":68,"./PaddleReader":70,"./Player":71,"./Playfield":72,"./WaveformAudio":75,"./palette":77,"microevent.ts":6}],74:[function(require,module,exports){
+},{"../Config":32,"./Ball":64,"./DelayQueue":65,"./FrameManager":66,"./LatchedInput":67,"./Missile":68,"./PCMAudio":69,"./PaddleReader":71,"./Player":72,"./Playfield":73,"./WaveformAudio":76,"./palette":78,"microevent.ts":6}],75:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../Config");
@@ -10542,7 +10638,7 @@ var ToneGenerator = (function () {
 }());
 exports.default = ToneGenerator;
 
-},{"../../../tools/AudioOutputBuffer":78,"../../../tools/base64":80,"../Config":32}],75:[function(require,module,exports){
+},{"../../../tools/AudioOutputBuffer":79,"../../../tools/base64":81,"../Config":32}],76:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -10617,7 +10713,7 @@ var WaveformAudio = (function () {
 }());
 exports.default = WaveformAudio;
 
-},{"./ToneGenerator":74,"microevent.ts":6}],76:[function(require,module,exports){
+},{"./ToneGenerator":75,"microevent.ts":6}],77:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160);
@@ -10653,7 +10749,7 @@ decodes3[12] = decodes3[28] = 1;
 decodes4[60] = 1;
 decodes6[28] = decodes6[60] = 1;
 
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NTSC = new Uint32Array([
@@ -11047,7 +11143,7 @@ exports.SECAM = new Uint32Array([
     0xffffffff
 ]);
 
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var AudioOutputBuffer = (function () {
@@ -11071,7 +11167,7 @@ var AudioOutputBuffer = (function () {
 }());
 exports.default = AudioOutputBuffer;
 
-},{}],79:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -11132,7 +11228,7 @@ var ClockProbe = (function () {
 }());
 exports.default = ClockProbe;
 
-},{"microevent.ts":6}],80:[function(require,module,exports){
+},{"microevent.ts":6}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var encodingsString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', encodings = new Uint8Array(256);
@@ -11183,7 +11279,7 @@ function decode(data) {
 }
 exports.decode = decode;
 
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encodeWithPrefix(value, width, signed, prefix) {
@@ -11224,7 +11320,7 @@ function decode(value) {
 }
 exports.decode = decode;
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember = (function () {
@@ -11249,7 +11345,7 @@ var InducedMember = (function () {
 }());
 exports.default = InducedMember;
 
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember_1 = require("./InducedMember");
@@ -11272,7 +11368,7 @@ var InducedPool = (function () {
 }());
 exports.default = InducedPool;
 
-},{"./InducedMember":82}],84:[function(require,module,exports){
+},{"./InducedMember":83}],85:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -11330,7 +11426,7 @@ var Pool = (function () {
 }());
 exports.default = Pool;
 
-},{"./PoolMember":85,"microevent.ts":6}],85:[function(require,module,exports){
+},{"./PoolMember":86,"microevent.ts":6}],86:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PoolMember = (function () {
@@ -11357,7 +11453,7 @@ var PoolMember = (function () {
 }());
 exports.default = PoolMember;
 
-},{}],86:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var SeedrandomGenerator = (function () {
@@ -11383,7 +11479,7 @@ var SeedrandomGenerator = (function () {
 }());
 exports.default = SeedrandomGenerator;
 
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var seedrandom = require("seedrandom");
@@ -11404,7 +11500,7 @@ function restoreRng(state) {
 }
 exports.restoreRng = restoreRng;
 
-},{"./SeedrandomGenerator":86,"seedrandom":9}],88:[function(require,module,exports){
+},{"./SeedrandomGenerator":87,"seedrandom":9}],89:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler_1 = require("./PeriodicScheduler");
@@ -11465,7 +11561,7 @@ var Factory = (function () {
 })(Factory || (Factory = {}));
 exports.default = Factory;
 
-},{"./ImmedateScheduler":89,"./PeriodicScheduler":90,"./limiting/BusyWait":92,"./limiting/ConstantCycles":93,"./limiting/ConstantTimeslice":94}],89:[function(require,module,exports){
+},{"./ImmedateScheduler":90,"./PeriodicScheduler":91,"./limiting/BusyWait":93,"./limiting/ConstantCycles":94,"./limiting/ConstantTimeslice":95}],90:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var setImmediate_1 = require("./setImmediate");
@@ -11490,7 +11586,7 @@ var ImmediateScheduler = (function () {
 }());
 exports.default = ImmediateScheduler;
 
-},{"./setImmediate":95}],90:[function(require,module,exports){
+},{"./setImmediate":96}],91:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler = (function () {
@@ -11523,7 +11619,7 @@ var PeriodicScheduler = (function () {
 }());
 exports.default = PeriodicScheduler;
 
-},{}],91:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp = self.performance && self.performance.now
@@ -11531,7 +11627,7 @@ var getTimestamp = self.performance && self.performance.now
     : function () { return Date.now(); };
 exports.default = getTimestamp;
 
-},{}],92:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -11570,7 +11666,7 @@ var ConstantTimesliceScheduler = (function () {
 }());
 exports.default = ConstantTimesliceScheduler;
 
-},{"../getTimestamp":91,"../setImmediate":95}],93:[function(require,module,exports){
+},{"../getTimestamp":92,"../setImmediate":96}],94:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -11622,7 +11718,7 @@ var ConstantCyclesScheduler = (function () {
 }());
 exports.default = ConstantCyclesScheduler;
 
-},{"../getTimestamp":91,"../setImmediate":95}],94:[function(require,module,exports){
+},{"../getTimestamp":92,"../setImmediate":96}],95:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -11661,7 +11757,7 @@ var ConstantTimesliceScheduler = (function () {
 }());
 exports.default = ConstantTimesliceScheduler;
 
-},{"../getTimestamp":91,"../setImmediate":95}],95:[function(require,module,exports){
+},{"../getTimestamp":92,"../setImmediate":96}],96:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var polyfill = require("setimmediate2");
@@ -11681,7 +11777,7 @@ function setImmediate(callback) {
 }
 exports.setImmediate = setImmediate;
 
-},{"setimmediate2":17}],96:[function(require,module,exports){
+},{"setimmediate2":17}],97:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -11732,7 +11828,7 @@ var FrameMergeProcessor = (function () {
 }());
 exports.default = FrameMergeProcessor;
 
-},{"microevent.ts":6}],97:[function(require,module,exports){
+},{"microevent.ts":6}],98:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -11749,7 +11845,7 @@ var PassthroughProcessor = (function () {
 }());
 exports.default = PassthroughProcessor;
 
-},{"microevent.ts":6}],98:[function(require,module,exports){
+},{"microevent.ts":6}],99:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config = require("./config");
@@ -11772,7 +11868,7 @@ var ProcessorFactory = (function () {
 }());
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":96,"./PassthroughProcessor":97,"./config":100}],99:[function(require,module,exports){
+},{"./FrameMergeProcessor":97,"./PassthroughProcessor":98,"./config":101}],100:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ProcessorFactory_1 = require("./ProcessorFactory");
@@ -11806,7 +11902,7 @@ var ProcessorPipeline = (function () {
 }());
 exports.default = ProcessorPipeline;
 
-},{"./ProcessorFactory":98}],100:[function(require,module,exports){
+},{"./ProcessorFactory":99}],101:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Type;
@@ -11815,7 +11911,7 @@ var Type;
     Type[Type["merge"] = 1] = "merge";
 })(Type = exports.Type || (exports.Type = {}));
 
-},{}],101:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
@@ -11879,7 +11975,7 @@ var PipelineClient = (function () {
 }());
 exports.default = PipelineClient;
 
-},{"./messages":102,"microevent.ts":6,"worker-rpc":22}],102:[function(require,module,exports){
+},{"./messages":103,"microevent.ts":6,"worker-rpc":22}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.messageIds = {
@@ -11891,7 +11987,7 @@ exports.messageIds = {
 };
 Object.freeze(exports.messageIds);
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface = (function () {
@@ -11943,7 +12039,7 @@ var ArrayBufferSurface = (function () {
 }());
 exports.default = ArrayBufferSurface;
 
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -11986,7 +12082,7 @@ var PCMAudioEndpoint = (function () {
 }());
 exports.default = PCMAudioEndpoint;
 
-},{"../../tools/AudioOutputBuffer":78,"../../tools/pool/InducedPool":83,"../../tools/pool/Pool":84,"microevent.ts":6}],105:[function(require,module,exports){
+},{"../../tools/AudioOutputBuffer":79,"../../tools/pool/InducedPool":84,"../../tools/pool/Pool":85,"microevent.ts":6}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -12032,7 +12128,7 @@ var VideoEndpoint = (function () {
 }());
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":83,"../../tools/pool/Pool":84,"../../video/processing/ProcessorPipeline":99,"../../video/surface/ArrayBufferSurface":103,"microevent.ts":6}],106:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":84,"../../tools/pool/Pool":85,"../../video/processing/ProcessorPipeline":100,"../../video/surface/ArrayBufferSurface":104,"microevent.ts":6}],107:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -12120,7 +12216,7 @@ var DriverManager = (function () {
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":107}],107:[function(require,module,exports){
+},{"./EmulationServiceInterface":108}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -12135,7 +12231,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var VideoEndpoint_1 = require("../../../driver/VideoEndpoint");
@@ -12196,7 +12292,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{"../../../driver/PCMAudioEndpoint":104,"../../../driver/VideoEndpoint":105}],109:[function(require,module,exports){
+},{"../../../driver/PCMAudioEndpoint":105,"../../../driver/VideoEndpoint":106}],110:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12440,7 +12536,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":30,"../../../../machine/stella/cartridge/CartridgeFactory":54,"../../../../tools/ClockProbe":79,"../../../../tools/scheduler/Factory":88,"../../../../tools/scheduler/PeriodicScheduler":90,"../EmulationServiceInterface":107,"./EmulationContext":108,"async-mutex":2,"microevent.ts":6}],110:[function(require,module,exports){
+},{"../../../../machine/stella/Board":30,"../../../../machine/stella/cartridge/CartridgeFactory":55,"../../../../tools/ClockProbe":80,"../../../../tools/scheduler/Factory":89,"../../../../tools/scheduler/PeriodicScheduler":91,"../EmulationServiceInterface":108,"./EmulationContext":109,"async-mutex":2,"microevent.ts":6}],111:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -12501,7 +12597,7 @@ var ControlDriver = (function () {
 }());
 exports.default = ControlDriver;
 
-},{"./messages":115}],111:[function(require,module,exports){
+},{"./messages":116}],112:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationService_1 = require("../vanilla/EmulationService");
@@ -12587,7 +12683,7 @@ var EmulationBackend = (function () {
 }());
 exports.default = EmulationBackend;
 
-},{"../DriverManager":106,"../vanilla/EmulationService":109,"./ControlDriver":110,"./PCMAudioDriver":112,"./VideoDriver":113,"./WaveformAudioDriver":114,"./messages":115}],112:[function(require,module,exports){
+},{"../DriverManager":107,"../vanilla/EmulationService":110,"./ControlDriver":111,"./PCMAudioDriver":113,"./VideoDriver":114,"./WaveformAudioDriver":115,"./messages":116}],113:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -12668,7 +12764,7 @@ var PCMAudioDriver = (function () {
 }());
 exports.default = PCMAudioDriver;
 
-},{"./messages":115}],113:[function(require,module,exports){
+},{"./messages":116}],114:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12878,7 +12974,7 @@ var VideoDriver = (function () {
 }());
 exports.default = VideoDriver;
 
-},{"../../../../tools/pool/Pool":84,"../../../../video/processing/worker/PipelineClient":101,"../../../../video/surface/ArrayBufferSurface":103,"./messages":115,"async-mutex":2,"worker-rpc":22}],114:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":85,"../../../../video/processing/worker/PipelineClient":102,"../../../../video/surface/ArrayBufferSurface":104,"./messages":116,"async-mutex":2,"worker-rpc":22}],115:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -12929,7 +13025,7 @@ var WaveformAudioDriver = (function () {
 }());
 exports.default = WaveformAudioDriver;
 
-},{"./messages":115}],115:[function(require,module,exports){
+},{"./messages":116}],116:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {
@@ -12961,7 +13057,7 @@ exports.SIGNAL_TYPE = {
 };
 Object.freeze(exports.SIGNAL_TYPE);
 
-},{}],116:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var rpc_1 = require("../rpc");
@@ -12969,7 +13065,7 @@ var EmulationBackend_1 = require("../../../src/web/stella/service/worker/Emulati
 var emulationBackend = new EmulationBackend_1.default(rpc_1.getRpc());
 emulationBackend.startup();
 
-},{"../../../src/web/stella/service/worker/EmulationBackend":111,"../rpc":117}],117:[function(require,module,exports){
+},{"../../../src/web/stella/service/worker/EmulationBackend":112,"../rpc":118}],118:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
@@ -13006,5 +13102,5 @@ function getRpc() {
 }
 exports.getRpc = getRpc;
 
-},{"worker-rpc":22}]},{},[116])
+},{"worker-rpc":22}]},{},[117])
 //# sourceMappingURL=stella.js.map
