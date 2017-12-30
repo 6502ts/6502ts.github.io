@@ -1,2 +1,3 @@
 exclude:
   - typedoc
+theme: jekyll-theme-primer
