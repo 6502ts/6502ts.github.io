@@ -1,2 +1,2 @@
-include:
-  - typedoc/stellerator-embedded/modules/_stellerator_.html
+exclude:
+  - typedoc
