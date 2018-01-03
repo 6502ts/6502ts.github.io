@@ -142,7 +142,7 @@ exports.Event = Event_1.default;
 },{"./Event":3}],5:[function(require,module,exports){
 /*!
 * screenfull
-* v3.3.1 - 2017-07-07
+* v3.3.2 - 2017-10-27
 * (c) Sindre Sorhus; MIT License
 */
 (function () {
@@ -234,7 +234,7 @@ exports.Event = Event_1.default;
 			// keyboard in fullscreen even though it doesn't.
 			// Browser sniffing, since the alternative with
 			// setTimeout is even worse.
-			if (/5\.1[.\d]* Safari/.test(navigator.userAgent)) {
+			if (/ Version\/5\.1(?:\.\d+)? Safari\//.test(navigator.userAgent)) {
 				elem[request]();
 			} else {
 				elem[request](keyboardAllowed && Element.ALLOW_KEYBOARD_INPUT);
@@ -355,11 +355,13 @@ var __makeTemplateObject;
         factory(createExporter(root));
     }
     function createExporter(exports, previous) {
-        if (typeof Object.create === "function") {
-            Object.defineProperty(exports, "__esModule", { value: true });
-        }
-        else {
-            exports.__esModule = true;
+        if (exports !== root) {
+            if (typeof Object.create === "function") {
+                Object.defineProperty(exports, "__esModule", { value: true });
+            }
+            else {
+                exports.__esModule = true;
+            }
         }
         return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
     }
@@ -1847,8 +1849,7 @@ var WebAudioDriver = (function () {
             return;
         }
         if (waveformSources.length !== this._waveformChannels.length) {
-            throw new Error("invalid number of waveform sources: expected " + this._waveformChannels
-                .length + ", got " + waveformSources.length);
+            throw new Error("invalid number of waveform sources: expected " + this._waveformChannels.length + ", got " + waveformSources.length);
         }
         if (pcmSources.length !== this._pcmChannels.length) {
             throw new Error("invalid number of waveform sources: expected " + this._pcmChannels.length + ", got " + pcmSources.length);
@@ -2144,10 +2145,12 @@ exports.default = WaveformChannel;
 },{}],29:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 
 var fragmentShaderPovSource = "precision mediump float;\n\nvarying vec2 v_TextureCoordinate;\n\nuniform sampler2D u_Sampler0, u_Sampler1, u_Sampler2;\nuniform float u_Gamma;\n\nvoid main() {\n    vec4 compositedTexel =\n        0.4 * texture2D(u_Sampler0, v_TextureCoordinate) +\n        0.4 * texture2D(u_Sampler1, v_TextureCoordinate) +\n        0.2 * texture2D(u_Sampler2, v_TextureCoordinate);\n\n    gl_FragColor = vec4(pow(compositedTexel.rgb, vec3(u_Gamma)), 1.);\n}\n";
 var fragmentSahderPlainSource = "precision mediump float;\n\nvarying vec2 v_TextureCoordinate;\n\nuniform sampler2D u_Sampler0;\nuniform float u_Gamma;\n\nvoid main() {\n    vec4 texel = texture2D(u_Sampler0, v_TextureCoordinate);\n\n    gl_FragColor = vec4(pow(texel.rgb, vec3(u_Gamma)), 1.);\n}\n";
 var vertexShaderSource = "attribute vec2 a_VertexPosition;\nattribute vec2 a_TextureCoordinate;\n\nvarying vec2 v_TextureCoordinate;\n\nvoid main() {\n    v_TextureCoordinate = a_TextureCoordinate;\n    gl_Position = vec4(a_VertexPosition, 0, 1);\n}\n";
+var CONTEXT_IDS = ['webgl', 'experimental-webgl'];
 var WebglVideoDriver = (function () {
     function WebglVideoDriver(_canvas, config) {
         if (config === void 0) { config = {}; }
@@ -2174,10 +2177,29 @@ var WebglVideoDriver = (function () {
         if (typeof config.povEmulation !== 'undefined') {
             this._povEmulation = config.povEmulation;
         }
-        this._gl = this._canvas.getContext('webgl', {
-            alpha: false
-        });
+        try {
+            for (var CONTEXT_IDS_1 = tslib_1.__values(CONTEXT_IDS), CONTEXT_IDS_1_1 = CONTEXT_IDS_1.next(); !CONTEXT_IDS_1_1.done; CONTEXT_IDS_1_1 = CONTEXT_IDS_1.next()) {
+                var contextId = CONTEXT_IDS_1_1.value;
+                if (this._gl) {
+                    break;
+                }
+                this._gl = this._canvas.getContext(contextId, {
+                    alpha: false
+                });
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (CONTEXT_IDS_1_1 && !CONTEXT_IDS_1_1.done && (_a = CONTEXT_IDS_1.return)) _a.call(CONTEXT_IDS_1);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        if (!this._gl) {
+            throw new Error('unable to acquire WebGL context');
+        }
         this._createTextureArrays();
+        var e_1, _a;
     }
     WebglVideoDriver.prototype.init = function () {
         this._gl.clearColor(0, 0, 0, 1);
@@ -2333,6 +2355,8 @@ var WebglVideoDriver = (function () {
         this._allocateTextures();
         this._configureTextures();
         this._setupAttribs();
+        this._frameCount = 0;
+        this._currentFrameIndex = 0;
     };
     WebglVideoDriver.prototype._scheduleDraw = function () {
         var _this = this;
@@ -2481,11 +2505,66 @@ var WebglVideoDriver = (function () {
 }());
 exports.default = WebglVideoDriver;
 
-},{}],30:[function(require,module,exports){
+},{"tslib":6}],30:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var SwitchProxy_1 = require("./SwitchProxy");
+var ControlPanelProxy = (function () {
+    function ControlPanelProxy() {
+        this._reset = new SwitchProxy_1.default();
+        this._select = new SwitchProxy_1.default();
+        this._difficultyPlayer1 = new SwitchProxy_1.default();
+        this._difficultyPlayer2 = new SwitchProxy_1.default();
+        this._color = new SwitchProxy_1.default();
+        this._boundControlPanel = null;
+    }
+    ControlPanelProxy.prototype.bind = function (controlPanel) {
+        this.unbind();
+        this._boundControlPanel = controlPanel;
+        this._reset.bind(this._boundControlPanel.getResetButton());
+        this._select.bind(this._boundControlPanel.getSelectSwitch());
+        this._difficultyPlayer1.bind(this._boundControlPanel.getDifficultySwitchP0());
+        this._difficultyPlayer2.bind(this._boundControlPanel.getDifficultySwitchP1());
+        this._color.bind(this._boundControlPanel.getColorSwitch());
+        this._difficultyPlayer1.toggle(true);
+        this._difficultyPlayer2.toggle(true);
+    };
+    ControlPanelProxy.prototype.unbind = function () {
+        if (!this._boundControlPanel) {
+            return;
+        }
+        this._reset.unbind();
+        this._select.unbind();
+        this._difficultyPlayer1.unbind();
+        this._difficultyPlayer2.unbind();
+        this._color.unbind();
+        this._boundControlPanel = null;
+    };
+    ControlPanelProxy.prototype.reset = function () {
+        return this._reset;
+    };
+    ControlPanelProxy.prototype.select = function () {
+        return this._select;
+    };
+    ControlPanelProxy.prototype.difficultyPlayer1 = function () {
+        return this._difficultyPlayer1;
+    };
+    ControlPanelProxy.prototype.difficultyPlayer2 = function () {
+        return this._difficultyPlayer2;
+    };
+    ControlPanelProxy.prototype.color = function () {
+        return this._color;
+    };
+    return ControlPanelProxy;
+}());
+exports.default = ControlPanelProxy;
+
+},{"./SwitchProxy":32}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var async_mutex_1 = require("async-mutex");
+var microevent_ts_1 = require("microevent.ts");
 var EmulationServiceInterface_1 = require("../../stella/service/EmulationServiceInterface");
 var EmulationService_1 = require("../../stella/service/worker/EmulationService");
 var DriverManager_1 = require("../../stella/service/DriverManager");
@@ -2499,12 +2578,14 @@ var FullscreenVideo_1 = require("../../driver/FullscreenVideo");
 var CartridgeInfo_1 = require("../../../machine/stella/cartridge/CartridgeInfo");
 var Config_1 = require("../../../machine/stella/Config");
 var base64_1 = require("../../../tools/base64");
+var ControlPanelProxy_1 = require("./ControlPanelProxy");
 var Stellerator = (function () {
-    function Stellerator(_canvasElt, workerUrl, config) {
+    function Stellerator(canvasElt, workerUrl, config) {
         if (config === void 0) { config = {}; }
-        this._canvasElt = _canvasElt;
+        var _this = this;
         this._config = null;
         this._emulationService = null;
+        this._serviceInitialized = null;
         this._videoDriver = null;
         this._webglVideo = null;
         this._fullscreenVideo = null;
@@ -2512,12 +2593,26 @@ var Stellerator = (function () {
         this._keyboardIO = null;
         this._paddle = null;
         this._gamepad = null;
+        this._controlPanel = new ControlPanelProxy_1.default();
         this._state = Stellerator.State.stopped;
         this._driverManager = new DriverManager_1.default();
         this._mutex = new async_mutex_1.Mutex();
-        this._config = tslib_1.__assign({ smoothScaling: true, simulatePov: true, gamma: 1, audio: true, volume: 1, enableKeyboard: true, keyboardTarget: document, fullscreenViaKeyboard: true, paddleViaMouse: true, pauseViaKeyboard: true, enableGamepad: true }, config);
+        this._canvasElt = canvasElt;
+        this._config = tslib_1.__assign({ smoothScaling: true, simulatePov: true, gamma: 1, audio: true, volume: 1, enableKeyboard: true, keyboardTarget: document, fullscreenViaKeyboard: true, paddleViaMouse: true, pauseViaKeyboard: true, enableGamepad: true, resetViaKeyboard: true }, config);
         this._emulationService = new EmulationService_1.default(workerUrl);
+        this.frequencyUpdate = this._emulationService.frequencyUpdate;
+        var stateChange = new microevent_ts_1.Event();
+        this._emulationService.stateChanged.addHandler(function (newState) { return stateChange.dispatch(_this._mapState(newState)); });
+        this.stateChange = stateChange;
         this._createDrivers();
+        this._driverManager.addDriver(this._controlPanel, function (context) {
+            return _this._controlPanel.bind(context.getControlPanel());
+        });
+        this._driverManager.bind(this._emulationService);
+        this._serviceInitialized = this._emulationService.init().then(undefined, function (e) {
+            console.log(e);
+            throw e;
+        });
     }
     Stellerator.prototype.setGamma = function (gamma) {
         if (this._webglVideo) {
@@ -2534,7 +2629,7 @@ var Stellerator = (function () {
         }
         return this;
     };
-    Stellerator.prototype.povSimulationEnabled = function () {
+    Stellerator.prototype.isPovSimulationEnabled = function () {
         return this._webglVideo ? this._webglVideo.povEmulationEnabled() : false;
     };
     Stellerator.prototype.enableSmoothScaling = function (smoothScalingEnabled) {
@@ -2568,11 +2663,19 @@ var Stellerator = (function () {
     Stellerator.prototype.getVolume = function () {
         return this._audioDriver ? this._audioDriver.getMasterVolume() : 0;
     };
+    Stellerator.prototype.resize = function () {
+        this._videoDriver.resize();
+        return this;
+    };
     Stellerator.prototype.getState = function () {
         return this._state;
     };
-    Stellerator.prototype.start = function (cartridge, cartidgeType, config) {
+    Stellerator.prototype.getControlPanel = function () {
+        return this._controlPanel;
+    };
+    Stellerator.prototype.start = function (cartridge, tvMode, config) {
         var _this = this;
+        if (config === void 0) { config = {}; }
         return this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () {
             var stellaConfig, _a, _b;
             return tslib_1.__generator(this, function (_c) {
@@ -2581,7 +2684,10 @@ var Stellerator = (function () {
                         if (typeof cartridge === 'string') {
                             cartridge = base64_1.decode(cartridge);
                         }
-                        stellaConfig = Config_1.default.create();
+                        stellaConfig = Config_1.default.create({
+                            tvMode: this._convertTvMode(tvMode),
+                            pcmAudio: true
+                        });
                         if (typeof config.randomSeed !== 'undefined' && config.randomSeed > 0) {
                             stellaConfig.randomSeed = config.randomSeed;
                         }
@@ -2591,52 +2697,130 @@ var Stellerator = (function () {
                         if (typeof config.frameStart !== 'undefined') {
                             stellaConfig.frameStart = config.frameStart;
                         }
+                        return [4, this._serviceInitialized];
+                    case 1:
+                        _c.sent();
                         _a = this;
                         _b = this._mapState;
                         return [4, this._emulationService.start(cartridge, stellaConfig, config.cartridgeType)];
-                    case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
+                    case 2: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
                 }
             });
         }); });
     };
+    Stellerator.prototype.run = function (cartridge, tvMode, config) {
+        if (config === void 0) { config = {}; }
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, this.start(cartridge, tvMode, config)];
+                    case 1:
+                        if ((_a.sent()) === Stellerator.State.paused) {
+                            return [2, this.resume()];
+                        }
+                        return [2];
+                }
+            });
+        });
+    };
     Stellerator.prototype.pause = function () {
-        var _this = this;
-        return this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    _a = this;
-                    _b = this._mapState;
-                    return [4, this._emulationService.pause()];
-                case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
-            }
-        }); }); });
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, this._serviceInitialized];
+                    case 1:
+                        _a.sent();
+                        return [2, this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
+                                switch (_c.label) {
+                                    case 0:
+                                        _a = this;
+                                        _b = this._mapState;
+                                        return [4, this._emulationService.pause()];
+                                    case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
+                                }
+                            }); }); })];
+                }
+            });
+        });
     };
     Stellerator.prototype.resume = function () {
-        var _this = this;
-        return this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    _a = this;
-                    _b = this._mapState;
-                    return [4, this._emulationService.resume()];
-                case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
-            }
-        }); }); });
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, this._serviceInitialized];
+                    case 1:
+                        _a.sent();
+                        return [2, this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
+                                switch (_c.label) {
+                                    case 0:
+                                        _a = this;
+                                        _b = this._mapState;
+                                        return [4, this._emulationService.resume()];
+                                    case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
+                                }
+                            }); }); })];
+                }
+            });
+        });
     };
     Stellerator.prototype.stop = function () {
-        var _this = this;
-        return this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    _a = this;
-                    _b = this._mapState;
-                    return [4, this._emulationService.stop()];
-                case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
-            }
-        }); }); });
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, this._serviceInitialized];
+                    case 1:
+                        _a.sent();
+                        return [2, this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
+                                switch (_c.label) {
+                                    case 0:
+                                        _a = this;
+                                        _b = this._mapState;
+                                        return [4, this._emulationService.stop()];
+                                    case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
+                                }
+                            }); }); })];
+                }
+            });
+        });
+    };
+    Stellerator.prototype.reset = function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, this._serviceInitialized];
+                    case 1:
+                        _a.sent();
+                        return [2, this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () { var _a, _b; return tslib_1.__generator(this, function (_c) {
+                                switch (_c.label) {
+                                    case 0:
+                                        _a = this;
+                                        _b = this._mapState;
+                                        return [4, this._emulationService.reset()];
+                                    case 1: return [2, (_a._state = _b.apply(this, [_c.sent()]))];
+                                }
+                            }); }); })];
+                }
+            });
+        });
     };
     Stellerator.prototype.lastError = function () {
         return this._emulationService.getLastError();
+    };
+    Stellerator.prototype._convertTvMode = function (tvMode) {
+        switch (tvMode) {
+            case Stellerator.TvMode.ntsc:
+                return 0;
+            case Stellerator.TvMode.pal:
+                return 1;
+            case Stellerator.TvMode.secam:
+                return 2;
+            default:
+                throw new Error("invalid TV mode '" + tvMode + "'");
+        }
     };
     Stellerator.prototype._createDrivers = function () {
         var _this = this;
@@ -2656,6 +2840,7 @@ var Stellerator = (function () {
         if (this._config.audio) {
             try {
                 this._audioDriver = new WebAudio_1.default();
+                this._audioDriver.init();
                 this._audioDriver.setMasterVolume(this._config.volume);
                 this._driverManager.addDriver(this._audioDriver, function (context) {
                     return _this._audioDriver.bind(true, [context.getPCMChannel()]);
@@ -2685,6 +2870,9 @@ var Stellerator = (function () {
                     }
                 });
             }
+        }
+        if (this._config.resetViaKeyboard) {
+            this._keyboardIO.hardReset.addHandler(function () { return _this.reset(); });
         }
         if (this._config.enableGamepad) {
             this._gamepad = new Gamepad_1.default();
@@ -2717,6 +2905,7 @@ var Stellerator = (function () {
     };
     return Stellerator;
 }());
+exports.default = Stellerator;
 (function (Stellerator) {
     var TvMode;
     (function (TvMode) {
@@ -2725,7 +2914,7 @@ var Stellerator = (function () {
         TvMode["secam"] = "secam";
     })(TvMode = Stellerator.TvMode || (Stellerator.TvMode = {}));
     Stellerator.CartridgeType = CartridgeInfo_1.default.CartridgeType;
-    Stellerator.describeCartridgeType = CartridgeInfo_1.default.CartridgeType;
+    Stellerator.describeCartridgeType = CartridgeInfo_1.default.describeCartridgeType;
     Stellerator.allCartridgeTypes = CartridgeInfo_1.default.getAllTypes;
     var State;
     (function (State) {
@@ -2737,14 +2926,63 @@ var Stellerator = (function () {
 })(Stellerator || (Stellerator = {}));
 exports.default = Stellerator;
 
-},{"../../../machine/stella/Config":12,"../../../machine/stella/cartridge/CartridgeInfo":14,"../../../tools/base64":18,"../../driver/FullscreenVideo":21,"../../driver/Gamepad":22,"../../driver/MouseAsPaddle":23,"../../driver/SimpleCanvasVideo":24,"../../driver/webgl/WebglVideo":29,"../../stella/driver/KeyboardIO":32,"../../stella/driver/WebAudio":33,"../../stella/service/DriverManager":34,"../../stella/service/EmulationServiceInterface":35,"../../stella/service/worker/EmulationService":38,"async-mutex":2,"tslib":6}],31:[function(require,module,exports){
+},{"../../../machine/stella/Config":12,"../../../machine/stella/cartridge/CartridgeInfo":14,"../../../tools/base64":18,"../../driver/FullscreenVideo":21,"../../driver/Gamepad":22,"../../driver/MouseAsPaddle":23,"../../driver/SimpleCanvasVideo":24,"../../driver/webgl/WebglVideo":29,"../../stella/driver/KeyboardIO":34,"../../stella/driver/WebAudio":35,"../../stella/service/DriverManager":36,"../../stella/service/EmulationServiceInterface":37,"../../stella/service/worker/EmulationService":40,"./ControlPanelProxy":30,"async-mutex":2,"microevent.ts":4,"tslib":6}],32:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var microevent_ts_1 = require("microevent.ts");
+var SwitchProxy = (function () {
+    function SwitchProxy() {
+        this.stateChange = new microevent_ts_1.Event();
+        this._state = false;
+        this._boundSwitch = null;
+    }
+    SwitchProxy.prototype.bind = function (swtch) {
+        this.unbind();
+        this._boundSwitch = swtch;
+        this._boundSwitch.toggle(this._state);
+        this._boundSwitch.stateChanged.addHandler(SwitchProxy._onBoundStateChange, this);
+        this._setState(this._boundSwitch.read());
+    };
+    SwitchProxy.prototype.unbind = function () {
+        if (!this._boundSwitch) {
+            return;
+        }
+        this._boundSwitch.stateChanged.removeHandler(SwitchProxy._onBoundStateChange, this);
+        this._boundSwitch = null;
+    };
+    SwitchProxy.prototype.toggle = function (state) {
+        if (this._boundSwitch) {
+            this._boundSwitch.toggle(state);
+        }
+        else {
+            this._setState(state);
+        }
+        return this;
+    };
+    SwitchProxy.prototype.read = function () {
+        return this._state;
+    };
+    SwitchProxy._onBoundStateChange = function (newState, self) {
+        self._setState(newState);
+    };
+    SwitchProxy.prototype._setState = function (newState) {
+        if (newState !== this._state) {
+            this._state = newState;
+            this.stateChange.dispatch(this._state);
+        }
+    };
+    return SwitchProxy;
+}());
+exports.default = SwitchProxy;
+
+},{"microevent.ts":4}],33:[function(require,module,exports){
 "use strict";
 var Stellerator_1 = require("./Stellerator");
 module.exports = {
     Stellerator: Stellerator_1.default
 };
 
-},{"./Stellerator":30}],32:[function(require,module,exports){
+},{"./Stellerator":31}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -2886,6 +3124,7 @@ var KeyboardIO = (function () {
     };
     return KeyboardIO;
 }());
+exports.default = KeyboardIO;
 (function (KeyboardIO) {
     KeyboardIO.defaultMappings = [
         {
@@ -2976,7 +3215,7 @@ var KeyboardIO = (function () {
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"microevent.ts":4,"tslib":6}],33:[function(require,module,exports){
+},{"microevent.ts":4,"tslib":6}],35:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3065,7 +3304,7 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":25,"tslib":6}],34:[function(require,module,exports){
+},{"../../driver/WebAudio":25,"tslib":6}],36:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -3141,6 +3380,7 @@ var DriverManager = (function () {
     };
     return DriverManager;
 }());
+exports.default = DriverManager;
 (function (DriverManager) {
     var DriverContext = (function () {
         function DriverContext(driver, binder) {
@@ -3153,7 +3393,7 @@ var DriverManager = (function () {
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":35}],35:[function(require,module,exports){
+},{"./EmulationServiceInterface":37}],37:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -3168,7 +3408,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DigitalJoystick_1 = require("../../../../machine/io/DigitalJoystick");
@@ -3238,7 +3478,7 @@ var ControlProxy = (function () {
 }());
 exports.default = ControlProxy;
 
-},{"../../../../machine/io/DigitalJoystick":9,"../../../../machine/io/Paddle":10,"../../../../machine/stella/ControlPanel":13,"./messages":42}],37:[function(require,module,exports){
+},{"../../../../machine/io/DigitalJoystick":9,"../../../../machine/io/Paddle":10,"../../../../machine/stella/ControlPanel":13,"./messages":44}],39:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationContext = (function () {
@@ -3283,7 +3523,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{}],38:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3574,7 +3814,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../EmulationServiceInterface":35,"./ControlProxy":36,"./EmulationContext":37,"./PCMAudioProxy":39,"./VideoProxy":40,"./WaveformAudioProxy":41,"./messages":42,"async-mutex":2,"microevent.ts":4,"tslib":6,"worker-rpc":8}],39:[function(require,module,exports){
+},{"../EmulationServiceInterface":37,"./ControlProxy":38,"./EmulationContext":39,"./PCMAudioProxy":41,"./VideoProxy":42,"./WaveformAudioProxy":43,"./messages":44,"async-mutex":2,"microevent.ts":4,"tslib":6,"worker-rpc":8}],41:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3665,7 +3905,7 @@ var PCMAudioProxy = (function () {
 }());
 exports.default = PCMAudioProxy;
 
-},{"../../../../tools/pool/Pool":19,"./messages":42,"microevent.ts":4,"tslib":6}],40:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":19,"./messages":44,"microevent.ts":4,"tslib":6}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3746,7 +3986,7 @@ var VideoProxy = (function () {
 }());
 exports.default = VideoProxy;
 
-},{"./messages":42,"microevent.ts":4,"tslib":6}],41:[function(require,module,exports){
+},{"./messages":44,"microevent.ts":4,"tslib":6}],43:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3815,7 +4055,7 @@ var WaveformAudioProxy = (function () {
 }());
 exports.default = WaveformAudioProxy;
 
-},{"../../../../machine/stella/tia/ToneGenerator":15,"./messages":42,"microevent.ts":4,"tslib":6}],42:[function(require,module,exports){
+},{"../../../../machine/stella/tia/ToneGenerator":15,"./messages":44,"microevent.ts":4,"tslib":6}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {
@@ -3847,6 +4087,6 @@ exports.SIGNAL_TYPE = {
 };
 Object.freeze(exports.SIGNAL_TYPE);
 
-},{}]},{},[31])(31)
+},{}]},{},[33])(33)
 });
 //# sourceMappingURL=stellerator_embedded.js.map

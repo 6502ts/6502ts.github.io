@@ -2479,7 +2479,7 @@ process.umask = function() { return 0; };
 },{}],12:[function(require,module,exports){
 /*!
 * screenfull
-* v3.3.1 - 2017-07-07
+* v3.3.2 - 2017-10-27
 * (c) Sindre Sorhus; MIT License
 */
 (function () {
@@ -2571,7 +2571,7 @@ process.umask = function() { return 0; };
 			// keyboard in fullscreen even though it doesn't.
 			// Browser sniffing, since the alternative with
 			// setTimeout is even worse.
-			if (/5\.1[.\d]* Safari/.test(navigator.userAgent)) {
+			if (/ Version\/5\.1(?:\.\d+)? Safari\//.test(navigator.userAgent)) {
 				elem[request]();
 			} else {
 				elem[request](keyboardAllowed && Element.ALLOW_KEYBOARD_INPUT);
@@ -4003,11 +4003,13 @@ var __makeTemplateObject;
         factory(createExporter(root));
     }
     function createExporter(exports, previous) {
-        if (typeof Object.create === "function") {
-            Object.defineProperty(exports, "__esModule", { value: true });
-        }
-        else {
-            exports.__esModule = true;
+        if (exports !== root) {
+            if (typeof Object.create === "function") {
+                Object.defineProperty(exports, "__esModule", { value: true });
+            }
+            else {
+                exports.__esModule = true;
+            }
         }
         return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
     }
@@ -4940,6 +4942,7 @@ var Completer = (function () {
     };
     return Completer;
 }());
+exports.default = Completer;
 (function (Completer) {
     var CompletionResult = (function () {
         function CompletionResult(candidates, match) {
@@ -7318,6 +7321,7 @@ var Instruction = (function () {
     };
     return Instruction;
 }());
+exports.default = Instruction;
 (function (Instruction) {
     var OperationMap;
     (function (OperationMap) {
@@ -7645,6 +7649,7 @@ exports.default = Instruction;
         set(0x33, 70, 11);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
+exports.default = Instruction;
 
 },{}],45:[function(require,module,exports){
 "use strict";
@@ -8093,6 +8098,7 @@ var Bus = (function () {
     };
     return Bus;
 }());
+exports.default = Bus;
 (function (Bus) {
     var TrapPayload = (function () {
         function TrapPayload(reason, bus, message) {
@@ -8316,6 +8322,7 @@ var Pia = (function () {
     };
     return Pia;
 }());
+exports.default = Pia;
 (function (Pia) {
     var TrapPayload = (function () {
         function TrapPayload(reason, pia, message) {
@@ -8961,6 +8968,7 @@ var CartridgeCDF = (function (_super) {
     };
     return CartridgeCDF;
 }(AbstractCartridge_1.default));
+exports.default = CartridgeCDF;
 var MusicStream = (function () {
     function MusicStream() {
         this.counter = 0;
@@ -8976,7 +8984,6 @@ var MusicStream = (function () {
     };
     return MusicStream;
 }());
-exports.default = CartridgeCDF;
 
 },{"./AbstractCartridge":53,"./CartridgeInfo":74,"./CartridgeInterface":75,"./harmony/Soc":78,"./util":81,"thumbulator.ts":22,"tslib":24}],60:[function(require,module,exports){
 "use strict";
@@ -9145,6 +9152,7 @@ var CartridgeDPC = (function (_super) {
     };
     return CartridgeDPC;
 }(AbstractCartridge_1.default));
+exports.default = CartridgeDPC;
 var Fetcher = (function () {
     function Fetcher() {
         this.pointer = 0;
@@ -9205,7 +9213,6 @@ var Fetcher = (function () {
     };
     return Fetcher;
 }());
-exports.default = CartridgeDPC;
 
 },{"./AbstractCartridge":53,"./CartridgeInfo":74,"tslib":24}],61:[function(require,module,exports){
 "use strict";
@@ -9501,6 +9508,7 @@ var CartridgeDPCPlus = (function (_super) {
     };
     return CartridgeDPCPlus;
 }(AbstractCartridge_1.default));
+exports.default = CartridgeDPCPlus;
 var Fetcher = (function () {
     function Fetcher() {
         this.pointer = 0;
@@ -9576,7 +9584,6 @@ var MusicFetcher = (function () {
     };
     return MusicFetcher;
 }());
-exports.default = CartridgeDPCPlus;
 
 },{"./AbstractCartridge":53,"./CartridgeInfo":74,"./CartridgeInterface":75,"./harmony/Soc":78,"./util":81,"tslib":24}],62:[function(require,module,exports){
 "use strict";
@@ -10552,10 +10559,6 @@ var CartridgeFE = (function (_super) {
     };
     CartridgeFE.prototype.write = function (address, value) {
         _super.prototype.write.call(this, address, value);
-    };
-    CartridgeFE.prototype.setCpu = function (cpu) {
-        this._cpu = cpu;
-        return this;
     };
     CartridgeFE.prototype.setBus = function (bus) {
         this._bus = bus;
@@ -12094,6 +12097,7 @@ var DelayQueue = (function () {
     };
     return DelayQueue;
 }());
+exports.default = DelayQueue;
 var QueueEntry = (function () {
     function QueueEntry(size) {
         this.size = size;
@@ -12124,7 +12128,6 @@ var QueueEntry = (function () {
     };
     return QueueEntry;
 }());
-exports.default = DelayQueue;
 
 },{}],84:[function(require,module,exports){
 "use strict";
@@ -13851,6 +13854,7 @@ var Tia = (function () {
     };
     return Tia;
 }());
+exports.default = Tia;
 (function (Tia) {
     var TrapPayload = (function () {
         function TrapPayload(reason, tia, message) {
@@ -15827,8 +15831,7 @@ var WebAudioDriver = (function () {
             return;
         }
         if (waveformSources.length !== this._waveformChannels.length) {
-            throw new Error("invalid number of waveform sources: expected " + this._waveformChannels
-                .length + ", got " + waveformSources.length);
+            throw new Error("invalid number of waveform sources: expected " + this._waveformChannels.length + ", got " + waveformSources.length);
         }
         if (pcmSources.length !== this._pcmChannels.length) {
             throw new Error("invalid number of waveform sources: expected " + this._pcmChannels.length + ", got " + pcmSources.length);
@@ -16263,6 +16266,7 @@ var KeyboardIO = (function () {
     };
     return KeyboardIO;
 }());
+exports.default = KeyboardIO;
 (function (KeyboardIO) {
     KeyboardIO.defaultMappings = [
         {

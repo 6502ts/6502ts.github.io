@@ -2722,11 +2722,13 @@ var __makeTemplateObject;
         factory(createExporter(root));
     }
     function createExporter(exports, previous) {
-        if (typeof Object.create === "function") {
-            Object.defineProperty(exports, "__esModule", { value: true });
-        }
-        else {
-            exports.__esModule = true;
+        if (exports !== root) {
+            if (typeof Object.create === "function") {
+                Object.defineProperty(exports, "__esModule", { value: true });
+            }
+            else {
+                exports.__esModule = true;
+            }
         }
         return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
     }
@@ -3659,6 +3661,7 @@ var Completer = (function () {
     };
     return Completer;
 }());
+exports.default = Completer;
 (function (Completer) {
     var CompletionResult = (function () {
         function CompletionResult(candidates, match) {
@@ -5787,6 +5790,7 @@ var Instruction = (function () {
     };
     return Instruction;
 }());
+exports.default = Instruction;
 (function (Instruction) {
     var OperationMap;
     (function (OperationMap) {
@@ -6114,6 +6118,7 @@ exports.default = Instruction;
         set(0x33, 70, 11);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
+exports.default = Instruction;
 
 },{}],27:[function(require,module,exports){
 "use strict";

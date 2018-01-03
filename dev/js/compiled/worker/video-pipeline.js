@@ -468,11 +468,6 @@ exports.default = ProcessorPipeline;
 },{"./ProcessorFactory":9}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Type;
-(function (Type) {
-    Type[Type["passthrough"] = 0] = "passthrough";
-    Type[Type["merge"] = 1] = "merge";
-})(Type = exports.Type || (exports.Type = {}));
 
 },{}],12:[function(require,module,exports){
 "use strict";

@@ -1915,11 +1915,13 @@ var __makeTemplateObject;
         factory(createExporter(root));
     }
     function createExporter(exports, previous) {
-        if (typeof Object.create === "function") {
-            Object.defineProperty(exports, "__esModule", { value: true });
-        }
-        else {
-            exports.__esModule = true;
+        if (exports !== root) {
+            if (typeof Object.create === "function") {
+                Object.defineProperty(exports, "__esModule", { value: true });
+            }
+            else {
+                exports.__esModule = true;
+            }
         }
         return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
     }
@@ -2276,18 +2278,6 @@ exports.RpcProvider = RpcProvider_1.default;
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoardInterface;
 (function (BoardInterface) {
-    var TrapReason;
-    (function (TrapReason) {
-        TrapReason[TrapReason["cpu"] = 0] = "cpu";
-        TrapReason[TrapReason["bus"] = 1] = "bus";
-        TrapReason[TrapReason["debug"] = 2] = "debug";
-        TrapReason[TrapReason["board"] = 3] = "board";
-    })(TrapReason = BoardInterface.TrapReason || (BoardInterface.TrapReason = {}));
-    var ClockMode;
-    (function (ClockMode) {
-        ClockMode[ClockMode["instruction"] = 0] = "instruction";
-        ClockMode[ClockMode["lazy"] = 1] = "lazy";
-    })(ClockMode = BoardInterface.ClockMode || (BoardInterface.ClockMode = {}));
     var TrapPayload = (function () {
         function TrapPayload(reason, board, message) {
             this.reason = reason;
@@ -2305,11 +2295,6 @@ exports.default = BoardInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./Instruction");
 var CpuInterface_1 = require("./CpuInterface");
-var InterruptCheck;
-(function (InterruptCheck) {
-    InterruptCheck[InterruptCheck["endOfInstruction"] = 0] = "endOfInstruction";
-    InterruptCheck[InterruptCheck["beforeOp"] = 1] = "beforeOp";
-})(InterruptCheck || (InterruptCheck = {}));
 function restoreFlagsFromStack(state, bus) {
     state.s = (state.s + 0x01) & 0xff;
     state.flags = (bus.read(0x0100 + state.s) | 32) & ~16;
@@ -3387,12 +3372,6 @@ exports.default = Cpu;
 Object.defineProperty(exports, "__esModule", { value: true });
 var CpuInterface;
 (function (CpuInterface) {
-    var ExecutionState;
-    (function (ExecutionState) {
-        ExecutionState[ExecutionState["boot"] = 0] = "boot";
-        ExecutionState[ExecutionState["fetch"] = 1] = "fetch";
-        ExecutionState[ExecutionState["execute"] = 2] = "execute";
-    })(ExecutionState = CpuInterface.ExecutionState || (CpuInterface.ExecutionState = {}));
     var State = (function () {
         function State() {
             this.a = 0;
@@ -3407,17 +3386,6 @@ var CpuInterface;
         return State;
     }());
     CpuInterface.State = State;
-    var Flags;
-    (function (Flags) {
-        Flags[Flags["c"] = 1] = "c";
-        Flags[Flags["z"] = 2] = "z";
-        Flags[Flags["i"] = 4] = "i";
-        Flags[Flags["d"] = 8] = "d";
-        Flags[Flags["b"] = 16] = "b";
-        Flags[Flags["e"] = 32] = "e";
-        Flags[Flags["v"] = 64] = "v";
-        Flags[Flags["n"] = 128] = "n";
-    })(Flags = CpuInterface.Flags || (CpuInterface.Flags = {}));
 })(CpuInterface || (CpuInterface = {}));
 exports.default = CpuInterface;
 
@@ -3450,82 +3418,8 @@ var Instruction = (function () {
     };
     return Instruction;
 }());
+exports.default = Instruction;
 (function (Instruction) {
-    var Operation;
-    (function (Operation) {
-        Operation[Operation["adc"] = 0] = "adc";
-        Operation[Operation["and"] = 1] = "and";
-        Operation[Operation["asl"] = 2] = "asl";
-        Operation[Operation["bcc"] = 3] = "bcc";
-        Operation[Operation["bcs"] = 4] = "bcs";
-        Operation[Operation["beq"] = 5] = "beq";
-        Operation[Operation["bit"] = 6] = "bit";
-        Operation[Operation["bmi"] = 7] = "bmi";
-        Operation[Operation["bne"] = 8] = "bne";
-        Operation[Operation["bpl"] = 9] = "bpl";
-        Operation[Operation["brk"] = 10] = "brk";
-        Operation[Operation["bvc"] = 11] = "bvc";
-        Operation[Operation["bvs"] = 12] = "bvs";
-        Operation[Operation["clc"] = 13] = "clc";
-        Operation[Operation["cld"] = 14] = "cld";
-        Operation[Operation["cli"] = 15] = "cli";
-        Operation[Operation["clv"] = 16] = "clv";
-        Operation[Operation["cmp"] = 17] = "cmp";
-        Operation[Operation["cpx"] = 18] = "cpx";
-        Operation[Operation["cpy"] = 19] = "cpy";
-        Operation[Operation["dec"] = 20] = "dec";
-        Operation[Operation["dex"] = 21] = "dex";
-        Operation[Operation["dey"] = 22] = "dey";
-        Operation[Operation["eor"] = 23] = "eor";
-        Operation[Operation["inc"] = 24] = "inc";
-        Operation[Operation["inx"] = 25] = "inx";
-        Operation[Operation["iny"] = 26] = "iny";
-        Operation[Operation["jmp"] = 27] = "jmp";
-        Operation[Operation["jsr"] = 28] = "jsr";
-        Operation[Operation["lda"] = 29] = "lda";
-        Operation[Operation["ldx"] = 30] = "ldx";
-        Operation[Operation["ldy"] = 31] = "ldy";
-        Operation[Operation["lsr"] = 32] = "lsr";
-        Operation[Operation["nop"] = 33] = "nop";
-        Operation[Operation["ora"] = 34] = "ora";
-        Operation[Operation["pha"] = 35] = "pha";
-        Operation[Operation["php"] = 36] = "php";
-        Operation[Operation["pla"] = 37] = "pla";
-        Operation[Operation["plp"] = 38] = "plp";
-        Operation[Operation["rol"] = 39] = "rol";
-        Operation[Operation["ror"] = 40] = "ror";
-        Operation[Operation["rti"] = 41] = "rti";
-        Operation[Operation["rts"] = 42] = "rts";
-        Operation[Operation["sbc"] = 43] = "sbc";
-        Operation[Operation["sec"] = 44] = "sec";
-        Operation[Operation["sed"] = 45] = "sed";
-        Operation[Operation["sei"] = 46] = "sei";
-        Operation[Operation["sta"] = 47] = "sta";
-        Operation[Operation["stx"] = 48] = "stx";
-        Operation[Operation["sty"] = 49] = "sty";
-        Operation[Operation["tax"] = 50] = "tax";
-        Operation[Operation["tay"] = 51] = "tay";
-        Operation[Operation["tsx"] = 52] = "tsx";
-        Operation[Operation["txa"] = 53] = "txa";
-        Operation[Operation["txs"] = 54] = "txs";
-        Operation[Operation["tya"] = 55] = "tya";
-        Operation[Operation["dop"] = 56] = "dop";
-        Operation[Operation["top"] = 57] = "top";
-        Operation[Operation["alr"] = 58] = "alr";
-        Operation[Operation["axs"] = 59] = "axs";
-        Operation[Operation["dcp"] = 60] = "dcp";
-        Operation[Operation["lax"] = 61] = "lax";
-        Operation[Operation["arr"] = 62] = "arr";
-        Operation[Operation["slo"] = 63] = "slo";
-        Operation[Operation["aax"] = 64] = "aax";
-        Operation[Operation["lar"] = 65] = "lar";
-        Operation[Operation["isc"] = 66] = "isc";
-        Operation[Operation["aac"] = 67] = "aac";
-        Operation[Operation["atx"] = 68] = "atx";
-        Operation[Operation["rra"] = 69] = "rra";
-        Operation[Operation["rla"] = 70] = "rla";
-        Operation[Operation["invalid"] = 71] = "invalid";
-    })(Operation = Instruction.Operation || (Instruction.Operation = {}));
     var OperationMap;
     (function (OperationMap) {
         OperationMap[OperationMap["adc"] = 0] = "adc";
@@ -3601,22 +3495,6 @@ var Instruction = (function () {
         OperationMap[OperationMap["rla"] = 70] = "rla";
         OperationMap[OperationMap["invalid"] = 71] = "invalid";
     })(OperationMap = Instruction.OperationMap || (Instruction.OperationMap = {}));
-    var AddressingMode;
-    (function (AddressingMode) {
-        AddressingMode[AddressingMode["implied"] = 0] = "implied";
-        AddressingMode[AddressingMode["immediate"] = 1] = "immediate";
-        AddressingMode[AddressingMode["zeroPage"] = 2] = "zeroPage";
-        AddressingMode[AddressingMode["absolute"] = 3] = "absolute";
-        AddressingMode[AddressingMode["indirect"] = 4] = "indirect";
-        AddressingMode[AddressingMode["relative"] = 5] = "relative";
-        AddressingMode[AddressingMode["zeroPageX"] = 6] = "zeroPageX";
-        AddressingMode[AddressingMode["absoluteX"] = 7] = "absoluteX";
-        AddressingMode[AddressingMode["indexedIndirectX"] = 8] = "indexedIndirectX";
-        AddressingMode[AddressingMode["zeroPageY"] = 9] = "zeroPageY";
-        AddressingMode[AddressingMode["absoluteY"] = 10] = "absoluteY";
-        AddressingMode[AddressingMode["indirectIndexedY"] = 11] = "indirectIndexedY";
-        AddressingMode[AddressingMode["invalid"] = 12] = "invalid";
-    })(AddressingMode = Instruction.AddressingMode || (Instruction.AddressingMode = {}));
     Instruction.opcodes = new Array(256);
 })(Instruction || (Instruction = {}));
 exports.default = Instruction;
@@ -3868,6 +3746,7 @@ exports.default = Instruction;
         set(0x33, 70, 11);
     })(__init = Instruction.__init || (Instruction.__init = {}));
 })(Instruction || (Instruction = {}));
+exports.default = Instruction;
 
 },{}],27:[function(require,module,exports){
 "use strict";
@@ -4316,19 +4195,8 @@ var Bus = (function () {
     };
     return Bus;
 }());
+exports.default = Bus;
 (function (Bus) {
-    var TrapReason;
-    (function (TrapReason) {
-        TrapReason[TrapReason["tia"] = 0] = "tia";
-        TrapReason[TrapReason["pia"] = 1] = "pia";
-        TrapReason[TrapReason["cartridge"] = 2] = "cartridge";
-    })(TrapReason = Bus.TrapReason || (Bus.TrapReason = {}));
-    var AccessType;
-    (function (AccessType) {
-        AccessType[AccessType["tia"] = 0] = "tia";
-        AccessType[AccessType["pia"] = 1] = "pia";
-        AccessType[AccessType["cartridge"] = 2] = "cartridge";
-    })(AccessType = Bus.AccessType || (Bus.AccessType = {}));
     var TrapPayload = (function () {
         function TrapPayload(reason, bus, message) {
             this.reason = reason;
@@ -4343,26 +4211,13 @@ exports.default = Bus;
 
 },{"microevent.ts":6}],32:[function(require,module,exports){
 "use strict";
-var __assign = (this && this.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var Config;
 (function (Config) {
-    var TvMode;
-    (function (TvMode) {
-        TvMode[TvMode["ntsc"] = 0] = "ntsc";
-        TvMode[TvMode["pal"] = 1] = "pal";
-        TvMode[TvMode["secam"] = 2] = "secam";
-    })(TvMode = Config.TvMode || (Config.TvMode = {}));
     function create(config) {
         if (config === void 0) { config = {}; }
-        return __assign({ tvMode: 0, enableAudio: true, randomSeed: -1, emulatePaddles: true, frameStart: -1, pcmAudio: false }, config);
+        return tslib_1.__assign({ tvMode: 0, enableAudio: true, randomSeed: -1, emulatePaddles: true, frameStart: -1, pcmAudio: false }, config);
     }
     Config.create = create;
     function getClockHz(config) {
@@ -4378,7 +4233,7 @@ var Config;
 })(Config || (Config = {}));
 exports.default = Config;
 
-},{}],33:[function(require,module,exports){
+},{"tslib":20}],33:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Switch_1 = require("../io/Switch");
@@ -4564,25 +4419,8 @@ var Pia = (function () {
     };
     return Pia;
 }());
+exports.default = Pia;
 (function (Pia) {
-    var Registers;
-    (function (Registers) {
-        Registers[Registers["swcha"] = 640] = "swcha";
-        Registers[Registers["swacnt"] = 641] = "swacnt";
-        Registers[Registers["swchb"] = 642] = "swchb";
-        Registers[Registers["swncnt"] = 643] = "swncnt";
-        Registers[Registers["intim"] = 644] = "intim";
-        Registers[Registers["instat"] = 645] = "instat";
-        Registers[Registers["tim1t"] = 660] = "tim1t";
-        Registers[Registers["tim8t"] = 661] = "tim8t";
-        Registers[Registers["tim64t"] = 662] = "tim64t";
-        Registers[Registers["t1024t"] = 663] = "t1024t";
-    })(Registers = Pia.Registers || (Pia.Registers = {}));
-    var TrapReason;
-    (function (TrapReason) {
-        TrapReason[TrapReason["invalidRead"] = 0] = "invalidRead";
-        TrapReason[TrapReason["invalidWrite"] = 1] = "invalidWrite";
-    })(TrapReason = Pia.TrapReason || (Pia.TrapReason = {}));
     var TrapPayload = (function () {
         function TrapPayload(reason, pia, message) {
             this.reason = reason;
@@ -4597,42 +4435,8 @@ exports.default = Pia;
 
 },{"microevent.ts":6}],35:[function(require,module,exports){
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var microevent_ts_1 = require("microevent.ts");
 var CartridgeInterface_1 = require("./CartridgeInterface");
 var CartridgeInfo_1 = require("./CartridgeInfo");
@@ -4641,7 +4445,7 @@ var AbstractCartridge = (function () {
         this.trap = new microevent_ts_1.Event();
     }
     AbstractCartridge.prototype.init = function () {
-        return __awaiter(this, void 0, void 0, function () { return __generator(this, function (_a) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () { return tslib_1.__generator(this, function (_a) {
             return [2];
         }); });
     };
@@ -4677,24 +4481,15 @@ var AbstractCartridge = (function () {
 }());
 exports.default = AbstractCartridge;
 
-},{"./CartridgeInfo":56,"./CartridgeInterface":57,"microevent.ts":6}],36:[function(require,module,exports){
+},{"./CartridgeInfo":56,"./CartridgeInterface":57,"microevent.ts":6,"tslib":20}],36:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var cartridgeUtil = require("./util");
 var Cartridge8040 = (function (_super) {
-    __extends(Cartridge8040, _super);
+    tslib_1.__extends(Cartridge8040, _super);
     function Cartridge8040(buffer) {
         var _this = _super.call(this) || this;
         _this._bank = null;
@@ -4719,13 +4514,23 @@ var Cartridge8040 = (function (_super) {
             [0x0c, 0x00, 0x08, 0x4c],
             [0x0c, 0xff, 0x0f, 0x4c]
         ]);
-        for (var _i = 0, signatureCounts_1 = signatureCounts; _i < signatureCounts_1.length; _i++) {
-            var count = signatureCounts_1[_i];
-            if (count >= 2) {
-                return true;
+        try {
+            for (var signatureCounts_1 = tslib_1.__values(signatureCounts), signatureCounts_1_1 = signatureCounts_1.next(); !signatureCounts_1_1.done; signatureCounts_1_1 = signatureCounts_1.next()) {
+                var count = signatureCounts_1_1.value;
+                if (count >= 2) {
+                    return true;
+                }
             }
         }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (signatureCounts_1_1 && !signatureCounts_1_1.done && (_a = signatureCounts_1.return)) _a.call(signatureCounts_1);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
         return false;
+        var e_1, _a;
     };
     Cartridge8040.prototype.reset = function () {
         this._bank = this._bank0;
@@ -4761,23 +4566,14 @@ var Cartridge8040 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge8040;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],37:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],37:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var Cartridge2k = (function (_super) {
-    __extends(Cartridge2k, _super);
+    tslib_1.__extends(Cartridge2k, _super);
     function Cartridge2k(buffer) {
         var _this = _super.call(this) || this;
         _this._rom = new Uint8Array(0x0800);
@@ -4799,24 +4595,15 @@ var Cartridge2k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge2k;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56}],38:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],38:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var cartridgeUtil = require("./util");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var Cartridge3E = (function (_super) {
-    __extends(Cartridge3E, _super);
+    tslib_1.__extends(Cartridge3E, _super);
     function Cartridge3E(buffer) {
         var _this = _super.call(this) || this;
         _this._banks = null;
@@ -4921,24 +4708,15 @@ var Cartridge3E = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3E;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],39:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],39:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var cartridgeUtil = require("./util");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var Cartridge3F = (function (_super) {
-    __extends(Cartridge3F, _super);
+    tslib_1.__extends(Cartridge3F, _super);
     function Cartridge3F(buffer) {
         var _this = _super.call(this) || this;
         _this._banks = new Array(4);
@@ -4987,23 +4765,14 @@ var Cartridge3F = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3F;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],40:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],40:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var Cartridge4k = (function (_super) {
-    __extends(Cartridge4k, _super);
+    tslib_1.__extends(Cartridge4k, _super);
     function Cartridge4k(buffer) {
         var _this = _super.call(this) || this;
         _this._rom = new Uint8Array(0x1000);
@@ -5026,36 +4795,21 @@ var Cartridge4k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge4k;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56}],41:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],41:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var thumbulator_ts_1 = require("thumbulator.ts");
 var Soc_1 = require("./harmony/Soc");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeInterface_1 = require("./CartridgeInterface");
 var cartridgeUtil = require("./util");
-var ReservedStream;
-(function (ReservedStream) {
-    ReservedStream[ReservedStream["amplitude"] = 34] = "amplitude";
-    ReservedStream[ReservedStream["jump"] = 33] = "jump";
-    ReservedStream[ReservedStream["comm"] = 32] = "comm";
-})(ReservedStream || (ReservedStream = {}));
 var DSPointerBase = new Uint16Array([0x06e0, 0x00a0]);
 var DSIncrementBase = new Uint16Array([0x0768, 0x0128]);
 var WaveformBase = new Uint16Array([0x07f0, 0x01b0]);
 var CartridgeCDF = (function (_super) {
-    __extends(CartridgeCDF, _super);
+    tslib_1.__extends(CartridgeCDF, _super);
     function CartridgeCDF(buffer) {
         var _this = _super.call(this) || this;
         _this._handleBxCDF0 = function (address) {
@@ -5137,7 +4891,7 @@ var CartridgeCDF = (function (_super) {
         return _this;
     }
     CartridgeCDF.getVersion = function (buffer) {
-        var sig = 'CDF'.split('').map(function (x) { return x.charCodeAt(0); }), startAddress = cartridgeUtil.searchForSignature(buffer, sig.concat([-1], sig, [-1], sig));
+        var sig = 'CDF'.split('').map(function (x) { return x.charCodeAt(0); }), startAddress = cartridgeUtil.searchForSignature(buffer, tslib_1.__spread(sig, [-1], sig, [-1], sig));
         if (startAddress < 0) {
             return -1;
         }
@@ -5311,6 +5065,7 @@ var CartridgeCDF = (function (_super) {
     };
     return CartridgeCDF;
 }(AbstractCartridge_1.default));
+exports.default = CartridgeCDF;
 var MusicStream = (function () {
     function MusicStream() {
         this.counter = 0;
@@ -5326,26 +5081,16 @@ var MusicStream = (function () {
     };
     return MusicStream;
 }());
-exports.default = CartridgeCDF;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./CartridgeInterface":57,"./harmony/Soc":60,"./util":63,"thumbulator.ts":18}],42:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./CartridgeInterface":57,"./harmony/Soc":60,"./util":63,"thumbulator.ts":18,"tslib":20}],42:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var mixerTable = new Uint8Array([0x0, 0x4, 0x5, 0x9, 0x6, 0xa, 0xb, 0xf]);
 var CartridgeDPC = (function (_super) {
-    __extends(CartridgeDPC, _super);
+    tslib_1.__extends(CartridgeDPC, _super);
     function CartridgeDPC(buffer) {
         var _this = _super.call(this) || this;
         _this._bank0 = new Uint8Array(0x1000);
@@ -5504,6 +5249,7 @@ var CartridgeDPC = (function (_super) {
     };
     return CartridgeDPC;
 }(AbstractCartridge_1.default));
+exports.default = CartridgeDPC;
 var Fetcher = (function () {
     function Fetcher() {
         this.pointer = 0;
@@ -5564,28 +5310,18 @@ var Fetcher = (function () {
     };
     return Fetcher;
 }());
-exports.default = CartridgeDPC;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56}],43:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],43:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var Soc_1 = require("./harmony/Soc");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeInterface_1 = require("./CartridgeInterface");
 var cartridgeUtil = require("./util");
 var CartridgeDPCPlus = (function (_super) {
-    __extends(CartridgeDPCPlus, _super);
+    tslib_1.__extends(CartridgeDPCPlus, _super);
     function CartridgeDPCPlus(buffer) {
         var _this = _super.call(this) || this;
         _this._banks = new Array(6);
@@ -5869,6 +5605,7 @@ var CartridgeDPCPlus = (function (_super) {
     };
     return CartridgeDPCPlus;
 }(AbstractCartridge_1.default));
+exports.default = CartridgeDPCPlus;
 var Fetcher = (function () {
     function Fetcher() {
         this.pointer = 0;
@@ -5944,9 +5681,8 @@ var MusicFetcher = (function () {
     };
     return MusicFetcher;
 }());
-exports.default = CartridgeDPCPlus;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./CartridgeInterface":57,"./harmony/Soc":60,"./util":63}],44:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./CartridgeInterface":57,"./harmony/Soc":60,"./util":63,"tslib":20}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo_1 = require("./CartridgeInfo");
@@ -6051,22 +5787,13 @@ exports.default = CartridgeDetector;
 
 },{"./Cartridge0840":36,"./Cartridge3E":38,"./Cartridge3F":39,"./CartridgeCDF":41,"./CartridgeDPCPlus":43,"./CartridgeE0":45,"./CartridgeE7":46,"./CartridgeEF":47,"./CartridgeF8":51,"./CartridgeFA2":53,"./CartridgeFE":54,"./CartridgeInfo":56,"./CartridgeUA":59}],45:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var cartridgeUtil = require("./util");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeE0 = (function (_super) {
-    __extends(CartridgeE0, _super);
+    tslib_1.__extends(CartridgeE0, _super);
     function CartridgeE0(buffer) {
         var _this = _super.call(this) || this;
         _this._banks = new Array(8);
@@ -6144,24 +5871,15 @@ var CartridgeE0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeE0;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],46:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],46:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var cartridgeUtil = require("./util");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartrdigeE7 = (function (_super) {
-    __extends(CartrdigeE7, _super);
+    tslib_1.__extends(CartrdigeE7, _super);
     function CartrdigeE7(buffer) {
         var _this = _super.call(this) || this;
         _this._banks = new Array(8);
@@ -6279,24 +5997,15 @@ var CartrdigeE7 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartrdigeE7;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],47:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],47:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var cartridgeUtil = require("./util");
 var CartridgeEF = (function (_super) {
-    __extends(CartridgeEF, _super);
+    tslib_1.__extends(CartridgeEF, _super);
     function CartridgeEF(buffer, _supportSC) {
         if (_supportSC === void 0) { _supportSC = true; }
         var _this = _super.call(this) || this;
@@ -6397,23 +6106,14 @@ var CartridgeEF = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeEF;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],48:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],48:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeF0 = (function (_super) {
-    __extends(CartridgeF0, _super);
+    tslib_1.__extends(CartridgeF0, _super);
     function CartridgeF0(buffer) {
         var _this = _super.call(this) || this;
         _this._banks = new Array(16);
@@ -6462,23 +6162,14 @@ var CartridgeF0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF0;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56}],49:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],49:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeF4 = (function (_super) {
-    __extends(CartridgeF4, _super);
+    tslib_1.__extends(CartridgeF4, _super);
     function CartridgeF4(buffer, _supportSC) {
         if (_supportSC === void 0) { _supportSC = true; }
         var _this = _super.call(this) || this;
@@ -6550,23 +6241,14 @@ var CartridgeF4 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF4;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56}],50:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],50:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeF6 = (function (_super) {
-    __extends(CartridgeF6, _super);
+    tslib_1.__extends(CartridgeF6, _super);
     function CartridgeF6(buffer, _supportSC) {
         if (_supportSC === void 0) { _supportSC = true; }
         var _this = _super.call(this) || this;
@@ -6649,24 +6331,15 @@ var CartridgeF6 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF6;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56}],51:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],51:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var cartridgeUtil = require("./util");
 var CartridgeF8 = (function (_super) {
-    __extends(CartridgeF8, _super);
+    tslib_1.__extends(CartridgeF8, _super);
     function CartridgeF8(buffer, _supportSC) {
         if (_supportSC === void 0) { _supportSC = true; }
         var _this = _super.call(this) || this;
@@ -6743,23 +6416,14 @@ var CartridgeF8 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF8;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],52:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],52:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var CartridgeFA = (function (_super) {
-    __extends(CartridgeFA, _super);
+    tslib_1.__extends(CartridgeFA, _super);
     function CartridgeFA(buffer) {
         var _this = _super.call(this) || this;
         _this._bank0 = new Uint8Array(0x1000);
@@ -6828,29 +6492,15 @@ var CartridgeFA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56}],53:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],53:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var cartridgeUtil = require("./util");
-var IODelay;
-(function (IODelay) {
-    IODelay[IODelay["load"] = 10] = "load";
-    IODelay[IODelay["save"] = 100] = "save";
-})(IODelay || (IODelay = {}));
 var CartridgeFA2 = (function (_super) {
-    __extends(CartridgeFA2, _super);
+    tslib_1.__extends(CartridgeFA2, _super);
     function CartridgeFA2(buffer) {
         var _this = _super.call(this) || this;
         _this._banks = new Array(7);
@@ -6957,24 +6607,15 @@ var CartridgeFA2 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA2;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],54:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],54:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var cartridgeUtil = require("./util");
 var CartridgeFE = (function (_super) {
-    __extends(CartridgeFE, _super);
+    tslib_1.__extends(CartridgeFE, _super);
     function CartridgeFE(buffer) {
         var _this = _super.call(this) || this;
         _this._bank0 = new Uint8Array(0x1000);
@@ -7016,10 +6657,6 @@ var CartridgeFE = (function (_super) {
     CartridgeFE.prototype.write = function (address, value) {
         _super.prototype.write.call(this, address, value);
     };
-    CartridgeFE.prototype.setCpu = function (cpu) {
-        this._cpu = cpu;
-        return this;
-    };
     CartridgeFE.prototype.setBus = function (bus) {
         this._bus = bus;
         this._bus.event.read.addHandler(CartridgeFE._onBusAccess, this);
@@ -7044,44 +6681,10 @@ var CartridgeFE = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFE;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],55:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],55:[function(require,module,exports){
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var Cartridge2k_1 = require("./Cartridge2k");
 var Cartridge4k_1 = require("./Cartridge4k");
 var CartridgeF8_1 = require("./CartridgeF8");
@@ -7108,9 +6711,9 @@ var CartridgeFactory = (function () {
     function CartridgeFactory() {
     }
     CartridgeFactory.prototype.createCartridge = function (buffer, cartridgeType) {
-        return __awaiter(this, void 0, void 0, function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
             var cartridge;
-            return __generator(this, function (_a) {
+            return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         cartridge = this._createCartridge(buffer, cartridgeType);
@@ -7176,7 +6779,7 @@ var CartridgeFactory = (function () {
 }());
 exports.default = CartridgeFactory;
 
-},{"./Cartridge0840":36,"./Cartridge2k":37,"./Cartridge3E":38,"./Cartridge3F":39,"./Cartridge4k":40,"./CartridgeCDF":41,"./CartridgeDPC":42,"./CartridgeDPCPlus":43,"./CartridgeDetector":44,"./CartridgeE0":45,"./CartridgeE7":46,"./CartridgeEF":47,"./CartridgeF0":48,"./CartridgeF4":49,"./CartridgeF6":50,"./CartridgeF8":51,"./CartridgeFA":52,"./CartridgeFA2":53,"./CartridgeFE":54,"./CartridgeInfo":56,"./CartridgeSupercharger":58,"./CartridgeUA":59}],56:[function(require,module,exports){
+},{"./Cartridge0840":36,"./Cartridge2k":37,"./Cartridge3E":38,"./Cartridge3F":39,"./Cartridge4k":40,"./CartridgeCDF":41,"./CartridgeDPC":42,"./CartridgeDPCPlus":43,"./CartridgeDetector":44,"./CartridgeE0":45,"./CartridgeE7":46,"./CartridgeEF":47,"./CartridgeF0":48,"./CartridgeF4":49,"./CartridgeF6":50,"./CartridgeF8":51,"./CartridgeFA":52,"./CartridgeFA2":53,"./CartridgeFE":54,"./CartridgeInfo":56,"./CartridgeSupercharger":58,"./CartridgeUA":59,"tslib":20}],56:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo;
@@ -7286,12 +6889,6 @@ exports.default = CartridgeInfo;
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInterface;
 (function (CartridgeInterface) {
-    var TrapReason;
-    (function (TrapReason) {
-        TrapReason[TrapReason["invalidRead"] = 0] = "invalidRead";
-        TrapReason[TrapReason["invalidWrite"] = 1] = "invalidWrite";
-        TrapReason[TrapReason["other"] = 2] = "other";
-    })(TrapReason = CartridgeInterface.TrapReason || (CartridgeInterface.TrapReason = {}));
     var TrapPayload = (function () {
         function TrapPayload(reason, cartridge, message) {
             this.reason = reason;
@@ -7306,28 +6903,14 @@ exports.default = CartridgeInterface;
 
 },{}],58:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var Header_1 = require("./supercharger/Header");
 var blob_1 = require("./supercharger/blob");
-var BankType;
-(function (BankType) {
-    BankType[BankType["ram"] = 0] = "ram";
-    BankType[BankType["rom"] = 1] = "rom";
-})(BankType || (BankType = {}));
 var CartridgeSupercharger = (function (_super) {
-    __extends(CartridgeSupercharger, _super);
+    tslib_1.__extends(CartridgeSupercharger, _super);
     function CartridgeSupercharger(buffer, _showLoadingBars) {
         if (_showLoadingBars === void 0) { _showLoadingBars = true; }
         var _this = _super.call(this) || this;
@@ -7517,24 +7100,15 @@ var CartridgeSupercharger = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeSupercharger;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./supercharger/Header":61,"./supercharger/blob":62}],59:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./supercharger/Header":61,"./supercharger/blob":62,"tslib":20}],59:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var cartridgeUtil = require("./util");
 var CartridgeUA = (function (_super) {
-    __extends(CartridgeUA, _super);
+    tslib_1.__extends(CartridgeUA, _super);
     function CartridgeUA(buffer) {
         var _this = _super.call(this) || this;
         _this._bus = null;
@@ -7593,16 +7167,12 @@ var CartridgeUA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeUA;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63}],60:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],60:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var thumbulator_ts_1 = require("thumbulator.ts");
 var microevent_ts_1 = require("microevent.ts");
 var hex_1 = require("../../../../tools/hex");
-var CONST;
-(function (CONST) {
-    CONST[CONST["returnAddress"] = 32772] = "returnAddress";
-})(CONST || (CONST = {}));
 function hostIsLittleEndian() {
     var buffer8 = new Uint8Array([1, 2, 3, 4]), buffer32 = new Uint32Array(buffer8.buffer);
     return buffer32[0] === 0x04030201;
@@ -8448,10 +8018,6 @@ exports.searchForSignature = searchForSignature;
 },{}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Count;
-(function (Count) {
-    Count[Count["renderCounterOffset"] = -4] = "renderCounterOffset";
-})(Count || (Count = {}));
 var Ball = (function () {
     function Ball(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
@@ -8628,6 +8194,7 @@ var DelayQueue = (function () {
     };
     return DelayQueue;
 }());
+exports.default = DelayQueue;
 var QueueEntry = (function () {
     function QueueEntry(size) {
         this.size = size;
@@ -8658,34 +8225,12 @@ var QueueEntry = (function () {
     };
     return QueueEntry;
 }());
-exports.default = DelayQueue;
 
 },{}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var Config_1 = require("../Config");
-var Metrics;
-(function (Metrics) {
-    Metrics[Metrics["vblankNTSC"] = 40] = "vblankNTSC";
-    Metrics[Metrics["vblankPAL"] = 48] = "vblankPAL";
-    Metrics[Metrics["kernelNTSC"] = 192] = "kernelNTSC";
-    Metrics[Metrics["kernelPAL"] = 228] = "kernelPAL";
-    Metrics[Metrics["overscanNTSC"] = 30] = "overscanNTSC";
-    Metrics[Metrics["overscanPAL"] = 36] = "overscanPAL";
-    Metrics[Metrics["vsync"] = 3] = "vsync";
-    Metrics[Metrics["visibleOverscan"] = 20] = "visibleOverscan";
-    Metrics[Metrics["maxUnderscan"] = 10] = "maxUnderscan";
-    Metrics[Metrics["maxLinesWithoutVsync"] = 150] = "maxLinesWithoutVsync";
-})(Metrics || (Metrics = {}));
-var State;
-(function (State) {
-    State[State["waitForVsyncStart"] = 0] = "waitForVsyncStart";
-    State[State["waitForVsyncEnd"] = 1] = "waitForVsyncEnd";
-    State[State["waitForFrameStart"] = 2] = "waitForFrameStart";
-    State[State["frame"] = 3] = "frame";
-    State[State["overscan"] = 4] = "overscan";
-})(State || (State = {}));
 var FrameManager = (function () {
     function FrameManager(_config) {
         this._config = _config;
@@ -8885,10 +8430,6 @@ exports.default = LatchedInput;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
-var Count;
-(function (Count) {
-    Count[Count["renderCounterOffset"] = -4] = "renderCounterOffset";
-})(Count || (Count = {}));
 var Missile = (function () {
     function Missile(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
@@ -9326,10 +8867,6 @@ exports.default = PaddleReader;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
-var Count;
-(function (Count) {
-    Count[Count["renderCounterOffset"] = -5] = "renderCounterOffset";
-})(Count || (Count = {}));
 var Player = (function () {
     function Player(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
@@ -9591,11 +9128,6 @@ exports.default = Player;
 },{"./drawCounterDecodes":77}],73:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var ColorMode;
-(function (ColorMode) {
-    ColorMode[ColorMode["normal"] = 0] = "normal";
-    ColorMode[ColorMode["score"] = 1] = "score";
-})(ColorMode || (ColorMode = {}));
 var Playfield = (function () {
     function Playfield(_collisionMask, _flushLineCache) {
         this._collisionMask = _collisionMask;
@@ -9753,54 +9285,6 @@ var PaddleReader_1 = require("./PaddleReader");
 var FrameManager_1 = require("./FrameManager");
 var DelayQueue_1 = require("./DelayQueue");
 var palette = require("./palette");
-var Metrics;
-(function (Metrics) {
-    Metrics[Metrics["frameLinesPAL"] = 312] = "frameLinesPAL";
-    Metrics[Metrics["frameLinesNTSC"] = 262] = "frameLinesNTSC";
-})(Metrics || (Metrics = {}));
-var Delay;
-(function (Delay) {
-    Delay[Delay["hmove"] = 6] = "hmove";
-    Delay[Delay["pf"] = 2] = "pf";
-    Delay[Delay["grp"] = 1] = "grp";
-    Delay[Delay["shufflePlayer"] = 1] = "shufflePlayer";
-    Delay[Delay["shuffleBall"] = 1] = "shuffleBall";
-    Delay[Delay["hmp"] = 2] = "hmp";
-    Delay[Delay["hmm"] = 2] = "hmm";
-    Delay[Delay["hmbl"] = 2] = "hmbl";
-    Delay[Delay["hmclr"] = 2] = "hmclr";
-    Delay[Delay["refp"] = 1] = "refp";
-    Delay[Delay["vblank"] = 1] = "vblank";
-    Delay[Delay["enabl"] = 1] = "enabl";
-    Delay[Delay["enam"] = 1] = "enam";
-})(Delay || (Delay = {}));
-var ResxCounter;
-(function (ResxCounter) {
-    ResxCounter[ResxCounter["hblank"] = 159] = "hblank";
-    ResxCounter[ResxCounter["lateHblank"] = 158] = "lateHblank";
-    ResxCounter[ResxCounter["frame"] = 157] = "frame";
-    ResxCounter[ResxCounter["lateHblankThreshold"] = 73] = "lateHblankThreshold";
-})(ResxCounter || (ResxCounter = {}));
-var CollisionMask;
-(function (CollisionMask) {
-    CollisionMask[CollisionMask["player0"] = 31744] = "player0";
-    CollisionMask[CollisionMask["player1"] = 17344] = "player1";
-    CollisionMask[CollisionMask["missile0"] = 8760] = "missile0";
-    CollisionMask[CollisionMask["missile1"] = 4390] = "missile1";
-    CollisionMask[CollisionMask["ball"] = 2197] = "ball";
-    CollisionMask[CollisionMask["playfield"] = 1099] = "playfield";
-})(CollisionMask || (CollisionMask = {}));
-var HState;
-(function (HState) {
-    HState[HState["blank"] = 0] = "blank";
-    HState[HState["frame"] = 1] = "frame";
-})(HState || (HState = {}));
-var Priority;
-(function (Priority) {
-    Priority[Priority["normal"] = 0] = "normal";
-    Priority[Priority["pfp"] = 1] = "pfp";
-    Priority[Priority["score"] = 2] = "score";
-})(Priority || (Priority = {}));
 var Tia = (function () {
     function Tia(_config, joystick0, joystick1, paddles) {
         var _this = this;
@@ -10467,77 +9951,8 @@ var Tia = (function () {
     };
     return Tia;
 }());
+exports.default = Tia;
 (function (Tia) {
-    var Registers;
-    (function (Registers) {
-        Registers[Registers["vsync"] = 0] = "vsync";
-        Registers[Registers["vblank"] = 1] = "vblank";
-        Registers[Registers["wsync"] = 2] = "wsync";
-        Registers[Registers["rsync"] = 3] = "rsync";
-        Registers[Registers["nusiz0"] = 4] = "nusiz0";
-        Registers[Registers["nusiz1"] = 5] = "nusiz1";
-        Registers[Registers["colup0"] = 6] = "colup0";
-        Registers[Registers["colup1"] = 7] = "colup1";
-        Registers[Registers["colupf"] = 8] = "colupf";
-        Registers[Registers["colubk"] = 9] = "colubk";
-        Registers[Registers["ctrlpf"] = 10] = "ctrlpf";
-        Registers[Registers["refp0"] = 11] = "refp0";
-        Registers[Registers["refp1"] = 12] = "refp1";
-        Registers[Registers["pf0"] = 13] = "pf0";
-        Registers[Registers["pf1"] = 14] = "pf1";
-        Registers[Registers["pf2"] = 15] = "pf2";
-        Registers[Registers["resp0"] = 16] = "resp0";
-        Registers[Registers["resp1"] = 17] = "resp1";
-        Registers[Registers["resm0"] = 18] = "resm0";
-        Registers[Registers["resm1"] = 19] = "resm1";
-        Registers[Registers["resbl"] = 20] = "resbl";
-        Registers[Registers["audc0"] = 21] = "audc0";
-        Registers[Registers["audc1"] = 22] = "audc1";
-        Registers[Registers["audf0"] = 23] = "audf0";
-        Registers[Registers["audf1"] = 24] = "audf1";
-        Registers[Registers["audv0"] = 25] = "audv0";
-        Registers[Registers["audv1"] = 26] = "audv1";
-        Registers[Registers["grp0"] = 27] = "grp0";
-        Registers[Registers["grp1"] = 28] = "grp1";
-        Registers[Registers["enam0"] = 29] = "enam0";
-        Registers[Registers["enam1"] = 30] = "enam1";
-        Registers[Registers["enabl"] = 31] = "enabl";
-        Registers[Registers["hmp0"] = 32] = "hmp0";
-        Registers[Registers["hmp1"] = 33] = "hmp1";
-        Registers[Registers["hmm0"] = 34] = "hmm0";
-        Registers[Registers["hmm1"] = 35] = "hmm1";
-        Registers[Registers["hmbl"] = 36] = "hmbl";
-        Registers[Registers["vdelp0"] = 37] = "vdelp0";
-        Registers[Registers["vdelp1"] = 38] = "vdelp1";
-        Registers[Registers["vdelbl"] = 39] = "vdelbl";
-        Registers[Registers["resmp0"] = 40] = "resmp0";
-        Registers[Registers["resmp1"] = 41] = "resmp1";
-        Registers[Registers["hmove"] = 42] = "hmove";
-        Registers[Registers["hmclr"] = 43] = "hmclr";
-        Registers[Registers["cxclr"] = 44] = "cxclr";
-        Registers[Registers["cxm0p"] = 0] = "cxm0p";
-        Registers[Registers["cxm1p"] = 1] = "cxm1p";
-        Registers[Registers["cxp0fb"] = 2] = "cxp0fb";
-        Registers[Registers["cxp1fb"] = 3] = "cxp1fb";
-        Registers[Registers["cxm0fb"] = 4] = "cxm0fb";
-        Registers[Registers["cxm1fb"] = 5] = "cxm1fb";
-        Registers[Registers["cxblpf"] = 6] = "cxblpf";
-        Registers[Registers["cxppmm"] = 7] = "cxppmm";
-        Registers[Registers["inpt0"] = 8] = "inpt0";
-        Registers[Registers["inpt1"] = 9] = "inpt1";
-        Registers[Registers["inpt2"] = 10] = "inpt2";
-        Registers[Registers["inpt3"] = 11] = "inpt3";
-        Registers[Registers["inpt4"] = 12] = "inpt4";
-        Registers[Registers["inpt5"] = 13] = "inpt5";
-        Registers[Registers["_shuffleP0"] = 240] = "_shuffleP0";
-        Registers[Registers["_shuffleP1"] = 241] = "_shuffleP1";
-        Registers[Registers["_shuffleBL"] = 242] = "_shuffleBL";
-    })(Registers = Tia.Registers || (Tia.Registers = {}));
-    var TrapReason;
-    (function (TrapReason) {
-        TrapReason[TrapReason["invalidRead"] = 0] = "invalidRead";
-        TrapReason[TrapReason["invalidWrite"] = 1] = "invalidWrite";
-    })(TrapReason = Tia.TrapReason || (Tia.TrapReason = {}));
     var TrapPayload = (function () {
         function TrapPayload(reason, tia, message) {
             this.reason = reason;
@@ -11551,14 +10966,6 @@ var Factory = (function () {
     };
     return Factory;
 }());
-(function (Factory) {
-    var LimitingSchedulingStrategy;
-    (function (LimitingSchedulingStrategy) {
-        LimitingSchedulingStrategy[LimitingSchedulingStrategy["busyWait"] = 0] = "busyWait";
-        LimitingSchedulingStrategy[LimitingSchedulingStrategy["constantCycles"] = 1] = "constantCycles";
-        LimitingSchedulingStrategy[LimitingSchedulingStrategy["constantTimeslice"] = 2] = "constantTimeslice";
-    })(LimitingSchedulingStrategy = Factory.LimitingSchedulingStrategy || (Factory.LimitingSchedulingStrategy = {}));
-})(Factory || (Factory = {}));
 exports.default = Factory;
 
 },{"./ImmedateScheduler":90,"./PeriodicScheduler":91,"./limiting/BusyWait":93,"./limiting/ConstantCycles":94,"./limiting/ConstantTimeslice":95}],90:[function(require,module,exports){
@@ -11761,10 +11168,6 @@ exports.default = ConstantTimesliceScheduler;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var polyfill = require("setimmediate2");
-var CONST;
-(function (CONST) {
-    CONST[CONST["setTimeoutRecurrence"] = 10] = "setTimeoutRecurrence";
-})(CONST || (CONST = {}));
 var index = 0;
 function setImmediate(callback) {
     if (index === 0) {
@@ -11905,11 +11308,6 @@ exports.default = ProcessorPipeline;
 },{"./ProcessorFactory":99}],101:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Type;
-(function (Type) {
-    Type[Type["passthrough"] = 0] = "passthrough";
-    Type[Type["merge"] = 1] = "merge";
-})(Type = exports.Type || (exports.Type = {}));
 
 },{}],102:[function(require,module,exports){
 "use strict";
@@ -12204,6 +11602,7 @@ var DriverManager = (function () {
     };
     return DriverManager;
 }());
+exports.default = DriverManager;
 (function (DriverManager) {
     var DriverContext = (function () {
         function DriverContext(driver, binder) {
@@ -12294,42 +11693,8 @@ exports.default = EmulationContext;
 
 },{"../../../driver/PCMAudioEndpoint":105,"../../../driver/VideoEndpoint":106}],110:[function(require,module,exports){
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var microevent_ts_1 = require("microevent.ts");
 var EmulationServiceInterface_1 = require("../EmulationServiceInterface");
 var EmulationContext_1 = require("./EmulationContext");
@@ -12361,9 +11726,9 @@ var EmulationService = (function () {
     EmulationService.prototype.start = function (buffer, config, cartridgeType, videoProcessing) {
         var _this = this;
         var factory = new CartridgeFactory_1.default();
-        return this._mutex.runExclusive(function () { return __awaiter(_this, void 0, void 0, function () {
+        return this._mutex.runExclusive(function () { return tslib_1.__awaiter(_this, void 0, void 0, function () {
             var cartridge, board, e_1;
-            return __generator(this, function (_a) {
+            return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 2, , 3]);
@@ -12536,7 +11901,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":30,"../../../../machine/stella/cartridge/CartridgeFactory":55,"../../../../tools/ClockProbe":80,"../../../../tools/scheduler/Factory":89,"../../../../tools/scheduler/PeriodicScheduler":91,"../EmulationServiceInterface":108,"./EmulationContext":109,"async-mutex":2,"microevent.ts":6}],111:[function(require,module,exports){
+},{"../../../../machine/stella/Board":30,"../../../../machine/stella/cartridge/CartridgeFactory":55,"../../../../tools/ClockProbe":80,"../../../../tools/scheduler/Factory":89,"../../../../tools/scheduler/PeriodicScheduler":91,"../EmulationServiceInterface":108,"./EmulationContext":109,"async-mutex":2,"microevent.ts":6,"tslib":20}],111:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -12766,42 +12131,8 @@ exports.default = PCMAudioDriver;
 
 },{"./messages":116}],114:[function(require,module,exports){
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var async_mutex_1 = require("async-mutex");
 var worker_rpc_1 = require("worker-rpc");
 var Pool_1 = require("../../../../tools/pool/Pool");
@@ -12882,9 +12213,9 @@ var VideoDriver = (function () {
         }
     };
     VideoDriver.prototype._bind = function (video) {
-        return __awaiter(this, void 0, void 0, function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
             var _this = this;
-            return __generator(this, function (_a) {
+            return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         if (this._active) {
@@ -12926,8 +12257,8 @@ var VideoDriver = (function () {
         });
     };
     VideoDriver.prototype._unbind = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
+        return tslib_1.__awaiter(this, void 0, void 0, function () {
+            return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         if (!this._active) {
@@ -12974,7 +12305,7 @@ var VideoDriver = (function () {
 }());
 exports.default = VideoDriver;
 
-},{"../../../../tools/pool/Pool":85,"../../../../video/processing/worker/PipelineClient":102,"../../../../video/surface/ArrayBufferSurface":104,"./messages":116,"async-mutex":2,"worker-rpc":22}],115:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":85,"../../../../video/processing/worker/PipelineClient":102,"../../../../video/surface/ArrayBufferSurface":104,"./messages":116,"async-mutex":2,"tslib":20,"worker-rpc":22}],115:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
