@@ -1642,8 +1642,9 @@ var SimpleCanvasVideo = (function () {
             width = this._canvas.clientWidth;
             height = this._canvas.clientHeight;
         }
-        this._canvas.width = width;
-        this._canvas.height = height;
+        var pixelRatio = window.devicePixelRatio || 1;
+        this._canvas.width = width * pixelRatio;
+        this._canvas.height = height * pixelRatio;
         this._clearCanvas();
         this._recalculateBlittingMetrics();
         this._applyInterpolationSettings();
@@ -2242,9 +2243,10 @@ var WebglVideoDriver = (function () {
             width = this._canvas.clientWidth;
             height = this._canvas.clientHeight;
         }
-        this._canvas.width = width;
-        this._canvas.height = height;
-        this._gl.viewport(0, 0, width, height);
+        var pixelRatio = window.devicePixelRatio || 1;
+        this._canvas.width = width * pixelRatio;
+        this._canvas.height = height * pixelRatio;
+        this._gl.viewport(0, 0, width * pixelRatio, height * pixelRatio);
         this._recalculateVertexBuffer();
         if (this._video) {
             this._draw();
