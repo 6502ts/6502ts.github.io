@@ -12883,7 +12883,6 @@ function isUndefined(arg) {
 }
 
 },{}],184:[function(require,module,exports){
-(function (process){
 'use strict';
 
 /**
@@ -12945,7 +12944,7 @@ var EventListener = {
         }
       };
     } else {
-      if (process.env.NODE_ENV !== 'production') {
+      if ("development" !== 'production') {
         console.error('Attempted to listen to events during the capture phase on a ' + 'browser that does not support the capture phase. Your application ' + 'will not receive some events.');
       }
       return {
@@ -12958,9 +12957,7 @@ var EventListener = {
 };
 
 module.exports = EventListener;
-}).call(this,require('_process'))
-
-},{"./emptyFunction":189,"_process":289}],185:[function(require,module,exports){
+},{"./emptyFunction":189}],185:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -13138,7 +13135,6 @@ emptyFunction.thatReturnsArgument = function (arg) {
 
 module.exports = emptyFunction;
 },{}],190:[function(require,module,exports){
-(function (process){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -13151,14 +13147,12 @@ module.exports = emptyFunction;
 
 var emptyObject = {};
 
-if (process.env.NODE_ENV !== 'production') {
+if ("development" !== 'production') {
   Object.freeze(emptyObject);
 }
 
 module.exports = emptyObject;
-}).call(this,require('_process'))
-
-},{"_process":289}],191:[function(require,module,exports){
+},{}],191:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -13289,7 +13283,6 @@ function hyphenateStyleName(string) {
 
 module.exports = hyphenateStyleName;
 },{"./hyphenate":193}],195:[function(require,module,exports){
-(function (process){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -13313,7 +13306,7 @@ module.exports = hyphenateStyleName;
 
 var validateFormat = function validateFormat(format) {};
 
-if (process.env.NODE_ENV !== 'production') {
+if ("development" !== 'production') {
   validateFormat = function validateFormat(format) {
     if (format === undefined) {
       throw new Error('invariant requires an error message argument');
@@ -13343,9 +13336,7 @@ function invariant(condition, format, a, b, c, d, e, f) {
 }
 
 module.exports = invariant;
-}).call(this,require('_process'))
-
-},{"_process":289}],196:[function(require,module,exports){
+},{}],196:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13458,7 +13449,6 @@ function shallowEqual(objA, objB) {
 
 module.exports = shallowEqual;
 },{}],199:[function(require,module,exports){
-(function (process){
 /**
  * Copyright (c) 2014-present, Facebook, Inc.
  *
@@ -13480,7 +13470,7 @@ var emptyFunction = require('./emptyFunction');
 
 var warning = emptyFunction;
 
-if (process.env.NODE_ENV !== 'production') {
+if ("development" !== 'production') {
   var printWarning = function printWarning(format) {
     for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
       args[_key - 1] = arguments[_key];
@@ -13521,9 +13511,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 module.exports = warning;
-}).call(this,require('_process'))
-
-},{"./emptyFunction":189,"_process":289}],200:[function(require,module,exports){
+},{"./emptyFunction":189}],200:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -14916,7 +14904,6 @@ if (typeof Object.create === 'function') {
 }
 
 },{}],212:[function(require,module,exports){
-(function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14940,7 +14927,7 @@ if (typeof Object.create === 'function') {
  */
 
 var invariant = function(condition, format, a, b, c, d, e, f) {
-  if (process.env.NODE_ENV !== 'production') {
+  if ("development" !== 'production') {
     if (format === undefined) {
       throw new Error('invariant requires an error message argument');
     }
@@ -14969,9 +14956,7 @@ var invariant = function(condition, format, a, b, c, d, e, f) {
 
 module.exports = invariant;
 
-}).call(this,require('_process'))
-
-},{"_process":289}],213:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -28390,7 +28375,6 @@ function createChainableTypeChecker(validate) {
 }
 module.exports = exports['default'];
 },{}],296:[function(require,module,exports){
-(function (process){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -28400,7 +28384,7 @@ module.exports = exports['default'];
 
 'use strict';
 
-if (process.env.NODE_ENV !== 'production') {
+if ("development" !== 'production') {
   var invariant = require('fbjs/lib/invariant');
   var warning = require('fbjs/lib/warning');
   var ReactPropTypesSecret = require('./lib/ReactPropTypesSecret');
@@ -28419,7 +28403,7 @@ if (process.env.NODE_ENV !== 'production') {
  * @private
  */
 function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
-  if (process.env.NODE_ENV !== 'production') {
+  if ("development" !== 'production') {
     for (var typeSpecName in typeSpecs) {
       if (typeSpecs.hasOwnProperty(typeSpecName)) {
         var error;
@@ -28451,9 +28435,7 @@ function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
 
 module.exports = checkPropTypes;
 
-}).call(this,require('_process'))
-
-},{"./lib/ReactPropTypesSecret":300,"_process":289,"fbjs/lib/invariant":195,"fbjs/lib/warning":199}],297:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":300,"fbjs/lib/invariant":195,"fbjs/lib/warning":199}],297:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -28514,7 +28496,6 @@ module.exports = function() {
 };
 
 },{"./lib/ReactPropTypesSecret":300,"fbjs/lib/emptyFunction":189,"fbjs/lib/invariant":195}],298:[function(require,module,exports){
-(function (process){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -28663,7 +28644,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
   PropTypeError.prototype = Error.prototype;
 
   function createChainableTypeChecker(validate) {
-    if (process.env.NODE_ENV !== 'production') {
+    if ("development" !== 'production') {
       var manualPropTypeCallCache = {};
       var manualPropTypeWarningCount = 0;
     }
@@ -28680,7 +28661,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
             'Use `PropTypes.checkPropTypes()` to call them. ' +
             'Read more at http://fb.me/use-check-prop-types'
           );
-        } else if (process.env.NODE_ENV !== 'production' && typeof console !== 'undefined') {
+        } else if ("development" !== 'production' && typeof console !== 'undefined') {
           // Old behavior for people using React.PropTypes
           var cacheKey = componentName + ':' + propName;
           if (
@@ -28790,7 +28771,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
   function createEnumTypeChecker(expectedValues) {
     if (!Array.isArray(expectedValues)) {
-      process.env.NODE_ENV !== 'production' ? warning(false, 'Invalid argument supplied to oneOf, expected an instance of array.') : void 0;
+      "development" !== 'production' ? warning(false, 'Invalid argument supplied to oneOf, expected an instance of array.') : void 0;
       return emptyFunction.thatReturnsNull;
     }
 
@@ -28833,7 +28814,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
   function createUnionTypeChecker(arrayOfTypeCheckers) {
     if (!Array.isArray(arrayOfTypeCheckers)) {
-      process.env.NODE_ENV !== 'production' ? warning(false, 'Invalid argument supplied to oneOfType, expected an instance of array.') : void 0;
+      "development" !== 'production' ? warning(false, 'Invalid argument supplied to oneOfType, expected an instance of array.') : void 0;
       return emptyFunction.thatReturnsNull;
     }
 
@@ -29058,10 +29039,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
   return ReactPropTypes;
 };
 
-}).call(this,require('_process'))
-
-},{"./checkPropTypes":296,"./lib/ReactPropTypesSecret":300,"_process":289,"fbjs/lib/emptyFunction":189,"fbjs/lib/invariant":195,"fbjs/lib/warning":199,"object-assign":269}],299:[function(require,module,exports){
-(function (process){
+},{"./checkPropTypes":296,"./lib/ReactPropTypesSecret":300,"fbjs/lib/emptyFunction":189,"fbjs/lib/invariant":195,"fbjs/lib/warning":199,"object-assign":269}],299:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -29069,7 +29047,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
  * LICENSE file in the root directory of this source tree.
  */
 
-if (process.env.NODE_ENV !== 'production') {
+if ("development" !== 'production') {
   var REACT_ELEMENT_TYPE = (typeof Symbol === 'function' &&
     Symbol.for &&
     Symbol.for('react.element')) ||
@@ -29091,9 +29069,7 @@ if (process.env.NODE_ENV !== 'production') {
   module.exports = require('./factoryWithThrowingShims')();
 }
 
-}).call(this,require('_process'))
-
-},{"./factoryWithThrowingShims":297,"./factoryWithTypeCheckers":298,"_process":289}],300:[function(require,module,exports){
+},{"./factoryWithThrowingShims":297,"./factoryWithTypeCheckers":298}],300:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -30581,7 +30557,6 @@ CarouselItem.defaultProps = defaultProps;
 exports.default = CarouselItem;
 module.exports = exports['default'];
 },{"./utils/TransitionEvents":393,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470,"react-dom":403}],312:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -30687,7 +30662,7 @@ var Checkbox = function (_React$Component) {
 
       // Use a warning here instead of in propTypes to get better-looking
       // generated documentation.
-      process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(!validationState, '`validationState` is ignored on `<Checkbox inline>`. To display ' + 'validation state on an inline checkbox, set `validationState` on a ' + 'parent `<FormGroup>` or other element instead.') : void 0;
+      "development" !== 'production' ? (0, _warning2.default)(!validationState, '`validationState` is ignored on `<Checkbox inline>`. To display ' + 'validation state on an inline checkbox, set `validationState` on a ' + 'parent `<FormGroup>` or other element instead.') : void 0;
 
       return _react2.default.createElement(
         'label',
@@ -30724,9 +30699,7 @@ Checkbox.defaultProps = defaultProps;
 
 exports.default = (0, _bootstrapUtils.bsClass)('checkbox', Checkbox);
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./utils/bootstrapUtils":395,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470,"warning":552}],313:[function(require,module,exports){
+},{"./utils/bootstrapUtils":395,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470,"warning":552}],313:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -31479,7 +31452,6 @@ Collapse.defaultProps = defaultProps;
 exports.default = Collapse;
 module.exports = exports['default'];
 },{"./utils/capitalize":396,"./utils/createChainedFunction":397,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"dom-helpers/style":165,"prop-types":299,"react":470,"react-overlays/lib/Transition":412}],317:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -31563,7 +31535,7 @@ var ControlLabel = function (_React$Component) {
         bsProps = _splitBsProps[0],
         elementProps = _splitBsProps[1];
 
-    process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(controlId == null || htmlFor === controlId, '`controlId` is ignored on `<ControlLabel>` when `htmlFor` is specified.') : void 0;
+    "development" !== 'production' ? (0, _warning2.default)(controlId == null || htmlFor === controlId, '`controlId` is ignored on `<ControlLabel>` when `htmlFor` is specified.') : void 0;
 
     var classes = (0, _extends3.default)({}, (0, _bootstrapUtils.getClassSet)(bsProps), {
       'sr-only': srOnly
@@ -31584,10 +31556,7 @@ ControlLabel.contextTypes = contextTypes;
 
 exports.default = (0, _bootstrapUtils.bsClass)('control-label', ControlLabel);
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./utils/bootstrapUtils":395,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470,"warning":552}],318:[function(require,module,exports){
-(function (process){
+},{"./utils/bootstrapUtils":395,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470,"warning":552}],318:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -31903,7 +31872,7 @@ var Dropdown = function (_React$Component) {
     };
 
     if (typeof child.ref === 'string') {
-      process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(false, 'String refs are not supported on `<Dropdown.Menu>` components. ' + 'To apply a ref to the component use the callback signature:\n\n ' + 'https://facebook.github.io/react/docs/more-about-refs.html#the-ref-callback-attribute') : void 0;
+      "development" !== 'production' ? (0, _warning2.default)(false, 'String refs are not supported on `<Dropdown.Menu>` components. ' + 'To apply a ref to the component use the callback signature:\n\n ' + 'https://facebook.github.io/react/docs/more-about-refs.html#the-ref-callback-attribute') : void 0;
     } else {
       ref = (0, _createChainedFunction2.default)(child.ref, ref);
     }
@@ -31928,7 +31897,7 @@ var Dropdown = function (_React$Component) {
     };
 
     if (typeof child.ref === 'string') {
-      process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(false, 'String refs are not supported on `<Dropdown.Toggle>` components. ' + 'To apply a ref to the component use the callback signature:\n\n ' + 'https://facebook.github.io/react/docs/more-about-refs.html#the-ref-callback-attribute') : void 0;
+      "development" !== 'production' ? (0, _warning2.default)(false, 'String refs are not supported on `<Dropdown.Toggle>` components. ' + 'To apply a ref to the component use the callback signature:\n\n ' + 'https://facebook.github.io/react/docs/more-about-refs.html#the-ref-callback-attribute') : void 0;
     } else {
       ref = (0, _createChainedFunction2.default)(child.ref, ref);
     }
@@ -32010,9 +31979,7 @@ UncontrolledDropdown.Menu = _DropdownMenu2.default;
 
 exports.default = UncontrolledDropdown;
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./ButtonGroup":307,"./DropdownMenu":320,"./DropdownToggle":321,"./utils/PropTypes":391,"./utils/ValidComponentChildren":394,"./utils/bootstrapUtils":395,"./utils/createChainedFunction":397,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"dom-helpers/activeElement":145,"dom-helpers/query/contains":156,"keycode":252,"prop-types":299,"prop-types-extra/lib/all":290,"prop-types-extra/lib/elementType":293,"prop-types-extra/lib/isRequiredForA11y":294,"react":470,"react-dom":403,"uncontrollable":548,"warning":552}],319:[function(require,module,exports){
+},{"./ButtonGroup":307,"./DropdownMenu":320,"./DropdownToggle":321,"./utils/PropTypes":391,"./utils/ValidComponentChildren":394,"./utils/bootstrapUtils":395,"./utils/createChainedFunction":397,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"dom-helpers/activeElement":145,"dom-helpers/query/contains":156,"keycode":252,"prop-types":299,"prop-types-extra/lib/all":290,"prop-types-extra/lib/elementType":293,"prop-types-extra/lib/isRequiredForA11y":294,"react":470,"react-dom":403,"uncontrollable":548,"warning":552}],319:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -32665,7 +32632,6 @@ Form.defaultProps = defaultProps;
 exports.default = (0, _bootstrapUtils.bsClass)('form', Form);
 module.exports = exports['default'];
 },{"./utils/bootstrapUtils":395,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"prop-types-extra/lib/elementType":293,"react":470}],324:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -32778,7 +32744,7 @@ var FormControl = function (_React$Component) {
         bsProps = _splitBsProps[0],
         elementProps = _splitBsProps[1];
 
-    process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(controlId == null || id === controlId, '`controlId` is ignored on `<FormControl>` when `id` is specified.') : void 0;
+    "development" !== 'production' ? (0, _warning2.default)(controlId == null || id === controlId, '`controlId` is ignored on `<FormControl>` when `id` is specified.') : void 0;
 
     // input[type="file"] should not have .form-control.
     var classes = void 0;
@@ -32813,9 +32779,7 @@ FormControl.Static = _FormControlStatic2.default;
 
 exports.default = (0, _bootstrapUtils.bsClass)('form-control', (0, _bootstrapUtils.bsSizes)([_StyleConfig.Size.SMALL, _StyleConfig.Size.LARGE], FormControl));
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./FormControlFeedback":325,"./FormControlStatic":326,"./utils/StyleConfig":392,"./utils/bootstrapUtils":395,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"prop-types-extra/lib/elementType":293,"react":470,"warning":552}],325:[function(require,module,exports){
+},{"./FormControlFeedback":325,"./FormControlStatic":326,"./utils/StyleConfig":392,"./utils/bootstrapUtils":395,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"prop-types-extra/lib/elementType":293,"react":470,"warning":552}],325:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -35795,7 +35759,6 @@ ModalTitle.defaultProps = defaultProps;
 exports.default = (0, _bootstrapUtils.bsClass)('modal-title', ModalTitle);
 module.exports = exports['default'];
 },{"./utils/bootstrapUtils":395,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types-extra/lib/elementType":293,"react":470}],353:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -35996,7 +35959,7 @@ var Nav = function (_React$Component) {
     var tabContainer = this.context.$bs_tabContainer;
 
     if (tabContainer) {
-      process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(this.props.activeKey == null && !this.props.activeHref, 'Specifying a `<Nav>` `activeKey` or `activeHref` in the context of ' + 'a `<TabContainer>` is not supported. Instead use `<TabContainer ' + ('activeKey={' + this.props.activeKey + '} />`.')) : void 0;
+      "development" !== 'production' ? (0, _warning2.default)(this.props.activeKey == null && !this.props.activeHref, 'Specifying a `<Nav>` `activeKey` or `activeHref` in the context of ' + 'a `<TabContainer>` is not supported. Instead use `<TabContainer ' + ('activeKey={' + this.props.activeKey + '} />`.')) : void 0;
 
       return tabContainer;
     }
@@ -36058,7 +36021,7 @@ var Nav = function (_React$Component) {
 
 
     if (tabContainer) {
-      process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(!id && !controls, 'In the context of a `<TabContainer>`, `<NavItem>`s are given ' + 'generated `id` and `aria-controls` attributes for the sake of ' + 'proper component accessibility. Any provided ones will be ignored. ' + 'To control these attributes directly, provide a `generateChildId` ' + 'prop to the parent `<TabContainer>`.') : void 0;
+      "development" !== 'production' ? (0, _warning2.default)(!id && !controls, 'In the context of a `<TabContainer>`, `<NavItem>`s are given ' + 'generated `id` and `aria-controls` attributes for the sake of ' + 'proper component accessibility. Any provided ones will be ignored. ' + 'To control these attributes directly, provide a `generateChildId` ' + 'prop to the parent `<TabContainer>`.') : void 0;
 
       id = tabContainer.getTabId(eventKey);
       controls = tabContainer.getPaneId(eventKey);
@@ -36198,9 +36161,7 @@ Nav.contextTypes = contextTypes;
 
 exports.default = (0, _bootstrapUtils.bsClass)('nav', (0, _bootstrapUtils.bsStyles)(['tabs', 'pills'], Nav));
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./utils/ValidComponentChildren":394,"./utils/bootstrapUtils":395,"./utils/createChainedFunction":397,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"keycode":252,"prop-types":299,"prop-types-extra/lib/all":290,"react":470,"react-dom":403,"warning":552}],354:[function(require,module,exports){
+},{"./utils/ValidComponentChildren":394,"./utils/bootstrapUtils":395,"./utils/createChainedFunction":397,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"keycode":252,"prop-types":299,"prop-types-extra/lib/all":290,"react":470,"react-dom":403,"warning":552}],354:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -37323,7 +37284,6 @@ Overlay.defaultProps = defaultProps;
 exports.default = Overlay;
 module.exports = exports['default'];
 },{"./Fade":322,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"prop-types-extra/lib/elementType":293,"react":470,"react-overlays/lib/Overlay":407}],362:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -37651,7 +37611,7 @@ var OverlayTrigger = function (_React$Component) {
     }
 
     if (isOneOf('hover', trigger)) {
-      process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(!(trigger === 'hover'), '[react-bootstrap] Specifying only the `"hover"` trigger limits the ' + 'visibility of the overlay to just mouse users. Consider also ' + 'including the `"focus"` trigger so that touch and keyboard only ' + 'users can see the overlay as well.') : void 0;
+      "development" !== 'production' ? (0, _warning2.default)(!(trigger === 'hover'), '[react-bootstrap] Specifying only the `"hover"` trigger limits the ' + 'visibility of the overlay to just mouse users. Consider also ' + 'including the `"focus"` trigger so that touch and keyboard only ' + 'users can see the overlay as well.') : void 0;
 
       triggerProps.onMouseOver = (0, _createChainedFunction2.default)(childProps.onMouseOver, onMouseOver, this.handleMouseOver);
       triggerProps.onMouseOut = (0, _createChainedFunction2.default)(childProps.onMouseOut, onMouseOut, this.handleMouseOut);
@@ -37675,9 +37635,7 @@ OverlayTrigger.defaultProps = defaultProps;
 
 exports.default = OverlayTrigger;
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./Overlay":361,"./utils/createChainedFunction":397,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"dom-helpers/query/contains":156,"prop-types":299,"react":470,"react-dom":403,"warning":552}],363:[function(require,module,exports){
+},{"./Overlay":361,"./utils/createChainedFunction":397,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"dom-helpers/query/contains":156,"prop-types":299,"react":470,"react-dom":403,"warning":552}],363:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -39210,7 +39168,6 @@ ProgressBar.defaultProps = defaultProps;
 exports.default = (0, _bootstrapUtils.bsClass)('progress-bar', (0, _bootstrapUtils.bsStyles)((0, _values2.default)(_StyleConfig.State), ProgressBar));
 module.exports = exports['default'];
 },{"./utils/StyleConfig":392,"./utils/ValidComponentChildren":394,"./utils/bootstrapUtils":395,"babel-runtime/core-js/object/values":8,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470}],373:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -39316,7 +39273,7 @@ var Radio = function (_React$Component) {
 
       // Use a warning here instead of in propTypes to get better-looking
       // generated documentation.
-      process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(!validationState, '`validationState` is ignored on `<Radio inline>`. To display ' + 'validation state on an inline radio, set `validationState` on a ' + 'parent `<FormGroup>` or other element instead.') : void 0;
+      "development" !== 'production' ? (0, _warning2.default)(!validationState, '`validationState` is ignored on `<Radio inline>`. To display ' + 'validation state on an inline radio, set `validationState` on a ' + 'parent `<FormGroup>` or other element instead.') : void 0;
 
       return _react2.default.createElement(
         'label',
@@ -39353,10 +39310,7 @@ Radio.defaultProps = defaultProps;
 
 exports.default = (0, _bootstrapUtils.bsClass)('radio', Radio);
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./utils/bootstrapUtils":395,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470,"warning":552}],374:[function(require,module,exports){
-(function (process){
+},{"./utils/bootstrapUtils":395,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470,"warning":552}],374:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -39445,8 +39399,8 @@ var ResponsiveEmbed = function (_React$Component) {
         bsProps = _splitBsProps[0],
         elementProps = _splitBsProps[1];
 
-    process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(a16by9 || a4by3, 'Either `a16by9` or `a4by3` must be set.') : void 0;
-    process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(!(a16by9 && a4by3), 'Only one of `a16by9` or `a4by3` can be set.') : void 0;
+    "development" !== 'production' ? (0, _warning2.default)(a16by9 || a4by3, 'Either `a16by9` or `a4by3` must be set.') : void 0;
+    "development" !== 'production' ? (0, _warning2.default)(!(a16by9 && a4by3), 'Only one of `a16by9` or `a4by3` can be set.') : void 0;
 
     var classes = (0, _extends4.default)({}, (0, _bootstrapUtils.getClassSet)(bsProps), (_extends2 = {}, _extends2[(0, _bootstrapUtils.prefix)(bsProps, '16by9')] = a16by9, _extends2[(0, _bootstrapUtils.prefix)(bsProps, '4by3')] = a4by3, _extends2));
 
@@ -39467,9 +39421,7 @@ ResponsiveEmbed.defaultProps = defaultProps;
 
 exports.default = (0, _bootstrapUtils.bsClass)('embed-responsive', ResponsiveEmbed);
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./utils/bootstrapUtils":395,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470,"warning":552}],375:[function(require,module,exports){
+},{"./utils/bootstrapUtils":395,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"react":470,"warning":552}],375:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -40344,7 +40296,6 @@ TabContent.childContextTypes = childContextTypes;
 exports.default = (0, _bootstrapUtils.bsClass)('tab', TabContent);
 module.exports = exports['default'];
 },{"./utils/bootstrapUtils":395,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"prop-types-extra/lib/elementType":293,"react":470}],382:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -40621,7 +40572,7 @@ var TabPane = function (_React$Component) {
     });
 
     if (tabContainer) {
-      process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(!elementProps.id && !elementProps['aria-labelledby'], 'In the context of a `<TabContainer>`, `<TabPanes>` are given ' + 'generated `id` and `aria-labelledby` attributes for the sake of ' + 'proper component accessibility. Any provided ones will be ignored. ' + 'To control these attributes directly provide a `generateChildId` ' + 'prop to the parent `<TabContainer>`.') : void 0;
+      "development" !== 'production' ? (0, _warning2.default)(!elementProps.id && !elementProps['aria-labelledby'], 'In the context of a `<TabContainer>`, `<TabPanes>` are given ' + 'generated `id` and `aria-labelledby` attributes for the sake of ' + 'proper component accessibility. Any provided ones will be ignored. ' + 'To control these attributes directly provide a `generateChildId` ' + 'prop to the parent `<TabContainer>`.') : void 0;
 
       elementProps.id = tabContainer.getPaneId(eventKey);
       elementProps['aria-labelledby'] = tabContainer.getTabId(eventKey);
@@ -40665,9 +40616,7 @@ TabPane.childContextTypes = childContextTypes;
 
 exports.default = (0, _bootstrapUtils.bsClass)('tab-pane', TabPane);
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./Fade":322,"./utils/bootstrapUtils":395,"./utils/createChainedFunction":397,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"prop-types-extra/lib/elementType":293,"react":470,"warning":552}],383:[function(require,module,exports){
+},{"./Fade":322,"./utils/bootstrapUtils":395,"./utils/createChainedFunction":397,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"classnames":107,"prop-types":299,"prop-types-extra/lib/elementType":293,"react":470,"warning":552}],383:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -41222,7 +41171,6 @@ ToggleButton.propTypes = propTypes;
 exports.default = ToggleButton;
 module.exports = exports['default'];
 },{"./Button":306,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"prop-types":299,"react":470}],387:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -41366,7 +41314,7 @@ var ToggleButtonGroup = function (_React$Component) {
 
     var values = this.getValues();
 
-    !(type !== 'radio' || !!name) ? process.env.NODE_ENV !== 'production' ? (0, _invariant2.default)(false, 'A `name` is required to group the toggle buttons when the `type` ' + 'is set to "radio"') : (0, _invariant2.default)(false) : void 0;
+    !(type !== 'radio' || !!name) ? "development" !== 'production' ? (0, _invariant2.default)(false, 'A `name` is required to group the toggle buttons when the `type` ' + 'is set to "radio"') : (0, _invariant2.default)(false) : void 0;
 
     delete props.onChange;
     delete props.value;
@@ -41408,9 +41356,7 @@ UncontrolledToggleButtonGroup.Button = _ToggleButton2.default;
 
 exports.default = UncontrolledToggleButtonGroup;
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"./ButtonGroup":307,"./ToggleButton":386,"./utils/ValidComponentChildren":394,"./utils/createChainedFunction":397,"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"invariant":212,"prop-types":299,"react":470,"uncontrollable":548}],388:[function(require,module,exports){
+},{"./ButtonGroup":307,"./ToggleButton":386,"./utils/ValidComponentChildren":394,"./utils/createChainedFunction":397,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/extends":12,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/objectWithoutProperties":14,"babel-runtime/helpers/possibleConstructorReturn":15,"invariant":212,"prop-types":299,"react":470,"uncontrollable":548}],388:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -42403,7 +42349,6 @@ exports.default = {
 };
 module.exports = exports['default'];
 },{"react":470}],395:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -42452,7 +42397,7 @@ function curry(fn) {
 } // TODO: The publicly exposed parts of this should be in lib/BootstrapUtils.
 
 function prefix(props, variant) {
-  !(props.bsClass != null) ? process.env.NODE_ENV !== 'production' ? (0, _invariant2.default)(false, 'A `bsClass` prop is required for this component') : (0, _invariant2.default)(false) : void 0;
+  !(props.bsClass != null) ? "development" !== 'production' ? (0, _invariant2.default)(false, 'A `bsClass` prop is required for this component') : (0, _invariant2.default)(false) : void 0;
   return props.bsClass + (variant ? '-' + variant : '');
 }
 
@@ -42620,9 +42565,7 @@ function addStyle(Component) {
 }
 
 var _curry = exports._curry = curry;
-}).call(this,require('_process'))
-
-},{"./StyleConfig":392,"_process":289,"babel-runtime/core-js/object/entries":6,"babel-runtime/helpers/extends":12,"invariant":212,"prop-types":299}],396:[function(require,module,exports){
+},{"./StyleConfig":392,"babel-runtime/core-js/object/entries":6,"babel-runtime/helpers/extends":12,"invariant":212,"prop-types":299}],396:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -42674,7 +42617,6 @@ function createChainedFunction() {
 exports.default = createChainedFunction;
 module.exports = exports['default'];
 },{}],398:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -42722,7 +42664,7 @@ function deprecationWarning(oldname, newname, link) {
     return;
   }
 
-  process.env.NODE_ENV !== 'production' ? (0, _warning2.default)(false, message) : void 0;
+  "development" !== 'production' ? (0, _warning2.default)(false, message) : void 0;
   warned[message] = true;
 }
 
@@ -42761,9 +42703,7 @@ exports.default = deprecationWarning;
 function _resetWarned() {
   warned = {};
 }
-}).call(this,require('_process'))
-
-},{"_process":289,"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/possibleConstructorReturn":15,"babel-runtime/helpers/typeof":16,"warning":552}],399:[function(require,module,exports){
+},{"babel-runtime/helpers/classCallCheck":11,"babel-runtime/helpers/inherits":13,"babel-runtime/helpers/possibleConstructorReturn":15,"babel-runtime/helpers/typeof":16,"warning":552}],399:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -42822,7 +42762,6 @@ function splitComponentProps(props, Component) {
 }
 module.exports = exports["default"];
 },{"babel-runtime/core-js/object/entries":6}],401:[function(require,module,exports){
-(function (process){
 /** @license React v16.2.0
  * react-dom.development.js
  *
@@ -42836,7 +42775,7 @@ module.exports = exports["default"];
 
 
 
-if (process.env.NODE_ENV !== "production") {
+if ("development" !== "production") {
   (function() {
 'use strict';
 
@@ -58218,9 +58157,7 @@ module.exports = reactDom;
   })();
 }
 
-}).call(this,require('_process'))
-
-},{"_process":289,"fbjs/lib/EventListener":184,"fbjs/lib/ExecutionEnvironment":185,"fbjs/lib/camelizeStyleName":187,"fbjs/lib/containsNode":188,"fbjs/lib/emptyFunction":189,"fbjs/lib/emptyObject":190,"fbjs/lib/focusNode":191,"fbjs/lib/getActiveElement":192,"fbjs/lib/hyphenateStyleName":194,"fbjs/lib/invariant":195,"fbjs/lib/shallowEqual":198,"fbjs/lib/warning":199,"object-assign":269,"prop-types/checkPropTypes":296,"react":470}],402:[function(require,module,exports){
+},{"fbjs/lib/EventListener":184,"fbjs/lib/ExecutionEnvironment":185,"fbjs/lib/camelizeStyleName":187,"fbjs/lib/containsNode":188,"fbjs/lib/emptyFunction":189,"fbjs/lib/emptyObject":190,"fbjs/lib/focusNode":191,"fbjs/lib/getActiveElement":192,"fbjs/lib/hyphenateStyleName":194,"fbjs/lib/invariant":195,"fbjs/lib/shallowEqual":198,"fbjs/lib/warning":199,"object-assign":269,"prop-types/checkPropTypes":296,"react":470}],402:[function(require,module,exports){
 /** @license React v16.2.0
  * react-dom.production.min.js
  *
@@ -58452,7 +58389,6 @@ E("40");return a._reactRootContainer?(Z.unbatchedUpdates(function(){Pg(null,null
 Z.injectIntoDevTools({findFiberByHostInstance:pb,bundleType:0,version:"16.2.0",rendererPackageName:"react-dom"});var Tg=Object.freeze({default:Sg}),Ug=Tg&&Sg||Tg;module.exports=Ug["default"]?Ug["default"]:Ug;
 
 },{"fbjs/lib/EventListener":184,"fbjs/lib/ExecutionEnvironment":185,"fbjs/lib/containsNode":188,"fbjs/lib/emptyFunction":189,"fbjs/lib/emptyObject":190,"fbjs/lib/focusNode":191,"fbjs/lib/getActiveElement":192,"fbjs/lib/shallowEqual":198,"object-assign":269,"react":470}],403:[function(require,module,exports){
-(function (process){
 'use strict';
 
 function checkDCE() {
@@ -58463,7 +58399,7 @@ function checkDCE() {
   ) {
     return;
   }
-  if (process.env.NODE_ENV !== 'production') {
+  if ("development" !== 'production') {
     // This branch is unreachable because this function is only called
     // in production, but the condition is true only in development.
     // Therefore if the branch is still here, dead code elimination wasn't
@@ -58483,7 +58419,7 @@ function checkDCE() {
   }
 }
 
-if (process.env.NODE_ENV === 'production') {
+if ("development" === 'production') {
   // DCE check should happen before ReactDOM bundle executes so that
   // DevTools can report bad minification during injection.
   checkDCE();
@@ -58492,9 +58428,7 @@ if (process.env.NODE_ENV === 'production') {
   module.exports = require('./cjs/react-dom.development.js');
 }
 
-}).call(this,require('_process'))
-
-},{"./cjs/react-dom.development.js":401,"./cjs/react-dom.production.min.js":402,"_process":289}],404:[function(require,module,exports){
+},{"./cjs/react-dom.development.js":401,"./cjs/react-dom.production.min.js":402}],404:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -60823,7 +60757,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 module.exports = exports['default'];
 },{"dom-helpers/ownerDocument":155,"react-dom":403}],420:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -60892,7 +60825,7 @@ function createProvider() {
     return Provider;
   }(_react.Component);
 
-  if (process.env.NODE_ENV !== 'production') {
+  if ("development" !== 'production') {
     Provider.prototype.componentWillReceiveProps = function (nextProps) {
       if (this[storeKey] !== nextProps.store) {
         warnAboutReceivingStore();
@@ -60910,10 +60843,7 @@ function createProvider() {
 }
 
 exports.default = createProvider();
-}).call(this,require('_process'))
-
-},{"../utils/PropTypes":430,"../utils/warning":434,"_process":289,"prop-types":299,"react":470}],421:[function(require,module,exports){
-(function (process){
+},{"../utils/PropTypes":430,"../utils/warning":434,"prop-types":299,"react":470}],421:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61186,7 +61116,7 @@ selectorFactory) {
     Connect.contextTypes = contextTypes;
     Connect.propTypes = contextTypes;
 
-    if (process.env.NODE_ENV !== 'production') {
+    if ("development" !== 'production') {
       Connect.prototype.componentWillUpdate = function componentWillUpdate() {
         var _this2 = this;
 
@@ -61220,9 +61150,7 @@ selectorFactory) {
     return (0, _hoistNonReactStatics2.default)(Connect, WrappedComponent);
   };
 }
-}).call(this,require('_process'))
-
-},{"../utils/PropTypes":430,"../utils/Subscription":431,"_process":289,"hoist-non-react-statics":208,"invariant":212,"react":470}],422:[function(require,module,exports){
+},{"../utils/PropTypes":430,"../utils/Subscription":431,"hoist-non-react-statics":208,"invariant":212,"react":470}],422:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61401,7 +61329,6 @@ function whenMapStateToPropsIsMissing(mapStateToProps) {
 
 exports.default = [whenMapStateToPropsIsFunction, whenMapStateToPropsIsMissing];
 },{"./wrapMapToProps":428}],425:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -61441,7 +61368,7 @@ function wrapMergePropsFunc(mergeProps) {
         hasRunOnce = true;
         mergedProps = nextMergedProps;
 
-        if (process.env.NODE_ENV !== 'production') (0, _verifyPlainObject2.default)(mergedProps, displayName, 'mergeProps');
+        if ("development" !== 'production') (0, _verifyPlainObject2.default)(mergedProps, displayName, 'mergeProps');
       }
 
       return mergedProps;
@@ -61460,10 +61387,7 @@ function whenMergePropsIsOmitted(mergeProps) {
 }
 
 exports.default = [whenMergePropsIsFunction, whenMergePropsIsOmitted];
-}).call(this,require('_process'))
-
-},{"../utils/verifyPlainObject":433,"_process":289}],426:[function(require,module,exports){
-(function (process){
+},{"../utils/verifyPlainObject":433}],426:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61569,7 +61493,7 @@ function finalPropsSelectorFactory(dispatch, _ref2) {
   var mapDispatchToProps = initMapDispatchToProps(dispatch, options);
   var mergeProps = initMergeProps(dispatch, options);
 
-  if (process.env.NODE_ENV !== 'production') {
+  if ("development" !== 'production') {
     (0, _verifySubselectors2.default)(mapStateToProps, mapDispatchToProps, mergeProps, options.displayName);
   }
 
@@ -61577,9 +61501,7 @@ function finalPropsSelectorFactory(dispatch, _ref2) {
 
   return selectorFactory(mapStateToProps, mapDispatchToProps, mergeProps, dispatch, options);
 }
-}).call(this,require('_process'))
-
-},{"./verifySubselectors":427,"_process":289}],427:[function(require,module,exports){
+},{"./verifySubselectors":427}],427:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -61607,7 +61529,6 @@ function verifySubselectors(mapStateToProps, mapDispatchToProps, mergeProps, dis
   verify(mergeProps, 'mergeProps', displayName);
 }
 },{"../utils/warning":434}],428:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -61678,7 +61599,7 @@ function wrapMapToPropsFunc(mapToProps, methodName) {
         props = proxy(stateOrDispatch, ownProps);
       }
 
-      if (process.env.NODE_ENV !== 'production') (0, _verifyPlainObject2.default)(props, displayName, methodName);
+      if ("development" !== 'production') (0, _verifyPlainObject2.default)(props, displayName, methodName);
 
       return props;
     };
@@ -61686,9 +61607,7 @@ function wrapMapToPropsFunc(mapToProps, methodName) {
     return proxy;
   };
 }
-}).call(this,require('_process'))
-
-},{"../utils/verifyPlainObject":433,"_process":289}],429:[function(require,module,exports){
+},{"../utils/verifyPlainObject":433}],429:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -63963,7 +63882,6 @@ var withRouter = function withRouter(Component) {
 
 exports.default = withRouter;
 },{"./Route":461,"hoist-non-react-statics":208,"prop-types":299,"react":470}],468:[function(require,module,exports){
-(function (process){
 /** @license React v16.2.0
  * react.development.js
  *
@@ -63977,7 +63895,7 @@ exports.default = withRouter;
 
 
 
-if (process.env.NODE_ENV !== "production") {
+if ("development" !== "production") {
   (function() {
 'use strict';
 
@@ -65322,9 +65240,7 @@ module.exports = react;
   })();
 }
 
-}).call(this,require('_process'))
-
-},{"_process":289,"fbjs/lib/emptyFunction":189,"fbjs/lib/emptyObject":190,"fbjs/lib/invariant":195,"fbjs/lib/warning":199,"object-assign":269,"prop-types/checkPropTypes":296}],469:[function(require,module,exports){
+},{"fbjs/lib/emptyFunction":189,"fbjs/lib/emptyObject":190,"fbjs/lib/invariant":195,"fbjs/lib/warning":199,"object-assign":269,"prop-types/checkPropTypes":296}],469:[function(require,module,exports){
 /** @license React v16.2.0
  * react.production.min.js
  *
@@ -65348,18 +65264,15 @@ d=a.key,g=a.ref,k=a._owner;if(null!=b){void 0!==b.ref&&(g=b.ref,k=G.current);voi
 isValidElement:K,version:"16.2.0",__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED:{ReactCurrentOwner:G,assign:m}},V=Object.freeze({default:U}),W=V&&U||V;module.exports=W["default"]?W["default"]:W;
 
 },{"fbjs/lib/emptyFunction":189,"fbjs/lib/emptyObject":190,"object-assign":269}],470:[function(require,module,exports){
-(function (process){
 'use strict';
 
-if (process.env.NODE_ENV === 'production') {
+if ("development" === 'production') {
   module.exports = require('./cjs/react.production.min.js');
 } else {
   module.exports = require('./cjs/react.development.js');
 }
 
-}).call(this,require('_process'))
-
-},{"./cjs/react.development.js":468,"./cjs/react.production.min.js":469,"_process":289}],471:[function(require,module,exports){
+},{"./cjs/react.development.js":468,"./cjs/react.production.min.js":469}],471:[function(require,module,exports){
 module.exports = require('./lib/_stream_duplex.js');
 
 },{"./lib/_stream_duplex.js":472}],472:[function(require,module,exports){
@@ -67990,7 +67903,6 @@ function bindActionCreators(actionCreators, dispatch) {
   return boundActionCreators;
 }
 },{}],488:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -68078,7 +67990,7 @@ function combineReducers(reducers) {
   for (var i = 0; i < reducerKeys.length; i++) {
     var key = reducerKeys[i];
 
-    if (process.env.NODE_ENV !== 'production') {
+    if ("development" !== 'production') {
       if (typeof reducers[key] === 'undefined') {
         (0, _warning2['default'])('No reducer provided for key "' + key + '"');
       }
@@ -68091,7 +68003,7 @@ function combineReducers(reducers) {
   var finalReducerKeys = Object.keys(finalReducers);
 
   var unexpectedKeyCache = void 0;
-  if (process.env.NODE_ENV !== 'production') {
+  if ("development" !== 'production') {
     unexpectedKeyCache = {};
   }
 
@@ -68110,7 +68022,7 @@ function combineReducers(reducers) {
       throw shapeAssertionError;
     }
 
-    if (process.env.NODE_ENV !== 'production') {
+    if ("development" !== 'production') {
       var warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action, unexpectedKeyCache);
       if (warningMessage) {
         (0, _warning2['default'])(warningMessage);
@@ -68134,9 +68046,7 @@ function combineReducers(reducers) {
     return hasChanged ? nextState : state;
   };
 }
-}).call(this,require('_process'))
-
-},{"./createStore":490,"./utils/warning":492,"_process":289,"lodash/isPlainObject":263}],489:[function(require,module,exports){
+},{"./createStore":490,"./utils/warning":492,"lodash/isPlainObject":263}],489:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -68436,7 +68346,6 @@ var ActionTypes = exports.ActionTypes = {
   }, _ref2[_symbolObservable2['default']] = observable, _ref2;
 }
 },{"lodash/isPlainObject":263,"symbol-observable":541}],491:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -68474,7 +68383,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 */
 function isCrushed() {}
 
-if (process.env.NODE_ENV !== 'production' && typeof isCrushed.name === 'string' && isCrushed.name !== 'isCrushed') {
+if ("development" !== 'production' && typeof isCrushed.name === 'string' && isCrushed.name !== 'isCrushed') {
   (0, _warning2['default'])('You are currently using minified code outside of NODE_ENV === \'production\'. ' + 'This means that you are running a slower development build of Redux. ' + 'You can use loose-envify (https://github.com/zertosh/loose-envify) for browserify ' + 'or DefinePlugin for webpack (http://stackoverflow.com/questions/30030031) ' + 'to ensure you have the correct code for your production build.');
 }
 
@@ -68483,9 +68392,7 @@ exports.combineReducers = _combineReducers2['default'];
 exports.bindActionCreators = _bindActionCreators2['default'];
 exports.applyMiddleware = _applyMiddleware2['default'];
 exports.compose = _compose2['default'];
-}).call(this,require('_process'))
-
-},{"./applyMiddleware":486,"./bindActionCreators":487,"./combineReducers":488,"./compose":489,"./createStore":490,"./utils/warning":492,"_process":289}],492:[function(require,module,exports){
+},{"./applyMiddleware":486,"./bindActionCreators":487,"./combineReducers":488,"./compose":489,"./createStore":490,"./utils/warning":492}],492:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -70214,7 +70121,6 @@ if (!String.prototype.repeat) {
 }
 
 },{}],507:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -70229,7 +70135,7 @@ exports.default = function (css) {
   var constructWithOptions = function constructWithOptions(componentConstructor, tag) {
     var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-    if (process.env.NODE_ENV !== 'production' && typeof tag !== 'string' && typeof tag !== 'function') {
+    if ("development" !== 'production' && typeof tag !== 'string' && typeof tag !== 'function') {
       // $FlowInvalidInputTest
       throw new Error('Cannot create styled-component for component: ' + tag);
     }
@@ -70260,9 +70166,7 @@ exports.default = function (css) {
 };
 
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"../types":521,"_process":289,"prop-types":299}],508:[function(require,module,exports){
+},{"../types":521,"prop-types":299}],508:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -70403,7 +70307,6 @@ exports.default = function (styledComponent, constructWithOptions) {
 
 module.exports = exports['default'];
 },{"../types":521,"../utils/domElements":525,"prop-types":299}],512:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -70475,7 +70378,7 @@ var wrapWithTheme = function wrapWithTheme(Component) {
 
       var styledContext = this.context[_ThemeProvider.CHANNEL_NEXT];
       var themeProp = (0, _determineTheme2.default)(this.props, undefined, defaultProps);
-      if (styledContext === undefined && themeProp === undefined && process.env.NODE_ENV !== 'production') {
+      if (styledContext === undefined && themeProp === undefined && "development" !== 'production') {
         // eslint-disable-next-line no-console
         console.warn('[withTheme] You are not using a ThemeProvider nor passing a theme prop or a theme in defaultProps');
       } else if (styledContext === undefined && themeProp !== undefined) {
@@ -70533,9 +70436,7 @@ var wrapWithTheme = function wrapWithTheme(Component) {
 
 exports.default = wrapWithTheme;
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"../models/ThemeProvider":520,"../utils/determineTheme":524,"../utils/isStyledComponent":532,"_process":289,"hoist-non-react-statics":539,"prop-types":299,"react":470}],513:[function(require,module,exports){
+},{"../models/ThemeProvider":520,"../utils/determineTheme":524,"../utils/isStyledComponent":532,"hoist-non-react-statics":539,"prop-types":299,"react":470}],513:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -70631,7 +70532,6 @@ exports.withTheme = _withTheme2.default;
 exports.ServerStyleSheet = _ServerStyleSheet2.default;
 exports.StyleSheetManager = _StyleSheetManager2.default;
 },{"./constructors/constructWithOptions":507,"./constructors/css":508,"./constructors/injectGlobal":509,"./constructors/keyframes":510,"./constructors/styled":511,"./hoc/withTheme":512,"./models/ComponentStyle":515,"./models/ServerStyleSheet":516,"./models/StyleSheetManager":518,"./models/StyledComponent":519,"./models/ThemeProvider":520,"./utils/flatten":528,"./utils/generateAlphabeticName":529,"./utils/stringifyRules":536}],514:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -70700,7 +70600,7 @@ var BrowserTag = function () {
 
   BrowserTag.prototype.addComponent = function addComponent(componentId) {
     if (!this.ready) this.replaceElement();
-    if (process.env.NODE_ENV !== 'production' && this.components[componentId]) {
+    if ("development" !== 'production' && this.components[componentId]) {
       throw new Error('Trying to add Component \'' + componentId + '\' twice!');
     }
 
@@ -70715,7 +70615,7 @@ var BrowserTag = function () {
     if (!this.ready) this.replaceElement();
     var comp = this.components[componentId];
 
-    if (process.env.NODE_ENV !== 'production' && !comp) {
+    if ("development" !== 'production' && !comp) {
       throw new Error('Must add a new component before you can inject css into it');
     }
     if (comp.textNode.data === '') {
@@ -70821,10 +70721,7 @@ exports.default = {
     return new _StyleSheet2.default(tagConstructor, tags, names);
   }
 };
-}).call(this,require('_process'))
-
-},{"../utils/extractCompsFromCSS":527,"../utils/nonce":534,"./StyleSheet":517,"_process":289,"prop-types":299}],515:[function(require,module,exports){
-(function (process){
+},{"../utils/extractCompsFromCSS":527,"../utils/nonce":534,"./StyleSheet":517,"prop-types":299}],515:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -70880,7 +70777,7 @@ var isStaticRules = function isStaticRules(rules, attrs) {
   return true;
 };
 
-var isHRMEnabled = typeof module !== 'undefined' && module.hot && process.env.NODE_ENV !== 'production';
+var isHRMEnabled = typeof module !== 'undefined' && module.hot && "development" !== 'production';
 
 /*
  ComponentStyle is all the CSS-specific stuff, not
@@ -70896,7 +70793,7 @@ exports.default = function (nameGenerator, flatten, stringifyRules) {
       this.isStatic = !isHRMEnabled && isStaticRules(rules, attrs);
       this.componentId = componentId;
       if (!_StyleSheet2.default.instance.hasInjectedComponent(this.componentId)) {
-        var placeholder = process.env.NODE_ENV !== 'production' ? '.' + componentId + ' {}' : '';
+        var placeholder = "development" !== 'production' ? '.' + componentId + ' {}' : '';
         _StyleSheet2.default.instance.deferredInject(componentId, true, placeholder);
       }
     }
@@ -70954,10 +70851,7 @@ exports.default = function (nameGenerator, flatten, stringifyRules) {
 };
 
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"../types":521,"../utils/isStyledComponent":532,"../vendor/glamor/hash":538,"./StyleSheet":517,"_process":289,"prop-types":299}],516:[function(require,module,exports){
-(function (process){
+},{"../types":521,"../utils/isStyledComponent":532,"../vendor/glamor/hash":538,"./StyleSheet":517,"prop-types":299}],516:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -71003,7 +70897,7 @@ var ServerTag = function () {
   };
 
   ServerTag.prototype.addComponent = function addComponent(componentId) {
-    if (process.env.NODE_ENV !== 'production' && this.components[componentId]) {
+    if ("development" !== 'production' && this.components[componentId]) {
       throw new Error('Trying to add Component \'' + componentId + '\' twice!');
     }
     this.components[componentId] = { componentId: componentId, css: '' };
@@ -71021,7 +70915,7 @@ var ServerTag = function () {
   ServerTag.prototype.inject = function inject(componentId, css, name) {
     var comp = this.components[componentId];
 
-    if (process.env.NODE_ENV !== 'production' && !comp) {
+    if ("development" !== 'production' && !comp) {
       throw new Error('Must add a new component before you can inject css into it');
     }
     if (comp.css === '') comp.css = '/* sc-component-id: ' + componentId + ' */\n';
@@ -71126,9 +71020,7 @@ var ServerStyleSheet = function () {
 
 exports.default = ServerStyleSheet;
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"../utils/nonce":534,"./StyleSheet":517,"./StyleSheetManager":518,"_process":289,"prop-types":299,"react":470}],517:[function(require,module,exports){
+},{"../utils/nonce":534,"./StyleSheet":517,"./StyleSheetManager":518,"prop-types":299,"react":470}],517:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -71395,7 +71287,6 @@ StyleSheetManager.propTypes = {
 exports.default = StyleSheetManager;
 module.exports = exports['default'];
 },{"./ServerStyleSheet":516,"./StyleSheet":517,"prop-types":299,"react":470}],519:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -71551,7 +71442,7 @@ exports.default = function (ComponentStyle, constructWithOptions) {
         var executionContext = this.buildExecutionContext(theme, props);
         var className = componentStyle.generateAndInjectStyles(executionContext, styleSheet);
 
-        if (process.env.NODE_ENV !== 'production' && warnTooManyClasses !== undefined) {
+        if ("development" !== 'production' && warnTooManyClasses !== undefined) {
           warnTooManyClasses(className);
         }
 
@@ -71729,7 +71620,7 @@ exports.default = function (ComponentStyle, constructWithOptions) {
     StyledComponent.target = target;
 
 
-    if (process.env.NODE_ENV !== 'production') {
+    if ("development" !== 'production') {
       StyledComponent.warnTooManyClasses = (0, _createWarnTooManyClasses2.default)(displayName);
     }
 
@@ -71740,10 +71631,7 @@ exports.default = function (ComponentStyle, constructWithOptions) {
 };
 
 module.exports = exports['default'];
-}).call(this,require('_process'))
-
-},{"../types":521,"../utils/createWarnTooManyClasses":523,"../utils/determineTheme":524,"../utils/escape":526,"../utils/getComponentName":530,"../utils/isStyledComponent":532,"../utils/isTag":533,"../utils/validAttr":537,"./ServerStyleSheet":516,"./StyleSheet":517,"./ThemeProvider":520,"_process":289,"prop-types":299,"react":470}],520:[function(require,module,exports){
-(function (process){
+},{"../types":521,"../utils/createWarnTooManyClasses":523,"../utils/determineTheme":524,"../utils/escape":526,"../utils/getComponentName":530,"../utils/isStyledComponent":532,"../utils/isTag":533,"../utils/validAttr":537,"./ServerStyleSheet":516,"./StyleSheet":517,"./ThemeProvider":520,"prop-types":299,"react":470}],520:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -71801,7 +71689,7 @@ if (typeof exports !== 'undefined') Object.defineProperty(exports, 'babelPluginF
 
 
 var warnChannelDeprecated = void 0;
-if (process.env.NODE_ENV !== 'production') {
+if ("development" !== 'production') {
   warnChannelDeprecated = (0, _once2.default)(function () {
     // eslint-disable-next-line no-console
     console.error('Warning: Usage of `context.' + CHANNEL + '` as a function is deprecated. It will be replaced with the object on `.context.' + CHANNEL_NEXT + '` in a future version.');
@@ -71854,7 +71742,7 @@ var ThemeProvider = function (_Component) {
       subscribe: this.broadcast.subscribe,
       unsubscribe: this.broadcast.unsubscribe
     }, _extends2[CHANNEL] = function (subscriber) {
-      if (process.env.NODE_ENV !== 'production') {
+      if ("development" !== 'production') {
         warnChannelDeprecated();
       }
 
@@ -71885,7 +71773,7 @@ var ThemeProvider = function (_Component) {
     var theme = passedTheme || this.props.theme;
     if (isFunction(theme)) {
       var mergedTheme = theme(this.outerTheme);
-      if (process.env.NODE_ENV !== 'production' && !(0, _isPlainObject2.default)(mergedTheme)) {
+      if ("development" !== 'production' && !(0, _isPlainObject2.default)(mergedTheme)) {
         throw new Error('[ThemeProvider] Please return an object from your theme function, i.e. theme={() => ({})}!');
       }
       return mergedTheme;
@@ -71916,9 +71804,7 @@ ThemeProvider.childContextTypes = (_ThemeProvider$childC = {}, _ThemeProvider$ch
 ThemeProvider.contextTypes = (_ThemeProvider$contex = {}, _ThemeProvider$contex[CHANNEL_NEXT] = CONTEXT_CHANNEL_SHAPE, _ThemeProvider$contex);
 
 exports.default = ThemeProvider;
-}).call(this,require('_process'))
-
-},{"../utils/create-broadcast":522,"../utils/once":535,"_process":289,"is-plain-object":214,"prop-types":299,"react":470}],521:[function(require,module,exports){
+},{"../utils/create-broadcast":522,"../utils/once":535,"is-plain-object":214,"prop-types":299,"react":470}],521:[function(require,module,exports){
 "use strict";
 
 /* todo: I want this to actually be an array of Function | string but that causes errors */
@@ -74658,7 +74544,6 @@ function set(component, propName, handler, value, args) {
 exports.default = (0, _createUncontrollable2.default)(mixin, set);
 module.exports = exports['default'];
 },{"./createUncontrollable":547}],549:[function(require,module,exports){
-(function (process){
 'use strict';
 
 exports.__esModule = true;
@@ -74697,7 +74582,7 @@ function readOnlyPropType(handler, name) {
 function uncontrolledPropTypes(controlledValues, basePropTypes, displayName) {
   var propTypes = {};
 
-  if (process.env.NODE_ENV !== 'production' && basePropTypes) {
+  if ("development" !== 'production' && basePropTypes) {
     transform(controlledValues, function (obj, handler, prop) {
       (0, _invariant2.default)(typeof handler === 'string' && handler.trim().length, 'Uncontrollable - [%s]: the prop `%s` needs a valid handler key name in order to make it uncontrollable', displayName, prop);
 
@@ -74775,9 +74660,7 @@ function has(o, k) {
 function isReactComponent(component) {
   return !!(component && component.prototype && component.prototype.isReactComponent);
 }
-}).call(this,require('_process'))
-
-},{"_process":289,"invariant":212,"react":470}],550:[function(require,module,exports){
+},{"invariant":212,"react":470}],550:[function(require,module,exports){
 (function (global){
 
 /**
@@ -74894,7 +74777,6 @@ function valueEqual(a, b) {
 exports.default = valueEqual;
 module.exports = exports['default'];
 },{}],552:[function(require,module,exports){
-(function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -74915,7 +74797,7 @@ module.exports = exports['default'];
 
 var warning = function() {};
 
-if (process.env.NODE_ENV !== 'production') {
+if ("development" !== 'production') {
   warning = function(condition, format, args) {
     var len = arguments.length;
     args = new Array(len > 2 ? len - 2 : 0);
@@ -74956,9 +74838,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = warning;
 
-}).call(this,require('_process'))
-
-},{"_process":289}],553:[function(require,module,exports){
+},{}],553:[function(require,module,exports){
 "use strict";
 var microevent_ts_1 = require('microevent.ts');
 var MSG_RESOLVE_TRANSACTION = "resolve_transaction", MSG_REJECT_TRANSACTION = "reject_transaction", MSG_ERROR = "error";
@@ -88778,7 +88658,6 @@ var Provider = (function (_super) {
 exports.Provider = Provider;
 
 },{"prop-types":299,"react":470,"tslib":546}],709:[function(require,module,exports){
-(function (process){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -88804,18 +88683,18 @@ function main() {
             switch (_a.label) {
                 case 0:
                     serviceContainer = new Container_1.default(), history = history_1.createHashHistory();
-                    store = redux_1.createStore(root_1.default, new State_1.default(), redux_1.compose(redux_1.applyMiddleware(middleware_1.batchMiddleware, serviceContainer.getPersistenceProvider().getMiddleware(), serviceContainer.getEmulationProvider().getMiddleware(), serviceContainer.getCartridgeManager().getMiddleware(), react_router_redux_1.routerMiddleware(history)), process.env.NODE_ENV !== 'production' && window.devToolsExtension ? window.devToolsExtension() : function (x) { return x; }));
+                    store = redux_1.createStore(root_1.default, new State_1.default(), redux_1.compose(redux_1.applyMiddleware(middleware_1.batchMiddleware, serviceContainer.getPersistenceProvider().getMiddleware(), serviceContainer.getEmulationProvider().getMiddleware(), serviceContainer.getCartridgeManager().getMiddleware(), react_router_redux_1.routerMiddleware(history)), "development" !== 'production' && window.devToolsExtension ? window.devToolsExtension() : function (x) { return x; }));
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
-                        helppageUrl: _stelleratorSettings.helppageUrl,
-                        buildId: _stelleratorSettings.buildId
+                        helppageUrl: "doc/stellerator.md",
+                        buildId: "5e9aaf"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:
                     _a.sent();
                     return [4, serviceContainer
                             .getEmulationProvider()
-                            .init(store.getState().settings.useWorker ? _stelleratorSettings.workerUrl : undefined)];
+                            .init(store.getState().settings.useWorker ? "js/compiled/worker/stellerator_worker.js" : undefined, "js/compiled/worker/video_pipeline_worker.js")];
                 case 2:
                     _a.sent();
                     react_dom_1.render(React.createElement(styled_components_1.ThemeProvider, { theme: {} },
@@ -88831,9 +88710,7 @@ function main() {
 }
 main();
 
-}).call(this,require('_process'))
-
-},{"./Routing":661,"./actions/environment":665,"./containers/Main":706,"./context/Emulation":708,"./middleware":710,"./reducers/root":718,"./service/implementation/Container":722,"./state/State":732,"_process":289,"history":207,"react":470,"react-dom":403,"react-redux":429,"react-router-redux":454,"redux":491,"styled-components":513,"tslib":546}],710:[function(require,module,exports){
+},{"./Routing":661,"./actions/environment":665,"./containers/Main":706,"./context/Emulation":708,"./middleware":710,"./reducers/root":718,"./service/implementation/Container":722,"./state/State":732,"history":207,"react":470,"react-dom":403,"react-redux":429,"react-router-redux":454,"redux":491,"styled-components":513,"tslib":546}],710:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var root_1 = require("./actions/root");
@@ -89790,13 +89667,13 @@ var EmulationProvider = (function () {
     EmulationProvider.prototype.setStore = function (store) {
         this._store = store;
     };
-    EmulationProvider.prototype.init = function (workerUrl) {
+    EmulationProvider.prototype.init = function (stellaWorkerUrl, videoPipelingWorkerUrl) {
         return tslib_1.__awaiter(this, void 0, void 0, function () {
             return tslib_1.__generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        this._service = workerUrl
-                            ? new EmulationService_1.default(workerUrl + "/stella.js", workerUrl + "/video-pipeline.js")
+                        this._service = stellaWorkerUrl
+                            ? new EmulationService_1.default("" + stellaWorkerUrl, "" + videoPipelingWorkerUrl)
                             : new EmulationService_2.default();
                         return [4, this._service.init()];
                     case 1:
