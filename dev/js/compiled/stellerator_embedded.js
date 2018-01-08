@@ -2147,10 +2147,7 @@ exports.default = WaveformChannel;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-
-var fragmentShaderPovSource = "precision mediump float;\n\nvarying vec2 v_TextureCoordinate;\n\nuniform sampler2D u_Sampler0, u_Sampler1, u_Sampler2;\nuniform float u_Gamma;\n\nvoid main() {\n    vec4 compositedTexel =\n        0.4 * texture2D(u_Sampler0, v_TextureCoordinate) +\n        0.4 * texture2D(u_Sampler1, v_TextureCoordinate) +\n        0.2 * texture2D(u_Sampler2, v_TextureCoordinate);\n\n    gl_FragColor = vec4(pow(compositedTexel.rgb, vec3(u_Gamma)), 1.);\n}\n";
-var fragmentSahderPlainSource = "precision mediump float;\n\nvarying vec2 v_TextureCoordinate;\n\nuniform sampler2D u_Sampler0;\nuniform float u_Gamma;\n\nvoid main() {\n    vec4 texel = texture2D(u_Sampler0, v_TextureCoordinate);\n\n    gl_FragColor = vec4(pow(texel.rgb, vec3(u_Gamma)), 1.);\n}\n";
-var vertexShaderSource = "attribute vec2 a_VertexPosition;\nattribute vec2 a_TextureCoordinate;\n\nvarying vec2 v_TextureCoordinate;\n\nvoid main() {\n    v_TextureCoordinate = a_TextureCoordinate;\n    gl_Position = vec4(a_VertexPosition, 0, 1);\n}\n";
+var shader_1 = require("./shader");
 var CONTEXT_IDS = ['webgl', 'experimental-webgl'];
 var WebglVideoDriver = (function () {
     function WebglVideoDriver(_canvas, config) {
@@ -2397,12 +2394,12 @@ var WebglVideoDriver = (function () {
     };
     WebglVideoDriver.prototype._createProgram = function () {
         var gl = this._gl, vertexShader = gl.createShader(gl.VERTEX_SHADER), fragmentShader = gl.createShader(gl.FRAGMENT_SHADER), program = gl.createProgram();
-        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.shaderSource(vertexShader, shader_1.vertexShader);
         gl.compileShader(vertexShader);
         if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
             throw new Error("failed to compile vertex shader: " + gl.getShaderInfoLog(vertexShader));
         }
-        gl.shaderSource(fragmentShader, this._povEmulation ? fragmentShaderPovSource : fragmentSahderPlainSource);
+        gl.shaderSource(fragmentShader, this._povEmulation ? shader_1.fragmentShaderPov : shader_1.fragmentShaderPlain);
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
             throw new Error("failed to compile fragment shader: " + gl.getShaderInfoLog(fragmentShader));
@@ -2507,7 +2504,14 @@ var WebglVideoDriver = (function () {
 }());
 exports.default = WebglVideoDriver;
 
-},{"tslib":6}],30:[function(require,module,exports){
+},{"./shader":30,"tslib":6}],30:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.vertexShader = "\n    attribute vec2 a_VertexPosition;\n    attribute vec2 a_TextureCoordinate;\n\n    varying vec2 v_TextureCoordinate;\n\n    void main() {\n        v_TextureCoordinate = a_TextureCoordinate;\n        gl_Position = vec4(a_VertexPosition, 0, 1);\n    }\n";
+exports.fragmentShaderPlain = "\n    precision mediump float;\n\n    varying vec2 v_TextureCoordinate;\n\n    uniform sampler2D u_Sampler0;\n    uniform float u_Gamma;\n\n    void main() {\n        vec4 texel = texture2D(u_Sampler0, v_TextureCoordinate);\n\n        gl_FragColor = vec4(pow(texel.rgb, vec3(u_Gamma)), 1.);\n    }\n";
+exports.fragmentShaderPov = "\n    precision mediump float;\n\n    varying vec2 v_TextureCoordinate;\n\n    uniform sampler2D u_Sampler0, u_Sampler1, u_Sampler2;\n    uniform float u_Gamma;\n\n    void main() {\n        vec4 compositedTexel =\n            0.4 * texture2D(u_Sampler0, v_TextureCoordinate) +\n            0.4 * texture2D(u_Sampler1, v_TextureCoordinate) +\n            0.2 * texture2D(u_Sampler2, v_TextureCoordinate);\n\n        gl_FragColor = vec4(pow(compositedTexel.rgb, vec3(u_Gamma)), 1.);\n    }\n";
+
+},{}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var SwitchProxy_1 = require("./SwitchProxy");
@@ -2561,7 +2565,7 @@ var ControlPanelProxy = (function () {
 }());
 exports.default = ControlPanelProxy;
 
-},{"./SwitchProxy":32}],31:[function(require,module,exports){
+},{"./SwitchProxy":33}],32:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -2928,7 +2932,7 @@ exports.default = Stellerator;
 })(Stellerator || (Stellerator = {}));
 exports.default = Stellerator;
 
-},{"../../../machine/stella/Config":12,"../../../machine/stella/cartridge/CartridgeInfo":14,"../../../tools/base64":18,"../../driver/FullscreenVideo":21,"../../driver/Gamepad":22,"../../driver/MouseAsPaddle":23,"../../driver/SimpleCanvasVideo":24,"../../driver/webgl/WebglVideo":29,"../../stella/driver/KeyboardIO":34,"../../stella/driver/WebAudio":35,"../../stella/service/DriverManager":36,"../../stella/service/EmulationServiceInterface":37,"../../stella/service/worker/EmulationService":40,"./ControlPanelProxy":30,"async-mutex":2,"microevent.ts":4,"tslib":6}],32:[function(require,module,exports){
+},{"../../../machine/stella/Config":12,"../../../machine/stella/cartridge/CartridgeInfo":14,"../../../tools/base64":18,"../../driver/FullscreenVideo":21,"../../driver/Gamepad":22,"../../driver/MouseAsPaddle":23,"../../driver/SimpleCanvasVideo":24,"../../driver/webgl/WebglVideo":29,"../../stella/driver/KeyboardIO":35,"../../stella/driver/WebAudio":36,"../../stella/service/DriverManager":37,"../../stella/service/EmulationServiceInterface":38,"../../stella/service/worker/EmulationService":41,"./ControlPanelProxy":31,"async-mutex":2,"microevent.ts":4,"tslib":6}],33:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -2977,14 +2981,14 @@ var SwitchProxy = (function () {
 }());
 exports.default = SwitchProxy;
 
-},{"microevent.ts":4}],33:[function(require,module,exports){
+},{"microevent.ts":4}],34:[function(require,module,exports){
 "use strict";
 var Stellerator_1 = require("./Stellerator");
 module.exports = {
     Stellerator: Stellerator_1.default
 };
 
-},{"./Stellerator":31}],34:[function(require,module,exports){
+},{"./Stellerator":32}],35:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3217,7 +3221,7 @@ exports.default = KeyboardIO;
 })(KeyboardIO || (KeyboardIO = {}));
 exports.default = KeyboardIO;
 
-},{"microevent.ts":4,"tslib":6}],35:[function(require,module,exports){
+},{"microevent.ts":4,"tslib":6}],36:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3306,7 +3310,7 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":25,"tslib":6}],36:[function(require,module,exports){
+},{"../../driver/WebAudio":25,"tslib":6}],37:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -3395,7 +3399,7 @@ exports.default = DriverManager;
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":37}],37:[function(require,module,exports){
+},{"./EmulationServiceInterface":38}],38:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -3410,7 +3414,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DigitalJoystick_1 = require("../../../../machine/io/DigitalJoystick");
@@ -3480,7 +3484,7 @@ var ControlProxy = (function () {
 }());
 exports.default = ControlProxy;
 
-},{"../../../../machine/io/DigitalJoystick":9,"../../../../machine/io/Paddle":10,"../../../../machine/stella/ControlPanel":13,"./messages":44}],39:[function(require,module,exports){
+},{"../../../../machine/io/DigitalJoystick":9,"../../../../machine/io/Paddle":10,"../../../../machine/stella/ControlPanel":13,"./messages":45}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationContext = (function () {
@@ -3525,7 +3529,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3816,7 +3820,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../EmulationServiceInterface":37,"./ControlProxy":38,"./EmulationContext":39,"./PCMAudioProxy":41,"./VideoProxy":42,"./WaveformAudioProxy":43,"./messages":44,"async-mutex":2,"microevent.ts":4,"tslib":6,"worker-rpc":8}],41:[function(require,module,exports){
+},{"../EmulationServiceInterface":38,"./ControlProxy":39,"./EmulationContext":40,"./PCMAudioProxy":42,"./VideoProxy":43,"./WaveformAudioProxy":44,"./messages":45,"async-mutex":2,"microevent.ts":4,"tslib":6,"worker-rpc":8}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3907,7 +3911,7 @@ var PCMAudioProxy = (function () {
 }());
 exports.default = PCMAudioProxy;
 
-},{"../../../../tools/pool/Pool":19,"./messages":44,"microevent.ts":4,"tslib":6}],42:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":19,"./messages":45,"microevent.ts":4,"tslib":6}],43:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3988,7 +3992,7 @@ var VideoProxy = (function () {
 }());
 exports.default = VideoProxy;
 
-},{"./messages":44,"microevent.ts":4,"tslib":6}],43:[function(require,module,exports){
+},{"./messages":45,"microevent.ts":4,"tslib":6}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4057,7 +4061,7 @@ var WaveformAudioProxy = (function () {
 }());
 exports.default = WaveformAudioProxy;
 
-},{"../../../../machine/stella/tia/ToneGenerator":15,"./messages":44,"microevent.ts":4,"tslib":6}],44:[function(require,module,exports){
+},{"../../../../machine/stella/tia/ToneGenerator":15,"./messages":45,"microevent.ts":4,"tslib":6}],45:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {
@@ -4089,6 +4093,6 @@ exports.SIGNAL_TYPE = {
 };
 Object.freeze(exports.SIGNAL_TYPE);
 
-},{}]},{},[33])(33)
+},{}]},{},[34])(34)
 });
 //# sourceMappingURL=stellerator_embedded.js.map
