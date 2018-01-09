@@ -2882,6 +2882,7 @@ var Stellerator = (function () {
         }
         if (this._config.enableGamepad) {
             this._gamepad = new Gamepad_1.default();
+            this._gamepad.init();
             this._driverManager.addDriver(this._gamepad, function (context) {
                 return _this._gamepad.bind({
                     joysticks: [context.getJoystick(0), context.getJoystick(1)],

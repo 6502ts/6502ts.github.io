@@ -82197,7 +82197,7 @@ var Tia = (function () {
                 result = this._collisionMask & 2197 & 1099 ? 0x80 : 0;
                 break;
             default:
-                result = lastDataBusValue;
+                result = 0;
                 break;
         }
         return (result & 0xc0) | (lastDataBusValue & 0x3f);
@@ -88691,7 +88691,7 @@ function main() {
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
                         helppageUrl: "doc/stellerator.md",
-                        buildId: "e020cb"
+                        buildId: "30c8dc"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:

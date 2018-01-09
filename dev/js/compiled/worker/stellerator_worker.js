@@ -9458,7 +9458,7 @@ var Tia = (function () {
                 result = this._collisionMask & 2197 & 1099 ? 0x80 : 0;
                 break;
             default:
-                result = lastDataBusValue;
+                result = 0;
                 break;
         }
         return (result & 0xc0) | (lastDataBusValue & 0x3f);
