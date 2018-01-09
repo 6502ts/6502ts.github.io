@@ -4643,6 +4643,7 @@ var Cpu = (function () {
         this._operand = 0;
         this._lastInstructionPointer = 0;
         this._currentAddressingMode = 12;
+        this._dereference = false;
         this.reset();
     }
     Cpu.prototype.setInterrupt = function (irq) {
@@ -4702,6 +4703,9 @@ var Cpu = (function () {
             case 0:
             case 2:
                 if (--this._opCycles === 0) {
+                    if (this._dereference) {
+                        this._operand = this._bus.read(this._operand);
+                    }
                     if (this._interuptCheck === 1) {
                         this._checkForInterrupts();
                     }
@@ -5245,8 +5249,8 @@ var Cpu = (function () {
                 this.state.p = (this.state.p + 1) & 0xffff;
                 break;
         }
+        this._dereference = dereference;
         if (dereference) {
-            this._operand = this._bus.read(this._operand);
             this._opCycles++;
         }
         this.executionState = 2;
