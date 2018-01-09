@@ -84220,6 +84220,8 @@ var FullscreenVideoDriver = (function () {
         var element = this._videoDriver.getCanvas();
         element.style.width = '';
         element.style.height = '';
+        element.style.maxWidth = '';
+        element.style.maxHeight = '';
         setTimeout(function () { return _this._videoDriver.resize(); }, 0);
     };
     FullscreenVideoDriver.prototype._adjustSizeForFullscreen = function () {
@@ -84227,6 +84229,8 @@ var FullscreenVideoDriver = (function () {
         this._videoDriver.resize(window.innerWidth, window.innerHeight);
         element.style.width = window.innerWidth + 'px';
         element.style.height = window.innerHeight + 'px';
+        element.style.maxWidth = window.innerWidth + 'px';
+        element.style.maxHeight = window.innerHeight + 'px';
     };
     return FullscreenVideoDriver;
 }());
@@ -88695,7 +88699,7 @@ function main() {
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
                         helppageUrl: "doc/stellerator.md",
-                        buildId: "9adbce"
+                        buildId: "d965b4"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:

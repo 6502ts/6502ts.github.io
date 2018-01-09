@@ -15454,6 +15454,8 @@ var FullscreenVideoDriver = (function () {
         var element = this._videoDriver.getCanvas();
         element.style.width = '';
         element.style.height = '';
+        element.style.maxWidth = '';
+        element.style.maxHeight = '';
         setTimeout(function () { return _this._videoDriver.resize(); }, 0);
     };
     FullscreenVideoDriver.prototype._adjustSizeForFullscreen = function () {
@@ -15461,6 +15463,8 @@ var FullscreenVideoDriver = (function () {
         this._videoDriver.resize(window.innerWidth, window.innerHeight);
         element.style.width = window.innerWidth + 'px';
         element.style.height = window.innerHeight + 'px';
+        element.style.maxWidth = window.innerWidth + 'px';
+        element.style.maxHeight = window.innerHeight + 'px';
     };
     return FullscreenVideoDriver;
 }());
