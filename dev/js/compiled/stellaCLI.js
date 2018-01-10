@@ -13202,7 +13202,6 @@ var Tia = (function () {
         this._bus = null;
         this._delayQueue = new DelayQueue_1.default(10, 20);
         this._hstate = 0;
-        this._hblankCtr = 0;
         this._hctr = 0;
         this._collisionUpdateRequired = false;
         this._movementClock = 0;
@@ -13242,7 +13241,6 @@ var Tia = (function () {
         this.reset();
     }
     Tia.prototype.reset = function () {
-        this._hblankCtr = 0;
         this._hctr = 0;
         this._movementInProgress = false;
         this._extendedHblank = false;
@@ -13593,7 +13591,6 @@ var Tia = (function () {
                 self._movementClock = 0;
                 self._movementInProgress = true;
                 if (!self._extendedHblank) {
-                    self._hblankCtr -= 8;
                     self._clearHmoveComb();
                     self._extendedHblank = true;
                 }
@@ -13698,12 +13695,21 @@ var Tia = (function () {
         }
     };
     Tia.prototype._tickHblank = function () {
-        if (this._hctr === 0) {
-            this._hblankCtr = 0;
-            this._cpu.resume();
-        }
-        if (++this._hblankCtr >= 68) {
-            this._hstate = 1;
+        switch (this._hctr) {
+            case 0:
+                this._extendedHblank = false;
+                this._cpu.resume();
+                break;
+            case 67:
+                if (!this._extendedHblank) {
+                    this._hstate = 1;
+                }
+                break;
+            case 75:
+                if (this._extendedHblank) {
+                    this._hstate = 1;
+                }
+                break;
         }
     };
     Tia.prototype._tickHframe = function () {
@@ -13731,7 +13737,6 @@ var Tia = (function () {
             this._linesSinceChange++;
         }
         this._hstate = 0;
-        this._extendedHblank = false;
         this._xDelta = 0;
         this._frameManager.nextLine();
         if (this._frameManager.isRendering() && this._frameManager.getCurrentLine() === 0) {
