@@ -88699,7 +88699,7 @@ function main() {
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
                         helppageUrl: "doc/stellerator.md",
-                        buildId: "d965b4"
+                        buildId: "4d35ab"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:
