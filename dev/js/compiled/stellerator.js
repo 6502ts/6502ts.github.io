@@ -84176,9 +84176,14 @@ exports.default = ArrayBufferSurface;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var screenfull = require("screenfull");
+var noFullscrenApi = !!navigator.platform.match(/iPhone|iPad|iPod/);
 var FullscreenVideoDriver = (function () {
-    function FullscreenVideoDriver(_videoDriver) {
+    function FullscreenVideoDriver(_videoDriver, _zIndex, _fullscreenClass) {
+        if (_zIndex === void 0) { _zIndex = 100000; }
+        if (_fullscreenClass === void 0) { _fullscreenClass = 'stellerator-fullscreen'; }
         this._videoDriver = _videoDriver;
+        this._zIndex = _zIndex;
+        this._fullscreenClass = _fullscreenClass;
         this._resizeListener = this._adjustSizeForFullscreen.bind(this);
         this._changeListener = this._onChange.bind(this);
         this._engaged = false;
@@ -84188,14 +84193,28 @@ var FullscreenVideoDriver = (function () {
             return;
         }
         this._engaged = true;
-        screenfull.on('change', this._changeListener);
-        screenfull.request(this._videoDriver.getCanvas());
+        if (noFullscrenApi) {
+            this._adjustSizeForFullscreen();
+            window.addEventListener('resize', this._resizeListener);
+            this._engaged = true;
+        }
+        else {
+            screenfull.on('change', this._changeListener);
+            screenfull.request(this._videoDriver.getCanvas());
+        }
     };
     FullscreenVideoDriver.prototype.disengage = function () {
         if (!this._engaged) {
             return;
         }
-        screenfull.exit();
+        if (noFullscrenApi) {
+            this._resetSize();
+            window.removeEventListener('resize', this._resizeListener);
+            this._engaged = false;
+        }
+        else {
+            screenfull.exit();
+        }
     };
     FullscreenVideoDriver.prototype.toggle = function () {
         if (this._engaged) {
@@ -84227,6 +84246,13 @@ var FullscreenVideoDriver = (function () {
         element.style.height = '';
         element.style.maxWidth = '';
         element.style.maxHeight = '';
+        if (noFullscrenApi) {
+            element.style.position = '';
+            element.style.top = '';
+            element.style.left = '';
+            element.style.zIndex = '';
+        }
+        document.body.classList.remove(this._fullscreenClass);
         setTimeout(function () { return _this._videoDriver.resize(); }, 0);
     };
     FullscreenVideoDriver.prototype._adjustSizeForFullscreen = function () {
@@ -84236,6 +84262,13 @@ var FullscreenVideoDriver = (function () {
         element.style.height = window.innerHeight + 'px';
         element.style.maxWidth = window.innerWidth + 'px';
         element.style.maxHeight = window.innerHeight + 'px';
+        if (noFullscrenApi) {
+            element.style.position = 'fixed';
+            element.style.top = '0';
+            element.style.left = '0';
+            element.style.zIndex = '' + this._zIndex;
+        }
+        document.body.classList.add(this._fullscreenClass);
     };
     return FullscreenVideoDriver;
 }());
@@ -84605,6 +84638,19 @@ var SimpleCanvasVideo = (function () {
             height = this._canvas.clientHeight;
         }
         var pixelRatio = window.devicePixelRatio || 1;
+        if (this._video) {
+            var w = this._video.getWidth(), h = this._video.getHeight();
+            if (height * this._aspect <= width) {
+                if (height >= 3 * h && height * this._aspect >= 3 * w) {
+                    pixelRatio = 1;
+                }
+            }
+            else {
+                if (width >= 3 * w && width / this._aspect >= 3 * h) {
+                    pixelRatio = 1;
+                }
+            }
+        }
         this._canvas.width = width * pixelRatio;
         this._canvas.height = height * pixelRatio;
         this._clearCanvas();
@@ -84812,10 +84858,22 @@ var tslib_1 = require("tslib");
 var async_mutex_1 = require("async-mutex");
 var WaveformChannel_1 = require("./audio/WaveformChannel");
 var PCMChannel_1 = require("./audio/PCMChannel");
+var audioNeedsInteraction = !!navigator.platform.match(/iPhone|iPad|iPod/);
 var WebAudioDriver = (function () {
     function WebAudioDriver(waveformChannels, pcmChannels, fragmentSize) {
         if (waveformChannels === void 0) { waveformChannels = 0; }
         if (pcmChannels === void 0) { pcmChannels = 0; }
+        var _this = this;
+        this._touchListener = function () {
+            document.removeEventListener('touchstart', _this._touchListener, true);
+            if (!_this._context) {
+                return;
+            }
+            _this._context.resume();
+            setTimeout(function () {
+                _this._mutex.runExclusive(function () { return (_this._suspended ? _this._context.suspend() : _this._context.resume()); });
+            }, 10);
+        };
         this._context = null;
         this._merger = null;
         this._waveformChannels = null;
@@ -84823,6 +84881,7 @@ var WebAudioDriver = (function () {
         this._channels = null;
         this._cache = new Map();
         this._mutex = new async_mutex_1.Mutex();
+        this._suspended = true;
         this._isBound = false;
         this._waveformChannels = new Array(waveformChannels);
         this._pcmChannels = new Array(pcmChannels);
@@ -84850,6 +84909,9 @@ var WebAudioDriver = (function () {
         this._merger = this._context.createChannelMerger(this._channels.length);
         this._merger.connect(this._context.destination);
         this._channels.forEach(function (channel) { return channel.init(_this._context, _this._merger); });
+        if (audioNeedsInteraction) {
+            document.addEventListener('touchstart', this._touchListener, true);
+        }
     };
     WebAudioDriver.prototype.bind = function (waveformSources, pcmSources) {
         if (waveformSources === void 0) { waveformSources = []; }
@@ -84882,6 +84944,7 @@ var WebAudioDriver = (function () {
     WebAudioDriver.prototype.pause = function () {
         var _this = this;
         return this._mutex.runExclusive(function () {
+            _this._suspended = true;
             return new Promise(function (resolve) {
                 _this._context.suspend().then(resolve, resolve);
                 setTimeout(resolve, 200);
@@ -84891,6 +84954,7 @@ var WebAudioDriver = (function () {
     WebAudioDriver.prototype.resume = function () {
         var _this = this;
         return this._mutex.runExclusive(function () {
+            _this._suspended = false;
             return new Promise(function (resolve) {
                 _this._context.resume().then(resolve, resolve);
                 setTimeout(resolve, 200);
@@ -85249,6 +85313,19 @@ var WebglVideoDriver = (function () {
             height = this._canvas.clientHeight;
         }
         var pixelRatio = window.devicePixelRatio || 1;
+        if (this._video) {
+            var w = this._video.getWidth(), h = this._video.getHeight();
+            if (height * this._aspect <= width) {
+                if (height >= 3 * h && height * this._aspect >= 3 * w) {
+                    pixelRatio = 1;
+                }
+            }
+            else {
+                if (width >= 3 * w && width / this._aspect >= 3 * h) {
+                    pixelRatio = 1;
+                }
+            }
+        }
         this._canvas.width = width * pixelRatio;
         this._canvas.height = height * pixelRatio;
         this._gl.viewport(0, 0, width * pixelRatio, height * pixelRatio);
@@ -87778,7 +87855,7 @@ function CartridgeControlsUnstyled(props) {
         onCartridgeUploaded: function () { return undefined; }
     };
 })(CartridgeControlsUnstyled || (CartridgeControlsUnstyled = {}));
-var CartridgeControlsStyled = style_1.styled(CartridgeControlsUnstyled)(templateObject_1 || (templateObject_1 = tslib_1.__makeTemplateObject(["\n    .btn:not(:last-child) {\n        margin-right: 2ex;\n    }\n\n    button[disabled] {\n        color: #777;\n    }\n"], ["\n    .btn:not(:last-child) {\n        margin-right: 2ex;\n    }\n\n    button[disabled] {\n        color: #777;\n    }\n"])));
+var CartridgeControlsStyled = style_1.styled(CartridgeControlsUnstyled)(templateObject_1 || (templateObject_1 = tslib_1.__makeTemplateObject(["\n    .btn:not(:last-child) {\n        margin-right: 2ex;\n    }\n\n    .btn {\n        margin-bottom: 0.5rem;\n    }\n\n    button[disabled] {\n        color: #777;\n    }\n"], ["\n    .btn:not(:last-child) {\n        margin-right: 2ex;\n    }\n\n    .btn {\n        margin-bottom: 0.5rem;\n    }\n\n    button[disabled] {\n        color: #777;\n    }\n"])));
 exports.default = CartridgeControlsStyled;
 var templateObject_1;
 
@@ -88704,7 +88781,7 @@ function main() {
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
                         helppageUrl: "doc/stellerator.md",
-                        buildId: "53a1c3"
+                        buildId: "23cde3"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:

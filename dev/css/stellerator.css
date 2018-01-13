@@ -4,6 +4,25 @@
 
 body {
     padding-top: 2.5rem;
+    padding-bottom: 1rem;
+}
+
+canvas {
+    max-width: calc(100vw - 1rem);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 6.5rem;
+    }
+
+    canvas {
+        margin-bottom: 1rem;
+    }
+
+    .navbar {
+        position: absolute !important;
+    }
 }
 
 .border-box {
