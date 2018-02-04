@@ -9808,6 +9808,9 @@ var Tia = (function () {
                 }
                 break;
         }
+        if (this._extendedHblank && this._hctr > 67) {
+            this._playfield.tick(this._hctr - 68 + this._xDelta);
+        }
     };
     Tia.prototype._tickHframe = function () {
         var y = this._frameManager.getCurrentLine(), x = this._hctr - 68 + this._xDelta;
@@ -9830,6 +9833,7 @@ var Tia = (function () {
             this._cloneLastLine();
         }
         this._hctr = 0;
+        this._playfield.tick(0);
         if (!this._movementInProgress) {
             this._linesSinceChange++;
         }

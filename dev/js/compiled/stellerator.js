@@ -82547,6 +82547,9 @@ var Tia = (function () {
                 }
                 break;
         }
+        if (this._extendedHblank && this._hctr > 67) {
+            this._playfield.tick(this._hctr - 68 + this._xDelta);
+        }
     };
     Tia.prototype._tickHframe = function () {
         var y = this._frameManager.getCurrentLine(), x = this._hctr - 68 + this._xDelta;
@@ -82569,6 +82572,7 @@ var Tia = (function () {
             this._cloneLastLine();
         }
         this._hctr = 0;
+        this._playfield.tick(0);
         if (!this._movementInProgress) {
             this._linesSinceChange++;
         }
@@ -88781,7 +88785,7 @@ function main() {
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
                         helppageUrl: "doc/stellerator.md",
-                        buildId: "23cde3"
+                        buildId: "f57f80"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:
