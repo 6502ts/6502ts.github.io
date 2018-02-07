@@ -8968,7 +8968,7 @@ var CartridgeCDF = (function (_super) {
     };
     CartridgeCDF.prototype._getWaveform = function (index) {
         var value = this._soc.getRam32(WaveformBase[this._version] + 4 * index);
-        return (value - 0x40000000 - 0x0fff) & 0x0fff;
+        return (value - 0x40000000 - 0x0800) & 0x0fff;
     };
     return CartridgeCDF;
 }(AbstractCartridge_1.default));
