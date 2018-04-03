@@ -4601,7 +4601,7 @@ function opLar(state, bus, operand) {
     setFlagsNZ(state, state.a);
 }
 function opIsc(state, bus, operand) {
-    var value = bus.read(operand) + 1;
+    var value = (bus.read(operand) + 1) & 0xff;
     bus.write(operand, value);
     opSbc(state, bus, value);
 }

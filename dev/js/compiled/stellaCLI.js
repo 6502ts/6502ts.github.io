@@ -6537,7 +6537,7 @@ function opLar(state, bus, operand) {
     setFlagsNZ(state, state.a);
 }
 function opIsc(state, bus, operand) {
-    var value = bus.read(operand) + 1;
+    var value = (bus.read(operand) + 1) & 0xff;
     bus.write(operand, value);
     opSbc(state, bus, value);
 }
@@ -7797,7 +7797,8 @@ var Board = (function () {
         cartridge
             .setCpu(cpu)
             .setBus(bus)
-            .setCpuTimeProvider(function () { return _this.getCpuTime(); });
+            .setCpuTimeProvider(function () { return _this.getCpuTime(); })
+            .setRng(this._rng);
         pia.setBus(bus);
         bus
             .setTia(tia)
@@ -8373,7 +8374,12 @@ var AbstractCartridge = (function () {
     AbstractCartridge.prototype.setBus = function (bus) {
         return this;
     };
-    AbstractCartridge.prototype.setCpuTimeProvider = function (provider) { };
+    AbstractCartridge.prototype.setRng = function (rng) {
+        return this;
+    };
+    AbstractCartridge.prototype.setCpuTimeProvider = function (provider) {
+        return this;
+    };
     AbstractCartridge.prototype.notifyCpuCycleComplete = function () { };
     AbstractCartridge.prototype.randomize = function (rng) { };
     AbstractCartridge.prototype.triggerTrap = function (reason, message) {
@@ -8836,6 +8842,7 @@ var CartridgeCDF = (function (_super) {
     };
     CartridgeCDF.prototype.setCpuTimeProvider = function (provider) {
         this._cpuTimeProvider = provider;
+        return this;
     };
     CartridgeCDF.prototype.read = function (address) {
         return this._access(address, this._bus.getLastDataBusValue());
@@ -9040,6 +9047,7 @@ var CartridgeDPC = (function (_super) {
     };
     CartridgeDPC.prototype.setCpuTimeProvider = function (provider) {
         this._cpuTimeProvider = provider;
+        return this;
     };
     CartridgeDPC.prototype.read = function (address) {
         return this._access(address, this._bus.getLastDataBusValue());
@@ -9310,6 +9318,7 @@ var CartridgeDPCPlus = (function (_super) {
     };
     CartridgeDPCPlus.prototype.setCpuTimeProvider = function (provider) {
         this._cpuTimeProvider = provider;
+        return this;
     };
     CartridgeDPCPlus.prototype.read = function (address) {
         return this._access(address, this._bus.getLastDataBusValue());
@@ -10818,14 +10827,12 @@ var Header_1 = require("./supercharger/Header");
 var blob_1 = require("./supercharger/blob");
 var CartridgeSupercharger = (function (_super) {
     tslib_1.__extends(CartridgeSupercharger, _super);
-    function CartridgeSupercharger(buffer, _showLoadingBars) {
-        if (_showLoadingBars === void 0) { _showLoadingBars = true; }
+    function CartridgeSupercharger(buffer) {
         var _this = _super.call(this) || this;
-        _this._showLoadingBars = _showLoadingBars;
         _this._loadCount = 0;
         _this._loads = null;
         _this._headers = null;
-        _this._rom = new Uint8Array(0x0800);
+        _this._rom = new Uint8Array(0x800);
         _this._ramBanks = new Array(3);
         _this._bank0 = null;
         _this._bank1 = null;
@@ -10835,6 +10842,9 @@ var CartridgeSupercharger = (function (_super) {
         _this._pendingWrite = false;
         _this._lastAddressBusValue = -1;
         _this._writeRamEnabled = false;
+        _this._loadInProgress = false;
+        _this._loadTimestamp = 0;
+        _this._cpuTimeProvider = null;
         if (buffer.length % 8448 !== 0) {
             throw new Error("not a supercharger image --- invalid size");
         }
@@ -10858,7 +10868,7 @@ var CartridgeSupercharger = (function (_super) {
         for (var i = 0; i < 3; i++) {
             _this._ramBanks[i] = new Uint8Array(0x0800);
         }
-        _this._loadBios();
+        _this._setupRom();
         _this.reset();
         return _this;
     }
@@ -10869,6 +10879,8 @@ var CartridgeSupercharger = (function (_super) {
         this._pendingWriteData = 0;
         this._lastAddressBusValue = -1;
         this._writeRamEnabled = false;
+        this._loadInProgress = false;
+        this._loadTimestamp = 0;
     };
     CartridgeSupercharger.prototype.setBus = function (bus) {
         this._bus = bus;
@@ -10876,22 +10888,19 @@ var CartridgeSupercharger = (function (_super) {
         this._bus.event.write.addHandler(CartridgeSupercharger._onBusAccess, this);
         return this;
     };
+    CartridgeSupercharger.prototype.setCpuTimeProvider = function (provider) {
+        this._cpuTimeProvider = provider;
+        return this;
+    };
+    CartridgeSupercharger.prototype.setRng = function (rng) {
+        this._rng = rng;
+        return this;
+    };
     CartridgeSupercharger.prototype.read = function (address) {
-        address &= 0x0fff;
-        if (address === 0x0850 && this._bank1Type === 1) {
-            this._loadIntoRam(this._bus.peek(0x80));
-        }
-        var value = this._access(address, this._bus.getLastDataBusValue());
-        if (value >= 0) {
-            return value;
-        }
-        return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
+        return this._access(address, this._bus.getLastDataBusValue());
     };
     CartridgeSupercharger.prototype.peek = function (address) {
         address &= 0x0fff;
-        if (this._pendingWrite && this._writeRamEnabled && this._transitionCount === 5) {
-            return this._pendingWriteData;
-        }
         return address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
     };
     CartridgeSupercharger.prototype.write = function (address, value) {
@@ -10902,38 +10911,54 @@ var CartridgeSupercharger = (function (_super) {
     };
     CartridgeSupercharger._onBusAccess = function (type, self) {
         var address = self._bus.getLastAddresBusValue();
-        if (address !== self._lastAddressBusValue) {
-            if (++self._transitionCount > 5) {
-                self._pendingWrite = false;
+        if (address !== self._lastAddressBusValue && !self._loadInProgress) {
+            if (self._transitionCount <= 5) {
+                self._transitionCount++;
             }
             self._lastAddressBusValue = address;
         }
     };
     CartridgeSupercharger.prototype._access = function (address, value) {
         address &= 0x0fff;
+        if (this._loadInProgress) {
+            if ((this._cpuTimeProvider() - this._loadTimestamp) > 1E-3) {
+                this._loadInProgress = false;
+            }
+            else {
+                return value;
+            }
+        }
+        var readValue = address < 0x0800 ? this._bank0[address] : this._bank1[address & 0x07ff];
         if ((address & 0x0f00) === 0 && (!this._pendingWrite || !this._writeRamEnabled)) {
             this._pendingWriteData = address & 0x00ff;
             this._transitionCount = 0;
             this._pendingWrite = true;
-            return -1;
+            return readValue;
         }
         if (address === 0x0ff8) {
             this._setBankswitchMode((this._pendingWriteData & 28) >>> 2);
             this._writeRamEnabled = (this._pendingWriteData & 0x02) > 0;
             this._pendingWrite = false;
-            return -1;
+            return readValue;
+        }
+        if (address === 0x0ff9 && this._bank1Type === 1 && ((this._lastAddressBusValue & 0x1fff) < 0xff)) {
+            this._loadIntoRam(value);
+            return readValue;
         }
         if (this._pendingWrite && this._writeRamEnabled && this._transitionCount === 5) {
+            this._pendingWrite = false;
             if (address < 0x0800) {
                 this._bank0[address] = this._pendingWriteData;
             }
             else if (this._bank1Type === 0) {
                 this._bank1[address & 0x07ff] = this._pendingWriteData;
             }
-            this._pendingWrite = false;
+            else {
+                return readValue;
+            }
             return this._pendingWriteData;
         }
-        return -1;
+        return readValue;
     };
     CartridgeSupercharger.prototype._setBankswitchMode = function (mode) {
         switch (mode) {
@@ -10963,13 +10988,15 @@ var CartridgeSupercharger = (function (_super) {
         this._bank1Type = bank1Type;
         this._bank1 = bank1Type === 0 ? this._ramBanks[bank1] : this._rom;
     };
-    CartridgeSupercharger.prototype._loadBios = function () {
+    CartridgeSupercharger.prototype._setupRom = function () {
         for (var i = 0; i < 0x0800; i++) {
-            this._rom[i] = i < blob_1.bios.length ? blob_1.bios[i] : 0x02;
+            this._rom[i] = 0;
         }
-        this._rom[109] = this._showLoadingBars ? 0 : 0xff;
+        for (var i = 0; i < blob_1.bios.length; i++) {
+            this._rom[i] = blob_1.bios[i];
+        }
         this._rom[0x07ff] = this._rom[0x07fd] = 0xf8;
-        this._rom[0x07fe] = this._rom[0x07fc] = 0x0a;
+        this._rom[0x07fe] = this._rom[0x07fc] = 0x07;
     };
     CartridgeSupercharger.prototype._loadIntoRam = function (loadId) {
         var loadIndex;
@@ -10999,9 +11026,12 @@ var CartridgeSupercharger = (function (_super) {
                 console.log("load " + loadIndex + ", block " + blockIdx + ": invalid checksum");
             }
         }
-        this._bus.write(0xfe, header.startAddressLow);
-        this._bus.write(0xff, header.startAddressHigh);
-        this._bus.write(0x80, header.controlWord);
+        this._rom[0x7f0] = header.controlWord;
+        this._rom[0x7f1] = this._rng.int(0xff);
+        this._rom[0x7f2] = header.startAddressLow;
+        this._rom[0x7f3] = header.startAddressHigh;
+        this._loadInProgress = true;
+        this._loadTimestamp = this._cpuTimeProvider();
     };
     return CartridgeSupercharger;
 }(AbstractCartridge_1.default));
@@ -11317,562 +11347,10 @@ exports.default = Header;
 },{}],80:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bios = new Uint8Array([
-    0xa5,
-    0xfa,
-    0x85,
-    0x80,
-    0x4c,
-    0x18,
-    0xf8,
-    0xff,
-    0xff,
-    0xff,
-    0x78,
-    0xd8,
-    0xa0,
-    0x00,
-    0xa2,
-    0x00,
-    0x94,
-    0x00,
-    0xe8,
-    0xd0,
-    0xfb,
-    0x4c,
-    0x50,
-    0xf8,
-    0xa2,
-    0x00,
-    0xbd,
-    0x06,
-    0xf0,
-    0xad,
-    0xf8,
-    0xff,
-    0xa2,
-    0x00,
-    0xad,
-    0x00,
-    0xf0,
-    0xea,
-    0xbd,
-    0x00,
-    0xf7,
-    0xca,
-    0xd0,
-    0xf6,
-    0x4c,
-    0x50,
-    0xf8,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xa2,
-    0x03,
-    0xbc,
-    0x22,
-    0xf9,
-    0x94,
-    0xfa,
-    0xca,
-    0x10,
-    0xf8,
-    0xa0,
-    0x00,
-    0xa2,
-    0x28,
-    0x94,
-    0x04,
-    0xca,
-    0x10,
-    0xfb,
-    0xa2,
-    0x1c,
-    0x94,
-    0x81,
-    0xca,
-    0x10,
-    0xfb,
-    0xa9,
-    0xff,
-    0xc9,
-    0x00,
-    0xd0,
-    0x03,
-    0x4c,
-    0x13,
-    0xf9,
-    0xa9,
-    0x00,
-    0x85,
-    0x1b,
-    0x85,
-    0x1c,
-    0x85,
-    0x1d,
-    0x85,
-    0x1e,
-    0x85,
-    0x1f,
-    0x85,
-    0x19,
-    0x85,
-    0x1a,
-    0x85,
-    0x08,
-    0x85,
-    0x01,
-    0xa9,
-    0x10,
-    0x85,
-    0x21,
-    0x85,
-    0x02,
-    0xa2,
-    0x07,
-    0xca,
-    0xca,
-    0xd0,
-    0xfd,
-    0xa9,
-    0x00,
-    0x85,
-    0x20,
-    0x85,
-    0x10,
-    0x85,
-    0x11,
-    0x85,
-    0x02,
-    0x85,
-    0x2a,
-    0xa9,
-    0x05,
-    0x85,
-    0x0a,
-    0xa9,
-    0xff,
-    0x85,
-    0x0d,
-    0x85,
-    0x0e,
-    0x85,
-    0x0f,
-    0x85,
-    0x84,
-    0x85,
-    0x85,
-    0xa9,
-    0xf0,
-    0x85,
-    0x83,
-    0xa9,
-    0x74,
-    0x85,
-    0x09,
-    0xa9,
-    0x0c,
-    0x85,
-    0x15,
-    0xa9,
-    0x1f,
-    0x85,
-    0x17,
-    0x85,
-    0x82,
-    0xa9,
-    0x07,
-    0x85,
-    0x19,
-    0xa2,
-    0x08,
-    0xa0,
-    0x00,
-    0x85,
-    0x02,
-    0x88,
-    0xd0,
-    0xfb,
-    0x85,
-    0x02,
-    0x85,
-    0x02,
-    0xa9,
-    0x02,
-    0x85,
-    0x02,
-    0x85,
-    0x00,
-    0x85,
-    0x02,
-    0x85,
-    0x02,
-    0x85,
-    0x02,
-    0xa9,
-    0x00,
-    0x85,
-    0x00,
-    0xca,
-    0x10,
-    0xe4,
-    0x06,
-    0x83,
-    0x66,
-    0x84,
-    0x26,
-    0x85,
-    0xa5,
-    0x83,
-    0x85,
-    0x0d,
-    0xa5,
-    0x84,
-    0x85,
-    0x0e,
-    0xa5,
-    0x85,
-    0x85,
-    0x0f,
-    0xa6,
-    0x82,
-    0xca,
-    0x86,
-    0x82,
-    0x86,
-    0x17,
-    0xe0,
-    0x0a,
-    0xd0,
-    0xc3,
-    0xa9,
-    0x02,
-    0x85,
-    0x01,
-    0xa2,
-    0x1c,
-    0xa0,
-    0x00,
-    0x84,
-    0x19,
-    0x84,
-    0x09,
-    0x94,
-    0x81,
-    0xca,
-    0x10,
-    0xfb,
-    0xa6,
-    0x80,
-    0xdd,
-    0x00,
-    0xf0,
-    0xa9,
-    0x9a,
-    0xa2,
-    0xff,
-    0xa0,
-    0x00,
-    0x9a,
-    0x4c,
-    0xfa,
-    0x00,
-    0xcd,
-    0xf8,
-    0xff,
-    0x4c
-]);
-exports.defaultHeader = new Uint8Array([
-    0xac,
-    0xfa,
-    0x0f,
-    0x18,
-    0x62,
-    0x00,
-    0x24,
-    0x02,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0x00,
-    0x04,
-    0x08,
-    0x0c,
-    0x10,
-    0x14,
-    0x18,
-    0x1c,
-    0x01,
-    0x05,
-    0x09,
-    0x0d,
-    0x11,
-    0x15,
-    0x19,
-    0x1d,
-    0x02,
-    0x06,
-    0x0a,
-    0x0e,
-    0x12,
-    0x16,
-    0x1a,
-    0x1e,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0xff,
-    0x00
-]);
+var base64_1 = require("../../../../tools/base64");
+exports.bios = base64_1.decode('pfqFgEwY+HjYqQCi/5qqqJUA6ND7TBj4ogCtBvCN+P+gAKIolATKEPuiHJSByhD7qQCFG4UchR2FHoUfhRmFGoUIhQGpEIUhhQKiB8rK0P2pAIUghRCFEYUChSqpBYUKqf+FDYUOhQ+FhIWFqfCFg6l0hQmpDIUVqR+FF4WCqQeFGaIIoACFAojQ+4UChQKpAoUChQCFAoUChQKpAIUAyhDkBoNmhCaFpYOFDaWEhQ6lhYUPpoLKhoKGF+AK0MOpAoUBohygAIQZhAmUgcoQ+6IArADw6rwA9+jQ9qILvRL5lfDKEPilgEzwAKIGvR35lfDKEPiu8P+GgLwA8K3x/67y/4b0rvP/hvWi/6AAmkzwAI35/637/9D7TOv4jfj/TAAA');
 
-},{}],81:[function(require,module,exports){
+},{"../../../../tools/base64":102}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function searchForSignatures(buffer, signatures) {
