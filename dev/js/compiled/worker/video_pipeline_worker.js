@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 var factories = [];
 factories[0] = function () {
@@ -411,7 +411,6 @@ exports.default = PassthroughProcessor;
 },{"microevent.ts":2}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Config = require("./config");
 var PassthroughProcessor_1 = require("./PassthroughProcessor");
 var FrameMergeProcessor_1 = require("./FrameMergeProcessor");
 var ProcessorFactory = (function () {
@@ -431,7 +430,7 @@ var ProcessorFactory = (function () {
 }());
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":7,"./PassthroughProcessor":8,"./config":11}],10:[function(require,module,exports){
+},{"./FrameMergeProcessor":7,"./PassthroughProcessor":8}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ProcessorFactory_1 = require("./ProcessorFactory");
@@ -466,10 +465,6 @@ var ProcessorPipeline = (function () {
 exports.default = ProcessorPipeline;
 
 },{"./ProcessorFactory":9}],11:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-
-},{}],12:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface_1 = require("../../surface/ArrayBufferSurface");
@@ -544,7 +539,7 @@ var PipelineHost = (function () {
 }());
 exports.default = PipelineHost;
 
-},{"../../../tools/pool/Pool":5,"../../surface/ArrayBufferSurface":14,"../ProcessorPipeline":10,"./messages":13}],13:[function(require,module,exports){
+},{"../../../tools/pool/Pool":5,"../../surface/ArrayBufferSurface":13,"../ProcessorPipeline":10,"./messages":12}],12:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.messageIds = {
@@ -556,7 +551,7 @@ exports.messageIds = {
 };
 Object.freeze(exports.messageIds);
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface = (function () {
@@ -608,14 +603,14 @@ var ArrayBufferSurface = (function () {
 }());
 exports.default = ArrayBufferSurface;
 
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var rpc_1 = require("../rpc");
 var PipelineHost_1 = require("../../../src/video/processing/worker/PipelineHost");
 exports.pipelineHost = new PipelineHost_1.default(rpc_1.getRpc());
 
-},{"../../../src/video/processing/worker/PipelineHost":12,"../rpc":16}],16:[function(require,module,exports){
+},{"../../../src/video/processing/worker/PipelineHost":11,"../rpc":15}],15:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
@@ -652,5 +647,5 @@ function getRpc() {
 }
 exports.getRpc = getRpc;
 
-},{"worker-rpc":4}]},{},[15])
+},{"worker-rpc":4}]},{},[14])
 //# sourceMappingURL=video_pipeline_worker.js.map

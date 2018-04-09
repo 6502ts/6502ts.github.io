@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Mutex = /** @class */ (function () {
@@ -1903,6 +1903,8 @@ var __asyncGenerator;
 var __asyncDelegator;
 var __asyncValues;
 var __makeTemplateObject;
+var __importStar;
+var __importDefault;
 (function (factory) {
     var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
     if (typeof define === "function" && define.amd) {
@@ -2078,6 +2080,18 @@ var __makeTemplateObject;
         return cooked;
     };
 
+    __importStar = function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+        result["default"] = mod;
+        return result;
+    };
+
+    __importDefault = function (mod) {
+        return (mod && mod.__esModule) ? mod : { "default": mod };
+    };
+
     exporter("__extends", __extends);
     exporter("__assign", __assign);
     exporter("__rest", __rest);
@@ -2095,6 +2109,8 @@ var __makeTemplateObject;
     exporter("__asyncDelegator", __asyncDelegator);
     exporter("__asyncValues", __asyncValues);
     exporter("__makeTemplateObject", __makeTemplateObject);
+    exporter("__importStar", __importStar);
+    exporter("__importDefault", __importDefault);
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -3842,7 +3858,6 @@ exports.default = Switch;
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var BoardInterface_1 = require("../board/BoardInterface");
-var CpuInterface_1 = require("../cpu/CpuInterface");
 var Cpu_1 = require("../cpu/Cpu");
 var Bus_1 = require("./Bus");
 var Pia_1 = require("./Pia");
@@ -4093,7 +4108,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../../tools/rng/factory":88,"../board/BoardInterface":23,"../cpu/Cpu":24,"../cpu/CpuInterface":25,"../io/DigitalJoystick":27,"../io/Paddle":28,"./Bus":31,"./Config":32,"./ControlPanel":33,"./Pia":34,"./tia/Tia":74,"microevent.ts":6}],31:[function(require,module,exports){
+},{"../../tools/rng/factory":88,"../board/BoardInterface":23,"../cpu/Cpu":24,"../io/DigitalJoystick":27,"../io/Paddle":28,"./Bus":31,"./Config":32,"./ControlPanel":33,"./Pia":34,"./tia/Tia":74,"microevent.ts":6}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -4809,11 +4824,9 @@ exports.default = Cartridge4k;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-var thumbulator_ts_1 = require("thumbulator.ts");
 var Soc_1 = require("./harmony/Soc");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
-var CartridgeInterface_1 = require("./CartridgeInterface");
 var cartridgeUtil = require("./util");
 var DSPointerBase = new Uint16Array([0x06e0, 0x00a0]);
 var DSIncrementBase = new Uint16Array([0x0768, 0x0128]);
@@ -5093,7 +5106,7 @@ var MusicStream = (function () {
     return MusicStream;
 }());
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./CartridgeInterface":57,"./harmony/Soc":60,"./util":63,"thumbulator.ts":18,"tslib":20}],42:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./harmony/Soc":60,"./util":63,"tslib":20}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -5330,7 +5343,6 @@ var tslib_1 = require("tslib");
 var Soc_1 = require("./harmony/Soc");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
-var CartridgeInterface_1 = require("./CartridgeInterface");
 var cartridgeUtil = require("./util");
 var CartridgeDPCPlus = (function (_super) {
     tslib_1.__extends(CartridgeDPCPlus, _super);
@@ -5695,7 +5707,7 @@ var MusicFetcher = (function () {
     return MusicFetcher;
 }());
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./CartridgeInterface":57,"./harmony/Soc":60,"./util":63,"tslib":20}],44:[function(require,module,exports){
+},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./harmony/Soc":60,"./util":63,"tslib":20}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo_1 = require("./CartridgeInfo");
@@ -7712,7 +7724,6 @@ var QueueEntry = (function () {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
-var Config_1 = require("../Config");
 var FrameManager = (function () {
     function FrameManager(_config) {
         this._config = _config;
@@ -7873,7 +7884,7 @@ var FrameManager = (function () {
 }());
 exports.default = FrameManager;
 
-},{"../Config":32,"microevent.ts":6}],67:[function(require,module,exports){
+},{"microevent.ts":6}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var LatchedInput = (function () {
@@ -8070,7 +8081,6 @@ exports.default = Missile;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
-var Config_1 = require("../Config");
 var PCMChannel_1 = require("./PCMChannel");
 var R_MAX = 30;
 var R = 1;
@@ -8175,7 +8185,7 @@ var PCMAudio = (function () {
 }());
 exports.default = PCMAudio;
 
-},{"../Config":32,"./PCMChannel":70,"microevent.ts":6}],70:[function(require,module,exports){
+},{"./PCMChannel":70,"microevent.ts":6}],70:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PCMChannel = (function () {
@@ -8755,7 +8765,6 @@ exports.default = Playfield;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
-var Config_1 = require("../Config");
 var WaveformAudio_1 = require("./WaveformAudio");
 var PCMAudio_1 = require("./PCMAudio");
 var Missile_1 = require("./Missile");
@@ -9456,7 +9465,7 @@ exports.default = Tia;
 })(Tia || (Tia = {}));
 exports.default = Tia;
 
-},{"../Config":32,"./Ball":64,"./DelayQueue":65,"./FrameManager":66,"./LatchedInput":67,"./Missile":68,"./PCMAudio":69,"./PaddleReader":71,"./Player":72,"./Playfield":73,"./WaveformAudio":76,"./palette":78,"microevent.ts":6}],75:[function(require,module,exports){
+},{"./Ball":64,"./DelayQueue":65,"./FrameManager":66,"./LatchedInput":67,"./Missile":68,"./PCMAudio":69,"./PaddleReader":71,"./Player":72,"./Playfield":73,"./WaveformAudio":76,"./palette":78,"microevent.ts":6}],75:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../Config");
@@ -10742,7 +10751,6 @@ exports.default = PassthroughProcessor;
 },{"microevent.ts":6}],99:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Config = require("./config");
 var PassthroughProcessor_1 = require("./PassthroughProcessor");
 var FrameMergeProcessor_1 = require("./FrameMergeProcessor");
 var ProcessorFactory = (function () {
@@ -10762,7 +10770,7 @@ var ProcessorFactory = (function () {
 }());
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":97,"./PassthroughProcessor":98,"./config":101}],100:[function(require,module,exports){
+},{"./FrameMergeProcessor":97,"./PassthroughProcessor":98}],100:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ProcessorFactory_1 = require("./ProcessorFactory");
@@ -10797,10 +10805,6 @@ var ProcessorPipeline = (function () {
 exports.default = ProcessorPipeline;
 
 },{"./ProcessorFactory":99}],101:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-
-},{}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
@@ -10864,7 +10868,7 @@ var PipelineClient = (function () {
 }());
 exports.default = PipelineClient;
 
-},{"./messages":103,"microevent.ts":6,"worker-rpc":22}],103:[function(require,module,exports){
+},{"./messages":102,"microevent.ts":6,"worker-rpc":22}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.messageIds = {
@@ -10876,7 +10880,7 @@ exports.messageIds = {
 };
 Object.freeze(exports.messageIds);
 
-},{}],104:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface = (function () {
@@ -10928,7 +10932,7 @@ var ArrayBufferSurface = (function () {
 }());
 exports.default = ArrayBufferSurface;
 
-},{}],105:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -10971,7 +10975,7 @@ var PCMAudioEndpoint = (function () {
 }());
 exports.default = PCMAudioEndpoint;
 
-},{"../../tools/AudioOutputBuffer":79,"../../tools/pool/InducedPool":84,"../../tools/pool/Pool":85,"microevent.ts":6}],106:[function(require,module,exports){
+},{"../../tools/AudioOutputBuffer":79,"../../tools/pool/InducedPool":84,"../../tools/pool/Pool":85,"microevent.ts":6}],105:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -11017,7 +11021,7 @@ var VideoEndpoint = (function () {
 }());
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":84,"../../tools/pool/Pool":85,"../../video/processing/ProcessorPipeline":100,"../../video/surface/ArrayBufferSurface":104,"microevent.ts":6}],107:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":84,"../../tools/pool/Pool":85,"../../video/processing/ProcessorPipeline":100,"../../video/surface/ArrayBufferSurface":103,"microevent.ts":6}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -11106,7 +11110,7 @@ exports.default = DriverManager;
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":108}],108:[function(require,module,exports){
+},{"./EmulationServiceInterface":107}],107:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -11121,7 +11125,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],109:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var VideoEndpoint_1 = require("../../../driver/VideoEndpoint");
@@ -11182,7 +11186,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{"../../../driver/PCMAudioEndpoint":105,"../../../driver/VideoEndpoint":106}],110:[function(require,module,exports){
+},{"../../../driver/PCMAudioEndpoint":104,"../../../driver/VideoEndpoint":105}],109:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -11392,7 +11396,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":30,"../../../../machine/stella/cartridge/CartridgeFactory":55,"../../../../tools/ClockProbe":80,"../../../../tools/scheduler/Factory":89,"../../../../tools/scheduler/PeriodicScheduler":91,"../EmulationServiceInterface":108,"./EmulationContext":109,"async-mutex":2,"microevent.ts":6,"tslib":20}],111:[function(require,module,exports){
+},{"../../../../machine/stella/Board":30,"../../../../machine/stella/cartridge/CartridgeFactory":55,"../../../../tools/ClockProbe":80,"../../../../tools/scheduler/Factory":89,"../../../../tools/scheduler/PeriodicScheduler":91,"../EmulationServiceInterface":107,"./EmulationContext":108,"async-mutex":2,"microevent.ts":6,"tslib":20}],110:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -11453,7 +11457,7 @@ var ControlDriver = (function () {
 }());
 exports.default = ControlDriver;
 
-},{"./messages":116}],112:[function(require,module,exports){
+},{"./messages":115}],111:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationService_1 = require("../vanilla/EmulationService");
@@ -11539,7 +11543,7 @@ var EmulationBackend = (function () {
 }());
 exports.default = EmulationBackend;
 
-},{"../DriverManager":107,"../vanilla/EmulationService":110,"./ControlDriver":111,"./PCMAudioDriver":113,"./VideoDriver":114,"./WaveformAudioDriver":115,"./messages":116}],113:[function(require,module,exports){
+},{"../DriverManager":106,"../vanilla/EmulationService":109,"./ControlDriver":110,"./PCMAudioDriver":112,"./VideoDriver":113,"./WaveformAudioDriver":114,"./messages":115}],112:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -11620,7 +11624,7 @@ var PCMAudioDriver = (function () {
 }());
 exports.default = PCMAudioDriver;
 
-},{"./messages":116}],114:[function(require,module,exports){
+},{"./messages":115}],113:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -11647,9 +11651,6 @@ var VideoDriver = (function () {
         this._nextId = 0;
     }
     VideoDriver.prototype.init = function (videoPipelinePort) {
-        if (navigator.userAgent.match(/safari/i)) {
-            videoPipelinePort = null;
-        }
         this._rpc
             .registerSignalHandler(messages_1.SIGNAL_TYPE.videoReturnSurface, this._onReturnSurfaceFromHost.bind(this))
             .registerRpcHandler(messages_1.RPC_TYPE.getVideoParameters, this._onGetVideoParameters.bind(this));
@@ -11799,7 +11800,7 @@ var VideoDriver = (function () {
 }());
 exports.default = VideoDriver;
 
-},{"../../../../tools/pool/Pool":85,"../../../../video/processing/worker/PipelineClient":102,"../../../../video/surface/ArrayBufferSurface":104,"./messages":116,"async-mutex":2,"tslib":20,"worker-rpc":22}],115:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":85,"../../../../video/processing/worker/PipelineClient":101,"../../../../video/surface/ArrayBufferSurface":103,"./messages":115,"async-mutex":2,"tslib":20,"worker-rpc":22}],114:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -11850,7 +11851,7 @@ var WaveformAudioDriver = (function () {
 }());
 exports.default = WaveformAudioDriver;
 
-},{"./messages":116}],116:[function(require,module,exports){
+},{"./messages":115}],115:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {
@@ -11882,7 +11883,7 @@ exports.SIGNAL_TYPE = {
 };
 Object.freeze(exports.SIGNAL_TYPE);
 
-},{}],117:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var rpc_1 = require("../rpc");
@@ -11890,7 +11891,7 @@ var EmulationBackend_1 = require("../../../src/web/stella/service/worker/Emulati
 var emulationBackend = new EmulationBackend_1.default(rpc_1.getRpc());
 emulationBackend.startup();
 
-},{"../../../src/web/stella/service/worker/EmulationBackend":112,"../rpc":118}],118:[function(require,module,exports){
+},{"../../../src/web/stella/service/worker/EmulationBackend":111,"../rpc":117}],117:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
@@ -11927,5 +11928,5 @@ function getRpc() {
 }
 exports.getRpc = getRpc;
 
-},{"worker-rpc":22}]},{},[117])
+},{"worker-rpc":22}]},{},[116])
 //# sourceMappingURL=stellerator_worker.js.map
