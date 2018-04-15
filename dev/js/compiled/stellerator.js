@@ -87462,6 +87462,194 @@ exports.default = KeyboardIO;
 },{"microevent.ts":267,"tslib":544}],647:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var microevent_ts_1 = require("microevent.ts");
+var DoubleTapDetector_1 = require("./touch/DoubleTapDetector");
+var TouchIO = (function () {
+    function TouchIO(_canvas, _joystickSensitivity) {
+        if (_joystickSensitivity === void 0) { _joystickSensitivity = 15; }
+        var _this = this;
+        this._canvas = _canvas;
+        this._joystickSensitivity = _joystickSensitivity;
+        this._onTouchStart = function (e) {
+            var cancel = false;
+            for (var i = 0; i < e.changedTouches.length; i++) {
+                var normalizedTouch = new NormalizedTouch(e.changedTouches.item(i), _this._canvas), id = normalizedTouch.touch.identifier;
+                if (normalizedTouch.x <= 0.5) {
+                    if (normalizedTouch.y <= 0.5) {
+                        normalizedTouch.type = "alt";
+                    }
+                    else {
+                        normalizedTouch.type = _this._isAlt ? "pause" : "fire";
+                    }
+                }
+                else {
+                    if (normalizedTouch.y <= 0.5) {
+                        normalizedTouch.type = _this._isAlt ? "select" : "joystick";
+                    }
+                    else {
+                        normalizedTouch.type = _this._isAlt ? "reset" : "joystick";
+                    }
+                }
+                if (_this._pendingTouches.has(id) || _this._pendingTouches.has(normalizedTouch.type)) {
+                    continue;
+                }
+                _this._pendingTouches.set(id, normalizedTouch);
+                _this._pendingTouches.set(normalizedTouch.type, normalizedTouch);
+                switch (normalizedTouch.type) {
+                    case "alt":
+                        _this._isAlt = true;
+                        _this._fullscreenDoubleTapDetector.startTouch();
+                        break;
+                    case "fire":
+                        _this._joystick.getFire().toggle(true);
+                        break;
+                    case "pause":
+                        _this.togglePause.dispatch(undefined);
+                        _this._fullscreenDoubleTapDetector.cancelTouch();
+                        break;
+                    case "select":
+                        _this._select.toggle(true);
+                        _this._fullscreenDoubleTapDetector.cancelTouch();
+                        break;
+                    case "reset":
+                        _this._reset.toggle(true);
+                        _this._fullscreenDoubleTapDetector.cancelTouch();
+                        break;
+                    case "joystick":
+                        break;
+                    default:
+                        throw new Error('invalid touch type');
+                }
+                if (_this._cancelEvent(normalizedTouch)) {
+                    cancel = true;
+                }
+            }
+            if (cancel) {
+                e.preventDefault();
+            }
+        };
+        this._onTouchEnd = function (e) {
+            var cancel = false;
+            for (var i = 0; i < e.changedTouches.length; i++) {
+                var normalizedTouch = _this._pendingTouches.get(e.changedTouches.item(i).identifier);
+                if (!normalizedTouch) {
+                    continue;
+                }
+                switch (normalizedTouch.type) {
+                    case "alt":
+                        _this._isAlt = false;
+                        _this._fullscreenDoubleTapDetector.endTouch();
+                        break;
+                    case "fire":
+                        _this._joystick.getFire().toggle(false);
+                        break;
+                    case "select":
+                        _this._select.toggle(false);
+                        break;
+                    case "reset":
+                        _this._reset.toggle(false);
+                        break;
+                    case "joystick":
+                        _this._joystick.getDown().toggle(false);
+                        _this._joystick.getUp().toggle(false);
+                        _this._joystick.getLeft().toggle(false);
+                        _this._joystick.getRight().toggle(false);
+                        break;
+                    case "pause":
+                        break;
+                    default:
+                        throw new Error('invalid touch type');
+                }
+                _this._pendingTouches.delete(normalizedTouch.type);
+                _this._pendingTouches.delete(normalizedTouch.touch.identifier);
+                if (_this._cancelEvent(normalizedTouch)) {
+                    cancel = true;
+                }
+            }
+            if (cancel) {
+                e.preventDefault();
+            }
+        };
+        this._onTouchMove = function (e) {
+            var cancel = false;
+            for (var i = 0; i < e.changedTouches.length; i++) {
+                var touch = e.changedTouches.item(i), normalizedTouch = _this._pendingTouches.get(touch.identifier);
+                if (!normalizedTouch) {
+                    continue;
+                }
+                if (_this._cancelEvent(normalizedTouch)) {
+                    cancel = true;
+                }
+                if (normalizedTouch.type !== "joystick") {
+                    continue;
+                }
+                var deltaX = touch.clientX - normalizedTouch.touch.clientX, deltaY = touch.clientY - normalizedTouch.touch.clientY;
+                _this._joystick.getLeft().toggle(deltaX < -_this._joystickSensitivity);
+                _this._joystick.getRight().toggle(deltaX > _this._joystickSensitivity);
+                _this._joystick.getUp().toggle(deltaY < -_this._joystickSensitivity);
+                _this._joystick.getDown().toggle(deltaY > _this._joystickSensitivity);
+            }
+            if (cancel) {
+                e.preventDefault();
+            }
+        };
+        this.togglePause = new microevent_ts_1.Event();
+        this._fullscreenDoubleTapDetector = new DoubleTapDetector_1.default();
+        this._bound = false;
+        this._joystick = null;
+        this._select = null;
+        this._reset = null;
+        this._isAlt = false;
+        this._pendingTouches = new Map();
+        this.toggleFullscreen = this._fullscreenDoubleTapDetector.trigger;
+    }
+    TouchIO.prototype.bind = function (joystick, controlPanel) {
+        if (this._bound) {
+            return;
+        }
+        this._bound = true;
+        this._joystick = joystick;
+        this._select = controlPanel.getSelectSwitch();
+        this._reset = controlPanel.getResetButton();
+        this._bindListeners();
+    };
+    TouchIO.prototype.unbind = function () {
+        if (!this._bound) {
+            return;
+        }
+        this._unbindListeners();
+        (this._bound = false), (this._joystick = this._reset = this._select = null);
+    };
+    TouchIO.prototype._bindListeners = function () {
+        this._canvas.addEventListener('touchstart', this._onTouchStart);
+        this._canvas.addEventListener('touchend', this._onTouchEnd);
+        this._canvas.addEventListener('touchmove', this._onTouchMove);
+    };
+    TouchIO.prototype._unbindListeners = function () {
+        this._canvas.removeEventListener('touchstart', this._onTouchStart);
+        this._canvas.removeEventListener('touchend', this._onTouchEnd);
+        this._canvas.removeEventListener('touchmove', this._onTouchMove);
+    };
+    TouchIO.prototype._cancelEvent = function (touch) {
+        return touch.type !== "alt";
+    };
+    return TouchIO;
+}());
+var NormalizedTouch = (function () {
+    function NormalizedTouch(touch, canvas) {
+        this.touch = touch;
+        this.type = "unknown";
+        var boundingRect = canvas.getBoundingClientRect();
+        this.x = (touch.clientX - boundingRect.left) / boundingRect.width;
+        this.y = (touch.clientY - boundingRect.top) / boundingRect.height;
+    }
+    return NormalizedTouch;
+}());
+exports.default = TouchIO;
+
+},{"./touch/DoubleTapDetector":649,"microevent.ts":267}],648:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var WebAudio_1 = require("../../driver/WebAudio");
 var WebAudioDriver = (function () {
@@ -87548,7 +87736,52 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":640,"tslib":544}],648:[function(require,module,exports){
+},{"../../driver/WebAudio":640,"tslib":544}],649:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var microevent_ts_1 = require("microevent.ts");
+var DoubleTapDetector = (function () {
+    function DoubleTapDetector(_maxTapLength, _timeout) {
+        if (_maxTapLength === void 0) { _maxTapLength = 500; }
+        if (_timeout === void 0) { _timeout = 200; }
+        this._maxTapLength = _maxTapLength;
+        this._timeout = _timeout;
+        this.trigger = new microevent_ts_1.Event();
+        this._dispatch = false;
+        this._touching = false;
+        this._lastTouchEligible = false;
+        this._lastTouchStart = 0;
+        this._lastTouchEnd = 0;
+    }
+    DoubleTapDetector.prototype.startTouch = function () {
+        this._lastTouchStart = Date.now();
+        if (this._touching) {
+            return;
+        }
+        this._touching = true;
+        this._dispatch = this._lastTouchEligible && this._lastTouchStart - this._lastTouchEnd < this._timeout;
+    };
+    DoubleTapDetector.prototype.endTouch = function () {
+        this._lastTouchEnd = Date.now();
+        if (this._dispatch) {
+            this._dispatch = false;
+            this.trigger.dispatch(undefined);
+        }
+        if (!this._touching) {
+            return;
+        }
+        this._touching = false;
+        this._lastTouchEligible = this._lastTouchStart - this._lastTouchEnd < this._maxTapLength;
+    };
+    DoubleTapDetector.prototype.cancelTouch = function () {
+        this.endTouch();
+        this._lastTouchEligible = false;
+    };
+    return DoubleTapDetector;
+}());
+exports.default = DoubleTapDetector;
+
+},{"microevent.ts":267}],650:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -87637,7 +87870,7 @@ exports.default = DriverManager;
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":649}],649:[function(require,module,exports){
+},{"./EmulationServiceInterface":651}],651:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -87652,7 +87885,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],650:[function(require,module,exports){
+},{}],652:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var VideoEndpoint_1 = require("../../../driver/VideoEndpoint");
@@ -87713,7 +87946,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{"../../../driver/PCMAudioEndpoint":637,"../../../driver/VideoEndpoint":639}],651:[function(require,module,exports){
+},{"../../../driver/PCMAudioEndpoint":637,"../../../driver/VideoEndpoint":639}],653:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -87923,7 +88156,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":560,"../../../../machine/stella/cartridge/CartridgeFactory":585,"../../../../tools/ClockProbe":610,"../../../../tools/scheduler/Factory":621,"../../../../tools/scheduler/PeriodicScheduler":623,"../EmulationServiceInterface":649,"./EmulationContext":650,"async-mutex":2,"microevent.ts":267,"tslib":544}],652:[function(require,module,exports){
+},{"../../../../machine/stella/Board":560,"../../../../machine/stella/cartridge/CartridgeFactory":585,"../../../../tools/ClockProbe":610,"../../../../tools/scheduler/Factory":621,"../../../../tools/scheduler/PeriodicScheduler":623,"../EmulationServiceInterface":651,"./EmulationContext":652,"async-mutex":2,"microevent.ts":267,"tslib":544}],654:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DigitalJoystick_1 = require("../../../../machine/io/DigitalJoystick");
@@ -87993,7 +88226,7 @@ var ControlProxy = (function () {
 }());
 exports.default = ControlProxy;
 
-},{"../../../../machine/io/DigitalJoystick":557,"../../../../machine/io/Paddle":558,"../../../../machine/stella/ControlPanel":563,"./messages":658}],653:[function(require,module,exports){
+},{"../../../../machine/io/DigitalJoystick":557,"../../../../machine/io/Paddle":558,"../../../../machine/stella/ControlPanel":563,"./messages":660}],655:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationContext = (function () {
@@ -88038,7 +88271,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{}],654:[function(require,module,exports){
+},{}],656:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -88329,7 +88562,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../EmulationServiceInterface":649,"./ControlProxy":652,"./EmulationContext":653,"./PCMAudioProxy":655,"./VideoProxy":656,"./WaveformAudioProxy":657,"./messages":658,"async-mutex":2,"microevent.ts":267,"tslib":544,"worker-rpc":552}],655:[function(require,module,exports){
+},{"../EmulationServiceInterface":651,"./ControlProxy":654,"./EmulationContext":655,"./PCMAudioProxy":657,"./VideoProxy":658,"./WaveformAudioProxy":659,"./messages":660,"async-mutex":2,"microevent.ts":267,"tslib":544,"worker-rpc":552}],657:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -88420,7 +88653,7 @@ var PCMAudioProxy = (function () {
 }());
 exports.default = PCMAudioProxy;
 
-},{"../../../../tools/pool/Pool":617,"./messages":658,"microevent.ts":267,"tslib":544}],656:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":617,"./messages":660,"microevent.ts":267,"tslib":544}],658:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -88501,7 +88734,7 @@ var VideoProxy = (function () {
 }());
 exports.default = VideoProxy;
 
-},{"./messages":658,"microevent.ts":267,"tslib":544}],657:[function(require,module,exports){
+},{"./messages":660,"microevent.ts":267,"tslib":544}],659:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -88570,7 +88803,7 @@ var WaveformAudioProxy = (function () {
 }());
 exports.default = WaveformAudioProxy;
 
-},{"../../../../machine/stella/tia/ToneGenerator":605,"./messages":658,"microevent.ts":267,"tslib":544}],658:[function(require,module,exports){
+},{"../../../../machine/stella/tia/ToneGenerator":605,"./messages":660,"microevent.ts":267,"tslib":544}],660:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {
@@ -88602,7 +88835,7 @@ exports.SIGNAL_TYPE = {
 };
 Object.freeze(exports.SIGNAL_TYPE);
 
-},{}],659:[function(require,module,exports){
+},{}],661:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -88622,7 +88855,7 @@ function Routing(props) {
 exports.Routing = Routing;
 exports.default = Routing;
 
-},{"./containers/CartridgeManager":701,"./containers/Emulation":702,"./containers/Help":703,"./containers/Settings":705,"react":470,"react-router":465}],660:[function(require,module,exports){
+},{"./containers/CartridgeManager":703,"./containers/Emulation":704,"./containers/Help":705,"./containers/Settings":707,"react":470,"react-router":465}],662:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.actions = {
@@ -88678,7 +88911,7 @@ function selectRomFromZipfile(filename) {
 }
 exports.selectRomFromZipfile = selectRomFromZipfile;
 
-},{}],661:[function(require,module,exports){
+},{}],663:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.types = {
@@ -88765,7 +88998,7 @@ function changeAudioDriver(driver) {
 }
 exports.changeAudioDriver = changeAudioDriver;
 
-},{}],662:[function(require,module,exports){
+},{}],664:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.types = {
@@ -88858,7 +89091,7 @@ function enforceRateLimit(enforce) {
 }
 exports.enforceRateLimit = enforceRateLimit;
 
-},{}],663:[function(require,module,exports){
+},{}],665:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.types = {
@@ -88875,7 +89108,7 @@ function initialize(_a) {
 }
 exports.initialize = initialize;
 
-},{}],664:[function(require,module,exports){
+},{}],666:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.types = {
@@ -88923,7 +89156,7 @@ function closeLoadPendingChangesModal() {
 }
 exports.closeLoadPendingChangesModal = closeLoadPendingChangesModal;
 
-},{}],665:[function(require,module,exports){
+},{}],667:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.types = {
@@ -88982,7 +89215,7 @@ function initCartridges(cartridges) {
 }
 exports.initCartridges = initCartridges;
 
-},{}],666:[function(require,module,exports){
+},{}],668:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.types = {
@@ -89072,7 +89305,7 @@ function changeAudioDriver(driver) {
 }
 exports.changeAudioDriver = changeAudioDriver;
 
-},{}],667:[function(require,module,exports){
+},{}],669:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.actions = {
@@ -89110,7 +89343,7 @@ function clearError() {
 }
 exports.clearError = clearError;
 
-},{}],668:[function(require,module,exports){
+},{}],670:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89142,7 +89375,7 @@ function CartridgeManager(props) {
 }
 exports.default = CartridgeManager;
 
-},{"./cartridge-manager/CartridgeControls":674,"./cartridge-manager/CartridgeList":675,"./cartridge-manager/CartridgeSettings":677,"./cartridge-manager/PendingChangesModal":681,"./cartridge-manager/ZipfileErrorModal":684,"./cartridge-manager/ZipfileSelectModal":685,"react":470,"react-bootstrap":390}],669:[function(require,module,exports){
+},{"./cartridge-manager/CartridgeControls":676,"./cartridge-manager/CartridgeList":677,"./cartridge-manager/CartridgeSettings":679,"./cartridge-manager/PendingChangesModal":683,"./cartridge-manager/ZipfileErrorModal":686,"./cartridge-manager/ZipfileSelectModal":687,"react":470,"react-bootstrap":390}],671:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89155,6 +89388,7 @@ var DriverManager_1 = require("../../service/DriverManager");
 var SimpleCanvasVideo_1 = require("../../../driver/SimpleCanvasVideo");
 var WebglVideo_1 = require("../../../driver/webgl/WebglVideo");
 var KeyboardIO_1 = require("../../driver/KeyboardIO");
+var TouchIO_1 = require("../../driver/TouchIO");
 var FullscreenVideo_1 = require("../../../driver/FullscreenVideo");
 var MouseAsPaddle_1 = require("../../../driver/MouseAsPaddle");
 var Emulation = (function (_super) {
@@ -89224,6 +89458,7 @@ var Emulation = (function (_super) {
             console.log(e);
         }
         var keyboardDriver = new KeyboardIO_1.default(document);
+        var touchDriver = new TouchIO_1.default(this._canvasElt);
         this._fullscreenDriver = new FullscreenVideo_1.default(videoDriver);
         this._driverManager
             .addDriver(new MouseAsPaddle_1.default(), function (context, driver) {
@@ -89231,21 +89466,37 @@ var Emulation = (function (_super) {
         })
             .addDriver(keyboardDriver, function (context, driver) {
             return driver.bind(context.getJoystick(0), context.getJoystick(1), context.getControlPanel());
+        })
+            .addDriver(touchDriver, function (context, driver) {
+            return driver.bind(context.getJoystick(0), context.getControlPanel());
         });
-        keyboardDriver.toggleFullscreen.addHandler(function () { return _this._fullscreenDriver.toggle(); });
+        try {
+            for (var _a = tslib_1.__values([keyboardDriver, touchDriver]), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var driver = _b.value;
+                driver.toggleFullscreen.addHandler(function () { return _this._fullscreenDriver.toggle(); });
+                driver.togglePause.addHandler(function () {
+                    if (_this.props.emulationState === EmulationServiceInterface_1.default.State.running) {
+                        _this.props.userPauseEmulation();
+                    }
+                    else if (_this.props.emulationState === EmulationServiceInterface_1.default.State.paused) {
+                        _this.props.resumeEmulation();
+                    }
+                });
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
         keyboardDriver.hardReset.addHandler(function () { return _this.props.resetEmulation(); });
-        keyboardDriver.togglePause.addHandler(function () {
-            if (_this.props.emulationState === EmulationServiceInterface_1.default.State.running) {
-                _this.props.userPauseEmulation();
-            }
-            else if (_this.props.emulationState === EmulationServiceInterface_1.default.State.paused) {
-                _this.props.resumeEmulation();
-            }
-        });
         if (this._videoDriver) {
             this._videoDriver.resize();
         }
         this._canvasVisible = this._showCanvas();
+        var e_1, _c;
     };
     Emulation.prototype.componentDidUpdate = function () {
         var canvasVisible = this._showCanvas();
@@ -89293,7 +89544,7 @@ exports.default = Emulation;
 })(Emulation || (Emulation = {}));
 exports.default = Emulation;
 
-},{"../../../driver/FullscreenVideo":634,"../../../driver/MouseAsPaddle":636,"../../../driver/SimpleCanvasVideo":638,"../../../driver/webgl/WebglVideo":644,"../../driver/KeyboardIO":646,"../../service/DriverManager":648,"../../service/EmulationServiceInterface":649,"../context/Emulation":706,"./emulation/ControlPanel":686,"react":470,"react-bootstrap":390,"tslib":544}],670:[function(require,module,exports){
+},{"../../../driver/FullscreenVideo":634,"../../../driver/MouseAsPaddle":636,"../../../driver/SimpleCanvasVideo":638,"../../../driver/webgl/WebglVideo":644,"../../driver/KeyboardIO":646,"../../driver/TouchIO":647,"../../service/DriverManager":650,"../../service/EmulationServiceInterface":651,"../context/Emulation":708,"./emulation/ControlPanel":688,"react":470,"react-bootstrap":390,"tslib":544}],672:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89319,7 +89570,7 @@ exports.default = Help;
 })(Help || (Help = {}));
 exports.default = Help;
 
-},{"./general/Markdown":689,"react":470,"react-bootstrap":390}],671:[function(require,module,exports){
+},{"./general/Markdown":691,"react":470,"react-bootstrap":390}],673:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89336,7 +89587,7 @@ function Main(props) {
 }
 exports.default = Main;
 
-},{"./main/Navbar":693,"react":470,"tslib":544}],672:[function(require,module,exports){
+},{"./main/Navbar":695,"react":470,"tslib":544}],674:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89428,7 +89679,7 @@ exports.default = Settings;
 })(Settings || (Settings = {}));
 exports.default = Settings;
 
-},{"./general/Slider":690,"./general/Switch":691,"./settings/AudioDriverSelect":699,"bowser":103,"react":470,"react-bootstrap":390}],673:[function(require,module,exports){
+},{"./general/Slider":692,"./general/Switch":693,"./settings/AudioDriverSelect":701,"bowser":103,"react":470,"react-bootstrap":390}],675:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89460,7 +89711,7 @@ exports.default = AudioDriverSelect;
 })(AudioDriverSelect || (AudioDriverSelect = {}));
 exports.default = AudioDriverSelect;
 
-},{"react":470,"react-bootstrap":390}],674:[function(require,module,exports){
+},{"react":470,"react-bootstrap":390}],676:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89489,7 +89740,7 @@ var CartridgeControlsStyled = style_1.styled(CartridgeControlsUnstyled)(template
 exports.default = CartridgeControlsStyled;
 var templateObject_1;
 
-},{"../general/FileUploadButton":688,"../style":700,"react":470,"react-bootstrap":390,"tslib":544}],675:[function(require,module,exports){
+},{"../general/FileUploadButton":690,"../style":702,"react":470,"react-bootstrap":390,"tslib":544}],677:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89516,7 +89767,7 @@ var CartridgeListStyled = style_1.styled(CartridgeListUnstyled)(templateObject_3
 exports.default = CartridgeListStyled;
 var templateObject_1, templateObject_2, templateObject_3;
 
-},{"../general/BorderBox":687,"../style":700,"react":470,"tslib":544}],676:[function(require,module,exports){
+},{"../general/BorderBox":689,"../style":702,"react":470,"tslib":544}],678:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89534,7 +89785,7 @@ exports.default = CartridgeNameInput;
 })(CartridgeNameInput || (CartridgeNameInput = {}));
 exports.default = CartridgeNameInput;
 
-},{"react":470,"react-bootstrap":390}],677:[function(require,module,exports){
+},{"react":470,"react-bootstrap":390}],679:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89592,7 +89843,7 @@ var CartridgeSettingsStyled = style_1.styled(CartridgeSettingsUnstyled)(template
 exports.default = CartridgeSettingsStyled;
 var templateObject_1, templateObject_2;
 
-},{"../general/Slider":690,"../general/Switch":691,"../style":700,"./AudioDriverSelect":673,"./CartridgeNameInput":676,"./CartridgeTypeSelect":678,"./FrameStartEdit":679,"./RandomSeedEdit":682,"./TvModeSelect":683,"react":470,"react-bootstrap":390,"tslib":544}],678:[function(require,module,exports){
+},{"../general/Slider":692,"../general/Switch":693,"../style":702,"./AudioDriverSelect":675,"./CartridgeNameInput":678,"./CartridgeTypeSelect":680,"./FrameStartEdit":681,"./RandomSeedEdit":684,"./TvModeSelect":685,"react":470,"react-bootstrap":390,"tslib":544}],680:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89623,7 +89874,7 @@ exports.default = CartridgeTypeSelect;
 })(CartridgeTypeSelect || (CartridgeTypeSelect = {}));
 exports.default = CartridgeTypeSelect;
 
-},{"../../../../../machine/stella/cartridge/CartridgeInfo":586,"react":470,"react-bootstrap":390,"tslib":544}],679:[function(require,module,exports){
+},{"../../../../../machine/stella/cartridge/CartridgeInfo":586,"react":470,"react-bootstrap":390,"tslib":544}],681:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89641,7 +89892,7 @@ exports.default = FrameStartEdit;
 })(FrameStartEdit || (FrameStartEdit = {}));
 exports.default = FrameStartEdit;
 
-},{"./OptionalValueEdit":680,"react":470}],680:[function(require,module,exports){
+},{"./OptionalValueEdit":682,"react":470}],682:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89667,7 +89918,7 @@ exports.default = OptionalValueInput;
 exports.default = OptionalValueInput;
 var templateObject_1;
 
-},{"../general/Switch":691,"../general/ValidatingInput":692,"../style":700,"react":470,"tslib":544}],681:[function(require,module,exports){
+},{"../general/Switch":693,"../general/ValidatingInput":694,"../style":702,"react":470,"tslib":544}],683:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89693,7 +89944,7 @@ exports.default = PendingChangesModal;
 })(PendingChangesModal || (PendingChangesModal = {}));
 exports.default = PendingChangesModal;
 
-},{"react":470,"react-bootstrap":390}],682:[function(require,module,exports){
+},{"react":470,"react-bootstrap":390}],684:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89713,7 +89964,7 @@ exports.default = RandomSeedEdit;
 })(RandomSeedEdit || (RandomSeedEdit = {}));
 exports.default = RandomSeedEdit;
 
-},{"./OptionalValueEdit":680,"react":470}],683:[function(require,module,exports){
+},{"./OptionalValueEdit":682,"react":470}],685:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89733,7 +89984,7 @@ exports.default = TvModeSelect;
 })(TvModeSelect || (TvModeSelect = {}));
 exports.default = TvModeSelect;
 
-},{"react":470,"react-bootstrap":390}],684:[function(require,module,exports){
+},{"react":470,"react-bootstrap":390}],686:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89755,7 +90006,7 @@ exports.default = ZipfileErrorModal;
 })(ZipfileErrorModal || (ZipfileErrorModal = {}));
 exports.default = ZipfileErrorModal;
 
-},{"react":470,"react-bootstrap":390}],685:[function(require,module,exports){
+},{"react":470,"react-bootstrap":390}],687:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89805,7 +90056,7 @@ var ZipfileSelectModal = (function (_super) {
 exports.default = ZipfileSelectModal;
 var templateObject_1;
 
-},{"../style":700,"react":470,"react-bootstrap":390,"tslib":544}],686:[function(require,module,exports){
+},{"../style":702,"react":470,"react-bootstrap":390,"tslib":544}],688:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -89853,7 +90104,7 @@ exports.default = ControlPanel;
 })(ControlPanel || (ControlPanel = {}));
 exports.default = ControlPanel;
 
-},{"../../../service/EmulationServiceInterface":649,"../general/Switch":691,"react":470,"react-bootstrap":390}],687:[function(require,module,exports){
+},{"../../../service/EmulationServiceInterface":651,"../general/Switch":693,"react":470,"react-bootstrap":390}],689:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89863,7 +90114,7 @@ exports.default = BorderBox;
 BorderBox.displayName = 'BorderBox';
 var templateObject_1;
 
-},{"../style":700,"tslib":544}],688:[function(require,module,exports){
+},{"../style":702,"tslib":544}],690:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89899,7 +90150,7 @@ exports.default = FileUploadButton;
 })(FileUploadButton || (FileUploadButton = {}));
 exports.default = FileUploadButton;
 
-},{"react":470,"tslib":544}],689:[function(require,module,exports){
+},{"react":470,"tslib":544}],691:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89947,7 +90198,7 @@ var Markdown = (function (_super) {
 }(React.Component));
 exports.default = Markdown;
 
-},{"commonmark":112,"react":470,"tslib":544}],690:[function(require,module,exports){
+},{"commonmark":112,"react":470,"tslib":544}],692:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -89987,7 +90238,7 @@ exports.default = Slider;
 exports.default = Slider;
 var templateObject_1, templateObject_2;
 
-},{"../style":700,"react":470,"tslib":544}],691:[function(require,module,exports){
+},{"../style":702,"react":470,"tslib":544}],693:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -90008,7 +90259,7 @@ exports.default = Switch;
 })(Switch || (Switch = {}));
 exports.default = Switch;
 
-},{"react":470,"react-bootstrap":390}],692:[function(require,module,exports){
+},{"react":470,"react-bootstrap":390}],694:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90051,7 +90302,7 @@ exports.default = ValidatingInput;
 })(ValidatingInput || (ValidatingInput = {}));
 exports.default = ValidatingInput;
 
-},{"classnames":108,"react":470,"react-bootstrap":390,"tslib":544}],693:[function(require,module,exports){
+},{"classnames":108,"react":470,"react-bootstrap":390,"tslib":544}],695:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90068,7 +90319,7 @@ function Navbar(props) {
 }
 exports.default = Navbar;
 
-},{"./navbar/Header":696,"./navbar/Navigation":697,"./navbar/StatusWidget":698,"react":470,"react-bootstrap":390,"tslib":544}],694:[function(require,module,exports){
+},{"./navbar/Header":698,"./navbar/Navigation":699,"./navbar/StatusWidget":700,"react":470,"react-bootstrap":390,"tslib":544}],696:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90095,7 +90346,7 @@ var EmulationStatusStyled = style_1.styled(EmulationStatusUnstyled)(templateObje
 exports.default = EmulationStatusStyled;
 var templateObject_1;
 
-},{"../../../../service/EmulationServiceInterface":649,"../../style":700,"react":470,"tslib":544}],695:[function(require,module,exports){
+},{"../../../../service/EmulationServiceInterface":651,"../../style":702,"react":470,"tslib":544}],697:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90111,7 +90362,7 @@ var GamepadStatusStyled = style_1.styled(GamepadStatusUnstyled)(templateObject_1
 exports.default = GamepadStatusStyled;
 var templateObject_1;
 
-},{"../../style":700,"react":470,"tslib":544}],696:[function(require,module,exports){
+},{"../../style":702,"react":470,"tslib":544}],698:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -90122,7 +90373,7 @@ function Header(props) {
 }
 exports.default = Header;
 
-},{"react":470,"react-bootstrap":390}],697:[function(require,module,exports){
+},{"react":470,"react-bootstrap":390}],699:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90148,7 +90399,7 @@ function Navigation(props) {
 exports.default = Navigation;
 var templateObject_1;
 
-},{"../../style":700,"react":470,"react-bootstrap":390,"react-router-bootstrap":437,"tslib":544}],698:[function(require,module,exports){
+},{"../../style":702,"react":470,"react-bootstrap":390,"react-router-bootstrap":437,"tslib":544}],700:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90166,7 +90417,7 @@ var StatusWidgetStyled = style_1.styled(StatusWidgetUnstyled)(templateObject_1 |
 exports.default = StatusWidgetStyled;
 var templateObject_1;
 
-},{"../../style":700,"./EmulationStatus":694,"./GamepadStatus":695,"react":470,"tslib":544}],699:[function(require,module,exports){
+},{"../../style":702,"./EmulationStatus":696,"./GamepadStatus":697,"react":470,"tslib":544}],701:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -90184,7 +90435,7 @@ exports.default = AudioDriverSelect;
 })(AudioDriverSelect || (AudioDriverSelect = {}));
 exports.default = AudioDriverSelect;
 
-},{"react":470,"react-bootstrap":390}],700:[function(require,module,exports){
+},{"react":470,"react-bootstrap":390}],702:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var styledComponents = require("styled-components");
@@ -90196,7 +90447,7 @@ exports.injectGlobal = injectGlobal;
 exports.keyframes = keyframes;
 exports.ThemeProvider = ThemeProvider;
 
-},{"styled-components":512}],701:[function(require,module,exports){
+},{"styled-components":512}],703:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -90252,7 +90503,7 @@ function mapDispatchToProps(dispatch) {
 var CartridgeManager = react_redux_1.connect(mapStateToProps, mapDispatchToProps)(CartridgeManager_1.default);
 exports.default = CartridgeManager;
 
-},{"../actions/cartridgeManager":660,"../actions/currentCartridge":661,"../actions/guiState":664,"../actions/root":665,"../actions/zipfile":667,"../components/CartridgeManager":668,"../model/Cartridge":709,"react-redux":429}],702:[function(require,module,exports){
+},{"../actions/cartridgeManager":662,"../actions/currentCartridge":663,"../actions/guiState":666,"../actions/root":667,"../actions/zipfile":669,"../components/CartridgeManager":670,"../model/Cartridge":711,"react-redux":429}],704:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -90289,7 +90540,7 @@ var EmulationContainer = react_redux_1.connect(mapStateToProps, {
 })(Emulation_1.default);
 exports.default = EmulationContainer;
 
-},{"../actions/emulation":662,"../components/Emulation":669,"../model/types":711,"react-redux":429,"react-router-redux":454}],703:[function(require,module,exports){
+},{"../actions/emulation":664,"../components/Emulation":671,"../model/types":713,"react-redux":429,"react-router-redux":454}],705:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -90303,7 +90554,7 @@ function mapStateToProps(state) {
 var HelpContainer = react_redux_1.connect(mapStateToProps)(Help_1.default);
 exports.default = HelpContainer;
 
-},{"../components/Help":670,"react-redux":429}],704:[function(require,module,exports){
+},{"../components/Help":672,"react-redux":429}],706:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -90320,7 +90571,7 @@ function mapStateToProps(state) {
 var Navbar = react_redux_1.connect(mapStateToProps, {}, undefined, { pure: false })(Main_1.default);
 exports.default = Navbar;
 
-},{"../components/Main":671,"../model/types":711,"react-redux":429}],705:[function(require,module,exports){
+},{"../components/Main":673,"../model/types":713,"react-redux":429}],707:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -90352,7 +90603,7 @@ var SettingsContainer = react_redux_1.connect(mapStateToProps, {
 })(Settings_1.default);
 exports.default = SettingsContainer;
 
-},{"../actions/settings":666,"../components/Settings":672,"react-redux":429}],706:[function(require,module,exports){
+},{"../actions/settings":668,"../components/Settings":674,"react-redux":429}],708:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90379,7 +90630,7 @@ var Provider = (function (_super) {
 }(React.Component));
 exports.Provider = Provider;
 
-},{"prop-types":299,"react":470,"tslib":544}],707:[function(require,module,exports){
+},{"prop-types":299,"react":470,"tslib":544}],709:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90409,7 +90660,7 @@ function main() {
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
                         helppageUrl: "doc/stellerator.md",
-                        buildId: "3e3ab9"
+                        buildId: "565952"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:
@@ -90432,7 +90683,7 @@ function main() {
 }
 main();
 
-},{"./Routing":659,"./actions/environment":663,"./containers/Main":704,"./context/Emulation":706,"./middleware":708,"./reducers/root":716,"./service/implementation/Container":720,"./state/State":730,"history":206,"react":470,"react-dom":403,"react-redux":429,"react-router-redux":454,"redux":490,"styled-components":512,"tslib":544}],708:[function(require,module,exports){
+},{"./Routing":661,"./actions/environment":665,"./containers/Main":706,"./context/Emulation":708,"./middleware":710,"./reducers/root":718,"./service/implementation/Container":722,"./state/State":732,"history":206,"react":470,"react-dom":403,"react-redux":429,"react-router-redux":454,"redux":490,"styled-components":512,"tslib":544}],710:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var root_1 = require("./actions/root");
@@ -90450,7 +90701,7 @@ function dispatchBatchedActions(action, dispatch) {
     return dispatcher(undefined);
 }
 
-},{"./actions/root":665}],709:[function(require,module,exports){
+},{"./actions/root":667}],711:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var deepEqual = require("deep-equal");
@@ -90480,7 +90731,7 @@ var Cartridge;
 })(Cartridge || (Cartridge = {}));
 exports.default = Cartridge;
 
-},{"../../../../machine/stella/cartridge/CartridgeInfo":586,"deep-equal":142}],710:[function(require,module,exports){
+},{"../../../../machine/stella/cartridge/CartridgeInfo":586,"deep-equal":142}],712:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Settings;
@@ -90514,7 +90765,7 @@ var Settings;
 })(Settings || (Settings = {}));
 exports.default = Settings;
 
-},{}],711:[function(require,module,exports){
+},{}],713:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var GuiMode;
@@ -90523,7 +90774,7 @@ var GuiMode;
     GuiMode[GuiMode["run"] = 1] = "run";
 })(GuiMode = exports.GuiMode || (exports.GuiMode = {}));
 
-},{}],712:[function(require,module,exports){
+},{}],714:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90598,7 +90849,7 @@ function changeAudioDriver(cartridge, action) {
     return tslib_1.__assign({}, cartridge, { audioDriver: action.driver });
 }
 
-},{"../actions/currentCartridge":661,"../model/Cartridge":709,"tslib":544}],713:[function(require,module,exports){
+},{"../actions/currentCartridge":663,"../model/Cartridge":711,"tslib":544}],715:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Emulation_1 = require("../state/Emulation");
@@ -90669,7 +90920,7 @@ function userPause(state) {
     return new Emulation_1.default({ pausedByUser: true }, state);
 }
 
-},{"../../service/EmulationServiceInterface":649,"../actions/emulation":662,"../state/Emulation":727}],714:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":651,"../actions/emulation":664,"../state/Emulation":729}],716:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Environment_1 = require("../state/Environment");
@@ -90691,7 +90942,7 @@ function initialize(state, action) {
     }, state);
 }
 
-},{"../actions/environment":663,"../state/Environment":728}],715:[function(require,module,exports){
+},{"../actions/environment":665,"../state/Environment":730}],717:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var guiState_1 = require("../actions/guiState");
@@ -90744,7 +90995,7 @@ function loadClosePendingChangesModal(state) {
     }, state);
 }
 
-},{"../actions/guiState":664,"../state/GuiState":729}],716:[function(require,module,exports){
+},{"../actions/guiState":666,"../state/GuiState":731}],718:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90837,7 +91088,7 @@ function saveCurrentCartride(state) {
     return new State_1.default({ cartridges: cartridges }, state);
 }
 
-},{"../../../../machine/stella/cartridge/CartridgeDetector":574,"../../../../tools/hash/md5":613,"../actions/root":665,"../model/Cartridge":709,"../state/State":730,"./currentCartridge":712,"./emulation":713,"./environment":714,"./guiState":715,"./settings":717,"./zipfile":718,"react-router-redux":454,"tslib":544}],717:[function(require,module,exports){
+},{"../../../../machine/stella/cartridge/CartridgeDetector":574,"../../../../tools/hash/md5":613,"../actions/root":667,"../model/Cartridge":711,"../state/State":732,"./currentCartridge":714,"./emulation":715,"./environment":716,"./guiState":717,"./settings":719,"./zipfile":720,"react-router-redux":454,"tslib":544}],719:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -90902,7 +91153,7 @@ function changeAudioDriver(settings, action) {
     return tslib_1.__assign({}, settings, { audioDriver: action.driver });
 }
 
-},{"../actions/settings":666,"../model/Settings":710,"tslib":544}],718:[function(require,module,exports){
+},{"../actions/settings":668,"../model/Settings":712,"tslib":544}],720:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Zipfile_1 = require("../state/Zipfile");
@@ -90942,7 +91193,7 @@ function clearError(state) {
     return new Zipfile_1.default({ error: '' }, state);
 }
 
-},{"../actions/zipfile":667,"../state/Zipfile":731}],719:[function(require,module,exports){
+},{"../actions/zipfile":669,"../state/Zipfile":733}],721:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -91247,7 +91498,7 @@ var CartridgeManager = (function () {
 }());
 exports.default = CartridgeManager;
 
-},{"../../../../../tools/hash/md5":613,"../../actions/cartridgeManager":660,"../../actions/emulation":662,"../../actions/guiState":664,"../../actions/root":665,"../../actions/zipfile":667,"../../model/Cartridge":709,"../../model/types":711,"jszip":225,"react-router-redux":454,"tslib":544}],720:[function(require,module,exports){
+},{"../../../../../tools/hash/md5":613,"../../actions/cartridgeManager":662,"../../actions/emulation":664,"../../actions/guiState":666,"../../actions/root":667,"../../actions/zipfile":669,"../../model/Cartridge":711,"../../model/types":713,"jszip":225,"react-router-redux":454,"tslib":544}],722:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -91303,7 +91554,7 @@ var Container = (function () {
 }());
 exports.default = Container;
 
-},{"./CartridgManager":719,"./EmulationProvider":721,"./PersistenceProvider":722,"./StorageManager":723,"microevent.ts":267}],721:[function(require,module,exports){
+},{"./CartridgManager":721,"./EmulationProvider":723,"./PersistenceProvider":724,"./StorageManager":725,"microevent.ts":267}],723:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -91514,7 +91765,7 @@ var EmulationProvider = (function () {
 }());
 exports.default = EmulationProvider;
 
-},{"../../../../../machine/stella/Config":562,"../../../../driver/Gamepad":635,"../../../driver/WebAudio":647,"../../../service/DriverManager":648,"../../../service/vanilla/EmulationService":651,"../../../service/worker/EmulationService":654,"../../actions/emulation":662,"../../actions/settings":666,"bowser":103,"tslib":544}],722:[function(require,module,exports){
+},{"../../../../../machine/stella/Config":562,"../../../../driver/Gamepad":635,"../../../driver/WebAudio":648,"../../../service/DriverManager":650,"../../../service/vanilla/EmulationService":653,"../../../service/worker/EmulationService":656,"../../actions/emulation":664,"../../actions/settings":668,"bowser":103,"tslib":544}],724:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -91591,7 +91842,7 @@ var PersistenceProvider = (function () {
 }());
 exports.default = PersistenceProvider;
 
-},{"../../actions/root":665,"../../actions/settings":666,"tslib":544}],723:[function(require,module,exports){
+},{"../../actions/root":667,"../../actions/settings":668,"tslib":544}],725:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Database_1 = require("./storage/Database");
@@ -91644,7 +91895,7 @@ var StorageManager = (function () {
 }());
 exports.default = StorageManager;
 
-},{"./storage/Cartridge":724,"./storage/Database":725,"./storage/Settings":726}],724:[function(require,module,exports){
+},{"./storage/Cartridge":726,"./storage/Database":727,"./storage/Settings":728}],726:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -91712,7 +91963,7 @@ function toState(cartridge) {
 }
 exports.toState = toState;
 
-},{"../../../../../../machine/stella/cartridge/CartridgeInfo":586,"tslib":544}],725:[function(require,module,exports){
+},{"../../../../../../machine/stella/cartridge/CartridgeInfo":586,"tslib":544}],727:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -91871,7 +92122,7 @@ var Database = (function (_super) {
 }(dexie_1.default));
 exports.default = Database;
 
-},{"dexie":145,"tslib":544}],726:[function(require,module,exports){
+},{"dexie":145,"tslib":544}],728:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -91911,7 +92162,7 @@ function toModel(record) {
 }
 exports.toModel = toModel;
 
-},{"../../../model/Settings":710,"tslib":544}],727:[function(require,module,exports){
+},{"../../../model/Settings":712,"tslib":544}],729:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("../../service/EmulationServiceInterface");
@@ -91932,7 +92183,7 @@ var EmulationState = (function () {
 }());
 exports.default = EmulationState;
 
-},{"../../service/EmulationServiceInterface":649}],728:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":651}],730:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Environment = (function () {
@@ -91945,7 +92196,7 @@ var Environment = (function () {
 }());
 exports.default = Environment;
 
-},{}],729:[function(require,module,exports){
+},{}],731:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var types_1 = require("../model/types");
@@ -91961,7 +92212,7 @@ var GuiState = (function () {
 }());
 exports.default = GuiState;
 
-},{"../model/types":711}],730:[function(require,module,exports){
+},{"../model/types":713}],732:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var State = (function () {
@@ -91974,7 +92225,7 @@ var State = (function () {
 }());
 exports.default = State;
 
-},{}],731:[function(require,module,exports){
+},{}],733:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Zipfile = (function () {
@@ -91988,5 +92239,5 @@ var Zipfile = (function () {
 }());
 exports.default = Zipfile;
 
-},{}]},{},[707])
+},{}]},{},[709])
 //# sourceMappingURL=stellerator.js.map
