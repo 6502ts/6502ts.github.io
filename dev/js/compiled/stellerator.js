@@ -87465,16 +87465,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var DoubleTapDetector_1 = require("./touch/DoubleTapDetector");
 var TouchIO = (function () {
-    function TouchIO(_canvas, _joystickSensitivity) {
+    function TouchIO(_canvas, _joystickSensitivity, _leftHanded) {
         if (_joystickSensitivity === void 0) { _joystickSensitivity = 15; }
+        if (_leftHanded === void 0) { _leftHanded = false; }
         var _this = this;
         this._canvas = _canvas;
         this._joystickSensitivity = _joystickSensitivity;
+        this._leftHanded = _leftHanded;
         this._onTouchStart = function (e) {
             var cancel = false;
             for (var i = 0; i < e.changedTouches.length; i++) {
                 var normalizedTouch = new NormalizedTouch(e.changedTouches.item(i), _this._canvas), id = normalizedTouch.touch.identifier;
-                if (normalizedTouch.x <= 0.5) {
+                if (_this._leftHanded ? normalizedTouch.x > 0.5 : normalizedTouch.x <= 0.5) {
                     if (normalizedTouch.y <= 0.5) {
                         normalizedTouch.type = "alt";
                     }
@@ -87520,7 +87522,7 @@ var TouchIO = (function () {
                     default:
                         throw new Error('invalid touch type');
                 }
-                if (_this._cancelEvent(normalizedTouch)) {
+                if (_this._cancelEvent(normalizedTouch) && !_this._fullscreenDoubleTapDetector.isDispatching()) {
                     cancel = true;
                 }
             }
@@ -87534,6 +87536,9 @@ var TouchIO = (function () {
                 var normalizedTouch = _this._pendingTouches.get(e.changedTouches.item(i).identifier);
                 if (!normalizedTouch) {
                     continue;
+                }
+                if (_this._cancelEvent(normalizedTouch) && !_this._fullscreenDoubleTapDetector.isDispatching()) {
+                    cancel = true;
                 }
                 switch (normalizedTouch.type) {
                     case "alt":
@@ -87562,9 +87567,6 @@ var TouchIO = (function () {
                 }
                 _this._pendingTouches.delete(normalizedTouch.type);
                 _this._pendingTouches.delete(normalizedTouch.touch.identifier);
-                if (_this._cancelEvent(normalizedTouch)) {
-                    cancel = true;
-                }
             }
             if (cancel) {
                 e.preventDefault();
@@ -87776,6 +87778,9 @@ var DoubleTapDetector = (function () {
     DoubleTapDetector.prototype.cancelTouch = function () {
         this.endTouch();
         this._lastTouchEligible = false;
+    };
+    DoubleTapDetector.prototype.isDispatching = function () {
+        return this._dispatch;
     };
     return DoubleTapDetector;
 }());
@@ -89228,6 +89233,9 @@ exports.types = {
     setVolume: 'settings/setVolume',
     setSyncRendering: 'settings/setSyncRendering',
     changeAudioDriver: 'settings/changeAudioDriver',
+    setEnableTouchControls: 'settings/setEnableTouchControls',
+    setTouchJoystickSensitivity: 'settings/setTouchJoystickSensitivity',
+    setTouchLeftHandedMode: 'settings/setTouchLeftHandedMode',
     init: 'settings/init'
 };
 function isSettingsChange(a) {
@@ -89304,6 +89312,27 @@ function changeAudioDriver(driver) {
     };
 }
 exports.changeAudioDriver = changeAudioDriver;
+function setEnableTouchControls(enableTouchControls) {
+    return {
+        type: exports.types.setEnableTouchControls,
+        enableTouchControls: enableTouchControls
+    };
+}
+exports.setEnableTouchControls = setEnableTouchControls;
+function setTouchJoystickSensitivity(sensitivity) {
+    return {
+        type: exports.types.setTouchJoystickSensitivity,
+        sensitivity: sensitivity
+    };
+}
+exports.setTouchJoystickSensitivity = setTouchJoystickSensitivity;
+function setTouchLeftHandedMode(leftHandedMode) {
+    return {
+        type: exports.types.setTouchLeftHandedMode,
+        leftHandedMode: leftHandedMode
+    };
+}
+exports.setTouchLeftHandedMode = setTouchLeftHandedMode;
 
 },{}],669:[function(require,module,exports){
 "use strict";
@@ -89458,7 +89487,9 @@ var Emulation = (function (_super) {
             console.log(e);
         }
         var keyboardDriver = new KeyboardIO_1.default(document);
-        var touchDriver = new TouchIO_1.default(this._canvasElt);
+        var touchDriver = this.props.enableTouchControls ?
+            new TouchIO_1.default(this._canvasElt, this.props.touchJoystickSensitivity, this.props.touchLeftHandedMode) :
+            null;
         this._fullscreenDriver = new FullscreenVideo_1.default(videoDriver);
         this._driverManager
             .addDriver(new MouseAsPaddle_1.default(), function (context, driver) {
@@ -89466,12 +89497,14 @@ var Emulation = (function (_super) {
         })
             .addDriver(keyboardDriver, function (context, driver) {
             return driver.bind(context.getJoystick(0), context.getJoystick(1), context.getControlPanel());
-        })
-            .addDriver(touchDriver, function (context, driver) {
-            return driver.bind(context.getJoystick(0), context.getControlPanel());
         });
+        if (this.props.enableTouchControls) {
+            this._driverManager.addDriver(touchDriver, function (context, driver) {
+                return driver.bind(context.getJoystick(0), context.getControlPanel());
+            });
+        }
         try {
-            for (var _a = tslib_1.__values([keyboardDriver, touchDriver]), _b = _a.next(); !_b.done; _b = _a.next()) {
+            for (var _a = tslib_1.__values(tslib_1.__spread([keyboardDriver], (this.props.enableTouchControls ? [touchDriver] : []))), _b = _a.next(); !_b.done; _b = _a.next()) {
                 var driver = _b.value;
                 driver.toggleFullscreen.addHandler(function () { return _this._fullscreenDriver.toggle(); });
                 driver.togglePause.addHandler(function () {
@@ -89540,7 +89573,7 @@ var Emulation = (function (_super) {
 }(React.Component));
 exports.default = Emulation;
 (function (Emulation) {
-    Emulation.defaultProps = tslib_1.__assign({ enabled: false, initialViewportWidth: 160, initialViewportHeight: 192, smoothScaling: true, webGlRendering: true, povEmulation: true, gamma: 1, emulationState: EmulationServiceInterface_1.default.State.stopped, pausedByUser: false, syncRendering: true, navigateAway: function () { return undefined; }, pauseEmulation: function () { return undefined; }, userPauseEmulation: function () { return undefined; }, resumeEmulation: function () { return undefined; }, resetEmulation: function () { return undefined; } }, ControlPanel_1.default.defaultProps);
+    Emulation.defaultProps = tslib_1.__assign({ enabled: false, initialViewportWidth: 160, initialViewportHeight: 192, smoothScaling: true, webGlRendering: true, povEmulation: true, gamma: 1, emulationState: EmulationServiceInterface_1.default.State.stopped, pausedByUser: false, syncRendering: true, enableTouchControls: true, touchJoystickSensitivity: 15, touchLeftHandedMode: false, navigateAway: function () { return undefined; }, pauseEmulation: function () { return undefined; }, userPauseEmulation: function () { return undefined; }, resumeEmulation: function () { return undefined; }, resetEmulation: function () { return undefined; } }, ControlPanel_1.default.defaultProps);
 })(Emulation || (Emulation = {}));
 exports.default = Emulation;
 
@@ -89598,7 +89631,7 @@ var Switch_1 = require("./general/Switch");
 var AudioDriverSelect_1 = require("./settings/AudioDriverSelect");
 var isSafari = bowser.safari || bowser.ios;
 function Settings(props) {
-    return (React.createElement(react_bootstrap_1.Grid, { fluid: true, className: "settings-grid" },
+    return React.createElement(react_bootstrap_1.Grid, { fluid: true, className: "settings-grid" },
         React.createElement(react_bootstrap_1.Row, null,
             React.createElement(react_bootstrap_1.Col, { md: 12 },
                 React.createElement("h1", null, "General Settings"))),
@@ -89643,17 +89676,34 @@ function Settings(props) {
                 React.createElement(react_bootstrap_1.ControlLabel, null, "Gamma correction (WebGL only):")),
             React.createElement(react_bootstrap_1.Col, { sm: 4 },
                 React.createElement(Slider_1.default, { value: props.gamma, min: 0.1, max: 5, step: 0.1, onChange: props.onChangeGamma }))),
-        isSafari ? null :
-            React.createElement(react_bootstrap_1.Row, null,
-                React.createElement(react_bootstrap_1.Col, { sm: 4 },
-                    React.createElement(react_bootstrap_1.ControlLabel, null, "Reduce framerate (requires cartridge restart):")),
-                React.createElement(react_bootstrap_1.Col, { sm: 8 },
-                    React.createElement(Switch_1.default, { labelTrue: "On", labelFalse: "Off", state: props.mergeFrames, onSwitch: props.onToggleMergeFrames }))),
+        isSafari ? null : React.createElement(react_bootstrap_1.Row, null,
+            React.createElement(react_bootstrap_1.Col, { sm: 4 },
+                React.createElement(react_bootstrap_1.ControlLabel, null, "Reduce framerate (requires cartridge restart):")),
+            React.createElement(react_bootstrap_1.Col, { sm: 8 },
+                React.createElement(Switch_1.default, { labelTrue: "On", labelFalse: "Off", state: props.mergeFrames, onSwitch: props.onToggleMergeFrames }))),
         React.createElement(react_bootstrap_1.Row, null,
             React.createElement(react_bootstrap_1.Col, { sm: 4 },
                 React.createElement(react_bootstrap_1.ControlLabel, null, "Sync rendering to browser redraw:")),
             React.createElement(react_bootstrap_1.Col, { sm: 8 },
-                React.createElement(Switch_1.default, { labelTrue: "On", labelFalse: "Off", state: props.syncRendering, onSwitch: props.onChangeSyncRendering })))));
+                React.createElement(Switch_1.default, { labelTrue: "On", labelFalse: "Off", state: props.syncRendering, onSwitch: props.onChangeSyncRendering }))),
+        React.createElement(react_bootstrap_1.Row, { style: { marginTop: '1rem' } },
+            React.createElement(react_bootstrap_1.Col, { md: 12 },
+                React.createElement("h1", null, "Touch controls"))),
+        React.createElement(react_bootstrap_1.Row, null,
+            React.createElement(react_bootstrap_1.Col, { sm: 4 },
+                React.createElement(react_bootstrap_1.ControlLabel, null, "Enable touch controls:")),
+            React.createElement(react_bootstrap_1.Col, { sm: 8 },
+                React.createElement(Switch_1.default, { labelTrue: "On", labelFalse: "Off", state: props.enableTouchControls, onSwitch: props.onChangeEnableTouch }))),
+        React.createElement(react_bootstrap_1.Row, null,
+            React.createElement(react_bootstrap_1.Col, { sm: 4 },
+                React.createElement(react_bootstrap_1.ControlLabel, null, "Left handed mode:")),
+            React.createElement(react_bootstrap_1.Col, { sm: 8 },
+                React.createElement(Switch_1.default, { labelTrue: "On", labelFalse: "Off", state: props.touchLeftHandedMode, onSwitch: props.onChangeTouchLeftHandedMode }))),
+        React.createElement(react_bootstrap_1.Row, null,
+            React.createElement(react_bootstrap_1.Col, { sm: 4 },
+                React.createElement(react_bootstrap_1.ControlLabel, null, "Virtual joystick sensitivity:")),
+            React.createElement(react_bootstrap_1.Col, { sm: 4 },
+                React.createElement(Slider_1.default, { value: props.touchJoystickSensitivity, min: 0, max: 100, step: 1, onChange: props.onChangeTouchJoystickSensitivity, format: function (x) { return x; } }))));
 }
 exports.default = Settings;
 (function (Settings) {
@@ -89667,6 +89717,9 @@ exports.default = Settings;
         volume: 1,
         syncRendering: true,
         audioDriver: 1,
+        enableTouchControls: true,
+        touchJoystickSensitivity: 15,
+        touchLeftHandedMode: false,
         onToggleSmoothScaling: function () { return undefined; },
         onToggleWebGlRendering: function () { return undefined; },
         onChangeGamma: function () { return undefined; },
@@ -89674,7 +89727,10 @@ exports.default = Settings;
         onToggleMergeFrames: function () { return undefined; },
         onChangeVolume: function () { return undefined; },
         onChangeSyncRendering: function () { return undefined; },
-        onChangeAudioDriver: function () { return undefined; }
+        onChangeAudioDriver: function () { return undefined; },
+        onChangeEnableTouch: function () { return undefined; },
+        onChangeTouchJoystickSensitivity: function () { return undefined; },
+        onChangeTouchLeftHandedMode: function () { return undefined; }
     };
 })(Settings || (Settings = {}));
 exports.default = Settings;
@@ -90222,7 +90278,7 @@ function Slider(props) {
             }
         } },
         React.createElement("input", { type: "range", value: props.value.toString(), min: props.min.toString(), max: props.max.toString(), step: props.step.toString(), onChange: function (e) { return props.onChange(parseFloat(e.target.value)); } }),
-        React.createElement(Label, null, props.value.toFixed(2))));
+        React.createElement(Label, null, props.format(props.value))));
 }
 exports.default = Slider;
 (function (Slider) {
@@ -90232,7 +90288,8 @@ exports.default = Slider;
         min: 1,
         step: 0.01,
         wheelWeight: 0.1,
-        onChange: function () { return undefined; }
+        onChange: function () { return undefined; },
+        format: function (x) { return x.toFixed(2); }
     };
 })(Slider || (Slider = {}));
 exports.default = Slider;
@@ -90524,7 +90581,10 @@ function mapStateToProps(state) {
         povEmulation: state.settings.povEmulation,
         gamma: state.settings.gamma,
         pausedByUser: state.emulationState.pausedByUser,
-        syncRendering: state.settings.syncRendering
+        syncRendering: state.settings.syncRendering,
+        enableTouchControls: state.settings.enableTouchControls,
+        touchJoystickSensitivity: state.settings.touchJoystickSensitivity,
+        touchLeftHandedMode: state.settings.touchLeftHandedMode
     };
 }
 var EmulationContainer = react_redux_1.connect(mapStateToProps, {
@@ -90587,7 +90647,10 @@ function mapStateToProps(state) {
         mergeFrames: state.settings.mergeFrames,
         volume: state.settings.volume,
         syncRendering: state.settings.syncRendering,
-        audioDriver: state.settings.audioDriver
+        audioDriver: state.settings.audioDriver,
+        enableTouchControls: state.settings.enableTouchControls,
+        touchJoystickSensitivity: state.settings.touchJoystickSensitivity,
+        touchLeftHandedMode: state.settings.touchLeftHandedMode
     };
 }
 var SettingsContainer = react_redux_1.connect(mapStateToProps, {
@@ -90599,7 +90662,10 @@ var SettingsContainer = react_redux_1.connect(mapStateToProps, {
     onChangeVolume: settings_1.setVolume,
     onChangeSyncRendering: settings_1.setSyncRendering,
     onTogglePovEmulation: settings_1.setPovEmulation,
-    onChangeAudioDriver: settings_1.changeAudioDriver
+    onChangeAudioDriver: settings_1.changeAudioDriver,
+    onChangeEnableTouch: settings_1.setEnableTouchControls,
+    onChangeTouchJoystickSensitivity: settings_1.setTouchJoystickSensitivity,
+    onChangeTouchLeftHandedMode: settings_1.setTouchLeftHandedMode
 })(Settings_1.default);
 exports.default = SettingsContainer;
 
@@ -90660,7 +90726,7 @@ function main() {
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
                         helppageUrl: "doc/stellerator.md",
-                        buildId: "565952"
+                        buildId: "722d89"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:
@@ -90748,7 +90814,10 @@ var Settings;
             mergeFrames: false,
             volume: 1,
             syncRendering: true,
-            audioDriver: 1
+            audioDriver: 1,
+            enableTouchControls: true,
+            touchJoystickSensitivity: 15,
+            touchLeftHandedMode: false
         };
     }
     Settings.create = create;
@@ -91117,6 +91186,12 @@ function reducer(settings, action) {
             return setSyncRendering(settings, action);
         case settings_1.types.changeAudioDriver:
             return changeAudioDriver(settings, action);
+        case settings_1.types.setEnableTouchControls:
+            return setEnableTouchControls(settings, action);
+        case settings_1.types.setTouchJoystickSensitivity:
+            return setTouchJoystickSensitivity(settings, action);
+        case settings_1.types.setTouchLeftHandedMode:
+            return setTouchLeftHandedMode(settings, action);
     }
     return settings;
 }
@@ -91151,6 +91226,15 @@ function setSyncRendering(settings, action) {
 }
 function changeAudioDriver(settings, action) {
     return tslib_1.__assign({}, settings, { audioDriver: action.driver });
+}
+function setEnableTouchControls(settings, action) {
+    return tslib_1.__assign({}, settings, { enableTouchControls: action.enableTouchControls });
+}
+function setTouchJoystickSensitivity(settings, action) {
+    return tslib_1.__assign({}, settings, { touchJoystickSensitivity: action.sensitivity });
+}
+function setTouchLeftHandedMode(settings, action) {
+    return tslib_1.__assign({}, settings, { touchLeftHandedMode: action.leftHandedMode });
 }
 
 },{"../actions/settings":668,"../model/Settings":712,"tslib":544}],720:[function(require,module,exports){
@@ -92113,6 +92197,21 @@ var Database = (function (_super) {
             transaction.table('settings').each(function (settings, c) {
                 var cursor = c;
                 settings.audioDriver = 'pcm';
+                cursor.update(settings);
+            });
+        });
+        _this.version(12)
+            .stores({
+            cartridge: '++id, &hash',
+            settings: 'id',
+            image: '&hash'
+        })
+            .upgrade(function (transaction) {
+            transaction.table('settings').each(function (settings, c) {
+                var cursor = c;
+                settings.enableTouchControls = true;
+                settings.touchJoystickSensitivity = 15;
+                settings.touchLeftHandedMode = false;
                 cursor.update(settings);
             });
         });
