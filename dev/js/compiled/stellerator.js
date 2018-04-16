@@ -87522,7 +87522,7 @@ var TouchIO = (function () {
                     default:
                         throw new Error('invalid touch type');
                 }
-                if (_this._cancelEvent(normalizedTouch) && !_this._fullscreenDoubleTapDetector.isDispatching()) {
+                if (_this._cancelEvent(normalizedTouch) || _this._fullscreenDoubleTapDetector.isDispatching()) {
                     cancel = true;
                 }
             }
@@ -87537,7 +87537,7 @@ var TouchIO = (function () {
                 if (!normalizedTouch) {
                     continue;
                 }
-                if (_this._cancelEvent(normalizedTouch) && !_this._fullscreenDoubleTapDetector.isDispatching()) {
+                if (_this._cancelEvent(normalizedTouch) || _this._fullscreenDoubleTapDetector.isDispatching()) {
                     cancel = true;
                 }
                 switch (normalizedTouch.type) {
@@ -90726,7 +90726,7 @@ function main() {
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
                         helppageUrl: "doc/stellerator.md",
-                        buildId: "722d89"
+                        buildId: "fae39e"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:
