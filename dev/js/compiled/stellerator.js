@@ -87585,11 +87585,11 @@ var TouchIO = (function () {
                 if (normalizedTouch.type !== "joystick") {
                     continue;
                 }
-                var deltaX = touch.clientX - normalizedTouch.touch.clientX, deltaY = touch.clientY - normalizedTouch.touch.clientY;
-                _this._joystick.getLeft().toggle(deltaX < -_this._joystickSensitivity);
-                _this._joystick.getRight().toggle(deltaX > _this._joystickSensitivity);
-                _this._joystick.getUp().toggle(deltaY < -_this._joystickSensitivity);
-                _this._joystick.getDown().toggle(deltaY > _this._joystickSensitivity);
+                var deltaX = touch.clientX - normalizedTouch.touch.clientX, deltaY = touch.clientY - normalizedTouch.touch.clientY, abs = Math.sqrt(deltaX * deltaX + deltaY * deltaY), sin = Math.abs(deltaY / abs), cos = Math.abs(deltaX / abs), trigger = abs > _this._joystickSensitivity;
+                _this._joystick.getLeft().toggle(trigger && deltaX < 0 && cos > 0.5);
+                _this._joystick.getRight().toggle(trigger && deltaX > 0 && cos > 0.5);
+                _this._joystick.getUp().toggle(trigger && deltaY < 0 && sin > 0.5);
+                _this._joystick.getDown().toggle(trigger && deltaY > 0 && sin > 0.5);
             }
             if (cancel) {
                 e.preventDefault();
@@ -90726,7 +90726,7 @@ function main() {
                     serviceContainer.setStore(store);
                     store.dispatch(environment_1.initialize({
                         helppageUrl: "doc/stellerator.md",
-                        buildId: "fae39e"
+                        buildId: "e270d9"
                     }));
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:
@@ -92212,6 +92212,21 @@ var Database = (function (_super) {
                 settings.enableTouchControls = true;
                 settings.touchJoystickSensitivity = 15;
                 settings.touchLeftHandedMode = false;
+                cursor.update(settings);
+            });
+        });
+        _this.version(13)
+            .stores({
+            cartridge: '++id, &hash',
+            settings: 'id',
+            image: '&hash'
+        })
+            .upgrade(function (transaction) {
+            transaction.table('settings').each(function (settings, c) {
+                var cursor = c;
+                if (settings.touchJoystickSensitivity >= 10) {
+                    settings.touchJoystickSensitivity -= 5;
+                }
                 cursor.update(settings);
             });
         });
