@@ -1282,10 +1282,20 @@ var FullscreenVideoDriver = (function () {
     function FullscreenVideoDriver(_videoDriver, _zIndex, _fullscreenClass) {
         if (_zIndex === void 0) { _zIndex = 100000; }
         if (_fullscreenClass === void 0) { _fullscreenClass = 'stellerator-fullscreen'; }
+        var _this = this;
         this._videoDriver = _videoDriver;
         this._zIndex = _zIndex;
         this._fullscreenClass = _fullscreenClass;
-        this._resizeListener = this._adjustSizeForFullscreen.bind(this);
+        this._resizeListener = function () {
+            if (_this._resizeHandle) {
+                return;
+            }
+            _this._resizeHandle = setTimeout(function () {
+                _this._resizeHandle = null;
+                _this._adjustSizeForFullscreen();
+            }, 100);
+        };
+        this._resizeHandle = null;
         this._changeListener = this._onChange.bind(this);
         this._engaged = false;
     }
@@ -1343,6 +1353,10 @@ var FullscreenVideoDriver = (function () {
     FullscreenVideoDriver.prototype._resetSize = function () {
         var _this = this;
         var element = this._videoDriver.getCanvas();
+        if (this._resizeHandle) {
+            clearTimeout(this._resizeHandle);
+            this._resizeHandle = null;
+        }
         element.style.width = '';
         element.style.height = '';
         element.style.maxWidth = '';

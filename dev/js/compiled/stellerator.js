@@ -87497,10 +87497,20 @@ var FullscreenVideoDriver = (function () {
     function FullscreenVideoDriver(_videoDriver, _zIndex, _fullscreenClass) {
         if (_zIndex === void 0) { _zIndex = 100000; }
         if (_fullscreenClass === void 0) { _fullscreenClass = 'stellerator-fullscreen'; }
+        var _this = this;
         this._videoDriver = _videoDriver;
         this._zIndex = _zIndex;
         this._fullscreenClass = _fullscreenClass;
-        this._resizeListener = this._adjustSizeForFullscreen.bind(this);
+        this._resizeListener = function () {
+            if (_this._resizeHandle) {
+                return;
+            }
+            _this._resizeHandle = setTimeout(function () {
+                _this._resizeHandle = null;
+                _this._adjustSizeForFullscreen();
+            }, 100);
+        };
+        this._resizeHandle = null;
         this._changeListener = this._onChange.bind(this);
         this._engaged = false;
     }
@@ -87558,6 +87568,10 @@ var FullscreenVideoDriver = (function () {
     FullscreenVideoDriver.prototype._resetSize = function () {
         var _this = this;
         var element = this._videoDriver.getCanvas();
+        if (this._resizeHandle) {
+            clearTimeout(this._resizeHandle);
+            this._resizeHandle = null;
+        }
         element.style.width = '';
         element.style.height = '';
         element.style.maxWidth = '';
@@ -90546,7 +90560,7 @@ function Routing(props) {
 exports.Routing = Routing;
 exports.default = Routing;
 
-},{"./containers/CartridgeManager":715,"./containers/Emulation":716,"./containers/Help":717,"./containers/Settings":719,"react":479,"react-router":474}],673:[function(require,module,exports){
+},{"./containers/CartridgeManager":716,"./containers/Emulation":717,"./containers/Help":718,"./containers/Settings":720,"react":479,"react-router":474}],673:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.actions = {
@@ -90786,18 +90800,26 @@ exports.enforceRateLimit = enforceRateLimit;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.types = {
-    initialize: 'environment/initialize'
+    initialize: 'environment/initialize',
+    clearWasUpdatedFlag: 'environment/clear-was-updated-flag'
 };
 Object.freeze(exports.types);
 function initialize(_a) {
-    var helppageUrl = _a.helppageUrl, buildId = _a.buildId;
+    var helppageUrl = _a.helppageUrl, buildId = _a.buildId, wasUpdated = _a.wasUpdated;
     return {
         type: exports.types.initialize,
         helppageUrl: helppageUrl,
-        buildId: buildId
+        buildId: buildId,
+        wasUpdated: wasUpdated
     };
 }
 exports.initialize = initialize;
+function clearWasUpdatedFlag() {
+    return {
+        type: exports.types.clearWasUpdatedFlag
+    };
+}
+exports.clearWasUpdatedFlag = clearWasUpdatedFlag;
 
 },{}],677:[function(require,module,exports){
 "use strict";
@@ -91096,6 +91118,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var React = require("react");
 var react_bootstrap_1 = require("react-bootstrap");
+var detect_it_1 = require("detect-it");
 var ControlPanel_1 = require("./emulation/ControlPanel");
 var Emulation_1 = require("../context/Emulation");
 var EmulationServiceInterface_1 = require("../../service/EmulationServiceInterface");
@@ -91236,7 +91259,11 @@ var Emulation = (function (_super) {
             React.createElement(react_bootstrap_1.Row, { style: { marginTop: '1rem' } },
                 React.createElement(react_bootstrap_1.Col, { md: 6 },
                     React.createElement("div", { className: "emulation-viewport error-display " + (this._showErrorMessage() ? '' : 'hidden') }, this._errorMessage()),
-                    React.createElement("div", { className: "emulation-viewport placeholder " + (this._showPlaceholder() ? '' : 'hidden') }, "paused"),
+                    React.createElement("div", { className: "emulation-viewport placeholder " + (this._showPlaceholder() ? '' : 'hidden'), onClick: detect_it_1.default.hasTouch ? this.props.resumeEmulation : function () { return undefined; } },
+                        React.createElement("p", null, "paused"),
+                        detect_it_1.default.hasTouch ?
+                            React.createElement("p", null, "(tap to resume)") :
+                            null),
                     React.createElement("canvas", { className: "emulation-viewport " + (this._showCanvas() ? '' : 'hidden'), width: this.props.initialViewportWidth, height: this.props.initialViewportHeight, ref: function (elt) { return (_this._canvasElt = elt); } })),
                 React.createElement(react_bootstrap_1.Col, { md: 5 },
                     React.createElement(ControlPanel_1.default, tslib_1.__assign({}, this.props, { onReset: this.props.resetEmulation, onPause: this.props.userPauseEmulation, onResume: this.props.resumeEmulation }))))));
@@ -91263,7 +91290,7 @@ exports.default = Emulation;
 })(Emulation || (Emulation = {}));
 exports.default = Emulation;
 
-},{"../../../driver/FullscreenVideo":645,"../../../driver/MouseAsPaddle":647,"../../../driver/SimpleCanvasVideo":649,"../../../driver/webgl/WebglVideo":655,"../../driver/KeyboardIO":657,"../../driver/TouchIO":658,"../../service/DriverManager":661,"../../service/EmulationServiceInterface":662,"../context/Emulation":720,"./emulation/ControlPanel":699,"react":479,"react-bootstrap":399,"tslib":553}],683:[function(require,module,exports){
+},{"../../../driver/FullscreenVideo":645,"../../../driver/MouseAsPaddle":647,"../../../driver/SimpleCanvasVideo":649,"../../../driver/webgl/WebglVideo":655,"../../driver/KeyboardIO":657,"../../driver/TouchIO":658,"../../service/DriverManager":661,"../../service/EmulationServiceInterface":662,"../context/Emulation":721,"./emulation/ControlPanel":699,"detect-it":146,"react":479,"react-bootstrap":399,"tslib":553}],683:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -91295,18 +91322,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var React = require("react");
 var Navbar_1 = require("./main/Navbar");
+var UpdatedDialog_1 = require("./main/UpdatedDialog");
 function Main(props) {
     var p = function (_a) {
         var children = _a.children, _p = tslib_1.__rest(_a, ["children"]);
         return _p;
     };
     return (React.createElement("div", null,
+        React.createElement(UpdatedDialog_1.default, { show: props.wasUpdated, buildId: props.buildId, onClose: props.onUpdatedDialogClosed }),
         React.createElement(Navbar_1.default, tslib_1.__assign({}, p(props))),
         props.children));
 }
 exports.default = Main;
+(function (Main) {
+    Main.defaultProps = {
+        wasUpdated: false,
+        buildId: '',
+        onUpdatedDialogClosed: function () { return undefined; }
+    };
+})(Main || (Main = {}));
+exports.default = Main;
 
-},{"./main/Navbar":707,"react":479,"tslib":553}],685:[function(require,module,exports){
+},{"./main/Navbar":707,"./main/UpdatedDialog":708,"react":479,"tslib":553}],685:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -91421,7 +91458,7 @@ exports.default = Settings;
 })(Settings || (Settings = {}));
 exports.default = Settings;
 
-},{"./general/Slider":704,"./general/Switch":705,"./settings/AudioDriverSelect":713,"bowser":103,"react":479,"react-bootstrap":399}],686:[function(require,module,exports){
+},{"./general/Slider":704,"./general/Switch":705,"./settings/AudioDriverSelect":714,"bowser":103,"react":479,"react-bootstrap":399}],686:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -91482,7 +91519,7 @@ var CartridgeControlsStyled = style_1.styled(CartridgeControlsUnstyled)(template
 exports.default = CartridgeControlsStyled;
 var templateObject_1;
 
-},{"../general/FileUploadButton":702,"../style":714,"react":479,"react-bootstrap":399,"tslib":553}],688:[function(require,module,exports){
+},{"../general/FileUploadButton":702,"../style":715,"react":479,"react-bootstrap":399,"tslib":553}],688:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -91509,7 +91546,7 @@ var CartridgeListStyled = style_1.styled(CartridgeListUnstyled)(templateObject_3
 exports.default = CartridgeListStyled;
 var templateObject_1, templateObject_2, templateObject_3;
 
-},{"../general/BorderBox":701,"../style":714,"react":479,"tslib":553}],689:[function(require,module,exports){
+},{"../general/BorderBox":701,"../style":715,"react":479,"tslib":553}],689:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -91585,7 +91622,7 @@ var CartridgeSettingsStyled = style_1.styled(CartridgeSettingsUnstyled)(template
 exports.default = CartridgeSettingsStyled;
 var templateObject_1, templateObject_2;
 
-},{"../general/Slider":704,"../general/Switch":705,"../style":714,"./AudioDriverSelect":686,"./CartridgeNameInput":689,"./CartridgeTypeSelect":691,"./FrameStartEdit":692,"./RandomSeedEdit":695,"./TvModeSelect":696,"react":479,"react-bootstrap":399,"tslib":553}],691:[function(require,module,exports){
+},{"../general/Slider":704,"../general/Switch":705,"../style":715,"./AudioDriverSelect":686,"./CartridgeNameInput":689,"./CartridgeTypeSelect":691,"./FrameStartEdit":692,"./RandomSeedEdit":695,"./TvModeSelect":696,"react":479,"react-bootstrap":399,"tslib":553}],691:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -91660,7 +91697,7 @@ exports.default = OptionalValueInput;
 exports.default = OptionalValueInput;
 var templateObject_1;
 
-},{"../general/Switch":705,"../general/ValidatingInput":706,"../style":714,"react":479,"tslib":553}],694:[function(require,module,exports){
+},{"../general/Switch":705,"../general/ValidatingInput":706,"../style":715,"react":479,"tslib":553}],694:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -91798,7 +91835,7 @@ var ZipfileSelectModal = (function (_super) {
 exports.default = ZipfileSelectModal;
 var templateObject_1;
 
-},{"../style":714,"react":479,"react-bootstrap":399,"tslib":553}],699:[function(require,module,exports){
+},{"../style":715,"react":479,"react-bootstrap":399,"tslib":553}],699:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -91929,7 +91966,7 @@ exports.default = BorderBox;
 BorderBox.displayName = 'BorderBox';
 var templateObject_1;
 
-},{"../style":714,"tslib":553}],702:[function(require,module,exports){
+},{"../style":715,"tslib":553}],702:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -92081,7 +92118,7 @@ exports.default = Slider;
 exports.default = Slider;
 var templateObject_1, templateObject_2;
 
-},{"../style":714,"react":479,"tslib":553}],705:[function(require,module,exports){
+},{"../style":715,"react":479,"tslib":553}],705:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -92162,7 +92199,28 @@ function Navbar(props) {
 }
 exports.default = Navbar;
 
-},{"./navbar/Header":710,"./navbar/Navigation":711,"./navbar/StatusWidget":712,"react":479,"react-bootstrap":399,"tslib":553}],708:[function(require,module,exports){
+},{"./navbar/Header":711,"./navbar/Navigation":712,"./navbar/StatusWidget":713,"react":479,"react-bootstrap":399,"tslib":553}],708:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var React = require("react");
+var react_bootstrap_1 = require("react-bootstrap");
+var UpdatedDialog = function (props) {
+    return React.createElement(react_bootstrap_1.Modal, { show: props.show, onHide: props.onClose, backdrop: false },
+        React.createElement(react_bootstrap_1.Modal.Header, { closeButton: true },
+            React.createElement(react_bootstrap_1.Modal.Title, null, "Stellerator updated")),
+        React.createElement(react_bootstrap_1.Modal.Body, null,
+            "Stellerator was updated to build ",
+            props.buildId,
+            "."),
+        React.createElement(react_bootstrap_1.Modal.Footer, null,
+            React.createElement(react_bootstrap_1.Button, { onClick: props.onClose }, "Close")));
+};
+UpdatedDialog.defaultProps = {
+    onClose: function () { return undefined; }
+};
+exports.default = UpdatedDialog;
+
+},{"react":479,"react-bootstrap":399}],709:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -92189,7 +92247,7 @@ var EmulationStatusStyled = style_1.styled(EmulationStatusUnstyled)(templateObje
 exports.default = EmulationStatusStyled;
 var templateObject_1;
 
-},{"../../../../service/EmulationServiceInterface":662,"../../style":714,"react":479,"tslib":553}],709:[function(require,module,exports){
+},{"../../../../service/EmulationServiceInterface":662,"../../style":715,"react":479,"tslib":553}],710:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -92205,7 +92263,7 @@ var GamepadStatusStyled = style_1.styled(GamepadStatusUnstyled)(templateObject_1
 exports.default = GamepadStatusStyled;
 var templateObject_1;
 
-},{"../../style":714,"react":479,"tslib":553}],710:[function(require,module,exports){
+},{"../../style":715,"react":479,"tslib":553}],711:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -92216,7 +92274,7 @@ function Header(props) {
 }
 exports.default = Header;
 
-},{"react":479,"react-bootstrap":399}],711:[function(require,module,exports){
+},{"react":479,"react-bootstrap":399}],712:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -92242,7 +92300,7 @@ function Navigation(props) {
 exports.default = Navigation;
 var templateObject_1;
 
-},{"../../style":714,"react":479,"react-bootstrap":399,"react-router-bootstrap":446,"tslib":553}],712:[function(require,module,exports){
+},{"../../style":715,"react":479,"react-bootstrap":399,"react-router-bootstrap":446,"tslib":553}],713:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -92260,7 +92318,7 @@ var StatusWidgetStyled = style_1.styled(StatusWidgetUnstyled)(templateObject_1 |
 exports.default = StatusWidgetStyled;
 var templateObject_1;
 
-},{"../../style":714,"./EmulationStatus":708,"./GamepadStatus":709,"react":479,"tslib":553}],713:[function(require,module,exports){
+},{"../../style":715,"./EmulationStatus":709,"./GamepadStatus":710,"react":479,"tslib":553}],714:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
@@ -92278,7 +92336,7 @@ exports.default = AudioDriverSelect;
 })(AudioDriverSelect || (AudioDriverSelect = {}));
 exports.default = AudioDriverSelect;
 
-},{"react":479,"react-bootstrap":399}],714:[function(require,module,exports){
+},{"react":479,"react-bootstrap":399}],715:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var styledComponents = require("styled-components");
@@ -92290,7 +92348,7 @@ exports.injectGlobal = injectGlobal;
 exports.keyframes = keyframes;
 exports.ThemeProvider = ThemeProvider;
 
-},{"styled-components":521}],715:[function(require,module,exports){
+},{"styled-components":521}],716:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -92346,7 +92404,7 @@ function mapDispatchToProps(dispatch) {
 var CartridgeManager = react_redux_1.connect(mapStateToProps, mapDispatchToProps)(CartridgeManager_1.default);
 exports.default = CartridgeManager;
 
-},{"../actions/cartridgeManager":673,"../actions/currentCartridge":674,"../actions/guiState":677,"../actions/root":678,"../actions/zipfile":680,"../components/CartridgeManager":681,"../model/Cartridge":723,"react-redux":438}],716:[function(require,module,exports){
+},{"../actions/cartridgeManager":673,"../actions/currentCartridge":674,"../actions/guiState":677,"../actions/root":678,"../actions/zipfile":680,"../components/CartridgeManager":681,"../model/Cartridge":724,"react-redux":438}],717:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -92386,7 +92444,7 @@ var EmulationContainer = react_redux_1.connect(mapStateToProps, {
 })(Emulation_1.default);
 exports.default = EmulationContainer;
 
-},{"../actions/emulation":675,"../components/Emulation":682,"../model/types":725,"react-redux":438,"react-router-redux":463}],717:[function(require,module,exports){
+},{"../actions/emulation":675,"../components/Emulation":682,"../model/types":726,"react-redux":438,"react-router-redux":463}],718:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -92400,10 +92458,11 @@ function mapStateToProps(state) {
 var HelpContainer = react_redux_1.connect(mapStateToProps)(Help_1.default);
 exports.default = HelpContainer;
 
-},{"../components/Help":683,"react-redux":438}],718:[function(require,module,exports){
+},{"../components/Help":683,"react-redux":438}],719:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
+var environment_1 = require("../actions/environment");
 var Main_1 = require("../components/Main");
 var types_1 = require("../model/types");
 function mapStateToProps(state) {
@@ -92411,13 +92470,17 @@ function mapStateToProps(state) {
         emulationActive: state.guiState.mode === types_1.GuiMode.run,
         frequency: state.emulationState.frequency,
         emulationState: state.emulationState.emulationState,
-        gamepadCount: state.emulationState.gamepadCount
+        gamepadCount: state.emulationState.gamepadCount,
+        wasUpdated: state.environment.wasUpdated,
+        buildId: state.environment.buildId
     };
 }
-var Navbar = react_redux_1.connect(mapStateToProps, {}, undefined, { pure: false })(Main_1.default);
+var Navbar = react_redux_1.connect(mapStateToProps, {
+    onUpdatedDialogClosed: environment_1.clearWasUpdatedFlag
+}, undefined, { pure: false })(Main_1.default);
 exports.default = Navbar;
 
-},{"../components/Main":684,"../model/types":725,"react-redux":438}],719:[function(require,module,exports){
+},{"../actions/environment":676,"../components/Main":684,"../model/types":726,"react-redux":438}],720:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_redux_1 = require("react-redux");
@@ -92455,7 +92518,7 @@ var SettingsContainer = react_redux_1.connect(mapStateToProps, {
 })(Settings_1.default);
 exports.default = SettingsContainer;
 
-},{"../actions/settings":679,"../components/Settings":685,"react-redux":438}],720:[function(require,module,exports){
+},{"../actions/settings":679,"../components/Settings":685,"react-redux":438}],721:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -92482,7 +92545,7 @@ var Provider = (function (_super) {
 }(React.Component));
 exports.Provider = Provider;
 
-},{"prop-types":304,"react":479,"tslib":553}],721:[function(require,module,exports){
+},{"prop-types":304,"react":479,"tslib":553}],722:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -92501,6 +92564,16 @@ var middleware_1 = require("./middleware");
 var Container_1 = require("./service/implementation/Container");
 var Main_1 = require("./containers/Main");
 var Routing_1 = require("./Routing");
+function initEnv(store) {
+    var BUILD_ID_KEY = 'build-id';
+    var buildId = "622042", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
+    localStorage.setItem(BUILD_ID_KEY, buildId);
+    store.dispatch(environment_1.initialize({
+        helppageUrl: "doc/stellerator.md",
+        buildId: buildId,
+        wasUpdated: wasUpdated
+    }));
+}
 function main() {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
         var serviceContainer, history, store;
@@ -92510,10 +92583,7 @@ function main() {
                     serviceContainer = new Container_1.default(), history = history_1.createHashHistory();
                     store = redux_1.createStore(root_1.default, new State_1.default(), redux_1.compose(redux_1.applyMiddleware(middleware_1.batchMiddleware, serviceContainer.getPersistenceProvider().getMiddleware(), serviceContainer.getEmulationProvider().getMiddleware(), serviceContainer.getCartridgeManager().getMiddleware(), react_router_redux_1.routerMiddleware(history)), "development" !== 'production' && window.devToolsExtension ? window.devToolsExtension() : function (x) { return x; }));
                     serviceContainer.setStore(store);
-                    store.dispatch(environment_1.initialize({
-                        helppageUrl: "doc/stellerator.md",
-                        buildId: "41985d"
-                    }));
+                    initEnv(store);
                     return [4, serviceContainer.getPersistenceProvider().init()];
                 case 1:
                     _a.sent();
@@ -92535,7 +92605,7 @@ function main() {
 }
 main();
 
-},{"./Routing":672,"./actions/environment":676,"./containers/Main":718,"./context/Emulation":720,"./middleware":722,"./reducers/root":730,"./service/implementation/Container":734,"./state/State":744,"history":211,"react":479,"react-dom":412,"react-redux":438,"react-router-redux":463,"redux":499,"styled-components":521,"tslib":553}],722:[function(require,module,exports){
+},{"./Routing":672,"./actions/environment":676,"./containers/Main":719,"./context/Emulation":721,"./middleware":723,"./reducers/root":731,"./service/implementation/Container":735,"./state/State":745,"history":211,"react":479,"react-dom":412,"react-redux":438,"react-router-redux":463,"redux":499,"styled-components":521,"tslib":553}],723:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var root_1 = require("./actions/root");
@@ -92553,7 +92623,7 @@ function dispatchBatchedActions(action, dispatch) {
     return dispatcher(undefined);
 }
 
-},{"./actions/root":678}],723:[function(require,module,exports){
+},{"./actions/root":678}],724:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var deepEqual = require("deep-equal");
@@ -92583,7 +92653,7 @@ var Cartridge;
 })(Cartridge || (Cartridge = {}));
 exports.default = Cartridge;
 
-},{"../../../../machine/stella/cartridge/CartridgeInfo":597,"deep-equal":142}],724:[function(require,module,exports){
+},{"../../../../machine/stella/cartridge/CartridgeInfo":597,"deep-equal":142}],725:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Settings;
@@ -92620,7 +92690,7 @@ var Settings;
 })(Settings || (Settings = {}));
 exports.default = Settings;
 
-},{}],725:[function(require,module,exports){
+},{}],726:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var GuiMode;
@@ -92629,7 +92699,7 @@ var GuiMode;
     GuiMode[GuiMode["run"] = 1] = "run";
 })(GuiMode = exports.GuiMode || (exports.GuiMode = {}));
 
-},{}],726:[function(require,module,exports){
+},{}],727:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -92704,7 +92774,7 @@ function changeAudioDriver(cartridge, action) {
     return tslib_1.__assign({}, cartridge, { audioDriver: action.driver });
 }
 
-},{"../actions/currentCartridge":674,"../model/Cartridge":723,"tslib":553}],727:[function(require,module,exports){
+},{"../actions/currentCartridge":674,"../model/Cartridge":724,"tslib":553}],728:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Emulation_1 = require("../state/Emulation");
@@ -92775,7 +92845,7 @@ function userPause(state) {
     return new Emulation_1.default({ pausedByUser: true }, state);
 }
 
-},{"../../service/EmulationServiceInterface":662,"../actions/emulation":675,"../state/Emulation":741}],728:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":662,"../actions/emulation":675,"../state/Emulation":742}],729:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Environment_1 = require("../state/Environment");
@@ -92785,6 +92855,8 @@ function reducer(state, action) {
     switch (action.type) {
         case environment_1.types.initialize:
             return initialize(state, action);
+        case environment_1.types.clearWasUpdatedFlag:
+            return clearWasUpdatedFlag(state);
         default:
             return state;
     }
@@ -92793,11 +92865,15 @@ exports.default = reducer;
 function initialize(state, action) {
     return new Environment_1.default({
         helppageUrl: action.helppageUrl,
-        buildId: action.buildId
+        buildId: action.buildId,
+        wasUpdated: action.wasUpdated
     }, state);
 }
+function clearWasUpdatedFlag(state) {
+    return new Environment_1.default({ wasUpdated: false }, state);
+}
 
-},{"../actions/environment":676,"../state/Environment":742}],729:[function(require,module,exports){
+},{"../actions/environment":676,"../state/Environment":743}],730:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var guiState_1 = require("../actions/guiState");
@@ -92850,7 +92926,7 @@ function loadClosePendingChangesModal(state) {
     }, state);
 }
 
-},{"../actions/guiState":677,"../state/GuiState":743}],730:[function(require,module,exports){
+},{"../actions/guiState":677,"../state/GuiState":744}],731:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -92943,7 +93019,7 @@ function saveCurrentCartride(state) {
     return new State_1.default({ cartridges: cartridges }, state);
 }
 
-},{"../../../../machine/stella/cartridge/CartridgeDetector":585,"../../../../tools/hash/md5":624,"../actions/root":678,"../model/Cartridge":723,"../state/State":744,"./currentCartridge":726,"./emulation":727,"./environment":728,"./guiState":729,"./settings":731,"./zipfile":732,"react-router-redux":463,"tslib":553}],731:[function(require,module,exports){
+},{"../../../../machine/stella/cartridge/CartridgeDetector":585,"../../../../tools/hash/md5":624,"../actions/root":678,"../model/Cartridge":724,"../state/State":745,"./currentCartridge":727,"./emulation":728,"./environment":729,"./guiState":730,"./settings":732,"./zipfile":733,"react-router-redux":463,"tslib":553}],732:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -93023,7 +93099,7 @@ function setTouchLeftHandedMode(settings, action) {
     return tslib_1.__assign({}, settings, { touchLeftHandedMode: action.leftHandedMode });
 }
 
-},{"../actions/settings":679,"../model/Settings":724,"tslib":553}],732:[function(require,module,exports){
+},{"../actions/settings":679,"../model/Settings":725,"tslib":553}],733:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Zipfile_1 = require("../state/Zipfile");
@@ -93063,7 +93139,7 @@ function clearError(state) {
     return new Zipfile_1.default({ error: '' }, state);
 }
 
-},{"../actions/zipfile":680,"../state/Zipfile":745}],733:[function(require,module,exports){
+},{"../actions/zipfile":680,"../state/Zipfile":746}],734:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -93368,7 +93444,7 @@ var CartridgeManager = (function () {
 }());
 exports.default = CartridgeManager;
 
-},{"../../../../../tools/hash/md5":624,"../../actions/cartridgeManager":673,"../../actions/emulation":675,"../../actions/guiState":677,"../../actions/root":678,"../../actions/zipfile":680,"../../model/Cartridge":723,"../../model/types":725,"jszip":230,"react-router-redux":463,"tslib":553}],734:[function(require,module,exports){
+},{"../../../../../tools/hash/md5":624,"../../actions/cartridgeManager":673,"../../actions/emulation":675,"../../actions/guiState":677,"../../actions/root":678,"../../actions/zipfile":680,"../../model/Cartridge":724,"../../model/types":726,"jszip":230,"react-router-redux":463,"tslib":553}],735:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -93424,7 +93500,7 @@ var Container = (function () {
 }());
 exports.default = Container;
 
-},{"./CartridgManager":733,"./EmulationProvider":735,"./PersistenceProvider":736,"./StorageManager":737,"microevent.ts":272}],735:[function(require,module,exports){
+},{"./CartridgManager":734,"./EmulationProvider":736,"./PersistenceProvider":737,"./StorageManager":738,"microevent.ts":272}],736:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -93635,7 +93711,7 @@ var EmulationProvider = (function () {
 }());
 exports.default = EmulationProvider;
 
-},{"../../../../../machine/stella/Config":573,"../../../../driver/Gamepad":646,"../../../driver/WebAudio":659,"../../../service/DriverManager":661,"../../../service/vanilla/EmulationService":664,"../../../service/worker/EmulationService":667,"../../actions/emulation":675,"../../actions/settings":679,"bowser":103,"tslib":553}],736:[function(require,module,exports){
+},{"../../../../../machine/stella/Config":573,"../../../../driver/Gamepad":646,"../../../driver/WebAudio":659,"../../../service/DriverManager":661,"../../../service/vanilla/EmulationService":664,"../../../service/worker/EmulationService":667,"../../actions/emulation":675,"../../actions/settings":679,"bowser":103,"tslib":553}],737:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -93712,7 +93788,7 @@ var PersistenceProvider = (function () {
 }());
 exports.default = PersistenceProvider;
 
-},{"../../actions/root":678,"../../actions/settings":679,"tslib":553}],737:[function(require,module,exports){
+},{"../../actions/root":678,"../../actions/settings":679,"tslib":553}],738:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Database_1 = require("./storage/Database");
@@ -93765,7 +93841,7 @@ var StorageManager = (function () {
 }());
 exports.default = StorageManager;
 
-},{"./storage/Cartridge":738,"./storage/Database":739,"./storage/Settings":740}],738:[function(require,module,exports){
+},{"./storage/Cartridge":739,"./storage/Database":740,"./storage/Settings":741}],739:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -93833,7 +93909,7 @@ function toState(cartridge) {
 }
 exports.toState = toState;
 
-},{"../../../../../../machine/stella/cartridge/CartridgeInfo":597,"tslib":553}],739:[function(require,module,exports){
+},{"../../../../../../machine/stella/cartridge/CartridgeInfo":597,"tslib":553}],740:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -94022,7 +94098,7 @@ var Database = (function (_super) {
 }(dexie_1.default));
 exports.default = Database;
 
-},{"dexie":150,"tslib":553}],740:[function(require,module,exports){
+},{"dexie":150,"tslib":553}],741:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -94062,7 +94138,7 @@ function toModel(record) {
 }
 exports.toModel = toModel;
 
-},{"../../../model/Settings":724,"tslib":553}],741:[function(require,module,exports){
+},{"../../../model/Settings":725,"tslib":553}],742:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("../../service/EmulationServiceInterface");
@@ -94083,20 +94159,21 @@ var EmulationState = (function () {
 }());
 exports.default = EmulationState;
 
-},{"../../service/EmulationServiceInterface":662}],742:[function(require,module,exports){
+},{"../../service/EmulationServiceInterface":662}],743:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Environment = (function () {
     function Environment(changes, old) {
         this.helppageUrl = '';
         this.buildId = '';
+        this.wasUpdated = false;
         Object.assign(this, old, changes);
     }
     return Environment;
 }());
 exports.default = Environment;
 
-},{}],743:[function(require,module,exports){
+},{}],744:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var types_1 = require("../model/types");
@@ -94112,7 +94189,7 @@ var GuiState = (function () {
 }());
 exports.default = GuiState;
 
-},{"../model/types":725}],744:[function(require,module,exports){
+},{"../model/types":726}],745:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var State = (function () {
@@ -94125,7 +94202,7 @@ var State = (function () {
 }());
 exports.default = State;
 
-},{}],745:[function(require,module,exports){
+},{}],746:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Zipfile = (function () {
@@ -94139,5 +94216,5 @@ var Zipfile = (function () {
 }());
 exports.default = Zipfile;
 
-},{}]},{},[721])
+},{}]},{},[722])
 //# sourceMappingURL=stellerator.js.map
