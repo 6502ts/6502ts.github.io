@@ -7291,7 +7291,7 @@ var Disassembler = (function () {
             return hex.encode(_this._peek(a) + (_this._peek(a + 1) << 8), 4);
         };
         var decodeSint8 = function (value) { return (value & 0x80 ? -(~(value - 1) & 0xff) : value); };
-        switch (instruction.addressingMode) {
+        switch (instruction.effectiveAddressingMode) {
             case 0:
                 return operation;
             case 1:
@@ -7336,12 +7336,14 @@ exports.default = Disassembler;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction = (function () {
-    function Instruction(operation, addressingMode) {
+    function Instruction(operation, addressingMode, effectiveAddressingMode) {
+        if (effectiveAddressingMode === void 0) { effectiveAddressingMode = addressingMode; }
         this.operation = operation;
         this.addressingMode = addressingMode;
+        this.effectiveAddressingMode = effectiveAddressingMode;
     }
     Instruction.prototype.getSize = function () {
-        switch (this.addressingMode) {
+        switch (this.effectiveAddressingMode) {
             case 1:
             case 2:
             case 6:
@@ -7507,17 +7509,15 @@ exports.default = Instruction;
                 }
                 if (operation !== 71 && addressingMode !== 12) {
                     opcode = (i << 5) | (j << 2) | 1;
-                    Instruction.opcodes[opcode].operation = operation;
-                    Instruction.opcodes[opcode].addressingMode = addressingMode;
+                    Instruction.opcodes[opcode] = new Instruction(operation, addressingMode);
                 }
             }
         }
-        function set(_opcode, _operation, _addressingMode) {
+        function set(_opcode, _operation, _addressingMode, _effectiveAdressingMode) {
             if (Instruction.opcodes[_opcode].operation !== 71) {
                 throw new Error('entry for opcode ' + _opcode + ' already exists');
             }
-            Instruction.opcodes[_opcode].operation = _operation;
-            Instruction.opcodes[_opcode].addressingMode = _addressingMode;
+            Instruction.opcodes[_opcode] = new Instruction(_operation, _addressingMode, _effectiveAdressingMode);
         }
         set(0x06, 2, 2);
         set(0x0a, 2, 0);
@@ -7582,7 +7582,7 @@ exports.default = Instruction;
         set(0xd0, 8, 5);
         set(0xf0, 5, 5);
         set(0x00, 10, 0);
-        set(0x20, 28, 0);
+        set(0x20, 28, 0, 3);
         set(0x40, 41, 0);
         set(0x60, 42, 0);
         set(0x08, 36, 0);
