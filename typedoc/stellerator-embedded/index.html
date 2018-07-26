@@ -952,29 +952,24 @@ img { max-width: 100%; }
 				<li><code>stellerator_embedded.min.js</code>: The emulation frontend. Load this via a script tag
 				in your HTML:</li>
 			</ul>
-			<pre><code class="lang-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"js/stellerator_embedded.min.js"</span>&gt;</span><span class="undefined"></span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
-</code></pre>
+			<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"js/stellerator_embedded.min.js"</span>&gt;</span><span class="undefined"></span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span></code></pre>
 			<p>   The <code>Stellerator</code> class is available on the global <code>$6502</code> object after the script has
 			been loaded.</p>
 			<ul>
 				<li><code>stellerator_worker.min.js</code>: The web worker. The path to this script must be passed
 				to the constructor of the <code>Stellerator</code> instance:</li>
 			</ul>
-			<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> stellerator = <span class="hljs-keyword">new</span> $<span class="hljs-number">6502.</span>Stellerator(canvasElement, <span class="hljs-string">'js/stellerator_worker.min.js'</span>);
-</code></pre>
+			<pre><code class="language-javascript"><span class="hljs-keyword">const</span> stellerator = <span class="hljs-keyword">new</span> $<span class="hljs-number">6502.</span>Stellerator(canvasElement, <span class="hljs-string">'js/stellerator_worker.min.js'</span>);</code></pre>
 			<p>In addition to these two scripts, the archive also contains source maps for both. Place
 				these on you server and host them alongside the scripts in order to enable source-level
 			debugging and traces in the developer console.</p>
 			<h2 id="installation-via-npm">Installation via NPM</h2>
 			<p>The emulation core of 6502.ts is available as <code>6502.ts</code> on
 			<a href="https://www.npmjs.com">NPM</a>. Install into your project e.g. using npm via</p>
-			<pre><code><span class="hljs-meta">$</span><span class="bash"> npm install 6502.ts</span>
-</code></pre><p>After installation, you can import the <code>Stellerator</code> class using an ES6 import</p>
-			<pre><code class="lang-javascript"><span class="hljs-keyword">import</span> Stellerator <span class="hljs-keyword">from</span> <span class="hljs-string">'6502.ts/lib/web/embedded/stellerator/Stellerator'</span>;
-</code></pre>
+			<pre><code><span class="hljs-meta">$</span><span class="bash"> npm install 6502.ts</span></code></pre><p>After installation, you can import the <code>Stellerator</code> class using an ES6 import</p>
+			<pre><code class="language-javascript"><span class="hljs-keyword">import</span> Stellerator <span class="hljs-keyword">from</span> <span class="hljs-string">'6502.ts/lib/web/embedded/stellerator/Stellerator'</span>;</code></pre>
 			<p>or via <code>require</code></p>
-			<pre><code class="lang-javascript"><span class="hljs-keyword">var</span> Stellerator = <span class="hljs-built_in">require</span>(<span class="hljs-string">'6502.ts/lib/web/embedded/stellerator/Stellerator'</span>).default;
-</code></pre>
+			<pre><code class="language-javascript"><span class="hljs-keyword">var</span> Stellerator = <span class="hljs-built_in">require</span>(<span class="hljs-string">'6502.ts/lib/web/embedded/stellerator/Stellerator'</span>).default;</code></pre>
 			<p>The NPM module comes with
 				<a href="https://www.typescriptlang.org">TypeScript</a>
 			typings, so you can use it directly in a TypeScript project.</p>
@@ -987,12 +982,10 @@ img { max-width: 100%; }
 				in your web
 				page (which will display the TIA image) and create an instance of the <code>Stellerator</code>
 			class:</p>
-			<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> stellerator = <span class="hljs-keyword">new</span> Stellerator(canvasElement, <span class="hljs-string">'js/stellerator_worker.min.js'</span>);
-</code></pre>
+			<pre><code class="language-javascript"><span class="hljs-keyword">const</span> stellerator = <span class="hljs-keyword">new</span> Stellerator(canvasElement, <span class="hljs-string">'js/stellerator_worker.min.js'</span>);</code></pre>
 			<p>The second argument of the constructor is the URL from which the web worker will be loaded.</p>
 			<p>Emulation can then be started by invoking the <code>run</code> method</p>
-			<pre><code class="lang-javascript">stellerator.run(romImage, Stellerator.TvMode.ntsc);
-</code></pre>
+			<pre><code class="language-javascript">stellerator.run(romImage, Stellerator.TvMode.ntsc);</code></pre>
 			<p>ROM images can be provided as arrays, typed arrays or as base64 encoded strings. Both the
 				constructor and <code>run</code> support an optional argument that allows to adjust many properties
 				of the emulator to the requirements of the embedding page, including ROM type, rendering options
@@ -1040,6 +1033,10 @@ img { max-width: 100%; }
 				<li>The horizontal axis of the mouse and d for fire control paddle 1</li>
 				<li>Gamepads are supported for joystick 1/2 but rely on browser and OS for the correct
 				mapping</li>
+				<li>Multitouch controls are available for controlling the left joystick and start / reset /
+					fullscreen. Check the
+					<a href="https://github.com/6502ts/6502.ts/blob/master/doc/stellerator.md#touch-controls">Stellerator documentation</a>
+				for the control scheme.</li>
 			</ul>
 			<p>The difficulty and color switches can be controlled via the API.</p>
 			<h1 id="limitations">Limitations</h1>
