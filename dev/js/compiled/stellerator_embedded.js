@@ -3002,7 +3002,7 @@ var Stellerator = (function () {
                 return _this._touchIO.bind(context.getJoystick(0), context.getControlPanel());
             });
             if (this._config.pauseViaTouch) {
-                this._touchIO.togglePause.addHandler(function () { return pauseHandler; });
+                this._touchIO.togglePause.addHandler(pauseHandler);
             }
             if (this._config.fullscreenViaTouch) {
                 this._touchIO.toggleFullscreen.addHandler(function () { return _this._fullscreenVideo.toggle(); });
