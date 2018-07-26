@@ -428,8 +428,8 @@ var __importDefault;
         function step(op) {
             if (f) throw new TypeError("Generator is already executing.");
             while (_) try {
-                if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-                if (y = 0, t) op = [0, t.value];
+                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [op[0] & 2, t.value];
                 switch (op[0]) {
                     case 0: case 1: t = op; break;
                     case 4: _.label++; return { value: op[1], done: false };
@@ -506,13 +506,15 @@ var __importDefault;
     __asyncDelegator = function (o) {
         var i, p;
         return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-        function verb(n, f) { if (o[n]) i[n] = function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; }; }
+        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
     };
 
     __asyncValues = function (o) {
         if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator];
-        return m ? m.call(o) : typeof __values === "function" ? __values(o) : o[Symbol.iterator]();
+        var m = o[Symbol.asyncIterator], i;
+        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
     };
 
     __makeTemplateObject = function (cooked, raw) {
@@ -1393,6 +1395,7 @@ exports.default = FullscreenVideoDriver;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
+var _a;
 var microevent_ts_1 = require("microevent.ts");
 var MIN_POLL_INTERVAL = 50;
 var standardMappings = (_a = {},
@@ -1494,17 +1497,18 @@ var GamepadDriver = (function () {
         self._syncShadows();
     };
     GamepadDriver.prototype._controlledSwitches = function () {
+        var e_1, _a;
         var switches = [];
         try {
-            for (var _a = tslib_1.__values(this._joysticks), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var joystick = _b.value;
+            for (var _b = tslib_1.__values(this._joysticks), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var joystick = _c.value;
                 switches.push(joystick.getLeft(), joystick.getRight(), joystick.getUp(), joystick.getDown(), joystick.getFire());
             }
         }
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
             finally { if (e_1) throw e_1.error; }
         }
@@ -1515,7 +1519,6 @@ var GamepadDriver = (function () {
             switches.push(this._start);
         }
         return switches;
-        var e_1, _c;
     };
     GamepadDriver.prototype._readState = function (mapping, gamepad) {
         var state = false;
@@ -1625,6 +1628,7 @@ var ShadowSwitch = (function () {
     return ShadowSwitch;
 }());
 function createShadowJoystick() {
+    var _a;
     return _a = {},
         _a["left"] = new ShadowSwitch(),
         _a["right"] = new ShadowSwitch(),
@@ -1632,9 +1636,7 @@ function createShadowJoystick() {
         _a["down"] = new ShadowSwitch(),
         _a["fire"] = new ShadowSwitch(),
         _a;
-    var _a;
 }
-var _a;
 
 },{"microevent.ts":4,"tslib":6}],23:[function(require,module,exports){
 "use strict";
@@ -1858,6 +1860,7 @@ var SimpleCanvasVideo = (function () {
         }
     };
     SimpleCanvasVideo.prototype._applyInterpolationSettings = function () {
+        var e_1, _a;
         try {
             for (var SMOOTHING_PROPS_1 = tslib_1.__values(SMOOTHING_PROPS), SMOOTHING_PROPS_1_1 = SMOOTHING_PROPS_1.next(); !SMOOTHING_PROPS_1_1.done; SMOOTHING_PROPS_1_1 = SMOOTHING_PROPS_1.next()) {
                 var prop = SMOOTHING_PROPS_1_1.value;
@@ -1871,7 +1874,6 @@ var SimpleCanvasVideo = (function () {
             }
             finally { if (e_1) throw e_1.error; }
         }
-        var e_1, _a;
     };
     return SimpleCanvasVideo;
 }());
@@ -2249,6 +2251,7 @@ var shader_1 = require("./shader");
 var CONTEXT_IDS = ['webgl', 'experimental-webgl'];
 var WebglVideoDriver = (function () {
     function WebglVideoDriver(_canvas, config) {
+        var e_1, _a;
         if (config === void 0) { config = {}; }
         this._canvas = _canvas;
         this._gl = null;
@@ -2295,7 +2298,6 @@ var WebglVideoDriver = (function () {
             throw new Error('unable to acquire WebGL context');
         }
         this._createTextureArrays();
-        var e_1, _a;
     }
     WebglVideoDriver.prototype.init = function () {
         this._gl.clearColor(0, 0, 0, 1);
@@ -2689,6 +2691,7 @@ var SimpleCanvasVideo_1 = require("../../driver/SimpleCanvasVideo");
 var WebglVideo_1 = require("../../driver/webgl/WebglVideo");
 var WebAudio_1 = require("../../stella/driver/WebAudio");
 var KeyboardIO_1 = require("../../stella/driver/KeyboardIO");
+var TouchIO_1 = require("../../stella/driver/TouchIO");
 var MouseAsPaddle_1 = require("../../driver/MouseAsPaddle");
 var Gamepad_1 = require("../../driver/Gamepad");
 var FullscreenVideo_1 = require("../../driver/FullscreenVideo");
@@ -2708,6 +2711,7 @@ var Stellerator = (function () {
         this._fullscreenVideo = null;
         this._audioDriver = null;
         this._keyboardIO = null;
+        this._touchIO = null;
         this._paddle = null;
         this._gamepad = null;
         this._controlPanel = new ControlPanelProxy_1.default();
@@ -2715,7 +2719,7 @@ var Stellerator = (function () {
         this._driverManager = new DriverManager_1.default();
         this._mutex = new async_mutex_1.Mutex();
         this._canvasElt = canvasElt;
-        this._config = tslib_1.__assign({ smoothScaling: true, simulatePov: true, gamma: 1, audio: true, volume: 0.5, enableKeyboard: true, keyboardTarget: document, fullscreenViaKeyboard: true, paddleViaMouse: true, pauseViaKeyboard: true, enableGamepad: true, resetViaKeyboard: true }, config);
+        this._config = tslib_1.__assign({ smoothScaling: true, simulatePov: true, gamma: 1, audio: true, volume: 0.5, enableKeyboard: true, enableTouch: true, touchLeftHanded: false, touchJoystickSensitivity: 15, keyboardTarget: document, fullscreenViaKeyboard: true, paddleViaMouse: true, pauseViaKeyboard: true, pauseViaTouch: true, fullscreenViaTouch: true, enableGamepad: true, resetViaKeyboard: true }, config);
         this._emulationService = new EmulationService_1.default(workerUrl);
         this.frequencyUpdate = this._emulationService.frequencyUpdate;
         var stateChange = new microevent_ts_1.Event();
@@ -2967,6 +2971,16 @@ var Stellerator = (function () {
                 console.error("failed to initialize audio: " + (e && e.message));
             }
         }
+        var pauseHandler = function () {
+            switch (_this._emulationService.getState()) {
+                case EmulationServiceInterface_1.default.State.paused:
+                    _this.resume();
+                    break;
+                case EmulationServiceInterface_1.default.State.running:
+                    _this.pause();
+                    break;
+            }
+        };
         if (this._config.enableKeyboard) {
             this._keyboardIO = new KeyboardIO_1.default(this._config.keyboardTarget);
             this._driverManager.addDriver(this._keyboardIO, function (context) {
@@ -2976,20 +2990,23 @@ var Stellerator = (function () {
                 this._keyboardIO.toggleFullscreen.addHandler(function () { return _this._fullscreenVideo.toggle(); });
             }
             if (this._config.pauseViaKeyboard) {
-                this._keyboardIO.togglePause.addHandler(function () {
-                    switch (_this._emulationService.getState()) {
-                        case EmulationServiceInterface_1.default.State.paused:
-                            _this.resume();
-                            break;
-                        case EmulationServiceInterface_1.default.State.running:
-                            _this.pause();
-                            break;
-                    }
-                });
+                this._keyboardIO.togglePause.addHandler(pauseHandler);
             }
         }
         if (this._config.resetViaKeyboard) {
             this._keyboardIO.hardReset.addHandler(function () { return _this.reset(); });
+        }
+        if (this._config.enableTouch) {
+            this._touchIO = new TouchIO_1.default(this._canvasElt, this._config.touchJoystickSensitivity, this._config.touchLeftHanded);
+            this._driverManager.addDriver(this._touchIO, function (context) {
+                return _this._touchIO.bind(context.getJoystick(0), context.getControlPanel());
+            });
+            if (this._config.pauseViaTouch) {
+                this._touchIO.togglePause.addHandler(function () { return pauseHandler; });
+            }
+            if (this._config.fullscreenViaTouch) {
+                this._touchIO.toggleFullscreen.addHandler(function () { return _this._fullscreenVideo.toggle(); });
+            }
         }
         if (this._config.enableGamepad) {
             this._gamepad = new Gamepad_1.default();
@@ -3044,7 +3061,7 @@ exports.default = Stellerator;
 })(Stellerator || (Stellerator = {}));
 exports.default = Stellerator;
 
-},{"../../../machine/stella/Config":12,"../../../machine/stella/cartridge/CartridgeInfo":14,"../../../tools/base64":18,"../../driver/FullscreenVideo":21,"../../driver/Gamepad":22,"../../driver/MouseAsPaddle":23,"../../driver/SimpleCanvasVideo":24,"../../driver/webgl/WebglVideo":29,"../../stella/driver/KeyboardIO":35,"../../stella/driver/WebAudio":36,"../../stella/service/DriverManager":37,"../../stella/service/EmulationServiceInterface":38,"../../stella/service/worker/EmulationService":41,"./ControlPanelProxy":31,"async-mutex":2,"microevent.ts":4,"tslib":6}],33:[function(require,module,exports){
+},{"../../../machine/stella/Config":12,"../../../machine/stella/cartridge/CartridgeInfo":14,"../../../tools/base64":18,"../../driver/FullscreenVideo":21,"../../driver/Gamepad":22,"../../driver/MouseAsPaddle":23,"../../driver/SimpleCanvasVideo":24,"../../driver/webgl/WebglVideo":29,"../../stella/driver/KeyboardIO":35,"../../stella/driver/TouchIO":36,"../../stella/driver/WebAudio":37,"../../stella/service/DriverManager":39,"../../stella/service/EmulationServiceInterface":40,"../../stella/service/worker/EmulationService":43,"./ControlPanelProxy":31,"async-mutex":2,"microevent.ts":4,"tslib":6}],33:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -3168,12 +3185,13 @@ var KeyboardIO = (function () {
             }
         };
         this._keyupListener = function (e) {
+            var e_1, _a;
             if (!_this._compiledMappings.has(e.keyCode)) {
                 return;
             }
             try {
-                for (var _a = tslib_1.__values(_this._compiledMappings.get(e.keyCode).values()), _b = _a.next(); !_b.done; _b = _a.next()) {
-                    var action = _b.value;
+                for (var _b = tslib_1.__values(_this._compiledMappings.get(e.keyCode).values()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var action = _c.value;
                     e.preventDefault();
                     var dispatch = _this._dispatchTable[action];
                     switch (dispatch.type) {
@@ -3187,11 +3205,10 @@ var KeyboardIO = (function () {
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
                 finally { if (e_1) throw e_1.error; }
             }
-            var e_1, _c;
         };
         this._target.addEventListener('keydown', this._keydownListener);
         this._target.addEventListener('keyup', this._keyupListener);
@@ -3336,6 +3353,196 @@ exports.default = KeyboardIO;
 },{"microevent.ts":4,"tslib":6}],36:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var microevent_ts_1 = require("microevent.ts");
+var DoubleTapDetector_1 = require("./touch/DoubleTapDetector");
+var TouchIO = (function () {
+    function TouchIO(_canvas, _joystickSensitivity, _leftHanded) {
+        if (_joystickSensitivity === void 0) { _joystickSensitivity = 15; }
+        if (_leftHanded === void 0) { _leftHanded = false; }
+        var _this = this;
+        this._canvas = _canvas;
+        this._joystickSensitivity = _joystickSensitivity;
+        this._leftHanded = _leftHanded;
+        this._onTouchStart = function (e) {
+            var cancel = false;
+            for (var i = 0; i < e.changedTouches.length; i++) {
+                var normalizedTouch = new NormalizedTouch(e.changedTouches.item(i), _this._canvas), id = normalizedTouch.touch.identifier;
+                if (_this._leftHanded ? normalizedTouch.x > 0.5 : normalizedTouch.x <= 0.5) {
+                    if (normalizedTouch.y <= 0.5) {
+                        normalizedTouch.type = "alt";
+                    }
+                    else {
+                        normalizedTouch.type = _this._isAlt ? "pause" : "fire";
+                    }
+                }
+                else {
+                    if (normalizedTouch.y <= 0.5) {
+                        normalizedTouch.type = _this._isAlt ? "select" : "joystick";
+                    }
+                    else {
+                        normalizedTouch.type = _this._isAlt ? "reset" : "joystick";
+                    }
+                }
+                if (_this._pendingTouches.has(id) || _this._pendingTouches.has(normalizedTouch.type)) {
+                    continue;
+                }
+                _this._pendingTouches.set(id, normalizedTouch);
+                _this._pendingTouches.set(normalizedTouch.type, normalizedTouch);
+                switch (normalizedTouch.type) {
+                    case "alt":
+                        _this._isAlt = true;
+                        _this._fullscreenDoubleTapDetector.startTouch();
+                        break;
+                    case "fire":
+                        _this._joystick.getFire().toggle(true);
+                        break;
+                    case "pause":
+                        _this.togglePause.dispatch(undefined);
+                        _this._fullscreenDoubleTapDetector.cancelTouch();
+                        break;
+                    case "select":
+                        _this._select.toggle(true);
+                        _this._fullscreenDoubleTapDetector.cancelTouch();
+                        break;
+                    case "reset":
+                        _this._reset.toggle(true);
+                        _this._fullscreenDoubleTapDetector.cancelTouch();
+                        break;
+                    case "joystick":
+                        break;
+                    default:
+                        throw new Error('invalid touch type');
+                }
+                if (_this._cancelEvent(normalizedTouch) || _this._fullscreenDoubleTapDetector.isDispatching()) {
+                    cancel = true;
+                }
+            }
+            if (cancel) {
+                e.preventDefault();
+            }
+        };
+        this._onTouchEnd = function (e) {
+            var cancel = false;
+            for (var i = 0; i < e.changedTouches.length; i++) {
+                var normalizedTouch = _this._pendingTouches.get(e.changedTouches.item(i).identifier);
+                if (!normalizedTouch) {
+                    continue;
+                }
+                if (_this._cancelEvent(normalizedTouch) || _this._fullscreenDoubleTapDetector.isDispatching()) {
+                    cancel = true;
+                }
+                switch (normalizedTouch.type) {
+                    case "alt":
+                        _this._isAlt = false;
+                        _this._fullscreenDoubleTapDetector.endTouch();
+                        break;
+                    case "fire":
+                        _this._joystick.getFire().toggle(false);
+                        break;
+                    case "select":
+                        _this._select.toggle(false);
+                        break;
+                    case "reset":
+                        _this._reset.toggle(false);
+                        break;
+                    case "joystick":
+                        _this._joystick.getDown().toggle(false);
+                        _this._joystick.getUp().toggle(false);
+                        _this._joystick.getLeft().toggle(false);
+                        _this._joystick.getRight().toggle(false);
+                        break;
+                    case "pause":
+                        break;
+                    default:
+                        throw new Error('invalid touch type');
+                }
+                _this._pendingTouches.delete(normalizedTouch.type);
+                _this._pendingTouches.delete(normalizedTouch.touch.identifier);
+            }
+            if (cancel) {
+                e.preventDefault();
+            }
+        };
+        this._onTouchMove = function (e) {
+            var cancel = false;
+            for (var i = 0; i < e.changedTouches.length; i++) {
+                var touch = e.changedTouches.item(i), normalizedTouch = _this._pendingTouches.get(touch.identifier);
+                if (!normalizedTouch) {
+                    continue;
+                }
+                if (_this._cancelEvent(normalizedTouch)) {
+                    cancel = true;
+                }
+                if (normalizedTouch.type !== "joystick") {
+                    continue;
+                }
+                var deltaX = touch.clientX - normalizedTouch.touch.clientX, deltaY = touch.clientY - normalizedTouch.touch.clientY, abs = Math.sqrt(deltaX * deltaX + deltaY * deltaY), sin = Math.abs(deltaY / abs), cos = Math.abs(deltaX / abs), trigger = abs > _this._joystickSensitivity;
+                _this._joystick.getLeft().toggle(trigger && deltaX < 0 && cos > 0.5);
+                _this._joystick.getRight().toggle(trigger && deltaX > 0 && cos > 0.5);
+                _this._joystick.getUp().toggle(trigger && deltaY < 0 && sin > 0.5);
+                _this._joystick.getDown().toggle(trigger && deltaY > 0 && sin > 0.5);
+            }
+            if (cancel) {
+                e.preventDefault();
+            }
+        };
+        this.togglePause = new microevent_ts_1.Event();
+        this._fullscreenDoubleTapDetector = new DoubleTapDetector_1.default();
+        this._bound = false;
+        this._joystick = null;
+        this._select = null;
+        this._reset = null;
+        this._isAlt = false;
+        this._pendingTouches = new Map();
+        this.toggleFullscreen = this._fullscreenDoubleTapDetector.trigger;
+    }
+    TouchIO.prototype.bind = function (joystick, controlPanel) {
+        if (this._bound) {
+            return;
+        }
+        this._bound = true;
+        this._joystick = joystick;
+        this._select = controlPanel.getSelectSwitch();
+        this._reset = controlPanel.getResetButton();
+        this._bindListeners();
+    };
+    TouchIO.prototype.unbind = function () {
+        if (!this._bound) {
+            return;
+        }
+        this._unbindListeners();
+        (this._bound = false), (this._joystick = this._reset = this._select = null);
+    };
+    TouchIO.prototype._bindListeners = function () {
+        this._canvas.addEventListener('touchstart', this._onTouchStart);
+        this._canvas.addEventListener('touchend', this._onTouchEnd);
+        this._canvas.addEventListener('touchmove', this._onTouchMove);
+    };
+    TouchIO.prototype._unbindListeners = function () {
+        this._canvas.removeEventListener('touchstart', this._onTouchStart);
+        this._canvas.removeEventListener('touchend', this._onTouchEnd);
+        this._canvas.removeEventListener('touchmove', this._onTouchMove);
+    };
+    TouchIO.prototype._cancelEvent = function (touch) {
+        return touch.type !== "alt";
+    };
+    return TouchIO;
+}());
+var NormalizedTouch = (function () {
+    function NormalizedTouch(touch, canvas) {
+        this.touch = touch;
+        this.type = "unknown";
+        var boundingRect = canvas.getBoundingClientRect();
+        this.x = (touch.clientX - boundingRect.left) / boundingRect.width;
+        this.y = (touch.clientY - boundingRect.top) / boundingRect.height;
+    }
+    return NormalizedTouch;
+}());
+exports.default = TouchIO;
+
+},{"./touch/DoubleTapDetector":38,"microevent.ts":4}],37:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var WebAudio_1 = require("../../driver/WebAudio");
 var WebAudioDriver = (function () {
@@ -3422,7 +3629,55 @@ var WebAudioDriver = (function () {
 }());
 exports.default = WebAudioDriver;
 
-},{"../../driver/WebAudio":25,"tslib":6}],37:[function(require,module,exports){
+},{"../../driver/WebAudio":25,"tslib":6}],38:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var microevent_ts_1 = require("microevent.ts");
+var DoubleTapDetector = (function () {
+    function DoubleTapDetector(_maxTapLength, _timeout) {
+        if (_maxTapLength === void 0) { _maxTapLength = 500; }
+        if (_timeout === void 0) { _timeout = 200; }
+        this._maxTapLength = _maxTapLength;
+        this._timeout = _timeout;
+        this.trigger = new microevent_ts_1.Event();
+        this._dispatch = false;
+        this._touching = false;
+        this._lastTouchEligible = false;
+        this._lastTouchStart = 0;
+        this._lastTouchEnd = 0;
+    }
+    DoubleTapDetector.prototype.startTouch = function () {
+        this._lastTouchStart = Date.now();
+        if (this._touching) {
+            return;
+        }
+        this._touching = true;
+        this._dispatch = this._lastTouchEligible && this._lastTouchStart - this._lastTouchEnd < this._timeout;
+    };
+    DoubleTapDetector.prototype.endTouch = function () {
+        this._lastTouchEnd = Date.now();
+        if (this._dispatch) {
+            this._dispatch = false;
+            this.trigger.dispatch(undefined);
+        }
+        if (!this._touching) {
+            return;
+        }
+        this._touching = false;
+        this._lastTouchEligible = this._lastTouchStart - this._lastTouchEnd < this._maxTapLength;
+    };
+    DoubleTapDetector.prototype.cancelTouch = function () {
+        this.endTouch();
+        this._lastTouchEligible = false;
+    };
+    DoubleTapDetector.prototype.isDispatching = function () {
+        return this._dispatch;
+    };
+    return DoubleTapDetector;
+}());
+exports.default = DoubleTapDetector;
+
+},{"microevent.ts":4}],39:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -3511,7 +3766,7 @@ exports.default = DriverManager;
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":38}],38:[function(require,module,exports){
+},{"./EmulationServiceInterface":40}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -3526,7 +3781,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DigitalJoystick_1 = require("../../../../machine/io/DigitalJoystick");
@@ -3596,7 +3851,7 @@ var ControlProxy = (function () {
 }());
 exports.default = ControlProxy;
 
-},{"../../../../machine/io/DigitalJoystick":9,"../../../../machine/io/Paddle":10,"../../../../machine/stella/ControlPanel":13,"./messages":45}],40:[function(require,module,exports){
+},{"../../../../machine/io/DigitalJoystick":9,"../../../../machine/io/Paddle":10,"../../../../machine/stella/ControlPanel":13,"./messages":47}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationContext = (function () {
@@ -3641,7 +3896,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -3932,7 +4187,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../EmulationServiceInterface":38,"./ControlProxy":39,"./EmulationContext":40,"./PCMAudioProxy":42,"./VideoProxy":43,"./WaveformAudioProxy":44,"./messages":45,"async-mutex":2,"microevent.ts":4,"tslib":6,"worker-rpc":8}],42:[function(require,module,exports){
+},{"../EmulationServiceInterface":40,"./ControlProxy":41,"./EmulationContext":42,"./PCMAudioProxy":44,"./VideoProxy":45,"./WaveformAudioProxy":46,"./messages":47,"async-mutex":2,"microevent.ts":4,"tslib":6,"worker-rpc":8}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4023,7 +4278,7 @@ var PCMAudioProxy = (function () {
 }());
 exports.default = PCMAudioProxy;
 
-},{"../../../../tools/pool/Pool":19,"./messages":45,"microevent.ts":4,"tslib":6}],43:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":19,"./messages":47,"microevent.ts":4,"tslib":6}],45:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4104,7 +4359,7 @@ var VideoProxy = (function () {
 }());
 exports.default = VideoProxy;
 
-},{"./messages":45,"microevent.ts":4,"tslib":6}],44:[function(require,module,exports){
+},{"./messages":47,"microevent.ts":4,"tslib":6}],46:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4173,7 +4428,7 @@ var WaveformAudioProxy = (function () {
 }());
 exports.default = WaveformAudioProxy;
 
-},{"../../../../machine/stella/tia/ToneGenerator":15,"./messages":45,"microevent.ts":4,"tslib":6}],45:[function(require,module,exports){
+},{"../../../../machine/stella/tia/ToneGenerator":15,"./messages":47,"microevent.ts":4,"tslib":6}],47:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {

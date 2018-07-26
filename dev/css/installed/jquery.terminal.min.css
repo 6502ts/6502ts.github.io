@@ -4,7 +4,7 @@
  *  __ / // // // // // _  // _// // / / // _  // _//     // //  \/ // _ \/ /
  * /  / // // // // // ___// / / // / / // ___// / / / / // // /\  // // / /__
  * \___//____ \\___//____//_/ _\_  / /_//____//_/ /_/ /_//_//_/ /_/ \__\_\___/
- *           \/              /____/                              version 1.14.0
+ *           \/              /____/                              version 1.19.1
  * http://terminal.jcubic.pl
  *
  * This file is part of jQuery Terminal.
@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2018 Jakub Jankiewicz <http://jcubic.pl>
  * Released under the MIT license
  *
- * Date: Sat, 24 Mar 2018 16:04:13 +0000
+ * Date: Mon, 23 Jul 2018 16:39:28 +0000
  */
 .terminal .terminal-output .format, .cmd .format,
 .cmd .prompt, .cmd .prompt div, .terminal .terminal-output div div{
@@ -69,26 +69,28 @@
     overflow-y: auto;
     /* overflow-x: hidden; */
 }
-.terminal, .cmd {
+.terminal {
     contain: content;
 }
 body.terminal {
-    height: 100%;
     min-height: 100vh;
+    height: 100%;
+}
+body.terminal {
     margin: 0;
 }
 .terminal > div {
-    overflow: hidden;
+    min-height: 100%;
 }
-.terminal > .resizer, .terminal > .font .resizer{
+.terminal > .resizer, .terminal > .font .resizer {
     position: absolute;
-    left: 0;
     top: 0;
     right: 0;
     bottom: 0;
+    left: 0;
     overflow: hidden;
+    pointer-events: none;
     z-index: -1;
-    visibility: hidden;
     height: 100%;
     border: none;
     padding: 0;
@@ -97,9 +99,7 @@ body.terminal {
 .cmd {
     padding: 0;
     position: relative;
-    /*margin-top: 3px; */
     float: left;
-    padding-bottom: 3px;
 }
 .terminal a[tabindex="1000"],
 .terminal a[tabindex="1000"]:active,
@@ -165,9 +165,9 @@ terminal .terminal-output > div {
 }
 .terminal .font {
     position: absolute;
+    float: left;
     font-size: inherit;
-    width: 1em;
-    height: 1em;
+    line-height: inherit;
     top: -100%;
     left: 0;
     margin-bottom: 1px;
@@ -244,6 +244,7 @@ terminal .terminal-output > div {
 }
 .terminal .terminal-output div.error, .terminal .terminal-output div.error div {
     color: red;
+    color: var(--error-color, red);
 }
 .tilda {
     position: fixed;
@@ -281,7 +282,7 @@ terminal .terminal-output > div {
     height: 100%;
     margin: 1px 0 0;
     border: none;
-    opacity: 0;
+    opacity: 0.01;
     pointer-events: none;
     box-sizing: border-box;
 }
@@ -452,10 +453,6 @@ terminal .terminal-output > div {
     .terminal, .cmd {
         color: var(--color, #aaa);
         background-color: var(--background, #000);
-    }
-    .terminal .font {
-        width: calc(var(--size, 1) * 1em);
-        height: calc(var(--size, 1) * 1em);
     }
     .terminal span[style*="--length"] {
         /*
@@ -694,4 +691,16 @@ terminal .terminal-output > div {
         background-color: rgba(170, 170, 170, 0.99);
         color: #000;
     }
+}
+.terminal .token.operator,
+.terminal .token.entity,
+.terminal .token.url,
+.terminal .token.string,
+.terminal .style .token.string,
+.cmd .token.operator,
+.cmd .token.entity,
+.cmd .token.url,
+.cmd .token.string,
+.cmd .style .token.string{
+    background: inherit;
 }
