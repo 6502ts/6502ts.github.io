@@ -95329,7 +95329,7 @@ function CartridgeListUnstyled(props) {
 })(CartridgeListUnstyled || (CartridgeListUnstyled = {}));
 var ListStyled = style_1.styled.ul(templateObject_1 || (templateObject_1 = tslib_1.__makeTemplateObject(["\n    list-style: none;\n    padding: 0;\n"], ["\n    list-style: none;\n    padding: 0;\n"])));
 var ListItemStyled = style_1.styled.li(templateObject_2 || (templateObject_2 = tslib_1.__makeTemplateObject(["\n    cursor: pointer;\n    list-style: none;\n    padding-left: 0.3rem;\n    padding-right: 0.3rem;\n\n    &:nth-child(odd) {\n        background-color: #444;\n    }\n\n    &.selected {\n        color: black;\n        background: #bbb;\n    }\n"], ["\n    cursor: pointer;\n    list-style: none;\n    padding-left: 0.3rem;\n    padding-right: 0.3rem;\n\n    &:nth-child(odd) {\n        background-color: #444;\n    }\n\n    &.selected {\n        color: black;\n        background: #bbb;\n    }\n"])));
-var CartridgeListStyled = style_1.styled(CartridgeListUnstyled)(templateObject_3 || (templateObject_3 = tslib_1.__makeTemplateObject(["\n    height: 24rem;\n    overflow-y: auto;\n    margin-bottom: 1.5rem;\n"], ["\n    height: 24rem;\n    overflow-y: auto;\n    margin-bottom: 1.5rem;\n"])));
+var CartridgeListStyled = style_1.styled(CartridgeListUnstyled)(templateObject_3 || (templateObject_3 = tslib_1.__makeTemplateObject(["\n    height: 26rem;\n    overflow-y: auto;\n    margin-bottom: 1.5rem;\n"], ["\n    height: 26rem;\n    overflow-y: auto;\n    margin-bottom: 1.5rem;\n"])));
 exports.default = CartridgeListStyled;
 var templateObject_1, templateObject_2, templateObject_3;
 
@@ -96409,7 +96409,7 @@ var Main_1 = require("./containers/Main");
 var Routing_1 = require("./Routing");
 function initEnv(store) {
     var BUILD_ID_KEY = 'build-id';
-    var buildId = "a9e2fe", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
+    var buildId = "8236fe", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
     localStorage.setItem(BUILD_ID_KEY, buildId);
     store.dispatch(environment_1.initialize({
         helppageUrl: "doc/stellerator.md",
