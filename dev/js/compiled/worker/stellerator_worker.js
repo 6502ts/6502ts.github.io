@@ -1366,7 +1366,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // The following constants are related to IEEE 754 limits.
 //
-var global = this,
+
+// Detect the global object, even if operating in strict mode.
+// http://stackoverflow.com/a/14387057/265298
+var global = (0, eval)('this'),
     width = 256,        // each RC4 output is 0 <= x < 256
     chunks = 6,         // at least six RC4 outputs for each double
     digits = 52,        // there are 52 significant digits in a double
@@ -2391,16 +2394,11 @@ exports.default = BoardInterface;
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction_1 = require("./Instruction");
 var CpuInterface_1 = require("./CpuInterface");
-function restoreFlagsFromStack(state, bus) {
-    state.s = (state.s + 0x01) & 0xff;
-    state.flags = (bus.read(0x0100 + state.s) | 32) & ~16;
+var ops = require("./ops");
+function opBoot(state, bus) {
+    state.p = bus.readWord(0xfffc);
 }
-function setFlagsNZ(state, operand) {
-    state.flags =
-        (state.flags & ~(128 | 2)) |
-            (operand & 0x80) |
-            (operand ? 0 : 2);
-}
+exports.opBoot = opBoot;
 function dispatchInterrupt(state, bus, vector) {
     var nextOpAddr = state.p;
     if (state.nmi) {
@@ -2419,414 +2417,13 @@ function dispatchInterrupt(state, bus, vector) {
 function opIrq(state, bus) {
     dispatchInterrupt(state, bus, 0xfffe);
 }
+exports.opIrq = opIrq;
 function opNmi(state, bus) {
     dispatchInterrupt(state, bus, 0xfffa);
 }
-function opBoot(state, bus) {
-    state.p = bus.readWord(0xfffc);
-}
-function opAdc(state, bus, operand) {
-    if (state.flags & 8) {
-        var d0 = (operand & 0x0f) + (state.a & 0x0f) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
-        state.a = (d0 % 10) | ((d1 % 10) << 4);
-        state.flags =
-            (state.flags & ~(128 | 2 | 1)) |
-                (state.a & 0x80) |
-                (state.a ? 0 : 2) |
-                (d1 > 9 ? 1 : 0);
-    }
-    else {
-        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
-        state.flags =
-            (state.flags &
-                ~(128 | 2 | 1 | 64)) |
-                (result & 0x80) |
-                (result ? 0 : 2) |
-                (sum >>> 8) |
-                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
-        state.a = result;
-    }
-}
-function opAnd(state, bus, operand) {
-    state.a &= operand;
-    setFlagsNZ(state, state.a);
-}
-function opAslAcc(state) {
-    var old = state.a;
-    state.a = (state.a << 1) & 0xff;
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (old >>> 7);
-}
-function opAslMem(state, bus, operand) {
-    var old = bus.read(operand), value = (old << 1) & 0xff;
-    bus.write(operand, value);
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (value & 0x80) |
-            (value ? 0 : 2) |
-            (old >>> 7);
-}
-function opBit(state, bus, operand) {
-    state.flags =
-        (state.flags & ~(128 | 64 | 2)) |
-            (operand & (128 | 64)) |
-            (operand & state.a ? 0 : 2);
-}
-function opBrk(state, bus) {
-    var nextOpAddr = (state.p + 1) & 0xffff;
-    var vector = 0xfffe;
-    if (state.nmi) {
-        vector = 0xfffa;
-        state.nmi = false;
-    }
-    state.nmi = state.irq = false;
-    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xff);
-    state.s = (state.s + 0xff) & 0xff;
-    bus.write(state.s + 0x0100, nextOpAddr & 0xff);
-    state.s = (state.s + 0xff) & 0xff;
-    bus.write(state.s + 0x0100, state.flags | 16);
-    state.s = (state.s + 0xff) & 0xff;
-    state.flags |= 4;
-    state.p = bus.readWord(vector);
-}
-function opClc(state) {
-    state.flags &= ~1;
-}
-function opCld(state) {
-    state.flags &= ~8;
-}
-function opCli(state) {
-    state.flags &= ~4;
-}
-function opClv(state) {
-    state.flags &= ~64;
-}
-function opCmp(state, bus, operand) {
-    var diff = state.a + (~operand & 0xff) + 1;
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (diff & 0x80) |
-            (diff & 0xff ? 0 : 2) |
-            (diff >>> 8);
-}
-function opCpx(state, bus, operand) {
-    var diff = state.x + (~operand & 0xff) + 1;
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (diff & 0x80) |
-            (diff & 0xff ? 0 : 2) |
-            (diff >>> 8);
-}
-function opCpy(state, bus, operand) {
-    var diff = state.y + (~operand & 0xff) + 1;
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (diff & 0x80) |
-            (diff & 0xff ? 0 : 2) |
-            (diff >>> 8);
-}
-function opDec(state, bus, operand) {
-    var value = (bus.read(operand) + 0xff) & 0xff;
-    bus.write(operand, value);
-    setFlagsNZ(state, value);
-}
-function opDex(state) {
-    state.x = (state.x + 0xff) & 0xff;
-    setFlagsNZ(state, state.x);
-}
-function opEor(state, bus, operand) {
-    state.a = state.a ^ operand;
-    setFlagsNZ(state, state.a);
-}
-function opDey(state) {
-    state.y = (state.y + 0xff) & 0xff;
-    setFlagsNZ(state, state.y);
-}
-function opInc(state, bus, operand) {
-    var value = (bus.read(operand) + 1) & 0xff;
-    bus.write(operand, value);
-    setFlagsNZ(state, value);
-}
-function opInx(state) {
-    state.x = (state.x + 0x01) & 0xff;
-    setFlagsNZ(state, state.x);
-}
-function opIny(state) {
-    state.y = (state.y + 0x01) & 0xff;
-    setFlagsNZ(state, state.y);
-}
-function opJmp(state, bus, operand) {
-    state.p = operand;
-}
-function opJsr(state, bus, operand) {
-    var returnPtr = (state.p + 1) & 0xffff, addrLo = bus.read(state.p);
-    bus.read(0x0100 + state.s);
-    bus.write(0x0100 + state.s, returnPtr >>> 8);
-    state.s = (state.s + 0xff) & 0xff;
-    bus.write(0x0100 + state.s, returnPtr & 0xff);
-    state.s = (state.s + 0xff) & 0xff;
-    state.p = addrLo | (bus.read((state.p + 1) & 0xffff) << 8);
-}
-function opLda(state, bus, operand, addressingMode) {
-    state.a = addressingMode === 1 ? operand : bus.read(operand);
-    setFlagsNZ(state, state.a);
-}
-function opLdx(state, bus, operand, addressingMode) {
-    state.x = addressingMode === 1 ? operand : bus.read(operand);
-    setFlagsNZ(state, state.x);
-}
-function opLdy(state, bus, operand, addressingMode) {
-    state.y = addressingMode === 1 ? operand : bus.read(operand);
-    setFlagsNZ(state, state.y);
-}
-function opLsrAcc(state) {
-    var old = state.a;
-    state.a = state.a >>> 1;
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (old & 1);
-}
-function opLsrMem(state, bus, operand) {
-    var old = bus.read(operand), value = old >>> 1;
-    bus.write(operand, value);
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (value & 0x80) |
-            (value ? 0 : 2) |
-            (old & 1);
-}
-function opNop() { }
-function opOra(state, bus, operand) {
-    state.a |= operand;
-    setFlagsNZ(state, state.a);
-}
-function opPhp(state, bus) {
-    bus.write(0x0100 + state.s, state.flags | 16);
-    state.s = (state.s + 0xff) & 0xff;
-}
-function opPlp(state, bus) {
-    restoreFlagsFromStack(state, bus);
-}
-function opPha(state, bus) {
-    bus.write(0x0100 + state.s, state.a);
-    state.s = (state.s + 0xff) & 0xff;
-}
-function opPla(state, bus) {
-    state.s = (state.s + 0x01) & 0xff;
-    state.a = bus.read(0x0100 + state.s);
-    setFlagsNZ(state, state.a);
-}
-function opRolAcc(state) {
-    var old = state.a;
-    state.a = ((state.a << 1) & 0xff) | (state.flags & 1);
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (old >>> 7);
-}
-function opRolMem(state, bus, operand) {
-    var old = bus.read(operand), value = ((old << 1) & 0xff) | (state.flags & 1);
-    bus.write(operand, value);
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (value & 0x80) |
-            (value ? 0 : 2) |
-            (old >>> 7);
-}
-function opRorAcc(state) {
-    var old = state.a;
-    state.a = (state.a >>> 1) | ((state.flags & 1) << 7);
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (old & 1);
-}
-function opRorMem(state, bus, operand) {
-    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
-    bus.write(operand, value);
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (value & 0x80) |
-            (value ? 0 : 2) |
-            (old & 1);
-}
-function opRti(state, bus) {
-    var returnPtr;
-    restoreFlagsFromStack(state, bus);
-    state.s = (state.s + 1) & 0xff;
-    returnPtr = bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xff;
-    returnPtr |= bus.read(0x0100 + state.s) << 8;
-    state.p = returnPtr;
-}
-function opRts(state, bus) {
-    var returnPtr;
-    bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xff;
-    returnPtr = bus.read(0x0100 + state.s);
-    state.s = (state.s + 1) & 0xff;
-    returnPtr += bus.read(0x0100 + state.s) << 8;
-    state.p = (returnPtr + 1) & 0xffff;
-}
-function opSbc(state, bus, operand) {
-    if (state.flags & 8) {
-        var d0 = (state.a & 0x0f) - (operand & 0x0f) - (~state.flags & 1), d1 = (state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0);
-        state.a = (d0 < 0 ? 10 + d0 : d0) | ((d1 < 0 ? 10 + d1 : d1) << 4);
-        state.flags =
-            (state.flags & ~(128 | 2 | 1)) |
-                (state.a & 0x80) |
-                (state.a ? 0 : 2) |
-                (d1 < 0 ? 0 : 1);
-    }
-    else {
-        operand = ~operand & 0xff;
-        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
-        state.flags =
-            (state.flags &
-                ~(128 | 2 | 1 | 64)) |
-                (result & 0x80) |
-                (result ? 0 : 2) |
-                (sum >>> 8) |
-                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
-        state.a = result;
-    }
-}
-function opSec(state) {
-    state.flags |= 1;
-}
-function opSed(state) {
-    state.flags |= 8;
-}
-function opSei(state) {
-    state.flags |= 4;
-}
-function opSta(state, bus, operand) {
-    bus.write(operand, state.a);
-}
-function opStx(state, bus, operand) {
-    bus.write(operand, state.x);
-}
-function opSty(state, bus, operand) {
-    bus.write(operand, state.y);
-}
-function opTax(state) {
-    state.x = state.a;
-    setFlagsNZ(state, state.a);
-}
-function opTay(state) {
-    state.y = state.a;
-    setFlagsNZ(state, state.a);
-}
-function opTsx(state) {
-    state.x = state.s;
-    setFlagsNZ(state, state.x);
-}
-function opTxa(state) {
-    state.a = state.x;
-    setFlagsNZ(state, state.a);
-}
-function opTxs(state) {
-    state.s = state.x;
-}
-function opTya(state) {
-    state.a = state.y;
-    setFlagsNZ(state, state.a);
-}
-function opAlr(state, bus, operand) {
-    var i = state.a & operand;
-    state.a = i >>> 1;
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (state.a & 0x80) |
-            (state.a ? 0 : 2) |
-            (i & 1);
-}
-function opAxs(state, bus, operand) {
-    var value = (state.a & state.x) + (~operand & 0xff) + 1;
-    state.x = value & 0xff;
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (state.x & 0x80) |
-            (state.x & 0xff ? 0 : 2) |
-            (value >>> 8);
-}
-function opDcp(state, bus, operand) {
-    var value = (bus.read(operand) + 0xff) & 0xff;
-    bus.write(operand, value);
-    var diff = state.a + (~value & 0xff) + 1;
-    state.flags =
-        (state.flags & ~(128 | 2 | 1)) |
-            (diff & 0x80) |
-            (diff & 0xff ? 0 : 2) |
-            (diff >>> 8);
-}
-function opLax(state, bus, operand) {
-    state.a = operand;
-    state.x = operand;
-    setFlagsNZ(state, operand);
-}
-function opArr(state, bus, operand) {
-    state.a = ((state.a & operand) >>> 1) | (state.flags & 1 ? 0x80 : 0);
-    state.flags =
-        (state.flags & ~(1 | 128 | 2 | 64)) |
-            ((state.a & 0x40) >>> 6) |
-            (state.a ? 0 : 2) |
-            (state.a & 0x80) |
-            ((state.a & 0x40) ^ ((state.a & 0x20) << 1));
-}
-function opSlo(state, bus, operand) {
-    var value = bus.read(operand);
-    state.flags = (state.flags & ~1) | (value >>> 7);
-    value = value << 1;
-    bus.write(operand, value);
-    state.a = state.a | value;
-    setFlagsNZ(state, state.a);
-}
-function opAax(state, bus, operand) {
-    var value = state.x & state.a;
-    bus.write(operand, value);
-    setFlagsNZ(state, value);
-}
-function opLar(state, bus, operand) {
-    state.s = state.a = state.x = state.s & operand;
-    setFlagsNZ(state, state.a);
-}
-function opIsc(state, bus, operand) {
-    var value = (bus.read(operand) + 1) & 0xff;
-    bus.write(operand, value);
-    opSbc(state, bus, value);
-}
-function opAac(state, bus, operand) {
-    state.a &= operand;
-    setFlagsNZ(state, state.a);
-    state.flags = (state.flags & ~1) | ((state.a & 0x80) >>> 7);
-}
-function opAtx(state, bus, operand) {
-    state.a &= operand;
-    state.x = state.a;
-    setFlagsNZ(state, state.a);
-}
-function opRra(state, bus, operand) {
-    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
-    bus.write(operand, value);
-    state.flags = (state.flags & ~1) | (old & 1);
-    opAdc(state, bus, value);
-}
-function opRla(state, bus, operand) {
-    var old = bus.read(operand), value = ((old << 1) & 0xff) | (state.flags & 1);
-    bus.write(operand, value);
-    state.flags = (state.flags & ~1) | (old >>> 7);
-    opAnd(state, bus, value);
-}
-var Cpu = (function () {
-    function Cpu(_bus, _rng) {
+exports.opNmi = opNmi;
+var BatchedAccessCpu = (function () {
+    function BatchedAccessCpu(_bus, _rng) {
         this._bus = _bus;
         this._rng = _rng;
         this.executionState = 0;
@@ -2844,39 +2441,39 @@ var Cpu = (function () {
         this._dereference = false;
         this.reset();
     }
-    Cpu.prototype.setInterrupt = function (irq) {
+    BatchedAccessCpu.prototype.setInterrupt = function (irq) {
         this._interruptPending = irq;
         return this;
     };
-    Cpu.prototype.isInterrupt = function () {
+    BatchedAccessCpu.prototype.isInterrupt = function () {
         return this._interruptPending;
     };
-    Cpu.prototype.nmi = function () {
+    BatchedAccessCpu.prototype.nmi = function () {
         this._nmiPending = true;
         return this;
     };
-    Cpu.prototype.halt = function () {
+    BatchedAccessCpu.prototype.halt = function () {
         this._halted = true;
         return this;
     };
-    Cpu.prototype.resume = function () {
+    BatchedAccessCpu.prototype.resume = function () {
         this._halted = false;
         return this;
     };
-    Cpu.prototype.isHalt = function () {
+    BatchedAccessCpu.prototype.isHalt = function () {
         return this._halted;
     };
-    Cpu.prototype.setInvalidInstructionCallback = function (callback) {
+    BatchedAccessCpu.prototype.setInvalidInstructionCallback = function (callback) {
         this._invalidInstructionCallback = callback;
         return this;
     };
-    Cpu.prototype.getInvalidInstructionCallback = function () {
+    BatchedAccessCpu.prototype.getInvalidInstructionCallback = function () {
         return this._invalidInstructionCallback;
     };
-    Cpu.prototype.getLastInstructionPointer = function () {
+    BatchedAccessCpu.prototype.getLastInstructionPointer = function () {
         return this._lastInstructionPointer;
     };
-    Cpu.prototype.reset = function () {
+    BatchedAccessCpu.prototype.reset = function () {
         this.state.a = this._rng ? this._rng.int(0xff) : 0;
         this.state.x = this._rng ? this._rng.int(0xff) : 0;
         this.state.y = this._rng ? this._rng.int(0xff) : 0;
@@ -2893,7 +2490,7 @@ var Cpu = (function () {
         this._instructionCallback = opBoot;
         return this;
     };
-    Cpu.prototype.cycle = function () {
+    BatchedAccessCpu.prototype.cycle = function () {
         if (this._halted) {
             return this;
         }
@@ -2936,7 +2533,7 @@ var Cpu = (function () {
         }
         return this;
     };
-    Cpu.prototype._fetch = function () {
+    BatchedAccessCpu.prototype._fetch = function () {
         var instruction = Instruction_1.default.opcodes[this._bus.read(this.state.p)];
         var addressingMode = instruction.addressingMode, dereference = false, slowIndexedAccess = false;
         this._lastInstructionPointer = this.state.p;
@@ -2945,74 +2542,74 @@ var Cpu = (function () {
         switch (instruction.operation) {
             case 0:
                 this._opCycles = 0;
-                this._instructionCallback = opAdc;
+                this._instructionCallback = ops.opAdc;
                 dereference = true;
                 break;
             case 1:
                 this._opCycles = 0;
-                this._instructionCallback = opAnd;
+                this._instructionCallback = ops.opAnd;
                 dereference = true;
                 break;
             case 2:
                 if (addressingMode === 0) {
                     this._opCycles = 1;
-                    this._instructionCallback = opAslAcc;
+                    this._instructionCallback = ops.opAslAcc;
                 }
                 else {
                     this._opCycles = 3;
-                    this._instructionCallback = opAslMem;
+                    this._instructionCallback = ops.opAslMem;
                     slowIndexedAccess = true;
                 }
                 break;
             case 3:
                 if (this.state.flags & 1) {
                     addressingMode = 0;
-                    this._instructionCallback = opNop;
+                    this._instructionCallback = ops.opNop;
                     this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
-                    this._instructionCallback = opJmp;
+                    this._instructionCallback = ops.opJmp;
                     this._opCycles = 0;
                 }
                 break;
             case 4:
                 if (this.state.flags & 1) {
-                    this._instructionCallback = opJmp;
+                    this._instructionCallback = ops.opJmp;
                     this._opCycles = 0;
                 }
                 else {
                     addressingMode = 0;
-                    this._instructionCallback = opNop;
+                    this._instructionCallback = ops.opNop;
                     this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
             case 5:
                 if (this.state.flags & 2) {
-                    this._instructionCallback = opJmp;
+                    this._instructionCallback = ops.opJmp;
                     this._opCycles = 0;
                 }
                 else {
                     addressingMode = 0;
-                    this._instructionCallback = opNop;
+                    this._instructionCallback = ops.opNop;
                     this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
             case 6:
                 this._opCycles = 0;
-                this._instructionCallback = opBit;
+                this._instructionCallback = ops.opBit;
                 dereference = true;
                 break;
             case 7:
                 if (this.state.flags & 128) {
-                    this._instructionCallback = opJmp;
+                    this._instructionCallback = ops.opJmp;
                     this._opCycles = 0;
                 }
                 else {
                     addressingMode = 0;
-                    this._instructionCallback = opNop;
+                    this._instructionCallback = ops.opNop;
                     this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
@@ -3020,328 +2617,330 @@ var Cpu = (function () {
             case 8:
                 if (this.state.flags & 2) {
                     addressingMode = 0;
-                    this._instructionCallback = opNop;
+                    this._instructionCallback = ops.opNop;
                     this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
-                    this._instructionCallback = opJmp;
+                    this._instructionCallback = ops.opJmp;
                     this._opCycles = 0;
                 }
                 break;
             case 9:
                 if (this.state.flags & 128) {
                     addressingMode = 0;
-                    this._instructionCallback = opNop;
+                    this._instructionCallback = ops.opNop;
                     this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
-                    this._instructionCallback = opJmp;
+                    this._instructionCallback = ops.opJmp;
                     this._opCycles = 0;
                 }
                 break;
             case 11:
                 if (this.state.flags & 64) {
                     addressingMode = 0;
-                    this._instructionCallback = opNop;
+                    this._instructionCallback = ops.opNop;
                     this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 else {
-                    this._instructionCallback = opJmp;
+                    this._instructionCallback = ops.opJmp;
                     this._opCycles = 0;
                 }
                 break;
             case 12:
                 if (this.state.flags & 64) {
-                    this._instructionCallback = opJmp;
+                    this._instructionCallback = ops.opJmp;
                     this._opCycles = 0;
                 }
                 else {
                     addressingMode = 0;
-                    this._instructionCallback = opNop;
+                    this._instructionCallback = ops.opNop;
                     this.state.p = (this.state.p + 1) & 0xffff;
                     this._opCycles = 1;
                 }
                 break;
             case 10:
                 this._opCycles = 6;
-                this._instructionCallback = opBrk;
+                this._instructionCallback = ops.opBrk;
                 this._interuptCheck = 1;
                 break;
             case 13:
                 this._opCycles = 1;
-                this._instructionCallback = opClc;
+                this._instructionCallback = ops.opClc;
                 break;
             case 14:
                 this._opCycles = 1;
-                this._instructionCallback = opCld;
+                this._instructionCallback = ops.opCld;
                 break;
             case 15:
                 this._opCycles = 1;
-                this._instructionCallback = opCli;
+                this._instructionCallback = ops.opCli;
                 this._interuptCheck = 1;
                 break;
             case 16:
                 this._opCycles = 1;
-                this._instructionCallback = opClv;
+                this._instructionCallback = ops.opClv;
                 break;
             case 17:
                 this._opCycles = 0;
-                this._instructionCallback = opCmp;
+                this._instructionCallback = ops.opCmp;
                 dereference = true;
                 break;
             case 18:
                 this._opCycles = 0;
-                this._instructionCallback = opCpx;
+                this._instructionCallback = ops.opCpx;
                 dereference = true;
                 break;
             case 19:
                 this._opCycles = 0;
-                this._instructionCallback = opCpy;
+                this._instructionCallback = ops.opCpy;
                 dereference = true;
                 break;
             case 20:
                 this._opCycles = 3;
-                this._instructionCallback = opDec;
+                this._instructionCallback = ops.opDec;
                 slowIndexedAccess = true;
                 break;
             case 21:
                 this._opCycles = 1;
-                this._instructionCallback = opDex;
+                this._instructionCallback = ops.opDex;
                 break;
             case 22:
                 this._opCycles = 1;
-                this._instructionCallback = opDey;
+                this._instructionCallback = ops.opDey;
                 break;
             case 23:
                 this._opCycles = 0;
-                this._instructionCallback = opEor;
+                this._instructionCallback = ops.opEor;
                 dereference = true;
                 break;
             case 24:
                 this._opCycles = 3;
-                this._instructionCallback = opInc;
+                this._instructionCallback = ops.opInc;
                 slowIndexedAccess = true;
                 break;
             case 25:
                 this._opCycles = 1;
-                this._instructionCallback = opInx;
+                this._instructionCallback = ops.opInx;
                 break;
             case 26:
                 this._opCycles = 1;
-                this._instructionCallback = opIny;
+                this._instructionCallback = ops.opIny;
                 break;
             case 27:
                 this._opCycles = 0;
-                this._instructionCallback = opJmp;
+                this._instructionCallback = ops.opJmp;
                 break;
             case 28:
                 this._opCycles = 5;
-                this._instructionCallback = opJsr;
+                this._instructionCallback = ops.opJsr;
                 break;
             case 29:
                 this._opCycles = addressingMode === 1 ? 0 : 1;
-                this._instructionCallback = opLda;
+                this._instructionCallback = ops.opLda;
                 break;
             case 30:
                 this._opCycles = addressingMode === 1 ? 0 : 1;
-                this._instructionCallback = opLdx;
+                this._instructionCallback = ops.opLdx;
                 break;
             case 31:
                 this._opCycles = addressingMode === 1 ? 0 : 1;
-                this._instructionCallback = opLdy;
+                this._instructionCallback = ops.opLdy;
                 break;
             case 32:
                 if (addressingMode === 0) {
                     this._opCycles = 1;
-                    this._instructionCallback = opLsrAcc;
+                    this._instructionCallback = ops.opLsrAcc;
                 }
                 else {
                     this._opCycles = 3;
-                    this._instructionCallback = opLsrMem;
+                    this._instructionCallback = ops.opLsrMem;
                     slowIndexedAccess = true;
                 }
                 break;
             case 33:
                 this._opCycles = 1;
-                this._instructionCallback = opNop;
+                this._instructionCallback = ops.opNop;
                 break;
             case 56:
             case 57:
                 this._opCycles = 0;
                 dereference = true;
-                this._instructionCallback = opNop;
+                this._instructionCallback = ops.opNop;
                 break;
             case 34:
                 this._opCycles = 0;
-                this._instructionCallback = opOra;
+                this._instructionCallback = ops.opOra;
                 dereference = true;
                 break;
             case 36:
                 this._opCycles = 2;
-                this._instructionCallback = opPhp;
+                this._instructionCallback = ops.opPhp;
                 break;
             case 35:
                 this._opCycles = 2;
-                this._instructionCallback = opPha;
+                this._instructionCallback = ops.opPha;
                 break;
             case 37:
                 this._opCycles = 3;
-                this._instructionCallback = opPla;
+                this._instructionCallback = ops.opPla;
                 break;
             case 38:
                 this._opCycles = 3;
-                this._instructionCallback = opPlp;
+                this._instructionCallback = ops.opPlp;
                 this._interuptCheck = 1;
                 break;
             case 39:
                 if (addressingMode === 0) {
                     this._opCycles = 1;
-                    this._instructionCallback = opRolAcc;
+                    this._instructionCallback = ops.opRolAcc;
                 }
                 else {
                     this._opCycles = 3;
-                    this._instructionCallback = opRolMem;
+                    this._instructionCallback = ops.opRolMem;
                     slowIndexedAccess = true;
                 }
                 break;
             case 40:
                 if (addressingMode === 0) {
                     this._opCycles = 1;
-                    this._instructionCallback = opRorAcc;
+                    this._instructionCallback = ops.opRorAcc;
                 }
                 else {
                     this._opCycles = 3;
-                    this._instructionCallback = opRorMem;
+                    this._instructionCallback = ops.opRorMem;
                     slowIndexedAccess = true;
                 }
                 break;
             case 41:
                 this._opCycles = 5;
-                this._instructionCallback = opRti;
+                this._instructionCallback = ops.opRti;
                 break;
             case 42:
                 this._opCycles = 5;
-                this._instructionCallback = opRts;
+                this._instructionCallback = ops.opRts;
                 break;
             case 43:
                 this._opCycles = 0;
-                this._instructionCallback = opSbc;
+                this._instructionCallback = ops.opSbc;
                 dereference = true;
                 break;
             case 44:
                 this._opCycles = 1;
-                this._instructionCallback = opSec;
+                this._instructionCallback = ops.opSec;
                 break;
             case 45:
                 this._opCycles = 1;
-                this._instructionCallback = opSed;
+                this._instructionCallback = ops.opSed;
                 break;
             case 46:
                 this._opCycles = 1;
-                this._instructionCallback = opSei;
+                this._instructionCallback = ops.opSei;
                 this._interuptCheck = 1;
                 break;
             case 47:
                 this._opCycles = 1;
-                this._instructionCallback = opSta;
+                this._instructionCallback = ops.opSta;
                 slowIndexedAccess = true;
                 break;
             case 48:
                 this._opCycles = 1;
-                this._instructionCallback = opStx;
+                this._instructionCallback = ops.opStx;
                 slowIndexedAccess = true;
                 break;
             case 49:
                 this._opCycles = 1;
-                this._instructionCallback = opSty;
+                this._instructionCallback = ops.opSty;
                 slowIndexedAccess = true;
                 break;
             case 50:
                 this._opCycles = 1;
-                this._instructionCallback = opTax;
+                this._instructionCallback = ops.opTax;
                 break;
             case 51:
                 this._opCycles = 1;
-                this._instructionCallback = opTay;
+                this._instructionCallback = ops.opTay;
                 break;
             case 52:
                 this._opCycles = 1;
-                this._instructionCallback = opTsx;
+                this._instructionCallback = ops.opTsx;
                 break;
             case 53:
                 this._opCycles = 1;
-                this._instructionCallback = opTxa;
+                this._instructionCallback = ops.opTxa;
                 break;
             case 54:
                 this._opCycles = 1;
-                this._instructionCallback = opTxs;
+                this._instructionCallback = ops.opTxs;
                 break;
             case 55:
                 this._opCycles = 1;
-                this._instructionCallback = opTya;
+                this._instructionCallback = ops.opTya;
                 break;
             case 62:
                 this._opCycles = 0;
-                this._instructionCallback = opArr;
+                this._instructionCallback = ops.opArr;
                 break;
             case 58:
                 this._opCycles = 0;
-                this._instructionCallback = opAlr;
+                this._instructionCallback = ops.opAlr;
                 break;
             case 59:
                 this._opCycles = 0;
-                this._instructionCallback = opAxs;
+                this._instructionCallback = ops.opAxs;
                 break;
             case 60:
                 this._opCycles = 3;
-                this._instructionCallback = opDcp;
+                this._instructionCallback = ops.opDcp;
                 slowIndexedAccess = true;
                 break;
             case 61:
                 this._opCycles = 0;
-                this._instructionCallback = opLax;
+                this._instructionCallback = ops.opLax;
                 dereference = true;
                 break;
             case 63:
-                this._opCycles = 2;
-                this._instructionCallback = opSlo;
+                this._opCycles = 3;
+                this._instructionCallback = ops.opSlo;
                 slowIndexedAccess = true;
+                dereference = false;
                 break;
             case 64:
                 this._opCycles = 1;
-                this._instructionCallback = opAax;
+                this._instructionCallback = ops.opAax;
                 break;
             case 65:
                 this._opCycles = 0;
-                this._instructionCallback = opLar;
+                this._instructionCallback = ops.opLar;
                 dereference = true;
                 break;
             case 66:
                 this._opCycles = 3;
-                this._instructionCallback = opIsc;
+                this._instructionCallback = ops.opIsc;
+                slowIndexedAccess = true;
                 break;
             case 67:
                 this._opCycles = 0;
-                this._instructionCallback = opAac;
+                this._instructionCallback = ops.opAac;
                 break;
             case 68:
                 this._opCycles = 0;
-                this._instructionCallback = opAtx;
+                this._instructionCallback = ops.opAtx;
                 break;
             case 69:
                 this._opCycles = 3;
                 dereference = false;
                 slowIndexedAccess = true;
-                this._instructionCallback = opRra;
+                this._instructionCallback = ops.opRra;
                 break;
             case 70:
                 this._opCycles = 3;
                 dereference = false;
                 slowIndexedAccess = true;
-                this._instructionCallback = opRla;
+                this._instructionCallback = ops.opRla;
                 break;
             default:
                 if (this._invalidInstructionCallback) {
@@ -3453,7 +3052,7 @@ var Cpu = (function () {
         }
         this.executionState = 2;
     };
-    Cpu.prototype._checkForInterrupts = function () {
+    BatchedAccessCpu.prototype._checkForInterrupts = function () {
         if (this._nmiPending) {
             this.state.irq = false;
             this.state.nmi = true;
@@ -3463,11 +3062,11 @@ var Cpu = (function () {
             this.state.irq = true;
         }
     };
-    return Cpu;
+    return BatchedAccessCpu;
 }());
-exports.default = Cpu;
+exports.default = BatchedAccessCpu;
 
-},{"./CpuInterface":25,"./Instruction":26}],25:[function(require,module,exports){
+},{"./CpuInterface":25,"./Instruction":27,"./ops":29}],25:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CpuInterface;
@@ -3490,6 +3089,36 @@ var CpuInterface;
 exports.default = CpuInterface;
 
 },{}],26:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var StateMachineCpu_1 = require("./StateMachineCpu");
+var BatchedAccessCpu_1 = require("./BatchedAccessCpu");
+var Factory = (function () {
+    function Factory(_type) {
+        this._type = _type;
+    }
+    Factory.prototype.create = function (bus, rng) {
+        switch (this._type) {
+            case Factory.Type.stateMachine:
+                return new StateMachineCpu_1.default(bus, rng);
+            case Factory.Type.batchedAccess:
+                return new BatchedAccessCpu_1.default(bus, rng);
+            default:
+                throw new Error('invalid CPU type');
+        }
+    };
+    return Factory;
+}());
+(function (Factory) {
+    var Type;
+    (function (Type) {
+        Type[Type["stateMachine"] = 0] = "stateMachine";
+        Type[Type["batchedAccess"] = 1] = "batchedAccess";
+    })(Type = Factory.Type || (Factory.Type = {}));
+})(Factory || (Factory = {}));
+exports.default = Factory;
+
+},{"./BatchedAccessCpu":24,"./StateMachineCpu":28}],27:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Instruction = (function () {
@@ -3848,7 +3477,2378 @@ exports.default = Instruction;
 })(Instruction || (Instruction = {}));
 exports.default = Instruction;
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var CpuInterface_1 = require("./CpuInterface");
+var vector_1 = require("./statemachine/vector");
+var Compiler_1 = require("./statemachine/Compiler");
+var StateMachineCpu = (function () {
+    function StateMachineCpu(_bus, _rng) {
+        this._bus = _bus;
+        this._rng = _rng;
+        this.executionState = 0;
+        this.state = new CpuInterface_1.default.State();
+        this._invalidInstructionCallback = null;
+        this._interruptPending = false;
+        this._nmiPending = false;
+        this._halt = false;
+        this._pollInterruptsAfterLastInstruction = false;
+        this._lastInstructionPointer = 0;
+        this._operations = new Array(255);
+        this._opBoot = vector_1.boot(this.state);
+        this._opIrq = vector_1.irq(this.state);
+        this._opNmi = vector_1.nmi(this.state);
+        var compiler = new Compiler_1.default(this.state);
+        for (var op = 0; op < 256; op++) {
+            this._operations[op] = compiler.compile(op);
+        }
+        this.reset();
+    }
+    StateMachineCpu.prototype.reset = function () {
+        this.state.a = this._rng ? this._rng.int(0xff) : 0;
+        this.state.x = this._rng ? this._rng.int(0xff) : 0;
+        this.state.y = this._rng ? this._rng.int(0xff) : 0;
+        this.state.s = 0xfd;
+        this.state.p = this._rng ? this._rng.int(0xffff) : 0;
+        this.state.flags =
+            (this._rng ? this._rng.int(0xff) : 0) | 4 | 32 | 16;
+        this.state.irq = false;
+        this.state.nmi = false;
+        this.executionState = 0;
+        this._interruptPending = false;
+        this._nmiPending = false;
+        this._halt = false;
+        this._lastResult = this._opBoot.reset(undefined);
+        this._lastInstructionPointer = 0;
+        return this;
+    };
+    StateMachineCpu.prototype.setInterrupt = function (i) {
+        this._interruptPending = i;
+        return this;
+    };
+    StateMachineCpu.prototype.isInterrupt = function () {
+        return this._interruptPending;
+    };
+    StateMachineCpu.prototype.nmi = function () {
+        this._nmiPending = true;
+        return this;
+    };
+    StateMachineCpu.prototype.halt = function () {
+        this._halt = true;
+        return this;
+    };
+    StateMachineCpu.prototype.resume = function () {
+        this._halt = false;
+        return this;
+    };
+    StateMachineCpu.prototype.isHalt = function () {
+        return this._halt;
+    };
+    StateMachineCpu.prototype.setInvalidInstructionCallback = function (callback) {
+        this._invalidInstructionCallback = callback;
+        return this;
+    };
+    StateMachineCpu.prototype.getInvalidInstructionCallback = function () {
+        return this._invalidInstructionCallback;
+    };
+    StateMachineCpu.prototype.getLastInstructionPointer = function () {
+        return this._lastInstructionPointer;
+    };
+    StateMachineCpu.prototype.cycle = function () {
+        if (this._halt && (!this._lastResult || this._lastResult.cycleType === 0)) {
+            return this;
+        }
+        if (this.executionState === 1) {
+            this._fetch();
+            return this;
+        }
+        var value;
+        switch (this._lastResult.cycleType) {
+            case 0:
+                value = this._bus.read(this._lastResult.address);
+                break;
+            case 1:
+                value = this._lastResult.value;
+                this._bus.write(this._lastResult.address, value);
+                break;
+            default:
+                throw new Error('invalid cycle type');
+        }
+        if (this._lastResult.pollInterrupts) {
+            this._pollInterrupts();
+            this._lastResult.pollInterrupts = false;
+            this._pollInterruptsAfterLastInstruction = false;
+        }
+        this._lastResult = this._lastResult.nextStep(value);
+        if (this._lastResult === null) {
+            this.executionState = 1;
+        }
+        return this;
+    };
+    StateMachineCpu.prototype._fetch = function () {
+        if (this._pollInterruptsAfterLastInstruction) {
+            this._pollInterrupts();
+        }
+        this._lastInstructionPointer = this.state.p;
+        var operation;
+        var opcode = this._bus.read(this.state.p);
+        if (this.state.nmi) {
+            operation = this._opNmi;
+            this._pollInterruptsAfterLastInstruction = false;
+        }
+        else if (this.state.irq) {
+            operation = this._opIrq;
+            this._pollInterruptsAfterLastInstruction = false;
+        }
+        else {
+            operation = this._operations[opcode];
+            this.state.p = (this.state.p + 1) & 0xffff;
+            this._pollInterruptsAfterLastInstruction = true;
+        }
+        if (!operation) {
+            if (this._invalidInstructionCallback) {
+                this._invalidInstructionCallback(this);
+            }
+            return;
+        }
+        this.executionState = 2;
+        this._lastResult = operation.reset(undefined);
+    };
+    StateMachineCpu.prototype._pollInterrupts = function () {
+        this.state.irq = false;
+        if (this._nmiPending) {
+            this.state.nmi = true;
+            this._nmiPending = false;
+            return;
+        }
+        if (this._interruptPending && !this.state.nmi && !(this.state.flags & 4)) {
+            this.state.irq = true;
+        }
+    };
+    return StateMachineCpu;
+}());
+exports.default = StateMachineCpu;
+
+},{"./CpuInterface":25,"./statemachine/Compiler":30,"./statemachine/vector":54}],29:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function restoreFlagsFromStack(state, bus) {
+    state.s = (state.s + 0x01) & 0xff;
+    state.flags = (bus.read(0x0100 + state.s) | 32) & ~16;
+}
+function setFlagsNZ(state, operand) {
+    state.flags =
+        (state.flags & ~(128 | 2)) |
+            (operand & 0x80) |
+            (operand ? 0 : 2);
+}
+function opAdc(state, bus, operand) {
+    if (state.flags & 8) {
+        var d0 = (operand & 0x0f) + (state.a & 0x0f) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
+        state.a = d0 % 10 | (d1 % 10 << 4);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 > 9 ? 1 : 0);
+    }
+    else {
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
+        state.flags =
+            (state.flags &
+                ~(128 | 2 | 1 | 64)) |
+                (result & 0x80) |
+                (result ? 0 : 2) |
+                (sum >>> 8) |
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
+        state.a = result;
+    }
+}
+exports.opAdc = opAdc;
+function opAnd(state, bus, operand) {
+    state.a &= operand;
+    setFlagsNZ(state, state.a);
+}
+exports.opAnd = opAnd;
+function opAslAcc(state) {
+    var old = state.a;
+    state.a = (state.a << 1) & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
+}
+exports.opAslAcc = opAslAcc;
+function opAslMem(state, bus, operand) {
+    var old = bus.read(operand), value = (old << 1) & 0xff;
+    bus.write(operand, value);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old >>> 7);
+}
+exports.opAslMem = opAslMem;
+function opBit(state, bus, operand) {
+    state.flags =
+        (state.flags & ~(128 | 64 | 2)) |
+            (operand & (128 | 64)) |
+            (operand & state.a ? 0 : 2);
+}
+exports.opBit = opBit;
+function opBrk(state, bus) {
+    var nextOpAddr = (state.p + 1) & 0xffff;
+    var vector = 0xfffe;
+    if (state.nmi) {
+        vector = 0xfffa;
+        state.nmi = false;
+    }
+    state.nmi = state.irq = false;
+    bus.write(state.s + 0x0100, (nextOpAddr >>> 8) & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, nextOpAddr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(state.s + 0x0100, state.flags | 16);
+    state.s = (state.s + 0xff) & 0xff;
+    state.flags |= 4;
+    state.p = bus.readWord(vector);
+}
+exports.opBrk = opBrk;
+function opClc(state) {
+    state.flags &= ~1;
+}
+exports.opClc = opClc;
+function opCld(state) {
+    state.flags &= ~8;
+}
+exports.opCld = opCld;
+function opCli(state) {
+    state.flags &= ~4;
+}
+exports.opCli = opCli;
+function opClv(state) {
+    state.flags &= ~64;
+}
+exports.opClv = opClv;
+function opCmp(state, bus, operand) {
+    var diff = state.a + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
+}
+exports.opCmp = opCmp;
+function opCpx(state, bus, operand) {
+    var diff = state.x + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
+}
+exports.opCpx = opCpx;
+function opCpy(state, bus, operand) {
+    var diff = state.y + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
+}
+exports.opCpy = opCpy;
+function opDec(state, bus, operand) {
+    var value = (bus.read(operand) + 0xff) & 0xff;
+    bus.write(operand, value);
+    setFlagsNZ(state, value);
+}
+exports.opDec = opDec;
+function opDex(state) {
+    state.x = (state.x + 0xff) & 0xff;
+    setFlagsNZ(state, state.x);
+}
+exports.opDex = opDex;
+function opEor(state, bus, operand) {
+    state.a = state.a ^ operand;
+    setFlagsNZ(state, state.a);
+}
+exports.opEor = opEor;
+function opDey(state) {
+    state.y = (state.y + 0xff) & 0xff;
+    setFlagsNZ(state, state.y);
+}
+exports.opDey = opDey;
+function opInc(state, bus, operand) {
+    var value = (bus.read(operand) + 1) & 0xff;
+    bus.write(operand, value);
+    setFlagsNZ(state, value);
+}
+exports.opInc = opInc;
+function opInx(state) {
+    state.x = (state.x + 0x01) & 0xff;
+    setFlagsNZ(state, state.x);
+}
+exports.opInx = opInx;
+function opIny(state) {
+    state.y = (state.y + 0x01) & 0xff;
+    setFlagsNZ(state, state.y);
+}
+exports.opIny = opIny;
+function opJmp(state, bus, operand) {
+    state.p = operand;
+}
+exports.opJmp = opJmp;
+function opJsr(state, bus, operand) {
+    var returnPtr = (state.p + 1) & 0xffff, addrLo = bus.read(state.p);
+    bus.read(0x0100 + state.s);
+    bus.write(0x0100 + state.s, returnPtr >>> 8);
+    state.s = (state.s + 0xff) & 0xff;
+    bus.write(0x0100 + state.s, returnPtr & 0xff);
+    state.s = (state.s + 0xff) & 0xff;
+    state.p = addrLo | (bus.read((state.p + 1) & 0xffff) << 8);
+}
+exports.opJsr = opJsr;
+function opLda(state, bus, operand, addressingMode) {
+    state.a = addressingMode === 1 ? operand : bus.read(operand);
+    setFlagsNZ(state, state.a);
+}
+exports.opLda = opLda;
+function opLdx(state, bus, operand, addressingMode) {
+    state.x = addressingMode === 1 ? operand : bus.read(operand);
+    setFlagsNZ(state, state.x);
+}
+exports.opLdx = opLdx;
+function opLdy(state, bus, operand, addressingMode) {
+    state.y = addressingMode === 1 ? operand : bus.read(operand);
+    setFlagsNZ(state, state.y);
+}
+exports.opLdy = opLdy;
+function opLsrAcc(state) {
+    var old = state.a;
+    state.a = state.a >>> 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
+}
+exports.opLsrAcc = opLsrAcc;
+function opLsrMem(state, bus, operand) {
+    var old = bus.read(operand), value = old >>> 1;
+    bus.write(operand, value);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old & 1);
+}
+exports.opLsrMem = opLsrMem;
+function opNop() { }
+exports.opNop = opNop;
+function opOra(state, bus, operand) {
+    state.a |= operand;
+    setFlagsNZ(state, state.a);
+}
+exports.opOra = opOra;
+function opPhp(state, bus) {
+    bus.write(0x0100 + state.s, state.flags | 16);
+    state.s = (state.s + 0xff) & 0xff;
+}
+exports.opPhp = opPhp;
+function opPlp(state, bus) {
+    restoreFlagsFromStack(state, bus);
+}
+exports.opPlp = opPlp;
+function opPha(state, bus) {
+    bus.write(0x0100 + state.s, state.a);
+    state.s = (state.s + 0xff) & 0xff;
+}
+exports.opPha = opPha;
+function opPla(state, bus) {
+    state.s = (state.s + 0x01) & 0xff;
+    state.a = bus.read(0x0100 + state.s);
+    setFlagsNZ(state, state.a);
+}
+exports.opPla = opPla;
+function opRolAcc(state) {
+    var old = state.a;
+    state.a = ((state.a << 1) & 0xff) | (state.flags & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
+}
+exports.opRolAcc = opRolAcc;
+function opRolMem(state, bus, operand) {
+    var old = bus.read(operand), value = ((old << 1) & 0xff) | (state.flags & 1);
+    bus.write(operand, value);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old >>> 7);
+}
+exports.opRolMem = opRolMem;
+function opRorAcc(state) {
+    var old = state.a;
+    state.a = (state.a >>> 1) | ((state.flags & 1) << 7);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
+}
+exports.opRorAcc = opRorAcc;
+function opRorMem(state, bus, operand) {
+    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
+    bus.write(operand, value);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (value & 0x80) |
+            (value ? 0 : 2) |
+            (old & 1);
+}
+exports.opRorMem = opRorMem;
+function opRti(state, bus) {
+    var returnPtr;
+    restoreFlagsFromStack(state, bus);
+    state.s = (state.s + 1) & 0xff;
+    returnPtr = bus.read(0x0100 + state.s);
+    state.s = (state.s + 1) & 0xff;
+    returnPtr |= bus.read(0x0100 + state.s) << 8;
+    state.p = returnPtr;
+}
+exports.opRti = opRti;
+function opRts(state, bus) {
+    var returnPtr;
+    bus.read(0x0100 + state.s);
+    state.s = (state.s + 1) & 0xff;
+    returnPtr = bus.read(0x0100 + state.s);
+    state.s = (state.s + 1) & 0xff;
+    returnPtr += bus.read(0x0100 + state.s) << 8;
+    state.p = (returnPtr + 1) & 0xffff;
+}
+exports.opRts = opRts;
+function opSbc(state, bus, operand) {
+    if (state.flags & 8) {
+        var d0 = (state.a & 0x0f) - (operand & 0x0f) - (~state.flags & 1), d1 = (state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0);
+        state.a = (d0 < 0 ? 10 + d0 : d0) | ((d1 < 0 ? 10 + d1 : d1) << 4);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 < 0 ? 0 : 1);
+    }
+    else {
+        operand = ~operand & 0xff;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
+        state.flags =
+            (state.flags &
+                ~(128 | 2 | 1 | 64)) |
+                (result & 0x80) |
+                (result ? 0 : 2) |
+                (sum >>> 8) |
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
+        state.a = result;
+    }
+}
+exports.opSbc = opSbc;
+function opSec(state) {
+    state.flags |= 1;
+}
+exports.opSec = opSec;
+function opSed(state) {
+    state.flags |= 8;
+}
+exports.opSed = opSed;
+function opSei(state) {
+    state.flags |= 4;
+}
+exports.opSei = opSei;
+function opSta(state, bus, operand) {
+    bus.write(operand, state.a);
+}
+exports.opSta = opSta;
+function opStx(state, bus, operand) {
+    bus.write(operand, state.x);
+}
+exports.opStx = opStx;
+function opSty(state, bus, operand) {
+    bus.write(operand, state.y);
+}
+exports.opSty = opSty;
+function opTax(state) {
+    state.x = state.a;
+    setFlagsNZ(state, state.a);
+}
+exports.opTax = opTax;
+function opTay(state) {
+    state.y = state.a;
+    setFlagsNZ(state, state.a);
+}
+exports.opTay = opTay;
+function opTsx(state) {
+    state.x = state.s;
+    setFlagsNZ(state, state.x);
+}
+exports.opTsx = opTsx;
+function opTxa(state) {
+    state.a = state.x;
+    setFlagsNZ(state, state.a);
+}
+exports.opTxa = opTxa;
+function opTxs(state) {
+    state.s = state.x;
+}
+exports.opTxs = opTxs;
+function opTya(state) {
+    state.a = state.y;
+    setFlagsNZ(state, state.a);
+}
+exports.opTya = opTya;
+function opAlr(state, bus, operand) {
+    var i = state.a & operand;
+    state.a = i >>> 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (i & 1);
+}
+exports.opAlr = opAlr;
+function opAxs(state, bus, operand) {
+    var value = (state.a & state.x) + (~operand & 0xff) + 1;
+    state.x = value & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.x & 0x80) |
+            (state.x & 0xff ? 0 : 2) |
+            (value >>> 8);
+}
+exports.opAxs = opAxs;
+function opDcp(state, bus, operand) {
+    var value = (bus.read(operand) + 0xff) & 0xff;
+    bus.write(operand, value);
+    var diff = state.a + (~value & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
+}
+exports.opDcp = opDcp;
+function opLax(state, bus, operand) {
+    state.a = operand;
+    state.x = operand;
+    setFlagsNZ(state, operand);
+}
+exports.opLax = opLax;
+function opArr(state, bus, operand) {
+    state.a = ((state.a & operand) >>> 1) | (state.flags & 1 ? 0x80 : 0);
+    state.flags =
+        (state.flags & ~(1 | 128 | 2 | 64)) |
+            ((state.a & 0x40) >>> 6) |
+            (state.a ? 0 : 2) |
+            (state.a & 0x80) |
+            ((state.a & 0x40) ^ ((state.a & 0x20) << 1));
+}
+exports.opArr = opArr;
+function opSlo(state, bus, operand) {
+    var value = bus.read(operand);
+    state.flags = (state.flags & ~1) | (value >>> 7);
+    value = (value << 1) & 0xff;
+    bus.write(operand, value);
+    state.a = state.a | value;
+    setFlagsNZ(state, state.a);
+}
+exports.opSlo = opSlo;
+function opAax(state, bus, operand) {
+    var value = state.x & state.a;
+    bus.write(operand, value);
+    setFlagsNZ(state, value);
+}
+exports.opAax = opAax;
+function opLar(state, bus, operand) {
+    state.s = state.a = state.x = state.s & operand;
+    setFlagsNZ(state, state.a);
+}
+exports.opLar = opLar;
+function opIsc(state, bus, operand) {
+    var value = (bus.read(operand) + 1) & 0xff;
+    bus.write(operand, value);
+    opSbc(state, bus, value);
+}
+exports.opIsc = opIsc;
+function opAac(state, bus, operand) {
+    state.a &= operand;
+    setFlagsNZ(state, state.a);
+    state.flags = (state.flags & ~1) | ((state.a & 0x80) >>> 7);
+}
+exports.opAac = opAac;
+function opAtx(state, bus, operand) {
+    state.a &= operand;
+    state.x = state.a;
+    setFlagsNZ(state, state.a);
+}
+exports.opAtx = opAtx;
+function opRra(state, bus, operand) {
+    var old = bus.read(operand), value = (old >>> 1) | ((state.flags & 1) << 7);
+    bus.write(operand, value);
+    state.flags = (state.flags & ~1) | (old & 1);
+    opAdc(state, bus, value);
+}
+exports.opRra = opRra;
+function opRla(state, bus, operand) {
+    var old = bus.read(operand), value = ((old << 1) & 0xff) | (state.flags & 1);
+    bus.write(operand, value);
+    state.flags = (state.flags & ~1) | (old >>> 7);
+    opAnd(state, bus, value);
+}
+exports.opRla = opRla;
+
+},{}],30:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var Instruction_1 = require("../Instruction");
+var addressing_1 = require("./addressing");
+var instruction_1 = require("./instruction");
+var ops = require("./ops");
+var indirect_1 = require("./addressing/indirect");
+var vector_1 = require("./vector");
+var Compiler = (function () {
+    function Compiler(_state) {
+        this._state = _state;
+    }
+    Compiler.prototype.compile = function (op) {
+        var instruction = Instruction_1.default.opcodes[op];
+        switch (instruction.operation) {
+            case 0:
+                return this._createAddressing(instruction.addressingMode, ops.adc, {
+                    deref: true
+                });
+            case 1:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ops.genUnary(o, s, function (operand, state) { return (state.a = state.a & operand); }); }, {
+                    deref: true
+                });
+            case 2:
+                return instruction.addressingMode === 0
+                    ? instruction_1.nullaryOneCycle(this._state, ops.aslImmediate)
+                    : this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, ops.aslRmw).reset, { writeOp: true });
+            case 6:
+                return this._createAddressing(instruction.addressingMode, ops.bit, {
+                    deref: true
+                });
+            case 10:
+                return vector_1.brk(this._state);
+            case 17:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return (ops.cmp(o, s, function (state) { return state.a; }), null); }, {
+                    deref: true
+                });
+            case 18:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return (ops.cmp(o, s, function (state) { return state.x; }), null); }, {
+                    deref: true
+                });
+            case 19:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return (ops.cmp(o, s, function (state) { return state.y; }), null); }, {
+                    deref: true
+                });
+            case 20:
+                return this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, function (s, o) { return ops.genRmw(s, o, function (x) { return (x - 1) & 0xff; }); }).reset, {
+                    writeOp: true
+                });
+            case 21:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return ops.genNullary(s, function (state) { return (state.x = (state.x - 1) & 0xff); }); });
+            case 22:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return ops.genNullary(s, function (state) { return (state.y = (state.y - 1) & 0xff); }); });
+            case 24:
+                return this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, function (s, o) { return ops.genRmw(s, o, function (x) { return (x + 1) & 0xff; }); }).reset, {
+                    writeOp: true
+                });
+            case 25:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return ops.genNullary(s, function (state) { return (state.x = (state.x + 1) & 0xff); }); });
+            case 26:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return ops.genNullary(s, function (state) { return (state.y = (state.y + 1) & 0xff); }); });
+            case 23:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ops.genUnary(o, s, function (operand, state) { return (state.a = state.a ^ operand); }); }, {
+                    deref: true
+                });
+            case 27:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ((s.p = o), null); });
+            case 28:
+                return instruction_1.jsr(this._state);
+            case 29:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ops.genUnary(o, s, function (operand, state) { return (state.a = operand); }); }, {
+                    deref: true
+                });
+            case 30:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ops.genUnary(o, s, function (operand, state) { return (state.x = operand); }); }, {
+                    deref: true
+                });
+            case 31:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ops.genUnary(o, s, function (operand, state) { return (state.y = operand); }); }, {
+                    deref: true
+                });
+            case 32:
+                return instruction.addressingMode === 0
+                    ? instruction_1.nullaryOneCycle(this._state, ops.lsrImmediate)
+                    : this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, ops.lsrRmw).reset, { writeOp: true });
+            case 33:
+                return instruction_1.nullaryOneCycle(this._state, function () { return undefined; });
+            case 34:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ops.genUnary(o, s, function (operand, state) { return (state.a |= operand); }); }, { deref: true });
+            case 35:
+                return instruction_1.push(this._state, function (s) { return s.a; });
+            case 36:
+                return instruction_1.push(this._state, function (s) { return s.flags | 16; });
+            case 37:
+                return instruction_1.pull(this._state, function (s, o) { return ops.genNullary(s, function (state) { return (state.a = o); }); });
+            case 38:
+                return instruction_1.pull(this._state, function (s, o) { return (s.flags = (o | 32) & ~16); });
+            case 39:
+                return instruction.addressingMode === 0
+                    ? instruction_1.nullaryOneCycle(this._state, ops.rolImmediate)
+                    : this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, ops.rolRmw).reset, { writeOp: true });
+            case 40:
+                return instruction.addressingMode === 0
+                    ? instruction_1.nullaryOneCycle(this._state, ops.rorImmediate)
+                    : this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, ops.rorRmw).reset, { writeOp: true });
+            case 41:
+                return instruction_1.rti(this._state);
+            case 42:
+                return instruction_1.rts(this._state);
+            case 43:
+                return this._createAddressing(instruction.addressingMode, ops.sbc, {
+                    deref: true
+                });
+            case 48:
+                return this._createAddressing(instruction.addressingMode, instruction_1.write(this._state, function (s) { return s.x; }).reset, {
+                    writeOp: true
+                });
+            case 49:
+                return this._createAddressing(instruction.addressingMode, instruction_1.write(this._state, function (s) { return s.y; }).reset, {
+                    writeOp: true
+                });
+            case 50:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return ops.genNullary(s, function (state) { return (state.x = state.a); }); });
+            case 51:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return ops.genNullary(s, function (state) { return (state.y = state.a); }); });
+            case 52:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return ops.genNullary(s, function (state) { return (state.x = state.s); }); });
+            case 53:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return ops.genNullary(s, function (state) { return (state.a = state.x); }); });
+            case 54:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return (s.s = s.x); });
+            case 55:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return ops.genNullary(s, function (state) { return (state.a = state.y); }); });
+            case 3:
+                return instruction_1.branch(this._state, function (flags) { return (flags & 1) === 0; });
+            case 4:
+                return instruction_1.branch(this._state, function (flags) { return (flags & 1) > 0; });
+            case 8:
+                return instruction_1.branch(this._state, function (flags) { return (flags & 2) === 0; });
+            case 5:
+                return instruction_1.branch(this._state, function (flags) { return (flags & 2) > 0; });
+            case 9:
+                return instruction_1.branch(this._state, function (flags) { return (flags & 128) === 0; });
+            case 7:
+                return instruction_1.branch(this._state, function (flags) { return (flags & 128) > 0; });
+            case 11:
+                return instruction_1.branch(this._state, function (flags) { return (flags & 64) === 0; });
+            case 12:
+                return instruction_1.branch(this._state, function (flags) { return (flags & 64) > 0; });
+            case 44:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return (s.flags |= 1); });
+            case 45:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return (s.flags |= 8); });
+            case 46:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return (s.flags |= 4); });
+            case 47:
+                return this._createAddressing(instruction.addressingMode, instruction_1.write(this._state, function (s) { return s.a; }).reset, {
+                    writeOp: true
+                });
+            case 13:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return (s.flags &= ~1); });
+            case 14:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return (s.flags &= ~8); });
+            case 15:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return (s.flags &= ~4); });
+            case 16:
+                return instruction_1.nullaryOneCycle(this._state, function (s) { return (s.flags &= ~64); });
+            case 56:
+            case 57:
+                return this._createAddressing(instruction.addressingMode, function () { return null; }, { deref: true });
+            case 67:
+                return this._createAddressing(instruction.addressingMode, ops.aac);
+            case 64:
+                return this._createAddressing(instruction.addressingMode, instruction_1.write(this._state, ops.aax).reset, {
+                    writeOp: true
+                });
+            case 58:
+                return this._createAddressing(instruction.addressingMode, ops.alr, {
+                    deref: true
+                });
+            case 62:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return (ops.arr(o, s), null); }, {
+                    deref: true
+                });
+            case 59:
+                return this._createAddressing(instruction.addressingMode, ops.axs, {
+                    deref: true
+                });
+            case 68:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ops.genUnary(o, s, function (operand, state) { return (state.x = state.a = state.a & operand); }); }, {
+                    deref: true
+                });
+            case 60:
+                return this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, ops.dcp).reset, {
+                    writeOp: true
+                });
+            case 66:
+                return this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, ops.isc).reset, {
+                    writeOp: true
+                });
+            case 61:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ops.genUnary(o, s, function (operand, state) { return (state.a = state.x = operand); }); }, {
+                    deref: true
+                });
+            case 65:
+                return this._createAddressing(instruction.addressingMode, function (o, s) { return ops.genUnary(o, s, function (operand, state) { return (state.s = state.x = state.a = state.s & operand); }); }, { deref: true });
+            case 70:
+                return this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, ops.rla).reset, {
+                    writeOp: true
+                });
+            case 69:
+                return this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, ops.rra).reset, {
+                    writeOp: true
+                });
+            case 63:
+                return this._createAddressing(instruction.addressingMode, instruction_1.readModifyWrite(this._state, ops.slo).reset, {
+                    writeOp: true
+                });
+            default:
+                return null;
+        }
+    };
+    Compiler.prototype._createAddressing = function (addressingMode, next, _a) {
+        var _b = _a === void 0 ? {} : _a, _c = _b.deref, deref = _c === void 0 ? false : _c, _d = _b.writeOp, writeOp = _d === void 0 ? false : _d;
+        if (deref && addressingMode !== 1) {
+            next = addressing_1.dereference(this._state, next).reset;
+        }
+        switch (addressingMode) {
+            case 1:
+                return addressing_1.immediate(this._state, next);
+            case 2:
+                return addressing_1.zeroPage(this._state, next);
+            case 3:
+                return addressing_1.absolute(this._state, next);
+            case 6:
+                return addressing_1.zeroPageX(this._state, next);
+            case 9:
+                return addressing_1.zeroPageY(this._state, next);
+            case 7:
+                return addressing_1.absoluteX(this._state, next, writeOp);
+            case 10:
+                return addressing_1.absoluteY(this._state, next, writeOp);
+            case 8:
+                return addressing_1.indexedIndirectX(this._state, next);
+            case 11:
+                return addressing_1.indirectIndexedY(this._state, next, writeOp);
+            case 4:
+                return indirect_1.indirect(this._state, next);
+            default:
+                throw new Error("invalid addressing mode " + addressingMode);
+        }
+    };
+    return Compiler;
+}());
+exports.default = Compiler;
+
+},{"../Instruction":27,"./addressing":36,"./addressing/indirect":38,"./instruction":43,"./ops":52,"./vector":54}],31:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var ResultImpl = (function () {
+    function ResultImpl() {
+        this.cycleType = 0;
+        this.address = 0;
+        this.value = 0;
+        this.pollInterrupts = false;
+        this.nextStep = null;
+    }
+    ResultImpl.prototype.read = function (nextStep, address) {
+        this.cycleType = 0;
+        this.address = address;
+        this.nextStep = nextStep;
+        return this;
+    };
+    ResultImpl.prototype.write = function (nextStep, address, value) {
+        this.cycleType = 1;
+        this.address = address;
+        this.value = value;
+        this.nextStep = nextStep;
+        return this;
+    };
+    ResultImpl.prototype.poll = function (poll) {
+        this.pollInterrupts = poll;
+        return this;
+    };
+    return ResultImpl;
+}());
+exports.default = ResultImpl;
+
+},{}],32:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Absolute = (function () {
+    function Absolute(state, next) {
+        if (next === void 0) { next = function () { return null; }; }
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchLo, _this._state.p); };
+        this._fetchLo = function (value) {
+            _this._operand = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._result.read(_this._fetchHi, _this._state.p);
+        };
+        this._fetchHi = function (value) {
+            _this._operand |= value << 8;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._next(_this._operand, _this._state);
+        };
+        this._operand = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._next = next;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Absolute.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Absolute.prototype, "_fetchLo", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Absolute.prototype, "_fetchHi", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Absolute.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Absolute.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Absolute.prototype, "_next", void 0);
+    return Absolute;
+}());
+exports.absolute = function (state, next) { return new Absolute(state, next); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],33:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var AbsoluteIndexed = (function () {
+    function AbsoluteIndexed(state, indexExtractor, next, writeOp) {
+        if (next === void 0) { next = function () { return null; }; }
+        if (writeOp === void 0) { writeOp = false; }
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchLo, _this._state.p); };
+        this._fetchLo = function (value) {
+            _this._operand = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._result.read(_this._fetchHi, _this._state.p);
+        };
+        this._fetchHi = function (value) {
+            _this._operand |= value << 8;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            var index = _this._indexExtractor(_this._state);
+            _this._carry = (_this._operand & 0xff) + index > 0xff;
+            _this._operand = (_this._operand & 0xff00) | ((_this._operand + index) & 0xff);
+            return _this._carry || _this._writeOp
+                ? _this._result.read(_this._dereferenceAndCarry, _this._operand)
+                : _this._next(_this._operand, _this._state);
+        };
+        this._dereferenceAndCarry = function (value) {
+            if (_this._carry) {
+                _this._operand = (_this._operand + 0x0100) & 0xffff;
+            }
+            return _this._next(_this._operand, _this._state);
+        };
+        this._operand = 0;
+        this._carry = false;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._indexExtractor = indexExtractor;
+        this._next = next;
+        this._writeOp = writeOp;
+        decorators_1.freezeImmutables(this);
+    }
+    AbsoluteIndexed.absoluteX = function (state, next, writeOp) {
+        return new AbsoluteIndexed(state, function (s) { return s.x; }, next, writeOp);
+    };
+    AbsoluteIndexed.absoluteY = function (state, next, writeOp) {
+        return new AbsoluteIndexed(state, function (s) { return s.y; }, next, writeOp);
+    };
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed.prototype, "_fetchLo", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed.prototype, "_fetchHi", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed.prototype, "_dereferenceAndCarry", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed.prototype, "_indexExtractor", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed.prototype, "_next", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed.prototype, "_writeOp", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed, "absoluteX", null);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], AbsoluteIndexed, "absoluteY", null);
+    return AbsoluteIndexed;
+}());
+exports.absoluteX = function (state, next, writeOp) {
+    return AbsoluteIndexed.absoluteX(state, next, writeOp);
+};
+exports.absoluteY = function (state, next, writeOp) {
+    return AbsoluteIndexed.absoluteY(state, next, writeOp);
+};
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],34:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Dereference = (function () {
+    function Dereference(state, next) {
+        if (next === void 0) { next = function () { return null; }; }
+        var _this = this;
+        this.reset = function (operand) { return _this._result.read(_this._dereference, operand); };
+        this._dereference = function (value) { return _this._next(value, _this._state); };
+        this._result = new ResultImpl_1.default();
+        this._next = next;
+        this._state = state;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Dereference.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Dereference.prototype, "_dereference", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Dereference.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Dereference.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Dereference.prototype, "_next", void 0);
+    return Dereference;
+}());
+exports.dereference = function (state, next) { return new Dereference(state, next); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],35:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Immediate = (function () {
+    function Immediate(state, next) {
+        if (next === void 0) { next = function () { return null; }; }
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchOperand, _this._state.p); };
+        this._fetchOperand = function (value) {
+            _this._operand = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._next(_this._operand, _this._state);
+        };
+        this._operand = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._next = next;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Immediate.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Immediate.prototype, "_fetchOperand", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Immediate.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Immediate.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Immediate.prototype, "_next", void 0);
+    return Immediate;
+}());
+exports.immediate = function (state, next) { return new Immediate(state, next); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],36:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var absolute_1 = require("./absolute");
+exports.absolute = absolute_1.absolute;
+var absoluteIndexed_1 = require("./absoluteIndexed");
+exports.absoluteX = absoluteIndexed_1.absoluteX;
+exports.absoluteY = absoluteIndexed_1.absoluteY;
+var dereference_1 = require("./dereference");
+exports.dereference = dereference_1.dereference;
+var immediate_1 = require("./immediate");
+exports.immediate = immediate_1.immediate;
+var indexedIndirectX_1 = require("./indexedIndirectX");
+exports.indexedIndirectX = indexedIndirectX_1.indexedIndirectX;
+var indirectIndexedY_1 = require("./indirectIndexedY");
+exports.indirectIndexedY = indirectIndexedY_1.indirectIndexedY;
+var zeroPage_1 = require("./zeroPage");
+exports.zeroPage = zeroPage_1.zeroPage;
+var zeroPageIndexed_1 = require("./zeroPageIndexed");
+exports.zeroPageX = zeroPageIndexed_1.zeroPageX;
+exports.zeroPageY = zeroPageIndexed_1.zeroPageY;
+
+},{"./absolute":32,"./absoluteIndexed":33,"./dereference":34,"./immediate":35,"./indexedIndirectX":37,"./indirectIndexedY":39,"./zeroPage":40,"./zeroPageIndexed":41}],37:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var IndexedIndirectX = (function () {
+    function IndexedIndirectX(state, next) {
+        if (next === void 0) { next = function () { return null; }; }
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchAddress, _this._state.p); };
+        this._fetchAddress = function (value) {
+            _this._address = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._result.read(_this._addIndex, _this._address);
+        };
+        this._addIndex = function (value) {
+            _this._address = (_this._address + _this._state.x) & 0xff;
+            return _this._result.read(_this._fetchLo, _this._address);
+        };
+        this._fetchLo = function (value) {
+            _this._operand = value;
+            _this._address = (_this._address + 1) & 0xff;
+            return _this._result.read(_this._fetchHi, _this._address);
+        };
+        this._fetchHi = function (value) {
+            _this._operand |= value << 8;
+            return _this._next(_this._operand, _this._state);
+        };
+        this._operand = 0;
+        this._address = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._next = next;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectX.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectX.prototype, "_fetchAddress", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectX.prototype, "_addIndex", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectX.prototype, "_fetchLo", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectX.prototype, "_fetchHi", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectX.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectX.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectX.prototype, "_next", void 0);
+    return IndexedIndirectX;
+}());
+exports.indexedIndirectX = function (state, next) { return new IndexedIndirectX(state, next); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],38:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Indirect = (function () {
+    function Indirect(state, next) {
+        if (next === void 0) { next = function () { return null; }; }
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchAddressLo, _this._state.p); };
+        this._fetchAddressLo = function (value) {
+            _this._address = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._result.read(_this._fetchAddressHi, _this._state.p);
+        };
+        this._fetchAddressHi = function (value) {
+            _this._address |= value << 8;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._result.read(_this._fetchLo, _this._address);
+        };
+        this._fetchLo = function (value) {
+            _this._operand = value;
+            if ((_this._address & 0xff) === 0xff) {
+                _this._address &= 0xff00;
+            }
+            else {
+                _this._address = (_this._address + 1) & 0xffff;
+            }
+            return _this._result.read(_this._fetchHi, _this._address);
+        };
+        this._fetchHi = function (value) {
+            _this._operand |= value << 8;
+            return _this._next(_this._operand, _this._state);
+        };
+        this._operand = 0;
+        this._address = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._next = next;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Indirect.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Indirect.prototype, "_fetchAddressLo", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Indirect.prototype, "_fetchAddressHi", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Indirect.prototype, "_fetchLo", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Indirect.prototype, "_fetchHi", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Indirect.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Indirect.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Indirect.prototype, "_next", void 0);
+    return Indirect;
+}());
+exports.indirect = function (state, next) { return new Indirect(state, next); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],39:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var IndexedIndirectY = (function () {
+    function IndexedIndirectY(state, next, writeOp) {
+        if (next === void 0) { next = function () { return null; }; }
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchAddress, _this._state.p); };
+        this._fetchAddress = function (value) {
+            _this._address = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._result.read(_this._fetchLo, _this._address);
+        };
+        this._fetchLo = function (value) {
+            _this._operand = value;
+            _this._address = (_this._address + 1) & 0xff;
+            return _this._result.read(_this._fetchHi, _this._address);
+        };
+        this._fetchHi = function (value) {
+            _this._operand |= value << 8;
+            _this._carry = (_this._operand & 0xff) + _this._state.y > 0xff;
+            _this._operand = (_this._operand & 0xff00) | ((_this._operand + _this._state.y) & 0xff);
+            return _this._carry || _this._writeOp
+                ? _this._result.read(_this._dereferenceAndCarry, _this._operand)
+                : _this._next(_this._operand, _this._state);
+        };
+        this._dereferenceAndCarry = function (value) {
+            if (_this._carry) {
+                _this._operand = (_this._operand + 0x0100) & 0xffff;
+            }
+            return _this._next(_this._operand, _this._state);
+        };
+        this._operand = 0;
+        this._address = 0;
+        this._carry = false;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._next = next;
+        this._writeOp = writeOp;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectY.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectY.prototype, "_fetchAddress", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectY.prototype, "_fetchLo", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectY.prototype, "_fetchHi", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectY.prototype, "_dereferenceAndCarry", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectY.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectY.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectY.prototype, "_next", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], IndexedIndirectY.prototype, "_writeOp", void 0);
+    return IndexedIndirectY;
+}());
+exports.indirectIndexedY = function (state, next, writeOp) {
+    return new IndexedIndirectY(state, next, writeOp);
+};
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],40:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var ZeroPage = (function () {
+    function ZeroPage(state, next) {
+        if (next === void 0) { next = function () { return null; }; }
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchAddress, _this._state.p); };
+        this._fetchAddress = function (value) {
+            _this._operand = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._next(_this._operand, _this._state);
+        };
+        this._operand = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._next = next;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPage.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPage.prototype, "_fetchAddress", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPage.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPage.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPage.prototype, "_next", void 0);
+    return ZeroPage;
+}());
+exports.zeroPage = function (state, next) { return new ZeroPage(state, next); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],41:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var ZeroPageIndexed = (function () {
+    function ZeroPageIndexed(state, indexExtractor, next) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchAddress, _this._state.p); };
+        this._fetchAddress = function (value) {
+            _this._operand = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._result.read(_this._addIndex, _this._operand);
+        };
+        this._addIndex = function (value) {
+            _this._operand = (_this._operand + _this._indexExtractor(_this._state)) & 0xff;
+            return _this._next(_this._operand, _this._state);
+        };
+        this._operand = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._indexExtractor = indexExtractor;
+        this._next = next;
+        decorators_1.freezeImmutables(this);
+    }
+    ZeroPageIndexed.zeroPageX = function (state, next) {
+        if (next === void 0) { next = function () { return null; }; }
+        return new ZeroPageIndexed(state, function (s) { return s.x; }, next);
+    };
+    ZeroPageIndexed.zeroPageY = function (state, next) {
+        if (next === void 0) { next = function () { return null; }; }
+        return new ZeroPageIndexed(state, function (s) { return s.y; }, next);
+    };
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPageIndexed.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPageIndexed.prototype, "_fetchAddress", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPageIndexed.prototype, "_addIndex", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPageIndexed.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPageIndexed.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPageIndexed.prototype, "_next", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ZeroPageIndexed.prototype, "_indexExtractor", void 0);
+    return ZeroPageIndexed;
+}());
+exports.zeroPageX = function (state, next) { return ZeroPageIndexed.zeroPageX(state, next); };
+exports.zeroPageY = function (state, next) { return ZeroPageIndexed.zeroPageY(state, next); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],42:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Branch = (function () {
+    function Branch(state, predicate) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchTarget, _this._state.p).poll(true); };
+        this._fetchTarget = function (value) {
+            _this._operand = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._predicate(_this._state.flags) ? _this._result.read(_this._firstDummyRead, _this._state.p) : null;
+        };
+        this._firstDummyRead = function (value) {
+            _this._target = (_this._state.p + (_this._operand & 0x80 ? _this._operand - 256 : _this._operand)) & 0xffff;
+            if ((_this._target & 0xff00) === (_this._state.p & 0xff00)) {
+                _this._state.p = _this._target;
+                return null;
+            }
+            return _this._result.read(_this._secondDummyRead, (_this._state.p & 0xff00) | (_this._target & 0x00ff)).poll(true);
+        };
+        this._secondDummyRead = function (value) {
+            _this._state.p = _this._target;
+            return null;
+        };
+        this._target = 0;
+        this._operand = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._predicate = predicate;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Branch.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Branch.prototype, "_fetchTarget", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Branch.prototype, "_firstDummyRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Branch.prototype, "_secondDummyRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Branch.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Branch.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Branch.prototype, "_predicate", void 0);
+    return Branch;
+}());
+exports.branch = function (state, predicate) { return new Branch(state, predicate); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],43:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var branch_1 = require("./branch");
+exports.branch = branch_1.branch;
+var jsr_1 = require("./jsr");
+exports.jsr = jsr_1.jsr;
+var readModifyWrite_1 = require("./readModifyWrite");
+exports.readModifyWrite = readModifyWrite_1.readModifyWrite;
+var rts_1 = require("./rts");
+exports.rts = rts_1.rts;
+var nullaryOneCycle_1 = require("./nullaryOneCycle");
+exports.nullaryOneCycle = nullaryOneCycle_1.nullaryOneCycle;
+var pull_1 = require("./pull");
+exports.pull = pull_1.pull;
+var push_1 = require("./push");
+exports.push = push_1.push;
+var rti_1 = require("./rti");
+exports.rti = rti_1.rti;
+var write_1 = require("./write");
+exports.write = write_1.write;
+
+},{"./branch":42,"./jsr":44,"./nullaryOneCycle":45,"./pull":46,"./push":47,"./readModifyWrite":48,"./rti":49,"./rts":50,"./write":51}],44:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Jsr = (function () {
+    function Jsr(state) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._fetchPcl, _this._state.p); };
+        this._fetchPcl = function (value) {
+            _this._addressLo = value;
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return _this._result.read(_this._dummyStackRead, 0x0100 + _this._state.s);
+        };
+        this._dummyStackRead = function () {
+            return _this._result.write(_this._pushPch, 0x0100 + _this._state.s, _this._state.p >>> 8);
+        };
+        this._pushPch = function () {
+            _this._state.s = (_this._state.s - 1) & 0xff;
+            return _this._result.write(_this._pushPcl, 0x0100 + _this._state.s, _this._state.p & 0xff);
+        };
+        this._pushPcl = function () {
+            _this._state.s = (_this._state.s - 1) & 0xff;
+            return _this._result.read(_this._fetchPch, _this._state.p);
+        };
+        this._fetchPch = function (value) {
+            _this._state.p = _this._addressLo | (value << 8);
+            return null;
+        };
+        this._addressLo = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Jsr.prototype, "_fetchPcl", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Jsr.prototype, "_dummyStackRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Jsr.prototype, "_pushPch", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Jsr.prototype, "_pushPcl", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Jsr.prototype, "_fetchPch", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Jsr.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Jsr.prototype, "_state", void 0);
+    return Jsr;
+}());
+exports.jsr = function (state) { return new Jsr(state); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],45:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var NullaryOneCycle = (function () {
+    function NullaryOneCycle(state, operation) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._executeOperation, _this._state.p).poll(true); };
+        this._executeOperation = function () {
+            _this._operation(_this._state);
+            return null;
+        };
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._operation = operation;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], NullaryOneCycle.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], NullaryOneCycle.prototype, "_executeOperation", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], NullaryOneCycle.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], NullaryOneCycle.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], NullaryOneCycle.prototype, "_operation", void 0);
+    return NullaryOneCycle;
+}());
+exports.nullaryOneCycle = function (state, operation) {
+    return new NullaryOneCycle(state, operation);
+};
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],46:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var decorators_1 = require("../../../../tools/decorators");
+var ResultImpl_1 = require("../ResultImpl");
+var Pull = (function () {
+    function Pull(state, operation) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._dummyRead, _this._state.p).poll(true); };
+        this._dummyRead = function () {
+            return _this._result.read(_this._incrementS, 0x0100 + _this._state.s);
+        };
+        this._incrementS = function () {
+            _this._state.s = (_this._state.s + 1) & 0xff;
+            return _this._result.read(_this._pull, 0x0100 + _this._state.s);
+        };
+        this._pull = function (value) { return (_this._operation(_this._state, value), null); };
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._operation = operation;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Pull.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Pull.prototype, "_dummyRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Pull.prototype, "_incrementS", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Pull.prototype, "_pull", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Pull.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Pull.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Pull.prototype, "_operation", void 0);
+    return Pull;
+}());
+exports.pull = function (state, operation) { return new Pull(state, operation); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],47:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var decorators_1 = require("../../../../tools/decorators");
+var ResultImpl_1 = require("../ResultImpl");
+var Push = (function () {
+    function Push(state, operation) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._dummyRead, _this._state.p); };
+        this._dummyRead = function () {
+            return _this._result.write(_this._push, 0x0100 + _this._state.s, _this._operation(_this._state));
+        };
+        this._push = function () {
+            _this._state.s = (_this._state.s - 1) & 0xff;
+            return null;
+        };
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._operation = operation;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Push.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Push.prototype, "_dummyRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Push.prototype, "_push", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Push.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Push.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Push.prototype, "_operation", void 0);
+    return Push;
+}());
+exports.push = function (state, operation) { return new Push(state, operation); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],48:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var ReadModifyWrite = (function () {
+    function ReadModifyWrite(state, operation) {
+        var _this = this;
+        this.reset = function (address) {
+            _this._address = address;
+            return _this._result.read(_this._read, address);
+        };
+        this._read = function (value) {
+            _this._operand = value;
+            return _this._result.write(_this._dummyWrite, _this._address, _this._operand);
+        };
+        this._dummyWrite = function (value) {
+            return _this._result.write(_this._write, _this._address, _this._operation(_this._operand, _this._state));
+        };
+        this._write = function () { return null; };
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._operation = operation;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ReadModifyWrite.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ReadModifyWrite.prototype, "_read", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ReadModifyWrite.prototype, "_dummyWrite", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ReadModifyWrite.prototype, "_write", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ReadModifyWrite.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ReadModifyWrite.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], ReadModifyWrite.prototype, "_operation", void 0);
+    return ReadModifyWrite;
+}());
+exports.readModifyWrite = function (state, operation) {
+    return new ReadModifyWrite(state, operation);
+};
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],49:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Rti = (function () {
+    function Rti(state) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._dummyOperandRead, _this._state.p); };
+        this._dummyOperandRead = function () {
+            return _this._result.read(_this._dummyStackRead, 0x0100 + _this._state.s);
+        };
+        this._dummyStackRead = function () {
+            _this._state.s = (_this._state.s + 1) & 0xff;
+            return _this._result.read(_this._popP, 0x0100 + _this._state.s);
+        };
+        this._popP = function (value) {
+            _this._state.flags = (value | 32) & ~16;
+            _this._state.s = (_this._state.s + 1) & 0xff;
+            return _this._result.read(_this._popPcl, 0x0100 + _this._state.s);
+        };
+        this._popPcl = function (value) {
+            _this._state.p = (_this._state.p & 0xff00) | value;
+            _this._state.s = (_this._state.s + 1) & 0xff;
+            return _this._result.read(_this._popPch, 0x0100 + _this._state.s);
+        };
+        this._popPch = function (value) {
+            _this._state.p = (_this._state.p & 0xff) | (value << 8);
+            return null;
+        };
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rti.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rti.prototype, "_dummyOperandRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rti.prototype, "_dummyStackRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rti.prototype, "_popP", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rti.prototype, "_popPcl", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rti.prototype, "_popPch", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rti.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rti.prototype, "_state", void 0);
+    return Rti;
+}());
+exports.rti = function (state) { return new Rti(state); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],50:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Rts = (function () {
+    function Rts(state) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._dummyOperandRead, _this._state.p); };
+        this._dummyOperandRead = function () {
+            return _this._result.read(_this._dummyStackRead, 0x0100 + _this._state.s);
+        };
+        this._dummyStackRead = function () {
+            _this._state.s = (_this._state.s + 1) & 0xff;
+            return _this._result.read(_this._popPcl, 0x0100 + _this._state.s);
+        };
+        this._popPcl = function (value) {
+            _this._state.p = (_this._state.p & 0xff00) | value;
+            _this._state.s = (_this._state.s + 1) & 0xff;
+            return _this._result.read(_this._popPch, 0x0100 + _this._state.s);
+        };
+        this._popPch = function (value) {
+            _this._state.p = (_this._state.p & 0xff) | (value << 8);
+            return _this._result.read(_this._incrementP, _this._state.p);
+        };
+        this._incrementP = function () {
+            _this._state.p = (_this._state.p + 1) & 0xffff;
+            return null;
+        };
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rts.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rts.prototype, "_dummyOperandRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rts.prototype, "_dummyStackRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rts.prototype, "_popPcl", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rts.prototype, "_popPch", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rts.prototype, "_incrementP", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rts.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Rts.prototype, "_state", void 0);
+    return Rts;
+}());
+exports.rts = function (state) { return new Rts(state); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],51:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Write = (function () {
+    function Write(state, operation) {
+        var _this = this;
+        this.reset = function (operand) {
+            return _this._result.write(function () { return null; }, operand, _this._operation(_this._state));
+        };
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._operation = operation;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Write.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Write.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Write.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Write.prototype, "_operation", void 0);
+    return Write;
+}());
+exports.write = function (state, operation) { return new Write(state, operation); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],52:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function setFlagsNZ(operand, state) {
+    state.flags =
+        (state.flags & ~(128 | 2)) |
+            (operand & 0x80) |
+            (operand ? 0 : 2);
+}
+function genRmw(operand, state, operation) {
+    var result = operation(operand);
+    setFlagsNZ(result, state);
+    return result;
+}
+exports.genRmw = genRmw;
+function genNullary(state, operation) {
+    setFlagsNZ(operation(state), state);
+}
+exports.genNullary = genNullary;
+function genUnary(operand, state, operation) {
+    setFlagsNZ(operation(operand, state), state);
+    return null;
+}
+exports.genUnary = genUnary;
+function adc(operand, state) {
+    if (state.flags & 8) {
+        var d0 = (operand & 0x0f) + (state.a & 0x0f) + (state.flags & 1), d1 = (operand >>> 4) + (state.a >>> 4) + (d0 > 9 ? 1 : 0);
+        state.a = d0 % 10 | (d1 % 10 << 4);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 > 9 ? 1 : 0);
+    }
+    else {
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
+        state.flags =
+            (state.flags &
+                ~(128 | 2 | 1 | 64)) |
+                (result & 0x80) |
+                (result ? 0 : 2) |
+                (sum >>> 8) |
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
+        state.a = result;
+    }
+    return null;
+}
+exports.adc = adc;
+function aslImmediate(state) {
+    var old = state.a;
+    state.a = (state.a << 1) & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
+}
+exports.aslImmediate = aslImmediate;
+function aslRmw(operand, state) {
+    var result = (operand << 1) & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (result & 0x80) |
+            (result ? 0 : 2) |
+            (operand >>> 7);
+    return result;
+}
+exports.aslRmw = aslRmw;
+function bit(operand, state) {
+    state.flags =
+        (state.flags & ~(128 | 64 | 2)) |
+            (operand & (128 | 64)) |
+            (operand & state.a ? 0 : 2);
+    return null;
+}
+exports.bit = bit;
+function cmp(operand, state, getRegister) {
+    var diff = getRegister(state) + (~operand & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
+}
+exports.cmp = cmp;
+function sbc(operand, state) {
+    if (state.flags & 8) {
+        var d0 = (state.a & 0x0f) - (operand & 0x0f) - (~state.flags & 1), d1 = (state.a >>> 4) - (operand >>> 4) - (d0 < 0 ? 1 : 0);
+        state.a = (d0 < 0 ? 10 + d0 : d0) | ((d1 < 0 ? 10 + d1 : d1) << 4);
+        state.flags =
+            (state.flags & ~(128 | 2 | 1)) |
+                (state.a & 0x80) |
+                (state.a ? 0 : 2) |
+                (d1 < 0 ? 0 : 1);
+    }
+    else {
+        operand = ~operand & 0xff;
+        var sum = state.a + operand + (state.flags & 1), result = sum & 0xff;
+        state.flags =
+            (state.flags &
+                ~(128 | 2 | 1 | 64)) |
+                (result & 0x80) |
+                (result ? 0 : 2) |
+                (sum >>> 8) |
+                ((~(operand ^ state.a) & (result ^ operand) & 0x80) >>> 1);
+        state.a = result;
+    }
+    return null;
+}
+exports.sbc = sbc;
+function lsrImmediate(state) {
+    var old = state.a;
+    state.a = state.a >>> 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
+}
+exports.lsrImmediate = lsrImmediate;
+function lsrRmw(operand, state) {
+    var result = operand >>> 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (result & 0x80) |
+            (result ? 0 : 2) |
+            (operand & 1);
+    return result;
+}
+exports.lsrRmw = lsrRmw;
+function rolImmediate(state) {
+    var old = state.a;
+    state.a = ((state.a << 1) & 0xff) | (state.flags & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old >>> 7);
+}
+exports.rolImmediate = rolImmediate;
+function rolRmw(operand, state) {
+    var result = ((operand << 1) & 0xff) | (state.flags & 1);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (result & 0x80) |
+            (result ? 0 : 2) |
+            (operand >>> 7);
+    return result;
+}
+exports.rolRmw = rolRmw;
+function rorImmediate(state) {
+    var old = state.a;
+    state.a = (state.a >>> 1) | ((state.flags & 1) << 7);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (old & 1);
+}
+exports.rorImmediate = rorImmediate;
+function rorRmw(operand, state) {
+    var result = (operand >>> 1) | ((state.flags & 1) << 7);
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (result & 0x80) |
+            (result ? 0 : 2) |
+            (operand & 1);
+    return result;
+}
+exports.rorRmw = rorRmw;
+function arr(operand, state) {
+    state.a = ((state.a & operand) >>> 1) | (state.flags & 1 ? 0x80 : 0);
+    state.flags =
+        (state.flags & ~(1 | 128 | 2 | 64)) |
+            ((state.a & 0x40) >>> 6) |
+            (state.a ? 0 : 2) |
+            (state.a & 0x80) |
+            ((state.a & 0x40) ^ ((state.a & 0x20) << 1));
+}
+exports.arr = arr;
+function alr(operand, state) {
+    var i = state.a & operand;
+    state.a = i >>> 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.a & 0x80) |
+            (state.a ? 0 : 2) |
+            (i & 1);
+    return null;
+}
+exports.alr = alr;
+function dcp(operand, state) {
+    var result = (operand + 0xff) & 0xff;
+    var diff = state.a + (~result & 0xff) + 1;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (diff & 0x80) |
+            (diff & 0xff ? 0 : 2) |
+            (diff >>> 8);
+    return result;
+}
+exports.dcp = dcp;
+function axs(operand, state) {
+    var value = (state.a & state.x) + (~operand & 0xff) + 1;
+    state.x = value & 0xff;
+    state.flags =
+        (state.flags & ~(128 | 2 | 1)) |
+            (state.x & 0x80) |
+            (state.x & 0xff ? 0 : 2) |
+            (value >>> 8);
+    return null;
+}
+exports.axs = axs;
+function rra(operand, state) {
+    var result = (operand >>> 1) | ((state.flags & 1) << 7);
+    state.flags = (state.flags & ~1) | (operand & 1);
+    adc(result, state);
+    return result;
+}
+exports.rra = rra;
+function rla(operand, state) {
+    var result = ((operand << 1) & 0xff) | (state.flags & 1);
+    state.flags = (state.flags & ~1) | (operand >>> 7);
+    setFlagsNZ((state.a &= result), state);
+    return result;
+}
+exports.rla = rla;
+function slo(operand, state) {
+    state.flags = (state.flags & ~1) | (operand >>> 7);
+    var result = (operand << 1) & 0xff;
+    state.a = state.a | result;
+    setFlagsNZ(state.a, state);
+    return result;
+}
+exports.slo = slo;
+function aax(state) {
+    var result = state.a & state.x;
+    setFlagsNZ(result, state);
+    return result;
+}
+exports.aax = aax;
+function isc(operand, state) {
+    var result = (operand + 1) & 0xff;
+    sbc(result, state);
+    return result;
+}
+exports.isc = isc;
+function aac(operand, state) {
+    state.a &= operand;
+    setFlagsNZ(state.a, state);
+    state.flags = (state.flags & ~1) | ((state.a & 0x80) >>> 7);
+    return null;
+}
+exports.aac = aac;
+
+},{}],53:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Boot = (function () {
+    function Boot(state) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._pre1Step, 0xff); };
+        this._pre1Step = function () { return _this._result.read(_this._pre2Step, 0x0ff); };
+        this._pre2Step = function () { return _this._result.read(_this._stack1Step, 0x0100); };
+        this._stack1Step = function () { return _this._result.read(_this._stack2Step, 0x01ff); };
+        this._stack2Step = function () {
+            _this._state.s = 0xfd;
+            return _this._result.read(_this._stack3Step, 0x01fe);
+        };
+        this._stack3Step = function () { return _this._result.read(_this._readTargetLoStep, 0xfffc); };
+        this._readTargetLoStep = function (operand) {
+            _this._targetAddress = operand;
+            return _this._result.read(_this._readTargetHiStep, 0xfffd);
+        };
+        this._readTargetHiStep = function (operand) {
+            _this._targetAddress |= operand << 8;
+            _this._state.p = _this._targetAddress;
+            return null;
+        };
+        this._targetAddress = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "_pre1Step", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "_pre2Step", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "_stack1Step", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "_stack2Step", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "_stack3Step", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "_readTargetLoStep", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "_readTargetHiStep", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Boot.prototype, "_state", void 0);
+    return Boot;
+}());
+exports.boot = function (state) { return new Boot(state); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],54:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var boot_1 = require("./boot");
+exports.boot = boot_1.boot;
+var interrupt_1 = require("./interrupt");
+exports.brk = interrupt_1.brk;
+exports.nmi = interrupt_1.nmi;
+exports.irq = interrupt_1.irq;
+
+},{"./boot":53,"./interrupt":55}],55:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var ResultImpl_1 = require("../ResultImpl");
+var decorators_1 = require("../../../../tools/decorators");
+var Interrupt = (function () {
+    function Interrupt(state, defaultVector, isBrk) {
+        var _this = this;
+        this.reset = function () { return _this._result.read(_this._dummyRead, _this._state.p); };
+        this._dummyRead = function () {
+            if (_this._isBrk) {
+                _this._state.p = (_this._state.p + 1) & 0xffff;
+            }
+            return _this._result.write(_this._pushPch, 0x0100 + _this._state.s, _this._state.p >>> 8);
+        };
+        this._pushPch = function () {
+            _this._state.s = (_this._state.s - 1) & 0xff;
+            return _this._result.write(_this._pushPcl, 0x0100 + _this._state.s, _this._state.p & 0xff).poll(true);
+        };
+        this._pushPcl = function () {
+            _this._state.s = (_this._state.s - 1) & 0xff;
+            _this._vector = _this._state.nmi ? 0xfffa : _this._defaultVector;
+            return _this._result.write(_this._pushFlags, 0x0100 + _this._state.s, _this._isBrk ? _this._state.flags | 16 : _this._state.flags & ~16);
+        };
+        this._pushFlags = function () {
+            _this._state.s = (_this._state.s - 1) & 0xff;
+            return _this._result.read(_this._fetchPcl, _this._vector);
+        };
+        this._fetchPcl = function (value) {
+            _this._state.flags |= 4;
+            _this._state.p = value;
+            return _this._result.read(_this._fetchPch, ++_this._vector);
+        };
+        this._fetchPch = function (value) {
+            _this._state.p = _this._state.p | (value << 8);
+            _this._state.nmi = _this._state.irq = false;
+            return null;
+        };
+        this._vector = 0;
+        this._result = new ResultImpl_1.default();
+        this._state = state;
+        this._defaultVector = defaultVector;
+        this._isBrk = isBrk;
+        decorators_1.freezeImmutables(this);
+    }
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "reset", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_dummyRead", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_pushPch", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_pushPcl", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_pushFlags", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_fetchPcl", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_fetchPch", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_result", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_state", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_defaultVector", void 0);
+    tslib_1.__decorate([
+        decorators_1.Immutable
+    ], Interrupt.prototype, "_isBrk", void 0);
+    return Interrupt;
+}());
+exports.brk = function (state) { return new Interrupt(state, 0xfffe, true); };
+exports.irq = function (state) { return new Interrupt(state, 0xfffe, false); };
+exports.nmi = function (state) { return new Interrupt(state, 0xfffa, false); };
+
+},{"../../../../tools/decorators":111,"../ResultImpl":31,"tslib":20}],56:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Switch_1 = require("./Switch");
@@ -3879,7 +5879,7 @@ var DigitalJoystick = (function () {
 }());
 exports.default = DigitalJoystick;
 
-},{"./Switch":29}],28:[function(require,module,exports){
+},{"./Switch":58}],57:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -3904,7 +5904,7 @@ var Paddle = (function () {
 }());
 exports.default = Paddle;
 
-},{"./Switch":29,"microevent.ts":6}],29:[function(require,module,exports){
+},{"./Switch":58,"microevent.ts":6}],58:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -3933,12 +5933,11 @@ var Switch = (function () {
 }());
 exports.default = Switch;
 
-},{"microevent.ts":6}],30:[function(require,module,exports){
+},{"microevent.ts":6}],59:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
 var BoardInterface_1 = require("../board/BoardInterface");
-var Cpu_1 = require("../cpu/Cpu");
 var Bus_1 = require("./Bus");
 var Pia_1 = require("./Pia");
 var Tia_1 = require("./tia/Tia");
@@ -3947,6 +5946,7 @@ var ControlPanel_1 = require("./ControlPanel");
 var DigitalJoystick_1 = require("../io/DigitalJoystick");
 var Paddle_1 = require("../io/Paddle");
 var factory_1 = require("../../tools/rng/factory");
+var Factory_1 = require("../cpu/Factory");
 var Board = (function () {
     function Board(_config, cartridge, cpuFactory) {
         var _this = this;
@@ -3972,7 +5972,7 @@ var Board = (function () {
         cartridge.randomize(this._rng);
         var bus = new Bus_1.default();
         if (typeof cpuFactory === 'undefined') {
-            cpuFactory = function (_bus, rng) { return new Cpu_1.default(_bus, rng); };
+            cpuFactory = function (_bus, rng) { return new Factory_1.default(_config.cpuType).create(_bus, rng); };
         }
         var controlPanel = new ControlPanel_1.default(), joystick0 = new DigitalJoystick_1.default(), joystick1 = new DigitalJoystick_1.default(), paddles = new Array(4);
         for (var i = 0; i < 4; i++) {
@@ -3982,8 +5982,7 @@ var Board = (function () {
         var pia = new Pia_1.default(controlPanel, joystick0, joystick1, this._rng);
         var tia = new Tia_1.default(_config, joystick0, joystick1, paddles);
         cpu.setInvalidInstructionCallback(function () { return _this._onInvalidInstruction(); });
-        tia
-            .setCpu(cpu)
+        tia.setCpu(cpu)
             .setBus(bus)
             .setCpuTimeProvider(function () { return _this.getCpuTime(); });
         cartridge
@@ -3992,8 +5991,7 @@ var Board = (function () {
             .setCpuTimeProvider(function () { return _this.getCpuTime(); })
             .setRng(this._rng);
         pia.setBus(bus);
-        bus
-            .setTia(tia)
+        bus.setTia(tia)
             .setPia(pia)
             .setCartridge(cartridge);
         this._bus = bus;
@@ -4120,11 +6118,11 @@ var Board = (function () {
         return this._paddles[idx];
     };
     Board.prototype.getCpuTime = function () {
-        return this._cpuCycles / Config_1.default.getClockHz(this._config) * 3;
+        return (this._cpuCycles / Config_1.default.getClockHz(this._config)) * 3;
     };
     Board._executeSlice = function (board, _timeSlice) {
-        var slice = _timeSlice ? Math.round(_timeSlice * board._clockHz / 1000) : board._sliceSize;
-        return board._tick(slice) / board._clockHz * 1000;
+        var slice = _timeSlice ? Math.round((_timeSlice * board._clockHz) / 1000) : board._sliceSize;
+        return (board._tick(slice) / board._clockHz) * 1000;
     };
     Board.prototype._updateAudioState = function () {
         this._tia.setAudioEnabled(this._audioEnabled && !this._suspended);
@@ -4188,7 +6186,7 @@ var Board = (function () {
 }());
 exports.default = Board;
 
-},{"../../tools/rng/factory":88,"../board/BoardInterface":23,"../cpu/Cpu":24,"../io/DigitalJoystick":27,"../io/Paddle":28,"./Bus":31,"./Config":32,"./ControlPanel":33,"./Pia":34,"./tia/Tia":74,"microevent.ts":6}],31:[function(require,module,exports){
+},{"../../tools/rng/factory":118,"../board/BoardInterface":23,"../cpu/Factory":26,"../io/DigitalJoystick":56,"../io/Paddle":57,"./Bus":60,"./Config":61,"./ControlPanel":62,"./Pia":63,"./tia/Tia":103,"microevent.ts":6}],60:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -4309,15 +6307,16 @@ exports.default = Bus;
 })(Bus || (Bus = {}));
 exports.default = Bus;
 
-},{"microevent.ts":6}],32:[function(require,module,exports){
+},{"microevent.ts":6}],61:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
+var Factory_1 = require("../cpu/Factory");
 var Config;
 (function (Config) {
     function create(config) {
         if (config === void 0) { config = {}; }
-        return tslib_1.__assign({ tvMode: 0, enableAudio: true, randomSeed: -1, emulatePaddles: true, frameStart: -1, pcmAudio: false }, config);
+        return tslib_1.__assign({ tvMode: 0, enableAudio: true, randomSeed: -1, emulatePaddles: true, frameStart: -1, pcmAudio: false, cpuType: Factory_1.default.Type.stateMachine }, config);
     }
     Config.create = create;
     function getClockHz(config) {
@@ -4333,7 +6332,7 @@ var Config;
 })(Config || (Config = {}));
 exports.default = Config;
 
-},{"tslib":20}],33:[function(require,module,exports){
+},{"../cpu/Factory":26,"tslib":20}],62:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Switch_1 = require("../io/Switch");
@@ -4364,7 +6363,7 @@ var ControlPanel = (function () {
 }());
 exports.default = ControlPanel;
 
-},{"../io/Switch":29}],34:[function(require,module,exports){
+},{"../io/Switch":58}],63:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -4533,7 +6532,7 @@ exports.default = Pia;
 })(Pia || (Pia = {}));
 exports.default = Pia;
 
-},{"microevent.ts":6}],35:[function(require,module,exports){
+},{"microevent.ts":6}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4586,7 +6585,7 @@ var AbstractCartridge = (function () {
 }());
 exports.default = AbstractCartridge;
 
-},{"./CartridgeInfo":56,"./CartridgeInterface":57,"microevent.ts":6,"tslib":20}],36:[function(require,module,exports){
+},{"./CartridgeInfo":85,"./CartridgeInterface":86,"microevent.ts":6,"tslib":20}],65:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4671,7 +6670,7 @@ var Cartridge8040 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge8040;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],37:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4700,7 +6699,7 @@ var Cartridge2k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge2k;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],38:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"tslib":20}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4813,7 +6812,7 @@ var Cartridge3E = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3E;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],39:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],68:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4870,7 +6869,7 @@ var Cartridge3F = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge3F;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],40:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],69:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -4900,7 +6899,7 @@ var Cartridge4k = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = Cartridge4k;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],41:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"tslib":20}],70:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -5186,7 +7185,7 @@ var MusicStream = (function () {
     return MusicStream;
 }());
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./harmony/Soc":60,"./util":63,"tslib":20}],42:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./harmony/Soc":89,"./util":92,"tslib":20}],71:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -5416,7 +7415,7 @@ var Fetcher = (function () {
     return Fetcher;
 }());
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],43:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"tslib":20}],72:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -5787,7 +7786,7 @@ var MusicFetcher = (function () {
     return MusicFetcher;
 }());
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./harmony/Soc":60,"./util":63,"tslib":20}],44:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./harmony/Soc":89,"./util":92,"tslib":20}],73:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo_1 = require("./CartridgeInfo");
@@ -5890,7 +7889,7 @@ var CartridgeDetector = (function () {
 }());
 exports.default = CartridgeDetector;
 
-},{"./Cartridge0840":36,"./Cartridge3E":38,"./Cartridge3F":39,"./CartridgeCDF":41,"./CartridgeDPCPlus":43,"./CartridgeE0":45,"./CartridgeE7":46,"./CartridgeEF":47,"./CartridgeF8":51,"./CartridgeFA2":53,"./CartridgeFE":54,"./CartridgeInfo":56,"./CartridgeUA":59}],45:[function(require,module,exports){
+},{"./Cartridge0840":65,"./Cartridge3E":67,"./Cartridge3F":68,"./CartridgeCDF":70,"./CartridgeDPCPlus":72,"./CartridgeE0":74,"./CartridgeE7":75,"./CartridgeEF":76,"./CartridgeF8":80,"./CartridgeFA2":82,"./CartridgeFE":83,"./CartridgeInfo":85,"./CartridgeUA":88}],74:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -5976,7 +7975,7 @@ var CartridgeE0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeE0;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],46:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],75:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6102,7 +8101,7 @@ var CartrdigeE7 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartrdigeE7;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],47:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],76:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6211,7 +8210,7 @@ var CartridgeEF = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeEF;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],48:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],77:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6267,7 +8266,7 @@ var CartridgeF0 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF0;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],49:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"tslib":20}],78:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6346,7 +8345,7 @@ var CartridgeF4 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF4;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],50:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"tslib":20}],79:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6436,7 +8435,7 @@ var CartridgeF6 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF6;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],51:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"tslib":20}],80:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6521,7 +8520,7 @@ var CartridgeF8 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeF8;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],52:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6597,7 +8596,7 @@ var CartridgeFA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"tslib":20}],53:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"tslib":20}],82:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6712,7 +8711,7 @@ var CartridgeFA2 = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFA2;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],54:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6786,7 +8785,7 @@ var CartridgeFE = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeFE;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],55:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -6884,7 +8883,7 @@ var CartridgeFactory = (function () {
 }());
 exports.default = CartridgeFactory;
 
-},{"./Cartridge0840":36,"./Cartridge2k":37,"./Cartridge3E":38,"./Cartridge3F":39,"./Cartridge4k":40,"./CartridgeCDF":41,"./CartridgeDPC":42,"./CartridgeDPCPlus":43,"./CartridgeDetector":44,"./CartridgeE0":45,"./CartridgeE7":46,"./CartridgeEF":47,"./CartridgeF0":48,"./CartridgeF4":49,"./CartridgeF6":50,"./CartridgeF8":51,"./CartridgeFA":52,"./CartridgeFA2":53,"./CartridgeFE":54,"./CartridgeInfo":56,"./CartridgeSupercharger":58,"./CartridgeUA":59,"tslib":20}],56:[function(require,module,exports){
+},{"./Cartridge0840":65,"./Cartridge2k":66,"./Cartridge3E":67,"./Cartridge3F":68,"./Cartridge4k":69,"./CartridgeCDF":70,"./CartridgeDPC":71,"./CartridgeDPCPlus":72,"./CartridgeDetector":73,"./CartridgeE0":74,"./CartridgeE7":75,"./CartridgeEF":76,"./CartridgeF0":77,"./CartridgeF4":78,"./CartridgeF6":79,"./CartridgeF8":80,"./CartridgeFA":81,"./CartridgeFA2":82,"./CartridgeFE":83,"./CartridgeInfo":85,"./CartridgeSupercharger":87,"./CartridgeUA":88,"tslib":20}],85:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInfo;
@@ -6989,7 +8988,7 @@ var CartridgeInfo;
 })(CartridgeInfo || (CartridgeInfo = {}));
 exports.default = CartridgeInfo;
 
-},{}],57:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var CartridgeInterface;
@@ -7006,7 +9005,7 @@ var CartridgeInterface;
 })(CartridgeInterface || (CartridgeInterface = {}));
 exports.default = CartridgeInterface;
 
-},{}],58:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -7226,7 +9225,7 @@ var CartridgeSupercharger = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeSupercharger;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./supercharger/Header":61,"./supercharger/blob":62,"tslib":20}],59:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./supercharger/Header":90,"./supercharger/blob":91,"tslib":20}],88:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -7293,7 +9292,7 @@ var CartridgeUA = (function (_super) {
 }(AbstractCartridge_1.default));
 exports.default = CartridgeUA;
 
-},{"./AbstractCartridge":35,"./CartridgeInfo":56,"./util":63,"tslib":20}],60:[function(require,module,exports){
+},{"./AbstractCartridge":64,"./CartridgeInfo":85,"./util":92,"tslib":20}],89:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var thumbulator_ts_1 = require("thumbulator.ts");
@@ -7496,7 +9495,7 @@ var Soc = (function () {
 }());
 exports.default = Soc;
 
-},{"../../../../tools/hex":82,"microevent.ts":6,"thumbulator.ts":18}],61:[function(require,module,exports){
+},{"../../../../tools/hex":112,"microevent.ts":6,"thumbulator.ts":18}],90:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Header = (function () {
@@ -7533,13 +9532,13 @@ var Header = (function () {
 }());
 exports.default = Header;
 
-},{}],62:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var base64_1 = require("../../../../tools/base64");
 exports.bios = base64_1.decode('pfqFgEwY+HjYqQCi/5qqqJUA6ND7TBj4ogCtBvCN+P+gAKIolATKEPuiHJSByhD7qQCFG4UchR2FHoUfhRmFGoUIhQGpEIUhhQKiB8rK0P2pAIUghRCFEYUChSqpBYUKqf+FDYUOhQ+FhIWFqfCFg6l0hQmpDIUVqR+FF4WCqQeFGaIIoACFAojQ+4UChQKpAoUChQCFAoUChQKpAIUAyhDkBoNmhCaFpYOFDaWEhQ6lhYUPpoLKhoKGF+AK0MOpAoUBohygAIQZhAmUgcoQ+6IArADw6rwA9+jQ9qILvRL5lfDKEPilgEzwAKIGvR35lfDKEPiu8P+GgLwA8K3x/67y/4b0rvP/hvWi/6AAmkzwAI35/637/9D7TOv4jfj/TAAA');
 
-},{"../../../../tools/base64":81}],63:[function(require,module,exports){
+},{"../../../../tools/base64":110}],92:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function searchForSignatures(buffer, signatures) {
@@ -7589,7 +9588,7 @@ function searchForSignature(buffer, signature) {
 }
 exports.searchForSignature = searchForSignature;
 
-},{}],64:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Ball = (function () {
@@ -7726,7 +9725,7 @@ var Ball = (function () {
 }());
 exports.default = Ball;
 
-},{}],65:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DelayQueue = (function () {
@@ -7800,7 +9799,7 @@ var QueueEntry = (function () {
     return QueueEntry;
 }());
 
-},{}],66:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -7964,7 +9963,7 @@ var FrameManager = (function () {
 }());
 exports.default = FrameManager;
 
-},{"microevent.ts":6}],67:[function(require,module,exports){
+},{"microevent.ts":6}],96:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var LatchedInput = (function () {
@@ -7999,7 +9998,7 @@ var LatchedInput = (function () {
 }());
 exports.default = LatchedInput;
 
-},{}],68:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -8157,7 +10156,7 @@ var Missile = (function () {
 }());
 exports.default = Missile;
 
-},{"./drawCounterDecodes":77}],69:[function(require,module,exports){
+},{"./drawCounterDecodes":106}],98:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -8265,7 +10264,7 @@ var PCMAudio = (function () {
 }());
 exports.default = PCMAudio;
 
-},{"./PCMChannel":70,"microevent.ts":6}],70:[function(require,module,exports){
+},{"./PCMChannel":99,"microevent.ts":6}],99:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PCMChannel = (function () {
@@ -8375,7 +10374,7 @@ var PCMChannel = (function () {
 }());
 exports.default = PCMChannel;
 
-},{}],71:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var C = 68e-9, RPOT = 1e6, R0 = 1.8e3, U = 5, LINES_FULL = 380;
@@ -8435,7 +10434,7 @@ var PaddleReader = (function () {
 }());
 exports.default = PaddleReader;
 
-},{}],72:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var drawCounterDecodes_1 = require("./drawCounterDecodes");
@@ -8697,7 +10696,7 @@ var Player = (function () {
 }());
 exports.default = Player;
 
-},{"./drawCounterDecodes":77}],73:[function(require,module,exports){
+},{"./drawCounterDecodes":106}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Playfield = (function () {
@@ -8841,7 +10840,7 @@ var Playfield = (function () {
 }());
 exports.default = Playfield;
 
-},{}],74:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -9545,7 +11544,7 @@ exports.default = Tia;
 })(Tia || (Tia = {}));
 exports.default = Tia;
 
-},{"./Ball":64,"./DelayQueue":65,"./FrameManager":66,"./LatchedInput":67,"./Missile":68,"./PCMAudio":69,"./PaddleReader":71,"./Player":72,"./Playfield":73,"./WaveformAudio":76,"./palette":78,"microevent.ts":6}],75:[function(require,module,exports){
+},{"./Ball":93,"./DelayQueue":94,"./FrameManager":95,"./LatchedInput":96,"./Missile":97,"./PCMAudio":98,"./PaddleReader":100,"./Player":101,"./Playfield":102,"./WaveformAudio":105,"./palette":107,"microevent.ts":6}],104:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Config_1 = require("../Config");
@@ -9633,7 +11632,7 @@ var ToneGenerator = (function () {
 }());
 exports.default = ToneGenerator;
 
-},{"../../../tools/AudioOutputBuffer":79,"../../../tools/base64":81,"../Config":32}],76:[function(require,module,exports){
+},{"../../../tools/AudioOutputBuffer":108,"../../../tools/base64":110,"../Config":61}],105:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -9708,7 +11707,7 @@ var WaveformAudio = (function () {
 }());
 exports.default = WaveformAudio;
 
-},{"./ToneGenerator":75,"microevent.ts":6}],77:[function(require,module,exports){
+},{"./ToneGenerator":104,"microevent.ts":6}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var decodes0 = new Uint8Array(160), decodes1 = new Uint8Array(160), decodes2 = new Uint8Array(160), decodes3 = new Uint8Array(160), decodes4 = new Uint8Array(160), decodes6 = new Uint8Array(160);
@@ -9744,7 +11743,7 @@ decodes3[12] = decodes3[28] = 1;
 decodes4[60] = 1;
 decodes6[28] = decodes6[60] = 1;
 
-},{}],78:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NTSC = new Uint32Array([
@@ -10138,7 +12137,7 @@ exports.SECAM = new Uint32Array([
     0xffffffff
 ]);
 
-},{}],79:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var AudioOutputBuffer = (function () {
@@ -10162,7 +12161,7 @@ var AudioOutputBuffer = (function () {
 }());
 exports.default = AudioOutputBuffer;
 
-},{}],80:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -10223,7 +12222,7 @@ var ClockProbe = (function () {
 }());
 exports.default = ClockProbe;
 
-},{"microevent.ts":6}],81:[function(require,module,exports){
+},{"microevent.ts":6}],110:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var encodingsString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', encodings = new Uint8Array(256);
@@ -10274,7 +12273,41 @@ function decode(data) {
 }
 exports.decode = decode;
 
-},{}],82:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var immutables = Symbol('immutable properties');
+function freezeImmutables(target) {
+    var e_1, _a;
+    var immutableProperties = target[immutables];
+    if (!immutableProperties) {
+        return;
+    }
+    try {
+        for (var immutableProperties_1 = tslib_1.__values(immutableProperties), immutableProperties_1_1 = immutableProperties_1.next(); !immutableProperties_1_1.done; immutableProperties_1_1 = immutableProperties_1.next()) {
+            var prop = immutableProperties_1_1.value;
+            Object.defineProperty(target, prop, { writable: false, configurable: false });
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (immutableProperties_1_1 && !immutableProperties_1_1.done && (_a = immutableProperties_1.return)) _a.call(immutableProperties_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+}
+exports.freezeImmutables = freezeImmutables;
+function Immutable(target, prop) {
+    if (!target[immutables]) {
+        Object.defineProperty(target, immutables, { value: [], writable: false, enumerable: false });
+    }
+    target[immutables].push(prop);
+}
+exports.Immutable = Immutable;
+
+},{"tslib":20}],112:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function encodeWithPrefix(value, width, signed, prefix) {
@@ -10315,7 +12348,7 @@ function decode(value) {
 }
 exports.decode = decode;
 
-},{}],83:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember = (function () {
@@ -10340,7 +12373,7 @@ var InducedMember = (function () {
 }());
 exports.default = InducedMember;
 
-},{}],84:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var InducedMember_1 = require("./InducedMember");
@@ -10363,7 +12396,7 @@ var InducedPool = (function () {
 }());
 exports.default = InducedPool;
 
-},{"./InducedMember":83}],85:[function(require,module,exports){
+},{"./InducedMember":113}],115:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -10421,7 +12454,7 @@ var Pool = (function () {
 }());
 exports.default = Pool;
 
-},{"./PoolMember":86,"microevent.ts":6}],86:[function(require,module,exports){
+},{"./PoolMember":116,"microevent.ts":6}],116:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PoolMember = (function () {
@@ -10448,7 +12481,7 @@ var PoolMember = (function () {
 }());
 exports.default = PoolMember;
 
-},{}],87:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var SeedrandomGenerator = (function () {
@@ -10474,7 +12507,7 @@ var SeedrandomGenerator = (function () {
 }());
 exports.default = SeedrandomGenerator;
 
-},{}],88:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var seedrandom = require("seedrandom");
@@ -10495,7 +12528,7 @@ function restoreRng(state) {
 }
 exports.restoreRng = restoreRng;
 
-},{"./SeedrandomGenerator":87,"seedrandom":9}],89:[function(require,module,exports){
+},{"./SeedrandomGenerator":117,"seedrandom":9}],119:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler_1 = require("./PeriodicScheduler");
@@ -10548,7 +12581,7 @@ var Factory = (function () {
 }());
 exports.default = Factory;
 
-},{"./ImmedateScheduler":90,"./PeriodicScheduler":91,"./limiting/BusyWait":93,"./limiting/ConstantCycles":94,"./limiting/ConstantTimeslice":95}],90:[function(require,module,exports){
+},{"./ImmedateScheduler":120,"./PeriodicScheduler":121,"./limiting/BusyWait":123,"./limiting/ConstantCycles":124,"./limiting/ConstantTimeslice":125}],120:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var setImmediate_1 = require("./setImmediate");
@@ -10573,7 +12606,7 @@ var ImmediateScheduler = (function () {
 }());
 exports.default = ImmediateScheduler;
 
-},{"./setImmediate":96}],91:[function(require,module,exports){
+},{"./setImmediate":126}],121:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PeriodicScheduler = (function () {
@@ -10606,7 +12639,7 @@ var PeriodicScheduler = (function () {
 }());
 exports.default = PeriodicScheduler;
 
-},{}],92:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp = self.performance && self.performance.now
@@ -10614,7 +12647,7 @@ var getTimestamp = self.performance && self.performance.now
     : function () { return Date.now(); };
 exports.default = getTimestamp;
 
-},{}],93:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -10653,7 +12686,7 @@ var ConstantTimesliceScheduler = (function () {
 }());
 exports.default = ConstantTimesliceScheduler;
 
-},{"../getTimestamp":92,"../setImmediate":96}],94:[function(require,module,exports){
+},{"../getTimestamp":122,"../setImmediate":126}],124:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -10705,7 +12738,7 @@ var ConstantCyclesScheduler = (function () {
 }());
 exports.default = ConstantCyclesScheduler;
 
-},{"../getTimestamp":92,"../setImmediate":96}],95:[function(require,module,exports){
+},{"../getTimestamp":122,"../setImmediate":126}],125:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var getTimestamp_1 = require("../getTimestamp");
@@ -10744,7 +12777,7 @@ var ConstantTimesliceScheduler = (function () {
 }());
 exports.default = ConstantTimesliceScheduler;
 
-},{"../getTimestamp":92,"../setImmediate":96}],96:[function(require,module,exports){
+},{"../getTimestamp":122,"../setImmediate":126}],126:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var polyfill = require("setimmediate2");
@@ -10760,7 +12793,7 @@ function setImmediate(callback) {
 }
 exports.setImmediate = setImmediate;
 
-},{"setimmediate2":17}],97:[function(require,module,exports){
+},{"setimmediate2":17}],127:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -10811,7 +12844,7 @@ var FrameMergeProcessor = (function () {
 }());
 exports.default = FrameMergeProcessor;
 
-},{"microevent.ts":6}],98:[function(require,module,exports){
+},{"microevent.ts":6}],128:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -10828,7 +12861,7 @@ var PassthroughProcessor = (function () {
 }());
 exports.default = PassthroughProcessor;
 
-},{"microevent.ts":6}],99:[function(require,module,exports){
+},{"microevent.ts":6}],129:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var PassthroughProcessor_1 = require("./PassthroughProcessor");
@@ -10850,7 +12883,7 @@ var ProcessorFactory = (function () {
 }());
 exports.default = ProcessorFactory;
 
-},{"./FrameMergeProcessor":97,"./PassthroughProcessor":98}],100:[function(require,module,exports){
+},{"./FrameMergeProcessor":127,"./PassthroughProcessor":128}],130:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ProcessorFactory_1 = require("./ProcessorFactory");
@@ -10884,7 +12917,7 @@ var ProcessorPipeline = (function () {
 }());
 exports.default = ProcessorPipeline;
 
-},{"./ProcessorFactory":99}],101:[function(require,module,exports){
+},{"./ProcessorFactory":129}],131:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
@@ -10948,7 +12981,7 @@ var PipelineClient = (function () {
 }());
 exports.default = PipelineClient;
 
-},{"./messages":102,"microevent.ts":6,"worker-rpc":22}],102:[function(require,module,exports){
+},{"./messages":132,"microevent.ts":6,"worker-rpc":22}],132:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.messageIds = {
@@ -10960,7 +12993,7 @@ exports.messageIds = {
 };
 Object.freeze(exports.messageIds);
 
-},{}],103:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArrayBufferSurface = (function () {
@@ -11012,7 +13045,7 @@ var ArrayBufferSurface = (function () {
 }());
 exports.default = ArrayBufferSurface;
 
-},{}],104:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -11055,7 +13088,7 @@ var PCMAudioEndpoint = (function () {
 }());
 exports.default = PCMAudioEndpoint;
 
-},{"../../tools/AudioOutputBuffer":79,"../../tools/pool/InducedPool":84,"../../tools/pool/Pool":85,"microevent.ts":6}],105:[function(require,module,exports){
+},{"../../tools/AudioOutputBuffer":108,"../../tools/pool/InducedPool":114,"../../tools/pool/Pool":115,"microevent.ts":6}],135:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
@@ -11101,7 +13134,7 @@ var VideoEndpoint = (function () {
 }());
 exports.default = VideoEndpoint;
 
-},{"../../tools/pool/InducedPool":84,"../../tools/pool/Pool":85,"../../video/processing/ProcessorPipeline":100,"../../video/surface/ArrayBufferSurface":103,"microevent.ts":6}],106:[function(require,module,exports){
+},{"../../tools/pool/InducedPool":114,"../../tools/pool/Pool":115,"../../video/processing/ProcessorPipeline":130,"../../video/surface/ArrayBufferSurface":133,"microevent.ts":6}],136:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface_1 = require("./EmulationServiceInterface");
@@ -11190,7 +13223,7 @@ exports.default = DriverManager;
 })(DriverManager || (DriverManager = {}));
 exports.default = DriverManager;
 
-},{"./EmulationServiceInterface":107}],107:[function(require,module,exports){
+},{"./EmulationServiceInterface":137}],137:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationServiceInterface;
@@ -11205,7 +13238,7 @@ var EmulationServiceInterface;
 })(EmulationServiceInterface || (EmulationServiceInterface = {}));
 exports.default = EmulationServiceInterface;
 
-},{}],108:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var VideoEndpoint_1 = require("../../../driver/VideoEndpoint");
@@ -11266,7 +13299,7 @@ var EmulationContext = (function () {
 }());
 exports.default = EmulationContext;
 
-},{"../../../driver/PCMAudioEndpoint":104,"../../../driver/VideoEndpoint":105}],109:[function(require,module,exports){
+},{"../../../driver/PCMAudioEndpoint":134,"../../../driver/VideoEndpoint":135}],139:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -11476,7 +13509,7 @@ var EmulationService = (function () {
 }());
 exports.default = EmulationService;
 
-},{"../../../../machine/stella/Board":30,"../../../../machine/stella/cartridge/CartridgeFactory":55,"../../../../tools/ClockProbe":80,"../../../../tools/scheduler/Factory":89,"../../../../tools/scheduler/PeriodicScheduler":91,"../EmulationServiceInterface":107,"./EmulationContext":108,"async-mutex":2,"microevent.ts":6,"tslib":20}],110:[function(require,module,exports){
+},{"../../../../machine/stella/Board":59,"../../../../machine/stella/cartridge/CartridgeFactory":84,"../../../../tools/ClockProbe":109,"../../../../tools/scheduler/Factory":119,"../../../../tools/scheduler/PeriodicScheduler":121,"../EmulationServiceInterface":137,"./EmulationContext":138,"async-mutex":2,"microevent.ts":6,"tslib":20}],140:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -11537,7 +13570,7 @@ var ControlDriver = (function () {
 }());
 exports.default = ControlDriver;
 
-},{"./messages":115}],111:[function(require,module,exports){
+},{"./messages":145}],141:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EmulationService_1 = require("../vanilla/EmulationService");
@@ -11623,7 +13656,7 @@ var EmulationBackend = (function () {
 }());
 exports.default = EmulationBackend;
 
-},{"../DriverManager":106,"../vanilla/EmulationService":109,"./ControlDriver":110,"./PCMAudioDriver":112,"./VideoDriver":113,"./WaveformAudioDriver":114,"./messages":115}],112:[function(require,module,exports){
+},{"../DriverManager":136,"../vanilla/EmulationService":139,"./ControlDriver":140,"./PCMAudioDriver":142,"./VideoDriver":143,"./WaveformAudioDriver":144,"./messages":145}],142:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -11704,7 +13737,7 @@ var PCMAudioDriver = (function () {
 }());
 exports.default = PCMAudioDriver;
 
-},{"./messages":115}],113:[function(require,module,exports){
+},{"./messages":145}],143:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
@@ -11880,7 +13913,7 @@ var VideoDriver = (function () {
 }());
 exports.default = VideoDriver;
 
-},{"../../../../tools/pool/Pool":85,"../../../../video/processing/worker/PipelineClient":101,"../../../../video/surface/ArrayBufferSurface":103,"./messages":115,"async-mutex":2,"tslib":20,"worker-rpc":22}],114:[function(require,module,exports){
+},{"../../../../tools/pool/Pool":115,"../../../../video/processing/worker/PipelineClient":131,"../../../../video/surface/ArrayBufferSurface":133,"./messages":145,"async-mutex":2,"tslib":20,"worker-rpc":22}],144:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var messages_1 = require("./messages");
@@ -11931,7 +13964,7 @@ var WaveformAudioDriver = (function () {
 }());
 exports.default = WaveformAudioDriver;
 
-},{"./messages":115}],115:[function(require,module,exports){
+},{"./messages":145}],145:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RPC_TYPE = {
@@ -11963,7 +13996,7 @@ exports.SIGNAL_TYPE = {
 };
 Object.freeze(exports.SIGNAL_TYPE);
 
-},{}],116:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var rpc_1 = require("../rpc");
@@ -11971,7 +14004,7 @@ var EmulationBackend_1 = require("../../../src/web/stella/service/worker/Emulati
 var emulationBackend = new EmulationBackend_1.default(rpc_1.getRpc());
 emulationBackend.startup();
 
-},{"../../../src/web/stella/service/worker/EmulationBackend":111,"../rpc":117}],117:[function(require,module,exports){
+},{"../../../src/web/stella/service/worker/EmulationBackend":141,"../rpc":147}],147:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_rpc_1 = require("worker-rpc");
@@ -12008,5 +14041,5 @@ function getRpc() {
 }
 exports.getRpc = getRpc;
 
-},{"worker-rpc":22}]},{},[116])
+},{"worker-rpc":22}]},{},[146])
 //# sourceMappingURL=stellerator_worker.js.map
