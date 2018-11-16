@@ -96409,7 +96409,7 @@ var Main_1 = require("./containers/Main");
 var Routing_1 = require("./Routing");
 function initEnv(store) {
     var BUILD_ID_KEY = 'build-id';
-    var buildId = "8236fe", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
+    var buildId = "7add82", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
     localStorage.setItem(BUILD_ID_KEY, buildId);
     store.dispatch(environment_1.initialize({
         helppageUrl: "doc/stellerator.md",
@@ -97318,15 +97318,10 @@ var CartridgeManager = (function () {
                         link.href = window.URL.createObjectURL(blob);
                         document.body.appendChild(link);
                         link.click();
-                        return [4, new Promise(function (resolve) {
-                                return setTimeout(function () {
-                                    document.body.removeChild(link);
-                                    window.URL.revokeObjectURL(link.href);
-                                    resolve();
-                                });
-                            })];
-                    case 2:
-                        _b.sent();
+                        setTimeout(function () {
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(link.href);
+                        }, 100);
                         return [2];
                 }
             });
