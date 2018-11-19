@@ -95286,10 +95286,10 @@ var FileUploadButton_1 = require("../general/FileUploadButton");
 function CartridgeControlsUnstyled(props) {
     return (React.createElement("div", { className: props.className },
         React.createElement(FileUploadButton_1.default, { accept: ".bin, .a26, .zip", onFilesSelected: function (files) { return (files.length === 1 ? props.onCartridgeUploaded(files[0]) : undefined); } }, "Load"),
+        React.createElement(react_bootstrap_1.Button, { disabled: !props.active, onClick: props.onDownload }, "Download"),
         React.createElement(react_bootstrap_1.Button, { disabled: !props.active, onClick: props.onDelete }, "Delete"),
         React.createElement(react_bootstrap_1.Button, { disabled: !props.active || !props.changes, onClick: props.onSave }, "Save"),
-        React.createElement(react_bootstrap_1.Button, { disabled: !props.active, onClick: props.onRun }, props.changes ? 'Save & Run' : 'Run'),
-        React.createElement(react_bootstrap_1.Button, { disabled: !props.active, onClick: props.onDownload }, "Download")));
+        React.createElement(react_bootstrap_1.Button, { disabled: !props.active, onClick: props.onRun }, props.changes ? 'Save & Run' : 'Run')));
 }
 (function (CartridgeControlsUnstyled) {
     CartridgeControlsUnstyled.defaultProps = {
@@ -96409,7 +96409,7 @@ var Main_1 = require("./containers/Main");
 var Routing_1 = require("./Routing");
 function initEnv(store) {
     var BUILD_ID_KEY = 'build-id';
-    var buildId = "7add82", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
+    var buildId = "4beaaf", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
     localStorage.setItem(BUILD_ID_KEY, buildId);
     store.dispatch(environment_1.initialize({
         helppageUrl: "doc/stellerator.md",
