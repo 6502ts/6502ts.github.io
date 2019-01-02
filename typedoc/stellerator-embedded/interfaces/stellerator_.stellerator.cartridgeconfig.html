@@ -911,6 +911,9 @@ img { max-width: 100%; }
 			<a href="../classes/stellerator_.stellerator.html" class="tsd-kind-icon">Stellerator</a>
 			<ul>
 				<li class=" tsd-kind-enum tsd-parent-kind-class tsd-is-static">
+					<a href="../enums/stellerator_.stellerator.cpuaccuracy.html" class="tsd-kind-icon">Cpu<wbr>Accuracy</a>
+				</li>
+				<li class=" tsd-kind-enum tsd-parent-kind-class tsd-is-static">
 					<a href="../enums/stellerator_.stellerator.state.html" class="tsd-kind-icon">State</a>
 				</li>
 				<li class=" tsd-kind-enum tsd-parent-kind-class tsd-is-static">
@@ -921,6 +924,9 @@ img { max-width: 100%; }
 					<ul>
 						<li class=" tsd-kind-property tsd-parent-kind-interface">
 							<a href="stellerator_.stellerator.cartridgeconfig.html#cartridgetype" class="tsd-kind-icon">cartridge<wbr>Type</a>
+						</li>
+						<li class=" tsd-kind-property tsd-parent-kind-interface">
+							<a href="stellerator_.stellerator.cartridgeconfig.html#cpuaccuracy" class="tsd-kind-icon">cpu<wbr>Accuracy</a>
 						</li>
 						<li class=" tsd-kind-property tsd-parent-kind-interface">
 							<a href="stellerator_.stellerator.cartridgeconfig.html#emulatepaddles" class="tsd-kind-icon">emulate<wbr>Paddles</a>
@@ -1019,6 +1025,9 @@ img { max-width: 100%; }
 				</li>
 			</ul>
 		</li>
+		<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+			<a href="../modules/stellerator_.html#cputype" class="tsd-kind-icon">cpu<wbr>Type</a>
+		</li>
 	</ul>
 </nav>
 <div class="container container-main">
@@ -1048,6 +1057,7 @@ img { max-width: 100%; }
 						<h3>Properties</h3>
 						<ul class="tsd-index-list">
 							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="stellerator_.stellerator.cartridgeconfig.html#cartridgetype" class="tsd-kind-icon">cartridge<wbr>Type</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="stellerator_.stellerator.cartridgeconfig.html#cpuaccuracy" class="tsd-kind-icon">cpu<wbr>Accuracy</a></li>
 							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="stellerator_.stellerator.cartridgeconfig.html#emulatepaddles" class="tsd-kind-icon">emulate<wbr>Paddles</a></li>
 							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="stellerator_.stellerator.cartridgeconfig.html#framestart" class="tsd-kind-icon">frame<wbr>Start</a></li>
 							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="stellerator_.stellerator.cartridgeconfig.html#randomseed" class="tsd-kind-icon">random<wbr>Seed</a></li>
@@ -1064,7 +1074,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">cartridge<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">CartridgeType</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/6502ts/6502.ts/blob/717b5d3/src/web/embedded/stellerator/Stellerator.ts#L787">Stellerator.ts:787</a></li>
+						<li>Defined in <a href="https://github.com/6502ts/6502.ts/blob/fa9184c/src/web/embedded/stellerator/Stellerator.ts#L803">Stellerator.ts:803</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -1076,12 +1086,28 @@ img { max-width: 100%; }
 				</div>
 			</section>
 			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+				<a name="cpuaccuracy" class="tsd-anchor"></a>
+				<h3>cpu<wbr>Accuracy</h3>
+				<div class="tsd-signature tsd-kind-icon">cpu<wbr>Accuracy<span class="tsd-signature-symbol">:</span> <a href="../enums/stellerator_.stellerator.cpuaccuracy.html" class="tsd-signature-type">CpuAccuracy</a></div>
+				<aside class="tsd-sources">
+					<ul>
+						<li>Defined in <a href="https://github.com/6502ts/6502.ts/blob/fa9184c/src/web/embedded/stellerator/Stellerator.ts#L833">Stellerator.ts:833</a></li>
+					</ul>
+				</aside>
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>The accuracy of the CPU core (see below).</p>
+					</div>
+					<p>Default: cycle (high precision)</p>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 				<a name="emulatepaddles" class="tsd-anchor"></a>
 				<h3>emulate<wbr>Paddles</h3>
 				<div class="tsd-signature tsd-kind-icon">emulate<wbr>Paddles<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/6502ts/6502.ts/blob/717b5d3/src/web/embedded/stellerator/Stellerator.ts#L802">Stellerator.ts:802</a></li>
+						<li>Defined in <a href="https://github.com/6502ts/6502.ts/blob/fa9184c/src/web/embedded/stellerator/Stellerator.ts#L818">Stellerator.ts:818</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -1097,7 +1123,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">frame<wbr>Start<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/6502ts/6502.ts/blob/717b5d3/src/web/embedded/stellerator/Stellerator.ts#L810">Stellerator.ts:810</a></li>
+						<li>Defined in <a href="https://github.com/6502ts/6502.ts/blob/fa9184c/src/web/embedded/stellerator/Stellerator.ts#L826">Stellerator.ts:826</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -1114,7 +1140,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">random<wbr>Seed<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/6502ts/6502.ts/blob/717b5d3/src/web/embedded/stellerator/Stellerator.ts#L795">Stellerator.ts:795</a></li>
+						<li>Defined in <a href="https://github.com/6502ts/6502.ts/blob/fa9184c/src/web/embedded/stellerator/Stellerator.ts#L811">Stellerator.ts:811</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
