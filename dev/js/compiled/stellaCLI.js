@@ -10683,6 +10683,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
+function nextPowerOfTwo(x) {
+    var v = 1;
+    while (v < x) {
+        v *= 2;
+    }
+    return v;
+}
+function padBuffer(buffer) {
+    var paddedLength = nextPowerOfTwo(buffer.length);
+    if (paddedLength === buffer.length) {
+        return buffer;
+    }
+    var paddedBuffer = new Uint8Array(paddedLength);
+    for (var i = 0; i < paddedLength; i++) {
+        paddedBuffer[paddedLength - i - 1] = i < buffer.length ? buffer[buffer.length - i - 1] : 0;
+    }
+    return paddedBuffer;
+}
 var Cartridge2k = (function (_super) {
     tslib_1.__extends(Cartridge2k, _super);
     function Cartridge2k(buffer) {
@@ -10691,8 +10709,9 @@ var Cartridge2k = (function (_super) {
         if (buffer.length > 0x0800) {
             throw new Error("buffer is not a 2k cartridge image: wrong length " + buffer.length);
         }
-        for (var i = 0; i < buffer.length && i < 0x0800; i++) {
-            _this._rom[0x07ff - i] = buffer[buffer.length - 1 - i];
+        var paddedBuffer = padBuffer(buffer);
+        for (var i = 0; i < 0x0800; i++) {
+            _this._rom[i] = buffer[i % paddedBuffer.length];
         }
         return _this;
     }

@@ -6332,6 +6332,18 @@ var CartridgeInfo_1 = require("../../../machine/stella/cartridge/CartridgeInfo")
 var Config_1 = require("../../../machine/stella/Config");
 var base64_1 = require("../../../tools/base64");
 var ControlPanelProxy_1 = require("./ControlPanelProxy");
+var Factory_1 = require("../../../machine/cpu/Factory");
+function cpuType(config) {
+    if (config === void 0) { config = Stellerator.CpuAccuracy.cycle; }
+    switch (config) {
+        case Stellerator.CpuAccuracy.cycle:
+            return Factory_1.default.Type.stateMachine;
+        case Stellerator.CpuAccuracy.instruction:
+            return Factory_1.default.Type.batchedAccess;
+        default:
+            throw new Error("invalid CPU Accuracy: " + config);
+    }
+}
 var Stellerator = (function () {
     function Stellerator(canvasElt, workerUrl, config) {
         if (config === void 0) { config = {}; }
@@ -6451,6 +6463,7 @@ var Stellerator = (function () {
                         if (typeof config.frameStart !== 'undefined') {
                             stellaConfig.frameStart = config.frameStart;
                         }
+                        stellaConfig.cpuType = cpuType(config.cpuAccuracy);
                         return [4, this._serviceInitialized];
                     case 1:
                         _c.sent();
@@ -6691,10 +6704,15 @@ exports.default = Stellerator;
         State["stopped"] = "stopped";
         State["error"] = "error";
     })(State = Stellerator.State || (Stellerator.State = {}));
+    var CpuAccuracy;
+    (function (CpuAccuracy) {
+        CpuAccuracy["cycle"] = "cycle";
+        CpuAccuracy["instruction"] = "instruction";
+    })(CpuAccuracy = Stellerator.CpuAccuracy || (Stellerator.CpuAccuracy = {}));
 })(Stellerator || (Stellerator = {}));
 exports.default = Stellerator;
 
-},{"../../../machine/stella/Config":44,"../../../machine/stella/cartridge/CartridgeInfo":46,"../../../tools/base64":50,"../../driver/FullscreenVideo":54,"../../driver/Gamepad":55,"../../driver/MouseAsPaddle":56,"../../driver/SimpleCanvasVideo":57,"../../driver/webgl/WebglVideo":65,"../../stella/driver/KeyboardIO":71,"../../stella/driver/TouchIO":72,"../../stella/driver/WebAudio":73,"../../stella/service/DriverManager":75,"../../stella/service/EmulationServiceInterface":76,"../../stella/service/worker/EmulationService":79,"./ControlPanelProxy":67,"async-mutex":2,"microevent.ts":4,"tslib":6}],69:[function(require,module,exports){
+},{"../../../machine/cpu/Factory":11,"../../../machine/stella/Config":44,"../../../machine/stella/cartridge/CartridgeInfo":46,"../../../tools/base64":50,"../../driver/FullscreenVideo":54,"../../driver/Gamepad":55,"../../driver/MouseAsPaddle":56,"../../driver/SimpleCanvasVideo":57,"../../driver/webgl/WebglVideo":65,"../../stella/driver/KeyboardIO":71,"../../stella/driver/TouchIO":72,"../../stella/driver/WebAudio":73,"../../stella/service/DriverManager":75,"../../stella/service/EmulationServiceInterface":76,"../../stella/service/worker/EmulationService":79,"./ControlPanelProxy":67,"async-mutex":2,"microevent.ts":4,"tslib":6}],69:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var microevent_ts_1 = require("microevent.ts");
