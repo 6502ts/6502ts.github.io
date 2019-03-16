@@ -85127,7 +85127,6 @@ var CartridgeCDF = (function (_super) {
             }
             return 3;
         };
-        _this._version = 1;
         _this._banks = new Array(7);
         _this._currentBank = null;
         _this._rom = null;
@@ -85143,16 +85142,37 @@ var CartridgeCDF = (function (_super) {
         _this._fastFetchPending = false;
         _this._jmpOperandAddress = 0;
         _this._ldaOperandAddress = 0;
+        _this._datastreamBase = 0;
+        _this._datastreamIncrementBase = 0;
+        _this._waveformBase = 0;
+        _this._jumpstream = 0;
+        _this._jumpstreamMask = 0;
+        _this._amplitudeStream = 0;
         _this._bus = null;
         _this._cpuTimeProvider = null;
-        _this._version = CartridgeCDF.getVersion(buffer);
+        var version = CartridgeCDF.getVersion(buffer);
+        if (!version) {
+            throw new Error('not a CDF image: missing signature');
+        }
+        _this._datastreamBase = DSPointerBase[version.layout];
+        _this._datastreamIncrementBase = DSIncrementBase[version.layout];
+        _this._waveformBase = WaveformBase[version.layout];
+        switch (version.subtype) {
+            case 0:
+                _this._jumpstreamMask = 0xff;
+                _this._amplitudeStream = 34;
+                break;
+            case 1:
+                _this._jumpstreamMask = 0xfe;
+                _this._amplitudeStream = 35;
+                break;
+            default:
+                throw new Error('invalid CDF subtype');
+        }
         if (buffer.length !== 0x8000) {
             throw new Error("not a CDF image: invalid lenght " + buffer.length);
         }
-        if (_this._version < 0) {
-            throw new Error('not a CDF image: missing signature');
-        }
-        _this._soc = new Soc_1.default(_this._version > 0 ? _this._handleBxCDF1 : _this._handleBxCDF0);
+        _this._soc = new Soc_1.default(version.layout > 0 ? _this._handleBxCDF1 : _this._handleBxCDF0);
         _this._soc.trap.addHandler(function (message) { return _this.triggerTrap(2, message); });
         _this._rom = _this._soc.getRom();
         for (var i = 0; i < 0x8000; i++) {
@@ -85172,12 +85192,28 @@ var CartridgeCDF = (function (_super) {
     CartridgeCDF.getVersion = function (buffer) {
         var sig = 'CDF'.split('').map(function (x) { return x.charCodeAt(0); }), startAddress = cartridgeUtil.searchForSignature(buffer, tslib_1.__spread(sig, [-1], sig, [-1], sig));
         if (startAddress < 0) {
-            return -1;
+            return null;
         }
-        return buffer[startAddress + 3] > 0 ? 1 : 0;
+        switch (buffer[startAddress + 3]) {
+            case 0:
+                return {
+                    subtype: 0,
+                    layout: 0
+                };
+            case 'J'.charCodeAt(0):
+                return {
+                    subtype: 1,
+                    layout: 1
+                };
+            default:
+                return {
+                    subtype: 0,
+                    layout: 1
+                };
+        }
     };
     CartridgeCDF.matchesBuffer = function (buffer) {
-        return CartridgeCDF.getVersion(buffer) >= 0;
+        return !!CartridgeCDF.getVersion(buffer);
     };
     CartridgeCDF.prototype.init = function () {
         return this._soc.init();
@@ -85224,23 +85260,27 @@ var CartridgeCDF = (function (_super) {
         var romValue = this._currentBank[address];
         if (this._fastJumpCountdown-- > 0 && address === this._jmpOperandAddress) {
             this._jmpOperandAddress++;
-            return this._datastreamReadWithIncrement(33, 0x0100);
+            return this._datastreamReadWithIncrement(this._jumpstream, 0x0100);
         }
         if (this._fastFetch &&
             romValue === 0x4c &&
-            this._currentBank[(address + 1) & 0x0fff] === 0 &&
+            (this._currentBank[(address + 1) & 0x0fff] & this._jumpstreamMask) === 0 &&
             this._currentBank[(address + 2) & 0x0fff] === 0) {
             this._fastJumpCountdown = 2;
             this._jmpOperandAddress = (address + 1) & 0x0fff;
+            this._jumpstream = 33 + this._currentBank[(address + 1) & 0x0fff];
             return romValue;
         }
         this._fastJumpCountdown = 0;
-        if (this._fastFetch && this._fastFetchPending && this._ldaOperandAddress === address && romValue <= 0x22) {
+        if (this._fastFetch &&
+            this._fastFetchPending &&
+            this._ldaOperandAddress === address &&
+            romValue <= this._amplitudeStream) {
             this._fastFetchPending = false;
-            if (romValue === 34) {
+            if (romValue === this._amplitudeStream) {
                 this._clockMusicStreams();
                 if (this._digitalAudio) {
-                    var counter = this._musicStreams[0].counter, sampleAddress = this._soc.getRam32(WaveformBase[this._version]) + (counter >>> 21);
+                    var counter = this._musicStreams[0].counter, sampleAddress = this._soc.getRam32(this._waveformBase) + (counter >>> 21);
                     var sample = 0;
                     if (sampleAddress < 0x8000) {
                         sample = this._rom[sampleAddress];
@@ -85316,13 +85356,13 @@ var CartridgeCDF = (function (_super) {
         }
     };
     CartridgeCDF.prototype._getDatastreamPointer = function (stream) {
-        return this._soc.getRam32(DSPointerBase[this._version] + 4 * stream);
+        return this._soc.getRam32(this._datastreamBase + 4 * stream);
     };
     CartridgeCDF.prototype._setDatastreamPointer = function (stream, value) {
-        this._soc.setRam32(DSPointerBase[this._version] + 4 * stream, value);
+        this._soc.setRam32(this._datastreamBase + 4 * stream, value);
     };
     CartridgeCDF.prototype._getDatastreamIncrement = function (stream) {
-        return this._soc.getRam32(DSIncrementBase[this._version] + 4 * stream);
+        return this._soc.getRam32(this._datastreamIncrementBase + 4 * stream);
     };
     CartridgeCDF.prototype._datastreamRead = function (stream) {
         var pointer = this._getDatastreamPointer(stream), value = this._displayRam[pointer >>> 20];
@@ -85340,7 +85380,7 @@ var CartridgeCDF = (function (_super) {
         this._setDatastreamPointer(stream, (pointer + (increment << 12)) | 0);
     };
     CartridgeCDF.prototype._getWaveform = function (index) {
-        var value = this._soc.getRam32(WaveformBase[this._version] + 4 * index);
+        var value = this._soc.getRam32(this._waveformBase + 4 * index);
         return (value - 0x40000000 - 0x0800) & 0x0fff;
     };
     return CartridgeCDF;
@@ -96515,7 +96555,7 @@ var Main_1 = require("./containers/Main");
 var Routing_1 = require("./Routing");
 function initEnv(store) {
     var BUILD_ID_KEY = 'build-id';
-    var buildId = "fa9184", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
+    var buildId = "80018f", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
     localStorage.setItem(BUILD_ID_KEY, buildId);
     store.dispatch(environment_1.initialize({
         helppageUrl: "doc/stellerator.md",
