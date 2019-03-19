@@ -10933,9 +10933,6 @@ var Soc_1 = require("./harmony/Soc");
 var AbstractCartridge_1 = require("./AbstractCartridge");
 var CartridgeInfo_1 = require("./CartridgeInfo");
 var cartridgeUtil = require("./util");
-var DSPointerBase = new Uint16Array([0x06e0, 0x00a0]);
-var DSIncrementBase = new Uint16Array([0x0768, 0x0128]);
-var WaveformBase = new Uint16Array([0x07f0, 0x01b0]);
 var CartridgeCDF = (function (_super) {
     tslib_1.__extends(CartridgeCDF, _super);
     function CartridgeCDF(buffer) {
@@ -11000,28 +10997,35 @@ var CartridgeCDF = (function (_super) {
         _this._bus = null;
         _this._cpuTimeProvider = null;
         var version = CartridgeCDF.getVersion(buffer);
-        if (!version) {
-            throw new Error('not a CDF image: missing signature');
-        }
-        _this._datastreamBase = DSPointerBase[version.layout];
-        _this._datastreamIncrementBase = DSIncrementBase[version.layout];
-        _this._waveformBase = WaveformBase[version.layout];
-        switch (version.subtype) {
+        switch (version) {
             case 0:
                 _this._jumpstreamMask = 0xff;
                 _this._amplitudeStream = 34;
+                _this._datastreamBase = 0x06e0;
+                _this._datastreamIncrementBase = 0x0768;
+                _this._waveformBase = 0x7f0;
                 break;
             case 1:
+                _this._jumpstreamMask = 0xff;
+                _this._amplitudeStream = 34;
+                _this._datastreamBase = 0x00a0;
+                _this._datastreamIncrementBase = 0x0128;
+                _this._waveformBase = 0x01b0;
+                break;
+            case 2:
                 _this._jumpstreamMask = 0xfe;
                 _this._amplitudeStream = 35;
+                _this._datastreamBase = 0x0098;
+                _this._datastreamIncrementBase = 0x0124;
+                _this._waveformBase = 0x01b0;
                 break;
             default:
-                throw new Error('invalid CDF subtype');
+                throw new Error('not a CDF image: missing signature');
         }
         if (buffer.length !== 0x8000) {
             throw new Error("not a CDF image: invalid lenght " + buffer.length);
         }
-        _this._soc = new Soc_1.default(version.layout > 0 ? _this._handleBxCDF1 : _this._handleBxCDF0);
+        _this._soc = new Soc_1.default(version === 0 ? _this._handleBxCDF0 : _this._handleBxCDF1);
         _this._soc.trap.addHandler(function (message) { return _this.triggerTrap(2, message); });
         _this._rom = _this._soc.getRom();
         for (var i = 0; i < 0x8000; i++) {
@@ -11045,24 +11049,17 @@ var CartridgeCDF = (function (_super) {
         }
         switch (buffer[startAddress + 3]) {
             case 0:
-                return {
-                    subtype: 0,
-                    layout: 0
-                };
+                return 0;
+            case 1:
+                return 1;
             case 'J'.charCodeAt(0):
-                return {
-                    subtype: 1,
-                    layout: 1
-                };
+                return 2;
             default:
-                return {
-                    subtype: 0,
-                    layout: 1
-                };
+                return 3;
         }
     };
     CartridgeCDF.matchesBuffer = function (buffer) {
-        return !!CartridgeCDF.getVersion(buffer);
+        return CartridgeCDF.getVersion(buffer) !== 3;
     };
     CartridgeCDF.prototype.init = function () {
         return this._soc.init();
