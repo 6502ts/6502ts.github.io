@@ -7038,7 +7038,7 @@ var CartridgeCDF = (function (_super) {
     CartridgeCDF.getVersion = function (buffer) {
         var sig = 'CDF'.split('').map(function (x) { return x.charCodeAt(0); }), startAddress = cartridgeUtil.searchForSignature(buffer, tslib_1.__spread(sig, [-1], sig, [-1], sig));
         if (startAddress < 0) {
-            return null;
+            return 3;
         }
         switch (buffer[startAddress + 3]) {
             case 0:
