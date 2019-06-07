@@ -4340,6 +4340,7 @@ var CartridgeInfo;
     (function (CartridgeType) {
         CartridgeType["vanilla_2k"] = "vanilla_2k";
         CartridgeType["vanilla_4k"] = "vanilla_4k";
+        CartridgeType["bankswitch_2k_cv"] = "bankswitch_2k_cv";
         CartridgeType["bankswitch_8k_F8"] = "bankswitch_8k_F8";
         CartridgeType["bankswitch_8k_E0"] = "bankswitch_8k_E0";
         CartridgeType["bankswitch_8k_3F"] = "bankswitch_8k_3F";
@@ -4364,6 +4365,7 @@ var CartridgeInfo;
         return [
             CartridgeType.vanilla_2k,
             CartridgeType.vanilla_4k,
+            CartridgeType.bankswitch_2k_cv,
             CartridgeType.bankswitch_8k_F8,
             CartridgeType.bankswitch_8k_E0,
             CartridgeType.bankswitch_8k_3F,
@@ -4392,6 +4394,8 @@ var CartridgeInfo;
                 return 'plain 2k';
             case CartridgeType.vanilla_4k:
                 return 'plain 4k';
+            case CartridgeType.bankswitch_2k_cv:
+                return '2k CommaVideo scheme';
             case CartridgeType.bankswitch_8k_F8:
                 return 'bankswitched 8k, F8 (Atari) scheme';
             case CartridgeType.bankswitch_8k_E0:
