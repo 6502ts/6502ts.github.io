@@ -6,6 +6,8 @@ github.io:
  * [Atari 2600 debugger frontend](https://6502ts.github.io/dev/stella.html)
  * [Atari 2600 stellerator, development build](https://6502ts.github.io/dev/stellerator.html)
  * [Atari 2600 stellerator, production build](https://6502ts.github.io/stellerator)
+ * [(prototype) Atari 2600 stellerator, next generation](https://6502ts.github.io/stellerator-ng)
+   (currently not functional)
 
 If you are looking for source code, documentation or licensing details, head over to the
 [main respoitory](https://github.com/6502ts/6502.ts)
