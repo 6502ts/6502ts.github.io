@@ -8903,15 +8903,21 @@ var CartridgeFE = (function (_super) {
         return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_FE;
     };
     CartridgeFE._onBusAccess = function (accessType, self) {
-        var lastAddressBusValue = self._lastAddressBusValue;
-        self._lastAddressBusValue = self._bus.getLastAddresBusValue();
-        if (self._lastAddressBusValue === lastAddressBusValue) {
+        var previousAddressBusValue = self._lastAddressBusValue;
+        self._lastAddressBusValue = self._bus.getLastAddresBusValue() & 0x1fff;
+        if (self._lastAddressBusValue === previousAddressBusValue) {
             return;
         }
         if (self._lastAccessWasFE) {
-            self._bank = (self._bus.getLastDataBusValue() & 0x20) > 0 ? self._bank0 : self._bank1;
+            var dataBusHiBits = self._bus.getLastDataBusValue() & 0xe0;
+            self._bank =
+                dataBusHiBits === 0
+                    ? self._bank0
+                    : (self._bus.getLastDataBusValue() & 0x20) > 0
+                        ? self._bank0
+                        : self._bank1;
         }
-        self._lastAccessWasFE = self._bus.getLastAddresBusValue() === 0x01fe;
+        self._lastAccessWasFE = self._lastAddressBusValue === 0x01fe;
     };
     return CartridgeFE;
 }(AbstractCartridge_1.default));
