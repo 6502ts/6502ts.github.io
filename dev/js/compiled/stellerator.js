@@ -86145,10 +86145,7 @@ var CartridgeDetector = (function () {
         if (Cartridge0840_1.default.matchesBuffer(buffer)) {
             return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_econobanking;
         }
-        if (CartridgeF8_1.default.matchesBuffer(buffer)) {
-            return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_F8;
-        }
-        return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_pp;
+        return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_F8;
     };
     CartridgeDetector.prototype._detect16k = function (buffer) {
         if (CartridgeE7_1.default.matchesBuffer(buffer)) {
@@ -96785,7 +96782,7 @@ var Main_1 = require("./containers/Main");
 var Routing_1 = require("./Routing");
 function initEnv(store) {
     var BUILD_ID_KEY = 'build-id';
-    var buildId = "ddf43e", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
+    var buildId = "1eeb72", storedBuildId = localStorage.getItem(BUILD_ID_KEY), wasUpdated = storedBuildId && storedBuildId !== buildId;
     localStorage.setItem(BUILD_ID_KEY, buildId);
     store.dispatch(environment_1.initialize({
         helppageUrl: "doc/stellerator.md",

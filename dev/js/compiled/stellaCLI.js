@@ -11994,10 +11994,7 @@ var CartridgeDetector = (function () {
         if (Cartridge0840_1.default.matchesBuffer(buffer)) {
             return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_econobanking;
         }
-        if (CartridgeF8_1.default.matchesBuffer(buffer)) {
-            return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_F8;
-        }
-        return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_pp;
+        return CartridgeInfo_1.default.CartridgeType.bankswitch_8k_F8;
     };
     CartridgeDetector.prototype._detect16k = function (buffer) {
         if (CartridgeE7_1.default.matchesBuffer(buffer)) {
