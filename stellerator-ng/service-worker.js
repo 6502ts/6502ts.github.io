@@ -15,11 +15,7 @@ importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox
 
 workbox.core.setCacheNameDetails({prefix: "stellerator-ng"});
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
+workbox.core.skipWaiting();
 
 /**
  * The workboxSW.precacheAndRoute() method efficiently caches and responds to
@@ -33,7 +29,7 @@ self.__precacheManifest = [
   },
   {
     "url": "app.js",
-    "revision": "db0a9b56f9177f1294f10f09525fc2cf"
+    "revision": "4c7287e4aa1576dcc6afcee51141074a"
   },
   {
     "url": "assets/fonts/PxPlus_IBM_VGA8.woff",
