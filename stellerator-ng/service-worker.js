@@ -17,6 +17,8 @@ workbox.core.setCacheNameDetails({prefix: "stellerator-ng"});
 
 workbox.core.skipWaiting();
 
+workbox.core.clientsClaim();
+
 /**
  * The workboxSW.precacheAndRoute() method efficiently caches and responds to
  * requests for URLs in the manifest.
@@ -29,7 +31,7 @@ self.__precacheManifest = [
   },
   {
     "url": "app.js",
-    "revision": "4c7287e4aa1576dcc6afcee51141074a"
+    "revision": "e882573db3ce908318d7876acc692d26"
   },
   {
     "url": "assets/fonts/PxPlus_IBM_VGA8.woff",
