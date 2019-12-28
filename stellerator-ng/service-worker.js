@@ -33,7 +33,7 @@ self.__precacheManifest = [
   },
   {
     "url": "app.js",
-    "revision": "8f8a9e2d57f5007ad6595e4cfb97568e"
+    "revision": "db0a9b56f9177f1294f10f09525fc2cf"
   },
   {
     "url": "assets/fonts/PxPlus_IBM_VGA8.woff",
