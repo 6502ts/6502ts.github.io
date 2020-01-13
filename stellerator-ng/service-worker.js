@@ -31,7 +31,7 @@ self.__precacheManifest = [
   },
   {
     "url": "app.js",
-    "revision": "e882573db3ce908318d7876acc692d26"
+    "revision": "c05712d76d4163d6f552260e77de8873"
   },
   {
     "url": "assets/fonts/PxPlus_IBM_VGA8.woff",
@@ -79,7 +79,7 @@ self.__precacheManifest = [
   },
   {
     "url": "doc/stellerator.md",
-    "revision": "ec06ac704371f8a10139f98a0a9352d8"
+    "revision": "edc6585b2b6adee3e312c646b53f5cfa"
   },
   {
     "url": "index.html",
@@ -87,7 +87,7 @@ self.__precacheManifest = [
   },
   {
     "url": "worker/stellerator.min.js",
-    "revision": "e3b68fb65b04e34209bed02b502c0e17"
+    "revision": "da592dbec3b5ec6e18054798c1684712"
   },
   {
     "url": "worker/video-pipeline.min.js",
