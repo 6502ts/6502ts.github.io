@@ -31,7 +31,7 @@ self.__precacheManifest = [
   },
   {
     "url": "app.js",
-    "revision": "520e51e932fbb8002f0318d638db86b0"
+    "revision": "b0406cd745998bb914580307ead41357"
   },
   {
     "url": "assets/fonts/PxPlus_IBM_VGA8.woff",
@@ -51,7 +51,7 @@ self.__precacheManifest = [
   },
   {
     "url": "CHANGELOG.md",
-    "revision": "4642fcd54296163afa46a18f3ccd7a31"
+    "revision": "aef734a44a5ed281a54bbc20c714898d"
   },
   {
     "url": "doc/cpu.md",
