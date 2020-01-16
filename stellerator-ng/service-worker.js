@@ -31,7 +31,7 @@ self.__precacheManifest = [
   },
   {
     "url": "app.js",
-    "revision": "b0406cd745998bb914580307ead41357"
+    "revision": "414f8fa8b134873398d0c3ccc3246b74"
   },
   {
     "url": "assets/fonts/PxPlus_IBM_VGA8.woff",
@@ -51,7 +51,7 @@ self.__precacheManifest = [
   },
   {
     "url": "CHANGELOG.md",
-    "revision": "aef734a44a5ed281a54bbc20c714898d"
+    "revision": "eaa4d66d03d288df38866119a70fbd70"
   },
   {
     "url": "doc/cpu.md",
@@ -83,11 +83,15 @@ self.__precacheManifest = [
   },
   {
     "url": "doc/stellerator.md",
-    "revision": "edc6585b2b6adee3e312c646b53f5cfa"
+    "revision": "dd7d9dd7fb532e2acd64977f017b8087"
   },
   {
     "url": "index.html",
     "revision": "152bde26bd7b73796cbbf8609663c9ee"
+  },
+  {
+    "url": "LICENSE.md",
+    "revision": "d4f21973a2c1f86aa3953f1b94036bb7"
   },
   {
     "url": "worker/stellerator.min.js",
