@@ -456,6 +456,10 @@
     	return module = { exports: {} }, fn(module, module.exports), module.exports;
     }
 
+    function getCjsExportFromNamespace (n) {
+    	return n && n['default'] || n;
+    }
+
     /*! *****************************************************************************
     Copyright (C) Microsoft. All rights reserved.
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use
@@ -21850,7 +21854,6 @@
             subtree: true
         });
     }
-    //# sourceMappingURL=rangetouch.js.map
 
     var CartridgeInfo;
     (function (CartridgeInfo) {
@@ -21960,7 +21963,6 @@
         }
         CartridgeInfo.describeCartridgeType = describeCartridgeType;
     })(CartridgeInfo || (CartridgeInfo = {}));
-    //# sourceMappingURL=CartridgeInfo.js.map
 
     var metadata_keys = createCommonjsModule(function (module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -24267,7 +24269,6 @@
         inversify_8()
     ], MediaApi);
     var MediaApi$1 = MediaApi;
-    //# sourceMappingURL=MediaApi.js.map
 
     let ScrollIntoView = class ScrollIntoView {
         constructor() {
@@ -24318,7 +24319,6 @@
         }
     }
     var ScrollIntoView$1 = ScrollIntoView;
-    //# sourceMappingURL=ScrollIntoView.js.map
 
     var lookup$1 = [];
     var revLookup = [];
@@ -40724,7 +40724,6 @@
     function calculateFromUint8Array(buffer) {
         return md5(Buffer.from(buffer));
     }
-    //# sourceMappingURL=md5.js.map
 
     var Event_1 = createCommonjsModule(function (module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -40826,7 +40825,6 @@
         }
         CartridgeInterface.TrapPayload = TrapPayload;
     })(CartridgeInterface || (CartridgeInterface = {}));
-    //# sourceMappingURL=CartridgeInterface.js.map
 
     class AbstractCartridge {
         constructor() {
@@ -40869,7 +40867,6 @@
             }
         }
     }
-    //# sourceMappingURL=AbstractCartridge.js.map
 
     function searchForSignatures(buffer, signatures) {
         const candidates = [], counts = signatures.map((signature) => 0);
@@ -40915,7 +40912,6 @@
         }
         return -1;
     }
-    //# sourceMappingURL=util.js.map
 
     class CartridgeF8 extends AbstractCartridge {
         constructor(buffer, _supportSC = true) {
@@ -40989,7 +40985,6 @@
             }
         }
     }
-    //# sourceMappingURL=CartridgeF8.js.map
 
     class CartridgeE0 extends AbstractCartridge {
         constructor(buffer) {
@@ -41065,7 +41060,6 @@
             }
         }
     }
-    //# sourceMappingURL=CartridgeE0.js.map
 
     class Cartridge3F extends AbstractCartridge {
         constructor(buffer) {
@@ -41112,7 +41106,6 @@
             }
         }
     }
-    //# sourceMappingURL=Cartridge3F.js.map
 
     class Cartridge3E extends AbstractCartridge {
         constructor(buffer) {
@@ -41215,7 +41208,6 @@
             }
         }
     }
-    //# sourceMappingURL=Cartridge3E.js.map
 
     class CartridgeFE extends AbstractCartridge {
         constructor(buffer) {
@@ -41285,7 +41277,6 @@
             self._lastAccessWasFE = self._lastAddressBusValue === 0x01fe;
         }
     }
-    //# sourceMappingURL=CartridgeFE.js.map
 
     class CartridgeUA extends AbstractCartridge {
         constructor(buffer) {
@@ -41342,7 +41333,6 @@
             }
         }
     }
-    //# sourceMappingURL=CartridgeUA.js.map
 
     class CartrdigeE7 extends AbstractCartridge {
         constructor(buffer) {
@@ -41458,7 +41448,6 @@
             }
         }
     }
-    //# sourceMappingURL=CartridgeE7.js.map
 
     class CartridgeFA2 extends AbstractCartridge {
         constructor(buffer) {
@@ -41563,7 +41552,6 @@
             this._ram[0xff] = 0;
         }
     }
-    //# sourceMappingURL=CartridgeFA2.js.map
 
     class CartridgeEF extends AbstractCartridge {
         constructor(buffer, _supportSC = true) {
@@ -41661,11 +41649,15 @@
             }
         }
     }
-    //# sourceMappingURL=CartridgeEF.js.map
 
     var __dirname = '/Users/pestix/git/6502ts/6502.ts/node_modules/thumbulator.ts/lib/native';
 
-    var require$$0 = {};
+    var empty = {};
+
+    var empty$1 = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        'default': empty
+    });
 
     // Copyright Joyent, Inc. and other Node contributors.
     //
@@ -41870,7 +41862,7 @@
     function extname(path) {
       return splitPath(path)[3];
     }
-    var require$$1 = {
+    var path = {
       extname: extname,
       basename: basename,
       dirname: dirname,
@@ -41899,6 +41891,25 @@
             return str.substr(start, len);
         }
     ;
+
+    var path$1 = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        resolve: resolve$1,
+        normalize: normalize,
+        isAbsolute: isAbsolute,
+        join: join,
+        relative: relative,
+        sep: sep,
+        delimiter: delimiter,
+        dirname: dirname,
+        basename: basename,
+        extname: extname,
+        'default': path
+    });
+
+    var require$$0 = getCjsExportFromNamespace(empty$1);
+
+    var require$$1 = getCjsExportFromNamespace(path$1);
 
     var thumbulator = createCommonjsModule(function (module, exports) {
     var Module = (function() {
@@ -42017,7 +42028,6 @@
     function encode$1(value, width, signed = true) {
         return encodeWithPrefix(value, width, signed, '$');
     }
-    //# sourceMappingURL=hex.js.map
 
     function hostIsLittleEndian() {
         const buffer8 = new Uint8Array([1, 2, 3, 4]), buffer32 = new Uint32Array(buffer8.buffer);
@@ -42205,7 +42215,6 @@
             this.trap.dispatch(message);
         }
     }
-    //# sourceMappingURL=Soc.js.map
 
     class CartridgeDPCPlus extends AbstractCartridge {
         constructor(buffer) {
@@ -42560,7 +42569,6 @@
             return this.counter >>> 27;
         }
     }
-    //# sourceMappingURL=CartridgeDPCPlus.js.map
 
     class CartridgeCDF extends AbstractCartridge {
         constructor(buffer) {
@@ -42871,7 +42879,6 @@
             this.counter = (this.counter + clocks * this.frequency) | 0;
         }
     }
-    //# sourceMappingURL=CartridgeCDF.js.map
 
     class Cartridge8040 extends AbstractCartridge {
         constructor(buffer) {
@@ -42935,7 +42942,6 @@
             }
         }
     }
-    //# sourceMappingURL=Cartridge0840.js.map
 
     class CartridgeCV extends AbstractCartridge {
         constructor(buffer) {
@@ -42992,7 +42998,6 @@
             return CartridgeInfo.CartridgeType.bankswitch_2k_cv;
         }
     }
-    //# sourceMappingURL=CartridgeCV.js.map
 
     class CartridgeDetector {
         detectCartridgeType(buffer) {
@@ -43086,7 +43091,6 @@
             return CartridgeInfo.CartridgeType.bankswitch_64k_F0;
         }
     }
-    //# sourceMappingURL=CartridgeDetector.js.map
 
     /*
      * Dexie.js - a minimalistic wrapper for IndexedDB
@@ -47550,10 +47554,9 @@
         }
         catch (_e) { }
     })();
-    //# sourceMappingURL=dexie.es.js.map
 
     const SETTINGS_ID = 0;
-    const DB_NAME = 'stellerator-ng';
+    const DB_NAME =  'stellerator-ng-dev' ;
     const DEFAULT_SETTINGS = {
         cpuEmulation: "cycle",
         volume: 80,
@@ -47675,7 +47678,6 @@
         inversify_8()
     ], Storage);
     var Storage$1 = Storage;
-    //# sourceMappingURL=Storage.js.map
 
     let AddCartridge = class AddCartridge {
         constructor(_storage) {
@@ -47764,7 +47766,6 @@
         __metadata("design:paramtypes", [Storage$1])
     ], AddCartridge);
     var AddCartridge$1 = AddCartridge;
-    //# sourceMappingURL=AddCartridge.js.map
 
     var Mutex_1 = createCommonjsModule(function (module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -47839,7 +47840,6 @@
             State["error"] = "error";
         })(State = EmulationServiceInterface.State || (EmulationServiceInterface.State = {}));
     })(EmulationServiceInterface || (EmulationServiceInterface = {}));
-    //# sourceMappingURL=EmulationServiceInterface.js.map
 
     var RpcProvider_1 = createCommonjsModule(function (module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -48060,7 +48060,6 @@
             return this._asyncIOProxy;
         }
     }
-    //# sourceMappingURL=EmulationContext.js.map
 
     class PoolMember {
         constructor(_value, _releaseCB, _disposeCB) {
@@ -48083,7 +48082,6 @@
             this._disposeCB(this);
         }
     }
-    //# sourceMappingURL=PoolMember.js.map
 
     class Pool {
         constructor(_factory) {
@@ -48134,7 +48132,6 @@
             this.event.dispose.dispatch(victim.get());
         }
     }
-    //# sourceMappingURL=Pool.js.map
 
     const RPC_TYPE = {
         emulationPause: 'emulation/pause',
@@ -48166,7 +48163,6 @@
         messageToAsyncIO: 'asyncIO/messageTo'
     };
     Object.freeze(SIGNAL_TYPE);
-    //# sourceMappingURL=messages.js.map
 
     class VideoProxy {
         constructor(_rpc) {
@@ -48233,7 +48229,6 @@
             this.newFrame.dispatch(frame);
         }
     }
-    //# sourceMappingURL=VideoProxy.js.map
 
     class Switch {
         constructor(_state = false) {
@@ -48256,7 +48251,6 @@
             this.stateChanged.dispatch(state);
         }
     }
-    //# sourceMappingURL=Switch.js.map
 
     class DigitalJoystick {
         constructor() {
@@ -48282,7 +48276,6 @@
             return this._fire;
         }
     }
-    //# sourceMappingURL=DigitalJoystick.js.map
 
     class ControlPanel {
         constructor() {
@@ -48308,7 +48301,6 @@
             return this._difficutlyP1;
         }
     }
-    //# sourceMappingURL=ControlPanel.js.map
 
     class Paddle {
         constructor() {
@@ -48327,7 +48319,6 @@
             return this._fireSwitch;
         }
     }
-    //# sourceMappingURL=Paddle.js.map
 
     class ControlProxy {
         constructor(_rpc) {
@@ -48389,7 +48380,6 @@
             };
         }
     }
-    //# sourceMappingURL=ControlProxy.js.map
 
     var CpuInterface;
     (function (CpuInterface) {
@@ -48407,7 +48397,6 @@
         }
         CpuInterface.State = State;
     })(CpuInterface || (CpuInterface = {}));
-    //# sourceMappingURL=CpuInterface.js.map
 
     class ResultImpl {
         constructor() {
@@ -48435,7 +48424,6 @@
             return this;
         }
     }
-    //# sourceMappingURL=ResultImpl.js.map
 
     const immutables = Symbol('immutable properties');
     function freezeImmutables(target) {
@@ -48453,7 +48441,6 @@
         }
         target[immutables].push(prop);
     }
-    //# sourceMappingURL=decorators.js.map
 
     class Boot {
         constructor(state) {
@@ -48522,7 +48509,6 @@
         __metadata("design:type", CpuInterface.State)
     ], Boot.prototype, "_state", void 0);
     const boot = (state) => new Boot(state);
-    //# sourceMappingURL=boot.js.map
 
     class Interrupt {
         constructor(state, defaultVector, isBrk) {
@@ -48611,7 +48597,6 @@
     const brk = (state) => new Interrupt(state, 0xfffe, true);
     const irq = (state) => new Interrupt(state, 0xfffe, false);
     const nmi = (state) => new Interrupt(state, 0xfffa, false);
-    //# sourceMappingURL=interrupt.js.map
 
     class Instruction {
         constructor(operation, addressingMode, effectiveAddressingMode = addressingMode) {
@@ -48963,7 +48948,6 @@
             set(0x33, 70, 11);
         })(__init = Instruction.__init || (Instruction.__init = {}));
     })(Instruction || (Instruction = {}));
-    //# sourceMappingURL=Instruction.js.map
 
     class Absolute {
         constructor(state, next = () => null) {
@@ -49010,7 +48994,6 @@
         __metadata("design:type", Function)
     ], Absolute.prototype, "_next", void 0);
     const absolute = (state, next) => new Absolute(state, next);
-    //# sourceMappingURL=absolute.js.map
 
     class AbsoluteIndexed {
         constructor(state, indexExtractor, next = () => null, writeOp = false) {
@@ -49102,7 +49085,6 @@
     ], AbsoluteIndexed, "absoluteY", null);
     const absoluteX = (state, next, writeOp) => AbsoluteIndexed.absoluteX(state, next, writeOp);
     const absoluteY = (state, next, writeOp) => AbsoluteIndexed.absoluteY(state, next, writeOp);
-    //# sourceMappingURL=absoluteIndexed.js.map
 
     class Dereference {
         constructor(state, next = () => null) {
@@ -49135,7 +49117,6 @@
         __metadata("design:type", Function)
     ], Dereference.prototype, "_next", void 0);
     const dereference = (state, next) => new Dereference(state, next);
-    //# sourceMappingURL=dereference.js.map
 
     class Immediate {
         constructor(state, next = () => null) {
@@ -49173,7 +49154,6 @@
         __metadata("design:type", Function)
     ], Immediate.prototype, "_next", void 0);
     const immediate$1 = (state, next) => new Immediate(state, next);
-    //# sourceMappingURL=immediate.js.map
 
     class IndexedIndirectX {
         constructor(state, next = () => null) {
@@ -49237,7 +49217,6 @@
         __metadata("design:type", Function)
     ], IndexedIndirectX.prototype, "_next", void 0);
     const indexedIndirectX = (state, next) => new IndexedIndirectX(state, next);
-    //# sourceMappingURL=indexedIndirectX.js.map
 
     class IndexedIndirectY {
         constructor(state, next = () => null, writeOp) {
@@ -49313,7 +49292,6 @@
         __metadata("design:type", Boolean)
     ], IndexedIndirectY.prototype, "_writeOp", void 0);
     const indirectIndexedY = (state, next, writeOp) => new IndexedIndirectY(state, next, writeOp);
-    //# sourceMappingURL=indirectIndexedY.js.map
 
     class ZeroPage {
         constructor(state, next = () => null) {
@@ -49351,7 +49329,6 @@
         __metadata("design:type", Function)
     ], ZeroPage.prototype, "_next", void 0);
     const zeroPage = (state, next) => new ZeroPage(state, next);
-    //# sourceMappingURL=zeroPage.js.map
 
     class ZeroPageIndexed {
         constructor(state, indexExtractor, next) {
@@ -49409,7 +49386,6 @@
     ], ZeroPageIndexed.prototype, "_indexExtractor", void 0);
     const zeroPageX = (state, next) => ZeroPageIndexed.zeroPageX(state, next);
     const zeroPageY = (state, next) => ZeroPageIndexed.zeroPageY(state, next);
-    //# sourceMappingURL=zeroPageIndexed.js.map
 
     class Branch {
         constructor(state, predicate) {
@@ -49468,7 +49444,6 @@
         __metadata("design:type", Function)
     ], Branch.prototype, "_predicate", void 0);
     const branch = (state, predicate) => new Branch(state, predicate);
-    //# sourceMappingURL=branch.js.map
 
     class Jsr {
         constructor(state) {
@@ -49526,7 +49501,6 @@
         __metadata("design:type", CpuInterface.State)
     ], Jsr.prototype, "_state", void 0);
     const jsr = (state) => new Jsr(state);
-    //# sourceMappingURL=jsr.js.map
 
     class ReadModifyWrite {
         constructor(state, operation) {
@@ -49575,7 +49549,6 @@
         __metadata("design:type", Function)
     ], ReadModifyWrite.prototype, "_operation", void 0);
     const readModifyWrite = (state, operation) => new ReadModifyWrite(state, operation);
-    //# sourceMappingURL=readModifyWrite.js.map
 
     class Rts {
         constructor(state) {
@@ -49636,7 +49609,6 @@
         __metadata("design:type", CpuInterface.State)
     ], Rts.prototype, "_state", void 0);
     const rts = (state) => new Rts(state);
-    //# sourceMappingURL=rts.js.map
 
     class NullaryOneCycle {
         constructor(state, operation) {
@@ -49672,7 +49644,6 @@
         __metadata("design:type", Function)
     ], NullaryOneCycle.prototype, "_operation", void 0);
     const nullaryOneCycle = (state, operation) => new NullaryOneCycle(state, operation);
-    //# sourceMappingURL=nullaryOneCycle.js.map
 
     class Pull {
         constructor(state, operation) {
@@ -49718,7 +49689,6 @@
         __metadata("design:type", Function)
     ], Pull.prototype, "_operation", void 0);
     const pull = (state, operation) => new Pull(state, operation);
-    //# sourceMappingURL=pull.js.map
 
     class Push {
         constructor(state, operation) {
@@ -49759,7 +49729,6 @@
         __metadata("design:type", Function)
     ], Push.prototype, "_operation", void 0);
     const push = (state, operation) => new Push(state, operation);
-    //# sourceMappingURL=push.js.map
 
     class Rti {
         constructor(state) {
@@ -49821,7 +49790,6 @@
         __metadata("design:type", CpuInterface.State)
     ], Rti.prototype, "_state", void 0);
     const rti = (state) => new Rti(state);
-    //# sourceMappingURL=rti.js.map
 
     class Write {
         constructor(state, operation) {
@@ -49849,7 +49817,6 @@
         __metadata("design:type", Function)
     ], Write.prototype, "_operation", void 0);
     const write$1 = (state, operation) => new Write(state, operation);
-    //# sourceMappingURL=write.js.map
 
     function setFlagsNZ(operand, state) {
         state.flags =
@@ -50077,7 +50044,6 @@
         state.flags = (state.flags & ~1) | ((state.a & 0x80) >>> 7);
         return null;
     }
-    //# sourceMappingURL=ops.js.map
 
     class Indirect {
         constructor(state, next = () => null) {
@@ -50147,7 +50113,6 @@
         __metadata("design:type", Function)
     ], Indirect.prototype, "_next", void 0);
     const indirect = (state, next) => new Indirect(state, next);
-    //# sourceMappingURL=indirect.js.map
 
     class Compiler {
         constructor(_state) {
@@ -50393,7 +50358,6 @@
             }
         }
     }
-    //# sourceMappingURL=Compiler.js.map
 
     class StateMachineCpu {
         constructor(_bus, _rng) {
@@ -50539,7 +50503,6 @@
             }
         }
     }
-    //# sourceMappingURL=StateMachineCpu.js.map
 
     function restoreFlagsFromStack(state, bus) {
         state.s = (state.s + 0x01) & 0xff;
@@ -50951,7 +50914,6 @@
         state.flags = (state.flags & ~1) | (old >>> 7);
         opAnd(state, bus, value);
     }
-    //# sourceMappingURL=ops.js.map
 
     function opBoot(state, bus) {
         state.p = bus.readWord(0xfffc);
@@ -51618,7 +51580,6 @@
             }
         }
     }
-    //# sourceMappingURL=BatchedAccessCpu.js.map
 
     class Factory {
         constructor(_type) {
@@ -51643,7 +51604,6 @@
         })(Type = Factory.Type || (Factory.Type = {}));
     })(Factory || (Factory = {}));
     var CpuFactory = Factory;
-    //# sourceMappingURL=Factory.js.map
 
     var Config$1;
     (function (Config) {
@@ -51662,7 +51622,6 @@
         }
         Config.getClockHz = getClockHz;
     })(Config$1 || (Config$1 = {}));
-    //# sourceMappingURL=Config.js.map
 
     class AudioOutputBuffer {
         constructor(_content, _sampleRate) {
@@ -51682,7 +51641,6 @@
             this._content = buffer;
         }
     }
-    //# sourceMappingURL=AudioOutputBuffer.js.map
 
     const encodingsString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', encodings = new Uint8Array(256);
     (function (__init) {
@@ -51729,7 +51687,6 @@
         }
         return decoded;
     }
-    //# sourceMappingURL=base64.js.map
 
     const FREQUENCY_DIVISIORS = decode$1('AQEPAQEBAQEBAQEBAwMDAQ==');
     const POLY0 = new Int8Array([1]);
@@ -51810,7 +51767,6 @@
             return new AudioOutputBuffer(content, sampleRate);
         }
     }
-    //# sourceMappingURL=ToneGenerator.js.map
 
     class WaveformAudioProxy {
         constructor(_index, _rpc) {
@@ -51863,7 +51819,6 @@
             }
         }
     }
-    //# sourceMappingURL=WaveformAudioProxy.js.map
 
     class PCMAudioProxy {
         constructor(_index, _rpc) {
@@ -51937,7 +51892,6 @@
             this.togglePause.dispatch(this._paused);
         }
     }
-    //# sourceMappingURL=PCMAudioProxy.js.map
 
     class AsyncIOProxy {
         constructor(_rpc) {
@@ -51951,7 +51905,6 @@
             this._rpc.signal(SIGNAL_TYPE.messageToAsyncIO, Array.from(message));
         }
     }
-    //# sourceMappingURL=AsyncIOProxy.js.map
 
     const CONTROL_PROXY_UPDATE_INTERVAL = 25;
     class EmulationService {
@@ -52146,7 +52099,6 @@
             }
         }
     }
-    //# sourceMappingURL=EmulationService.js.map
 
     class DriverManager {
         constructor() {
@@ -52224,7 +52176,6 @@
         }
         DriverManager.DriverContext = DriverContext;
     })(DriverManager || (DriverManager = {}));
-    //# sourceMappingURL=DriverManager.js.map
 
     var vsh;
     (function (vsh) {
@@ -52478,7 +52429,6 @@
         `;
         })(scanlines = fsh.scanlines || (fsh.scanlines = {}));
     })(fsh || (fsh = {}));
-    //# sourceMappingURL=shader.js.map
 
     function compileShader(gl, type, source) {
         const shader = gl.createShader(type);
@@ -52555,7 +52505,6 @@
             this._gl.uniform1f(this.getUniformLocation(uniform), value);
         }
     }
-    //# sourceMappingURL=Program.js.map
 
     class PhosphorProcessor {
         constructor(_gl) {
@@ -52667,7 +52616,6 @@
             this._program.uniform1f("u_PhosphorLevel", level);
         }
     }
-    //# sourceMappingURL=PhosphorProcessor.js.map
 
     class NtscProcessor {
         constructor(_gl, _capabilities) {
@@ -52886,7 +52834,6 @@
             this._program.uniform1f("u_Level", 1 - level);
         }
     }
-    //# sourceMappingURL=ScanlineProcessor.js.map
 
     class IntegerScalingProcessor {
         constructor(_gl) {
@@ -52995,7 +52942,6 @@
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         }
     }
-    //# sourceMappingURL=IntegerScalingProcessor.js.map
 
     class RingBuffer {
         constructor(_capacity) {
@@ -53046,7 +52992,6 @@
             return this._capacity;
         }
     }
-    //# sourceMappingURL=RingBuffer.js.map
 
     function framebufferSupportTextureType(gl, type) {
         const texture = gl.createTexture();
@@ -53081,7 +53026,6 @@
             halfFloatTextures: detectHalfFloatTextureSupport(gl)
         };
     }
-    //# sourceMappingURL=Capabilities.js.map
 
     const MAX_CONSECUTIVE_UNDERFLOWS = 5;
     class Video {
@@ -53353,7 +53297,6 @@
             this._configureProcessors();
         }
     }
-    //# sourceMappingURL=Video.js.map
 
     function mkSwitch(swtch) {
         return {
@@ -53561,7 +53504,6 @@
             }
         ];
     })(KeyboardIO || (KeyboardIO = {}));
-    //# sourceMappingURL=KeyboardIO.js.map
 
     class WaveformChannel {
         constructor(_cache) {
@@ -53636,7 +53578,6 @@
             this._gain.gain.value = this._volume * this._masterVolume;
         }
     }
-    //# sourceMappingURL=WaveformChannel.js.map
 
     class LinearReasmpler {
         constructor() {
@@ -53672,7 +53613,6 @@
             return this._needsData;
         }
     }
-    //# sourceMappingURL=LinearResampler.js.map
 
     class PCMChannel {
         constructor(_hostFragmentSize = 1024) {
@@ -53791,12 +53731,10 @@
             fillBuffer(this._bufferSize);
         }
     }
-    //# sourceMappingURL=PCMChannel.js.map
 
     const isSafari = 'safari' in window;
     const isIOS = !!navigator.platform.match(/iPhone|iPad|iPod/) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    //# sourceMappingURL=browser.js.map
 
     const audioNeedsInteraction = isIOS || isSafari;
     const INTERACTION_EVENTS = ['touchstart', 'click', 'keydown'];
@@ -53947,7 +53885,6 @@
             this._mutex.runExclusive(() => this._context.close());
         }
     }
-    //# sourceMappingURL=WebAudio.js.map
 
     class WebAudioDriver$1 {
         constructor(_fragmentSize) {
@@ -54014,7 +53951,6 @@
             });
         }
     }
-    //# sourceMappingURL=WebAudio.js.map
 
     var screenfull = createCommonjsModule(function (module) {
     /*!
@@ -54304,7 +54240,6 @@
             document.body.classList.add(this._fullscreenClass);
         }
     }
-    //# sourceMappingURL=FullscreenVideo.js.map
 
     class DoubleTapDetector {
         constructor(_maxTapLength = 500, _timeout = 200) {
@@ -54345,7 +54280,6 @@
             return this._dispatch;
         }
     }
-    //# sourceMappingURL=DoubleTapDetector.js.map
 
     class TouchIO {
         constructor(_canvas, _joystickSensitivity = 15, _leftHanded = false) {
@@ -54534,7 +54468,6 @@
             this.y0 = touch.clientY;
         }
     }
-    //# sourceMappingURL=TouchIO.js.map
 
     class MouseAsPaddleDriver {
         constructor() {
@@ -54572,7 +54505,6 @@
             this._x = e.screenX;
         }
     }
-    //# sourceMappingURL=MouseAsPaddle.js.map
 
     class ShadowSwitch {
         constructor() {
@@ -54597,7 +54529,6 @@
             }
         }
     }
-    //# sourceMappingURL=ShadowSwitch.js.map
 
     function button(index, target) {
         return {
@@ -54614,7 +54545,6 @@
             target
         };
     }
-    //# sourceMappingURL=Mapping.js.map
 
     const defaultMapping = [
         button(12, "up"),
@@ -54634,7 +54564,6 @@
         axis(3, "negative", "up"),
         axis(3, "positive", "down")
     ];
-    //# sourceMappingURL=defaultMapping.js.map
 
     const MIN_POLL_INTERVAL = 50;
     function readButton(button) {
@@ -54819,7 +54748,6 @@
             }
         }
     }
-    //# sourceMappingURL=Gamepad.js.map
 
     var Emulation_1;
     const CANVAS_ID = 'stellerator-canvas';
@@ -55188,12 +55116,11 @@
         __metadata("design:paramtypes", [Storage$1])
     ], Emulation);
     var Emulation$1 = Emulation;
-    //# sourceMappingURL=Emulation.js.map
 
     var FileSaver_min = createCommonjsModule(function (module, exports) {
     (function(a,b){b();})(commonjsGlobal,function(){function b(a,b){return "undefined"==typeof b?b={autoBom:!1}:"object"!=typeof b&&(console.warn("Deprecated: Expected third argument to be a object"),b={autoBom:!b}),b.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\uFEFF",a],{type:a.type}):a}function c(b,c,d){var e=new XMLHttpRequest;e.open("GET",b),e.responseType="blob",e.onload=function(){a(e.response,c,d);},e.onerror=function(){console.error("could not download file");},e.send();}function d(a){var b=new XMLHttpRequest;b.open("HEAD",a,!1);try{b.send();}catch(a){}return 200<=b.status&&299>=b.status}function e(a){try{a.dispatchEvent(new MouseEvent("click"));}catch(c){var b=document.createEvent("MouseEvents");b.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),a.dispatchEvent(b);}}var f="object"==typeof window&&window.window===window?window:"object"==typeof self&&self.self===self?self:"object"==typeof commonjsGlobal&&commonjsGlobal.global===commonjsGlobal?commonjsGlobal:void 0,a=f.saveAs||("object"!=typeof window||window!==f?function(){}:"download"in HTMLAnchorElement.prototype?function(b,g,h){var i=f.URL||f.webkitURL,j=document.createElement("a");g=g||b.name||"download",j.download=g,j.rel="noopener","string"==typeof b?(j.href=b,j.origin===location.origin?e(j):d(j.href)?c(b,g,h):e(j,j.target="_blank")):(j.href=i.createObjectURL(b),setTimeout(function(){i.revokeObjectURL(j.href);},4E4),setTimeout(function(){e(j);},0));}:"msSaveOrOpenBlob"in navigator?function(f,g,h){if(g=g||f.name||"download","string"!=typeof f)navigator.msSaveOrOpenBlob(b(f,h),g);else if(d(f))c(f,g,h);else{var i=document.createElement("a");i.href=f,i.target="_blank",setTimeout(function(){e(i);});}}:function(a,b,d,e){if(e=e||open("","_blank"),e&&(e.document.title=e.document.body.innerText="downloading..."),"string"==typeof a)return c(a,b,d);var g="application/octet-stream"===a.type,h=/constructor/i.test(f.HTMLElement)||f.safari,i=/CriOS\/[\d]+/.test(navigator.userAgent);if((i||g&&h)&&"object"==typeof FileReader){var j=new FileReader;j.onloadend=function(){var a=j.result;a=i?a:a.replace(/^data:[^;]*;/,"data:attachment/file;"),e?e.location.href=a:location=a,e=null;},j.readAsDataURL(a);}else{var k=f.URL||f.webkitURL,l=k.createObjectURL(a);e?e.location=l:location.href=l,e=null,setTimeout(function(){k.revokeObjectURL(l);},4E4);}});f.saveAs=a.saveAs=a,(module.exports=a);});
 
-    //# sourceMappingURL=FileSaver.min.js.map
+
     });
 
     let TrackCartridges = class TrackCartridges {
@@ -55236,7 +55163,6 @@
         __metadata("design:paramtypes", [Storage$1, Emulation$1])
     ], TrackCartridges);
     var TrackCartridges$1 = TrackCartridges;
-    //# sourceMappingURL=TrackCartridges.js.map
 
     let TrackSettings = class TrackSettings {
         constructor(_storage, _emulation) {
@@ -55261,9 +55187,8 @@
         __metadata("design:paramtypes", [Storage$1, Emulation$1])
     ], TrackSettings);
     var TrackSettings$1 = TrackSettings;
-    //# sourceMappingURL=TrackSettings.js.map
 
-    const VERSION_STORAGE_KEY = 'stellerator-ng-version';
+    const VERSION_STORAGE_KEY =  'stellerator-ng-version-dev' ;
     if (navigator.serviceWorker && !true) {
         navigator.serviceWorker.register('./service-worker.js', { scope: './' });
     }
@@ -55312,7 +55237,6 @@
         });
     }
     window.addEventListener('load', main);
-    //# sourceMappingURL=index.js.map
 
 }());
 //# sourceMappingURL=app.js.map
