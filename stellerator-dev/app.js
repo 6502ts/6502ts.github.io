@@ -456,10 +456,6 @@
     	return module = { exports: {} }, fn(module, module.exports), module.exports;
     }
 
-    function getCjsExportFromNamespace (n) {
-    	return n && n['default'] || n;
-    }
-
     /*! *****************************************************************************
     Copyright (C) Microsoft. All rights reserved.
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use
@@ -12123,9 +12119,9 @@
     var $author$project$Stellerator$Model$SetLicense = function (a) {
     	return {$: 'SetLicense', a: a};
     };
-    var $author$project$Stellerator$Main$Flags = F8(
-    	function (cartridges, cartridgeTypes, settings, defaultSettings, touchSupport, version, wasUpdated, gamepadCount) {
-    		return {cartridgeTypes: cartridgeTypes, cartridges: cartridges, defaultSettings: defaultSettings, gamepadCount: gamepadCount, settings: settings, touchSupport: touchSupport, version: version, wasUpdated: wasUpdated};
+    var $author$project$Stellerator$Main$Flags = F9(
+    	function (cartridges, cartridgeTypes, settings, defaultSettings, touchSupport, version, wasUpdated, gamepadCount, badGpu) {
+    		return {badGpu: badGpu, cartridgeTypes: cartridgeTypes, cartridges: cartridges, defaultSettings: defaultSettings, gamepadCount: gamepadCount, settings: settings, touchSupport: touchSupport, version: version, wasUpdated: wasUpdated};
     	});
     var $elm$json$Json$Decode$bool = _Json_decodeBool;
     var $author$project$Stellerator$Model$Cartridge = function (hash) {
@@ -12454,24 +12450,43 @@
     													'cpuEmulation',
     													$author$project$Stellerator$Model$decodeCpuEmulation,
     													$elm$json$Json$Decode$succeed($author$project$Stellerator$Model$Settings))))))))))))));
-    var $elm$json$Json$Decode$map8 = _Json_map8;
-    var $author$project$Stellerator$Main$decodeFlags = A9(
-    	$elm$json$Json$Decode$map8,
-    	$author$project$Stellerator$Main$Flags,
-    	A2(
-    		$elm$json$Json$Decode$field,
-    		'cartridges',
-    		$elm$json$Json$Decode$list($author$project$Stellerator$Model$decodeCartridge)),
-    	A2(
-    		$elm$json$Json$Decode$field,
-    		'cartridgeTypes',
-    		$elm$json$Json$Decode$list($author$project$Stellerator$Model$decodeCartridgeType)),
-    	A2($elm$json$Json$Decode$field, 'settings', $author$project$Stellerator$Model$decodeSettings),
-    	A2($elm$json$Json$Decode$field, 'defaultSettings', $author$project$Stellerator$Model$decodeSettings),
-    	A2($elm$json$Json$Decode$field, 'touchSupport', $elm$json$Json$Decode$bool),
-    	A2($elm$json$Json$Decode$field, 'version', $elm$json$Json$Decode$string),
-    	A2($elm$json$Json$Decode$field, 'wasUpdated', $elm$json$Json$Decode$bool),
-    	A2($elm$json$Json$Decode$field, 'gamepadCount', $elm$json$Json$Decode$int));
+    var $author$project$Stellerator$Main$decodeFlags = A3(
+    	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+    	'badGpu',
+    	$elm$json$Json$Decode$bool,
+    	A3(
+    		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+    		'gamepadCount',
+    		$elm$json$Json$Decode$int,
+    		A3(
+    			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+    			'wasUpdated',
+    			$elm$json$Json$Decode$bool,
+    			A3(
+    				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+    				'version',
+    				$elm$json$Json$Decode$string,
+    				A3(
+    					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+    					'touchSupport',
+    					$elm$json$Json$Decode$bool,
+    					A3(
+    						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+    						'defaultSettings',
+    						$author$project$Stellerator$Model$decodeSettings,
+    						A3(
+    							$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+    							'settings',
+    							$author$project$Stellerator$Model$decodeSettings,
+    							A3(
+    								$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+    								'cartridgeTypes',
+    								$elm$json$Json$Decode$list($author$project$Stellerator$Model$decodeCartridgeType),
+    								A3(
+    									$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+    									'cartridges',
+    									$elm$json$Json$Decode$list($author$project$Stellerator$Model$decodeCartridge),
+    									$elm$json$Json$Decode$succeed($author$project$Stellerator$Main$Flags))))))))));
     var $elm$http$Http$BadStatus_ = F2(
     	function (a, b) {
     		return {$: 'BadStatus_', a: a, b: b};
@@ -12837,10 +12852,11 @@
     				var f = _v0.a;
     				return f;
     			} else {
-    				return {cartridgeTypes: _List_Nil, cartridges: _List_Nil, defaultSettings: $author$project$Stellerator$Main$fallbackSettings, gamepadCount: 0, settings: $author$project$Stellerator$Main$fallbackSettings, touchSupport: false, version: '[unknown]', wasUpdated: false};
+    				return {badGpu: false, cartridgeTypes: _List_Nil, cartridges: _List_Nil, defaultSettings: $author$project$Stellerator$Main$fallbackSettings, gamepadCount: 0, settings: $author$project$Stellerator$Main$fallbackSettings, touchSupport: false, version: '[unknown]', wasUpdated: false};
     			}
     		}();
     		var model = {
+    			badGpu: flags.badGpu,
     			cartridgeFilter: '',
     			cartridgeTypes: flags.cartridgeTypes,
     			cartridgeViewMode: $author$project$Stellerator$Model$CartridgeViewCartridges,
@@ -17577,7 +17593,7 @@
     			]),
     		_List_fromArray(
     			[
-    				A4($author$project$Stellerator$View$Navigation$navigationLink, linkCss, model, $author$project$Stellerator$Model$RouteCartridges, 'Cartridges'),
+    				A4($author$project$Stellerator$View$Navigation$navigationLink, linkCss, model, $author$project$Stellerator$Model$RouteCartridges, 'ROMs'),
     				A4($author$project$Stellerator$View$Navigation$navigationLink, linkCss, model, $author$project$Stellerator$Model$RouteSettings, 'Settings'),
     				A4($author$project$Stellerator$View$Navigation$navigationLink, linkCss, model, $author$project$Stellerator$Model$RouteEmulation, 'Emulation'),
     				A4($author$project$Stellerator$View$Navigation$navigationLink, linkCss, model, $author$project$Stellerator$Model$RouteHelp, 'Help'),
@@ -17800,7 +17816,7 @@
     						]),
     					_List_fromArray(
     						[
-    							A4($author$project$Stellerator$View$Navigation$navigationLink, _List_Nil, model, $author$project$Stellerator$Model$RouteCartridges, 'Cartridges'),
+    							A4($author$project$Stellerator$View$Navigation$navigationLink, _List_Nil, model, $author$project$Stellerator$Model$RouteCartridges, 'ROMs'),
     							A4($author$project$Stellerator$View$Navigation$navigationLink, _List_Nil, model, $author$project$Stellerator$Model$RouteSettings, 'Settings'),
     							A4($author$project$Stellerator$View$Navigation$navigationLink, _List_Nil, model, $author$project$Stellerator$Model$RouteEmulation, 'Emulation'),
     							A4($author$project$Stellerator$View$Navigation$navigationLink, _List_Nil, model, $author$project$Stellerator$Model$RouteHelp, 'Help'),
@@ -18047,7 +18063,7 @@
     				} else {
     					if (!_v0.b.a) {
     						var _v2 = _v0.b;
-    						return message('no cartridges match the search');
+    						return message('no ROMS match the search');
     					} else {
     						break _v0$2;
     					}
@@ -18872,7 +18888,7 @@
     									$rtfeldman$elm_css$Css$int(1)),
     									$author$project$Dos$marginRightCw(1)
     								])),
-    							$rtfeldman$elm_css$Html$Styled$Attributes$placeholder('Search cartridges...'),
+    							$rtfeldman$elm_css$Html$Styled$Attributes$placeholder('Filter ROMs...'),
     							$author$project$Stellerator$View$Form$onInput($author$project$Stellerator$Model$ChangeCartridgeFilter),
     							$author$project$Stellerator$View$Form$onChange(
     							function (_v0) {
@@ -19425,7 +19441,7 @@
     				[
     					A2(
     					withLabel,
-    					'Cartridge name:',
+    					'ROM name:',
     					A2(
     						$author$project$Stellerator$View$Form$textInput,
     						_List_fromArray(
@@ -19443,7 +19459,7 @@
     						cart.name)),
     					A2(
     					withLabel,
-    					'Cartridge type:',
+    					'ROM type:',
     					A3(
     						$author$project$Stellerator$View$Form$picker,
     						A2(
@@ -19611,7 +19627,7 @@
     									]),
     								_List_fromArray(
     									[
-    										$rtfeldman$elm_css$Html$Styled$text('Save cartridge image')
+    										$rtfeldman$elm_css$Html$Styled$text('Save ROM image')
     									]))
     							]))
     					])));
@@ -19767,6 +19783,12 @@
     				[calcs]));
     		return {calc: $rtfeldman$elm_css$Css$Structure$Compatible, flexBasis: $rtfeldman$elm_css$Css$Structure$Compatible, fontSize: $rtfeldman$elm_css$Css$Structure$Compatible, length: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrAuto: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrAutoOrCoverOrContain: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrMinMaxDimension: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrNone: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrNoneOrMinMaxDimension: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrNumber: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrNumberOrAutoOrNoneOrContent: $rtfeldman$elm_css$Css$Structure$Compatible, textIndent: $rtfeldman$elm_css$Css$Structure$Compatible, value: value};
     	});
+    var $rtfeldman$elm_css$Html$Styled$Events$onDoubleClick = function (msg) {
+    	return A2(
+    		$rtfeldman$elm_css$Html$Styled$Events$on,
+    		'dblclick',
+    		$elm$json$Json$Decode$succeed(msg));
+    };
     var $rtfeldman$elm_css$Css$overflowY = $rtfeldman$elm_css$Css$prop1('overflow-y');
     var $rtfeldman$elm_css$Css$scroll = {backgroundAttachment: $rtfeldman$elm_css$Css$Structure$Compatible, blockAxisOverflow: $rtfeldman$elm_css$Css$Structure$Compatible, inlineAxisOverflow: $rtfeldman$elm_css$Css$Structure$Compatible, overflow: $rtfeldman$elm_css$Css$Structure$Compatible, scroll: $rtfeldman$elm_css$Css$Structure$Compatible, value: 'scroll'};
     var $rtfeldman$elm_css$Css$stretch = $rtfeldman$elm_css$Css$prop1('stretch');
@@ -19828,7 +19850,9 @@
     							A2($rtfeldman$elm_css$Css$property, 'word-break', 'break-word')
     						])),
     					$rtfeldman$elm_css$Html$Styled$Events$onClick(
-    					$author$project$Stellerator$Model$SelectCartridge(cart.hash))
+    					$author$project$Stellerator$Model$SelectCartridge(cart.hash)),
+    					$rtfeldman$elm_css$Html$Styled$Events$onDoubleClick(
+    					$author$project$Stellerator$Model$StartEmulation(cart.hash))
     				]),
     			_List_fromArray(
     				[
@@ -19924,7 +19948,7 @@
     								$rtfeldman$elm_css$Css$int(1)),
     								$author$project$Dos$marginRightCw(1)
     							])),
-    						$rtfeldman$elm_css$Html$Styled$Attributes$placeholder('Search cartridges...'),
+    						$rtfeldman$elm_css$Html$Styled$Attributes$placeholder('Filter ROMs...'),
     						$author$project$Stellerator$View$Form$onInput($author$project$Stellerator$Model$ChangeCartridgeFilter)
     					]),
     				model.cartridgeFilter),
@@ -20176,7 +20200,7 @@
     				[
     					A2(
     					$elm$core$Maybe$withDefault,
-    					$rtfeldman$elm_css$Html$Styled$text('no cartridge selected'),
+    					$rtfeldman$elm_css$Html$Styled$text('no ROMs selected'),
     					A2(
     						$elm$core$Maybe$map,
     						A2(
@@ -20547,7 +20571,7 @@
     							item('LEFT JOYSTICK: wasd / arrows + v / space'),
     							item('RIGHT JOYSTICK: ijkl + b'),
     							item('RESET: shift-enter'),
-    							item('SELECT: shifht-space'),
+    							item('SELECT: shift-space'),
     							item('TOGGLE FULLSCREEN: enter'),
     							item('HARD RESET: shift-r'),
     							item('PAUSE: p')
@@ -21066,13 +21090,14 @@
     	});
     var $elm$core$Basics$round = _Basics_round;
     var $author$project$Stellerator$View$Settings$settingsList = F3(
-    	function (settings, media, haveCartridges) {
+    	function (model, media, haveCartridges) {
     		var slider = $author$project$Stellerator$View$Form$slider(
     			_List_fromArray(
     				[
     					A2($rtfeldman$elm_css$Css$property, 'width', 'calc(40*var(--cw))'),
     					A2($rtfeldman$elm_css$Css$property, 'max-width', 'calc(100vw - 4*var(--cw))')
     				]));
+    		var settings = model.settings;
     		var section = function (t) {
     			return A2(
     				$rtfeldman$elm_css$Html$Styled$h1,
@@ -21216,90 +21241,114 @@
     				A2(
     				$rtfeldman$elm_css$Html$Styled$p,
     				_List_Nil,
-    				_List_fromArray(
-    					[
-    						A2(
-    						oneline,
-    						'Gamma correction:',
-    						A4(
-    							slider,
-    							_Utils_Tuple2(0, 50),
+    				_Utils_ap(
+    					_List_fromArray(
+    						[
     							A2(
-    								$elm$core$Basics$composeR,
-    								$elm$core$Maybe$map(
-    									A2(
-    										$elm$core$Basics$composeL,
+    							oneline,
+    							'Gamma correction:',
+    							A4(
+    								slider,
+    								_Utils_Tuple2(0, 50),
+    								A2(
+    									$elm$core$Basics$composeR,
+    									$elm$core$Maybe$map(
     										A2(
     											$elm$core$Basics$composeL,
-    											A2($elm$core$Basics$composeL, $author$project$Stellerator$Model$ChangeSettings, $author$project$Stellerator$Model$ChangeSettingsGammaCorrection),
-    											function (x) {
-    												return x / 10;
-    											}),
-    										$elm$core$Basics$toFloat)),
-    								$elm$core$Maybe$withDefault($author$project$Stellerator$Model$None)),
-    							function (x) {
-    								return $elm$core$String$fromFloat(x / 10);
-    							},
-    							$elm$core$Basics$round(settings.gammaCorrection * 10))),
-    						A2(
-    						oneline,
-    						'TV Emulation:',
-    						A4(
-    							$author$project$Stellerator$View$Form$radioGroup,
-    							_List_Nil,
-    							_List_fromArray(
-    								[
-    									_Utils_Tuple2($author$project$Stellerator$Model$TvEmulationComposite, 'Composite'),
-    									_Utils_Tuple2($author$project$Stellerator$Model$TvEmulationSvideo, 'S-Video'),
-    									_Utils_Tuple2($author$project$Stellerator$Model$TvEmulationNone, 'None')
-    								]),
-    							A2($elm$core$Basics$composeL, $author$project$Stellerator$Model$ChangeSettings, $author$project$Stellerator$Model$ChangeSettingsTvEmulation),
-    							settings.tvEmulation)),
-    						A2(
-    						oneline,
-    						'Scaling:',
-    						A4(
-    							$author$project$Stellerator$View$Form$radioGroup,
-    							_List_Nil,
-    							_List_fromArray(
-    								[
-    									_Utils_Tuple2($author$project$Stellerator$Model$ScalingQis, 'QIS'),
-    									_Utils_Tuple2($author$project$Stellerator$Model$ScalingBilinear, 'Bilinear'),
-    									_Utils_Tuple2($author$project$Stellerator$Model$ScalingNone, 'Plain')
-    								]),
-    							A2($elm$core$Basics$composeL, $author$project$Stellerator$Model$ChangeSettings, $author$project$Stellerator$Model$ChangeSettingsScaling),
-    							settings.scaling)),
-    						A2(
-    						oneline,
-    						'Phosphor level:',
-    						A4(
-    							slider,
-    							_Utils_Tuple2(0, 100),
+    											A2(
+    												$elm$core$Basics$composeL,
+    												A2($elm$core$Basics$composeL, $author$project$Stellerator$Model$ChangeSettings, $author$project$Stellerator$Model$ChangeSettingsGammaCorrection),
+    												function (x) {
+    													return x / 10;
+    												}),
+    											$elm$core$Basics$toFloat)),
+    									$elm$core$Maybe$withDefault($author$project$Stellerator$Model$None)),
+    								function (x) {
+    									return $elm$core$String$fromFloat(x / 10);
+    								},
+    								$elm$core$Basics$round(settings.gammaCorrection * 10))),
     							A2(
-    								$elm$core$Basics$composeR,
-    								$elm$core$Maybe$map(
-    									A2($elm$core$Basics$composeR, $author$project$Stellerator$Model$ChangeSettingsPhosphorLevel, $author$project$Stellerator$Model$ChangeSettings)),
-    								$elm$core$Maybe$withDefault($author$project$Stellerator$Model$None)),
-    							function (x) {
-    								return $elm$core$String$fromInt(x) + '%';
-    							},
-    							settings.phosphorLevel)),
-    						A2(
-    						oneline,
-    						'Scanline intensity:',
-    						A4(
-    							slider,
-    							_Utils_Tuple2(0, 100),
-    							A2(
-    								$elm$core$Basics$composeR,
-    								$elm$core$Maybe$map(
-    									A2($elm$core$Basics$composeR, $author$project$Stellerator$Model$ChangeSettingsScanlineIntensity, $author$project$Stellerator$Model$ChangeSettings)),
-    								$elm$core$Maybe$withDefault($author$project$Stellerator$Model$None)),
-    							function (x) {
-    								return $elm$core$String$fromInt(x) + '%';
-    							},
-    							settings.scanlineIntensity))
-    					])),
+    							oneline,
+    							'TV Emulation:',
+    							A4(
+    								$author$project$Stellerator$View$Form$radioGroup,
+    								_List_Nil,
+    								_List_fromArray(
+    									[
+    										_Utils_Tuple2($author$project$Stellerator$Model$TvEmulationComposite, 'Composite'),
+    										_Utils_Tuple2($author$project$Stellerator$Model$TvEmulationSvideo, 'S-Video'),
+    										_Utils_Tuple2($author$project$Stellerator$Model$TvEmulationNone, 'None')
+    									]),
+    								A2($elm$core$Basics$composeL, $author$project$Stellerator$Model$ChangeSettings, $author$project$Stellerator$Model$ChangeSettingsTvEmulation),
+    								settings.tvEmulation))
+    						]),
+    					_Utils_ap(
+    						(model.badGpu && (!_Utils_eq(settings.tvEmulation, $author$project$Stellerator$Model$TvEmulationNone))) ? _List_fromArray(
+    							[
+    								A2(
+    								$rtfeldman$elm_css$Html$Styled$div,
+    								_List_fromArray(
+    									[
+    										$rtfeldman$elm_css$Html$Styled$Attributes$css(
+    										_List_fromArray(
+    											[
+    												$author$project$Dos$color($author$project$Dos$Red),
+    												A2($rtfeldman$elm_css$Css$property, 'width', 'calc(60*var(--cw))'),
+    												A2($rtfeldman$elm_css$Css$property, 'max-width', 'calc(100vw - 4*var(--cw))')
+    											]))
+    									]),
+    								_List_fromArray(
+    									[
+    										$rtfeldman$elm_css$Html$Styled$text('WARNING: Your GPU lacks required features. ' + 'TV emulation will work, but colors will be slightly wrong.')
+    									]))
+    							]) : _List_Nil,
+    						_List_fromArray(
+    							[
+    								A2(
+    								oneline,
+    								'Scaling:',
+    								A4(
+    									$author$project$Stellerator$View$Form$radioGroup,
+    									_List_Nil,
+    									_List_fromArray(
+    										[
+    											_Utils_Tuple2($author$project$Stellerator$Model$ScalingQis, 'QIS'),
+    											_Utils_Tuple2($author$project$Stellerator$Model$ScalingBilinear, 'Bilinear'),
+    											_Utils_Tuple2($author$project$Stellerator$Model$ScalingNone, 'Plain')
+    										]),
+    									A2($elm$core$Basics$composeL, $author$project$Stellerator$Model$ChangeSettings, $author$project$Stellerator$Model$ChangeSettingsScaling),
+    									settings.scaling)),
+    								A2(
+    								oneline,
+    								'Phosphor level:',
+    								A4(
+    									slider,
+    									_Utils_Tuple2(0, 100),
+    									A2(
+    										$elm$core$Basics$composeR,
+    										$elm$core$Maybe$map(
+    											A2($elm$core$Basics$composeR, $author$project$Stellerator$Model$ChangeSettingsPhosphorLevel, $author$project$Stellerator$Model$ChangeSettings)),
+    										$elm$core$Maybe$withDefault($author$project$Stellerator$Model$None)),
+    									function (x) {
+    										return $elm$core$String$fromInt(x) + '%';
+    									},
+    									settings.phosphorLevel)),
+    								A2(
+    								oneline,
+    								'Scanline intensity:',
+    								A4(
+    									slider,
+    									_Utils_Tuple2(0, 100),
+    									A2(
+    										$elm$core$Basics$composeR,
+    										$elm$core$Maybe$map(
+    											A2($elm$core$Basics$composeR, $author$project$Stellerator$Model$ChangeSettingsScanlineIntensity, $author$project$Stellerator$Model$ChangeSettings)),
+    										$elm$core$Maybe$withDefault($author$project$Stellerator$Model$None)),
+    									function (x) {
+    										return $elm$core$String$fromInt(x) + '%';
+    									},
+    									settings.scanlineIntensity))
+    							])))),
     				section('Controls'),
     				A2(
     				$rtfeldman$elm_css$Html$Styled$p,
@@ -21465,7 +21514,7 @@
     					]),
     				A3(
     					$author$project$Stellerator$View$Settings$settingsList,
-    					model.settings,
+    					model,
     					media,
     					$elm$core$List$length(model.cartridges) > 0))
     			]);
@@ -21549,8 +21598,6 @@
     var $author$project$Stellerator$Main$main = $elm$browser$Browser$application(
     	{init: $author$project$Stellerator$Main$init, onUrlChange: $author$project$Stellerator$Routing$onUrlChange, onUrlRequest: $author$project$Stellerator$Routing$onUrlRequest, subscriptions: $author$project$Stellerator$Main$subscriptions, update: $author$project$Stellerator$Update$update, view: $author$project$Stellerator$View$view});
     _Platform_export({'Stellerator':{'Main':{'init':$author$project$Stellerator$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Stellerator.Model.Msg","aliases":{"Stellerator.Model.Cartridge":{"args":[],"type":"{ hash : String.String, name : String.String, cartridgeType : String.String, tvMode : Stellerator.Model.TvMode, emulatePaddles : Basics.Bool, volume : Basics.Int, rngSeed : Maybe.Maybe Basics.Int, firstVisibleLine : Maybe.Maybe Basics.Int, cpuEmulation : Maybe.Maybe Stellerator.Model.CpuEmulation, audioEmulation : Maybe.Maybe Stellerator.Model.AudioEmulation, phosphorLevel : Maybe.Maybe Basics.Int }"}},"unions":{"Stellerator.Model.Msg":{"args":[],"tags":{"NavigateToUrl":["String.String"],"ChangeRoute":["Stellerator.Model.Route"],"ChangeMedia":["Stellerator.Model.Media"],"SetHelpPage":["String.String"],"SetChangelog":["String.String"],"SetLicense":["String.String"],"ToggleSideMenu":[],"ChangeCartridgeFilter":["String.String"],"ClearCartridgeFilter":[],"SelectCartridge":["String.String"],"SelectNextCartridgeMatchingSearch":["String.String"],"SelectPreviousCartridgeMatchingSearch":["String.String"],"SelectFirstCartridgeMatchingSearch":[],"SelectLastCartridgeMatchingSearch":[],"ClearSelectedCartridge":[],"DeleteCartridge":["String.String"],"DeleteAllCartridges":[],"ChangeCartridge":["String.String","Stellerator.Model.ChangeCartridgeMsg"],"ChangeCartridgeViewMode":["Stellerator.Model.CartridgeViewMode"],"AddCartridge":[],"AddNewCartridges":["List.List Stellerator.Model.Cartridge"],"SaveCartridge":["String.String"],"ChangeSettings":["Stellerator.Model.ChangeSettingsMsg"],"MessageNeedsConfirmOrReject":["String.String","( String.String, String.String )","Stellerator.Model.Msg"],"MessageNeedsAck":["String.String","String.String","Stellerator.Model.Msg"],"RejectPendingMessage":[],"ConfirmPendingMessage":[],"StartEmulation":["String.String"],"PauseEmulation":[],"StopEmulation":[],"ResetEmulation":[],"TogglePauseEmulation":[],"ChangeLimitFramerate":["Basics.Bool"],"UpdateEmulationState":["Stellerator.Model.EmulationState"],"IncomingInputDriverEvent":["Stellerator.Model.InputDriverEvent"],"ChangeDifficultyP0":["Stellerator.Model.DifficultySwitch"],"ChangeDifficultyP1":["Stellerator.Model.DifficultySwitch"],"ChangeColorSwitch":["Stellerator.Model.ColorSwitch"],"BlurCurrentElement":[],"NavigateToAboutPage":[],"UpdateGamepadCount":["Basics.Int"],"None":[]}},"Stellerator.Model.AudioEmulation":{"args":[],"tags":{"AudioWaveform":[],"AudioPCM":[]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Stellerator.Model.CartridgeViewMode":{"args":[],"tags":{"CartridgeViewCartridges":[],"CartridgeViewSettings":[]}},"Stellerator.Model.ChangeCartridgeMsg":{"args":[],"tags":{"ChangeCartridgeName":["String.String"],"ChangeCartridgeType":["String.String"],"ChangeCartridgeTvMode":["Stellerator.Model.TvMode"],"ChangeCartridgeEmulatePaddles":["Basics.Bool"],"ChangeCartridgeRngSeed":["Maybe.Maybe Basics.Int"],"ChangeCartridgeFirstVisibleLine":["Maybe.Maybe Basics.Int"],"ChangeCartridgeCpuEmulation":["Maybe.Maybe Stellerator.Model.CpuEmulation"],"ChangeCartridgeAudioEmulation":["Maybe.Maybe Stellerator.Model.AudioEmulation"],"ChangeCartridgeVolume":["Basics.Int"],"ChangeCartridgePhosphorLevel":["Maybe.Maybe Basics.Int"]}},"Stellerator.Model.ChangeSettingsMsg":{"args":[],"tags":{"ChangeSettingsCpuEmulation":["Stellerator.Model.CpuEmulation"],"ChangeSettingsVolume":["Basics.Int"],"ChangeSettingsAudioEmulation":["Stellerator.Model.AudioEmulation"],"ChangeSettingsGammaCorrection":["Basics.Float"],"ChangeSettingsTvEmulation":["Stellerator.Model.TvEmulation"],"ChangeSettingsScaling":["Stellerator.Model.Scaling"],"ChangeSettingsPhosphorLevel":["Basics.Int"],"ChangeSettingsScanlineIntensity":["Basics.Int"],"ChangeSettingsTouchControls":["Maybe.Maybe Basics.Bool"],"ChangeSettingsLeftHanded":["Basics.Bool"],"ChangeSettingsVirtualJoystickSensitivity":["Basics.Int"],"ChangeSettingsUiMode":["Maybe.Maybe Stellerator.Model.Media"],"ChangeSettingsUiSize":["Basics.Int"],"ChangeSettingsResetToDefault":[]}},"Stellerator.Model.ColorSwitch":{"args":[],"tags":{"ColorColor":[],"ColorBW":[]}},"Stellerator.Model.CpuEmulation":{"args":[],"tags":{"AccuracyCycle":[],"AccuracyInstruction":[]}},"Stellerator.Model.DifficultySwitch":{"args":[],"tags":{"DifficultyPro":[],"DifficultyAmateur":[]}},"Stellerator.Model.EmulationState":{"args":[],"tags":{"EmulationStopped":[],"EmulationPaused":[],"EmulationRunning":["Maybe.Maybe Basics.Float"],"EmulationError":["String.String"],"EmulationStarting":[]}},"Stellerator.Model.InputDriverEvent":{"args":[],"tags":{"EventTogglePause":[],"EventReset":[],"EventToggleFullscreen":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Stellerator.Model.Media":{"args":[],"tags":{"MediaNarrow":[],"MediaWide":[]}},"Stellerator.Model.Route":{"args":[],"tags":{"RouteCartridges":[],"RouteSettings":[],"RouteEmulation":[],"RouteHelp":[],"RouteAbout":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Stellerator.Model.TvMode":{"args":[],"tags":{"TvPAL":[],"TvNTSC":[],"TvSECAM":[]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Stellerator.Model.Scaling":{"args":[],"tags":{"ScalingQis":[],"ScalingBilinear":[],"ScalingNone":[]}},"Stellerator.Model.TvEmulation":{"args":[],"tags":{"TvEmulationComposite":[],"TvEmulationSvideo":[],"TvEmulationNone":[]}}}}})}}});}(this)); }).call(output); var Elm = output.Elm;
-
-    var version$1 = "1.0.0-beta.8";
 
     const defaults = {
         addCSS: true, // Add CSS to the element to improve usability (required here or in your CSS!)
@@ -21854,6 +21901,7 @@
             subtree: true
         });
     }
+    //# sourceMappingURL=rangetouch.js.map
 
     var CartridgeInfo;
     (function (CartridgeInfo) {
@@ -21963,6 +22011,7 @@
         }
         CartridgeInfo.describeCartridgeType = describeCartridgeType;
     })(CartridgeInfo || (CartridgeInfo = {}));
+    //# sourceMappingURL=CartridgeInfo.js.map
 
     var metadata_keys = createCommonjsModule(function (module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -24269,6 +24318,7 @@
         inversify_8()
     ], MediaApi);
     var MediaApi$1 = MediaApi;
+    //# sourceMappingURL=MediaApi.js.map
 
     let ScrollIntoView = class ScrollIntoView {
         constructor() {
@@ -24319,6 +24369,7 @@
         }
     }
     var ScrollIntoView$1 = ScrollIntoView;
+    //# sourceMappingURL=ScrollIntoView.js.map
 
     var lookup$1 = [];
     var revLookup = [];
@@ -40724,6 +40775,7 @@
     function calculateFromUint8Array(buffer) {
         return md5(Buffer.from(buffer));
     }
+    //# sourceMappingURL=md5.js.map
 
     var Event_1 = createCommonjsModule(function (module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -40825,6 +40877,7 @@
         }
         CartridgeInterface.TrapPayload = TrapPayload;
     })(CartridgeInterface || (CartridgeInterface = {}));
+    //# sourceMappingURL=CartridgeInterface.js.map
 
     class AbstractCartridge {
         constructor() {
@@ -40867,6 +40920,7 @@
             }
         }
     }
+    //# sourceMappingURL=AbstractCartridge.js.map
 
     function searchForSignatures(buffer, signatures) {
         const candidates = [], counts = signatures.map((signature) => 0);
@@ -40912,6 +40966,7 @@
         }
         return -1;
     }
+    //# sourceMappingURL=util.js.map
 
     class CartridgeF8 extends AbstractCartridge {
         constructor(buffer, _supportSC = true) {
@@ -40985,6 +41040,7 @@
             }
         }
     }
+    //# sourceMappingURL=CartridgeF8.js.map
 
     class CartridgeE0 extends AbstractCartridge {
         constructor(buffer) {
@@ -41060,6 +41116,7 @@
             }
         }
     }
+    //# sourceMappingURL=CartridgeE0.js.map
 
     class Cartridge3F extends AbstractCartridge {
         constructor(buffer) {
@@ -41106,6 +41163,7 @@
             }
         }
     }
+    //# sourceMappingURL=Cartridge3F.js.map
 
     class Cartridge3E extends AbstractCartridge {
         constructor(buffer) {
@@ -41208,6 +41266,7 @@
             }
         }
     }
+    //# sourceMappingURL=Cartridge3E.js.map
 
     class CartridgeFE extends AbstractCartridge {
         constructor(buffer) {
@@ -41277,6 +41336,7 @@
             self._lastAccessWasFE = self._lastAddressBusValue === 0x01fe;
         }
     }
+    //# sourceMappingURL=CartridgeFE.js.map
 
     class CartridgeUA extends AbstractCartridge {
         constructor(buffer) {
@@ -41333,6 +41393,7 @@
             }
         }
     }
+    //# sourceMappingURL=CartridgeUA.js.map
 
     class CartrdigeE7 extends AbstractCartridge {
         constructor(buffer) {
@@ -41448,6 +41509,7 @@
             }
         }
     }
+    //# sourceMappingURL=CartridgeE7.js.map
 
     class CartridgeFA2 extends AbstractCartridge {
         constructor(buffer) {
@@ -41552,6 +41614,7 @@
             this._ram[0xff] = 0;
         }
     }
+    //# sourceMappingURL=CartridgeFA2.js.map
 
     class CartridgeEF extends AbstractCartridge {
         constructor(buffer, _supportSC = true) {
@@ -41649,15 +41712,11 @@
             }
         }
     }
+    //# sourceMappingURL=CartridgeEF.js.map
 
     var __dirname = '/Users/pestix/git/6502ts/6502.ts/node_modules/thumbulator.ts/lib/native';
 
-    var empty = {};
-
-    var empty$1 = /*#__PURE__*/Object.freeze({
-        __proto__: null,
-        'default': empty
-    });
+    var require$$0 = {};
 
     // Copyright Joyent, Inc. and other Node contributors.
     //
@@ -41862,7 +41921,7 @@
     function extname(path) {
       return splitPath(path)[3];
     }
-    var path = {
+    var require$$1 = {
       extname: extname,
       basename: basename,
       dirname: dirname,
@@ -41891,25 +41950,6 @@
             return str.substr(start, len);
         }
     ;
-
-    var path$1 = /*#__PURE__*/Object.freeze({
-        __proto__: null,
-        resolve: resolve$1,
-        normalize: normalize,
-        isAbsolute: isAbsolute,
-        join: join,
-        relative: relative,
-        sep: sep,
-        delimiter: delimiter,
-        dirname: dirname,
-        basename: basename,
-        extname: extname,
-        'default': path
-    });
-
-    var require$$0 = getCjsExportFromNamespace(empty$1);
-
-    var require$$1 = getCjsExportFromNamespace(path$1);
 
     var thumbulator = createCommonjsModule(function (module, exports) {
     var Module = (function() {
@@ -42028,6 +42068,7 @@
     function encode$1(value, width, signed = true) {
         return encodeWithPrefix(value, width, signed, '$');
     }
+    //# sourceMappingURL=hex.js.map
 
     function hostIsLittleEndian() {
         const buffer8 = new Uint8Array([1, 2, 3, 4]), buffer32 = new Uint32Array(buffer8.buffer);
@@ -42215,6 +42256,7 @@
             this.trap.dispatch(message);
         }
     }
+    //# sourceMappingURL=Soc.js.map
 
     class CartridgeDPCPlus extends AbstractCartridge {
         constructor(buffer) {
@@ -42569,6 +42611,7 @@
             return this.counter >>> 27;
         }
     }
+    //# sourceMappingURL=CartridgeDPCPlus.js.map
 
     class CartridgeCDF extends AbstractCartridge {
         constructor(buffer) {
@@ -42879,6 +42922,7 @@
             this.counter = (this.counter + clocks * this.frequency) | 0;
         }
     }
+    //# sourceMappingURL=CartridgeCDF.js.map
 
     class Cartridge8040 extends AbstractCartridge {
         constructor(buffer) {
@@ -42942,6 +42986,7 @@
             }
         }
     }
+    //# sourceMappingURL=Cartridge0840.js.map
 
     class CartridgeCV extends AbstractCartridge {
         constructor(buffer) {
@@ -42998,6 +43043,7 @@
             return CartridgeInfo.CartridgeType.bankswitch_2k_cv;
         }
     }
+    //# sourceMappingURL=CartridgeCV.js.map
 
     class CartridgeDetector {
         detectCartridgeType(buffer) {
@@ -43091,6 +43137,7 @@
             return CartridgeInfo.CartridgeType.bankswitch_64k_F0;
         }
     }
+    //# sourceMappingURL=CartridgeDetector.js.map
 
     /*
      * Dexie.js - a minimalistic wrapper for IndexedDB
@@ -47554,24 +47601,10 @@
         }
         catch (_e) { }
     })();
+    //# sourceMappingURL=dexie.es.js.map
 
     const SETTINGS_ID = 0;
     const DB_NAME =  'stellerator-ng-dev' ;
-    const DEFAULT_SETTINGS = {
-        cpuEmulation: "cycle",
-        volume: 80,
-        audioEmulation: "pcm",
-        gammaCorrection: 1.0,
-        tvEmulation: "composite",
-        scaling: "qis",
-        phosphorLevel: 50,
-        scanlineIntensity: 20,
-        touchControls: undefined,
-        leftHanded: false,
-        virtualJoystickSensitivity: 10,
-        uiMode: undefined,
-        uiSize: 100
-    };
     class Database extends Dexie {
         constructor() {
             super(DB_NAME);
@@ -47612,6 +47645,10 @@
     let Storage = class Storage {
         constructor() {
             this._database = new Database();
+            this._defaultSettings = null;
+        }
+        setDefaults(settings) {
+            this._defaultSettings = settings;
         }
         getAllCartridges() {
             return this._database.cartridges.toArray();
@@ -47655,7 +47692,7 @@
             return __awaiter(this, void 0, void 0, function* () {
                 const record = yield this._database.settings.get(SETTINGS_ID);
                 if (!record) {
-                    return DEFAULT_SETTINGS;
+                    return this._defaultSettings;
                 }
                 const settings = __rest(record, ["id"]);
                 return settings;
@@ -47678,6 +47715,7 @@
         inversify_8()
     ], Storage);
     var Storage$1 = Storage;
+    //# sourceMappingURL=Storage.js.map
 
     let AddCartridge = class AddCartridge {
         constructor(_storage) {
@@ -47766,6 +47804,7 @@
         __metadata("design:paramtypes", [Storage$1])
     ], AddCartridge);
     var AddCartridge$1 = AddCartridge;
+    //# sourceMappingURL=AddCartridge.js.map
 
     var Mutex_1 = createCommonjsModule(function (module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -47840,6 +47879,7 @@
             State["error"] = "error";
         })(State = EmulationServiceInterface.State || (EmulationServiceInterface.State = {}));
     })(EmulationServiceInterface || (EmulationServiceInterface = {}));
+    //# sourceMappingURL=EmulationServiceInterface.js.map
 
     var RpcProvider_1 = createCommonjsModule(function (module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -48060,6 +48100,7 @@
             return this._asyncIOProxy;
         }
     }
+    //# sourceMappingURL=EmulationContext.js.map
 
     class PoolMember {
         constructor(_value, _releaseCB, _disposeCB) {
@@ -48082,6 +48123,7 @@
             this._disposeCB(this);
         }
     }
+    //# sourceMappingURL=PoolMember.js.map
 
     class Pool {
         constructor(_factory) {
@@ -48132,6 +48174,7 @@
             this.event.dispose.dispatch(victim.get());
         }
     }
+    //# sourceMappingURL=Pool.js.map
 
     const RPC_TYPE = {
         emulationPause: 'emulation/pause',
@@ -48163,6 +48206,7 @@
         messageToAsyncIO: 'asyncIO/messageTo'
     };
     Object.freeze(SIGNAL_TYPE);
+    //# sourceMappingURL=messages.js.map
 
     class VideoProxy {
         constructor(_rpc) {
@@ -48229,6 +48273,7 @@
             this.newFrame.dispatch(frame);
         }
     }
+    //# sourceMappingURL=VideoProxy.js.map
 
     class Switch {
         constructor(_state = false) {
@@ -48251,6 +48296,7 @@
             this.stateChanged.dispatch(state);
         }
     }
+    //# sourceMappingURL=Switch.js.map
 
     class DigitalJoystick {
         constructor() {
@@ -48276,6 +48322,7 @@
             return this._fire;
         }
     }
+    //# sourceMappingURL=DigitalJoystick.js.map
 
     class ControlPanel {
         constructor() {
@@ -48301,6 +48348,7 @@
             return this._difficutlyP1;
         }
     }
+    //# sourceMappingURL=ControlPanel.js.map
 
     class Paddle {
         constructor() {
@@ -48319,6 +48367,7 @@
             return this._fireSwitch;
         }
     }
+    //# sourceMappingURL=Paddle.js.map
 
     class ControlProxy {
         constructor(_rpc) {
@@ -48380,6 +48429,7 @@
             };
         }
     }
+    //# sourceMappingURL=ControlProxy.js.map
 
     var CpuInterface;
     (function (CpuInterface) {
@@ -48397,6 +48447,7 @@
         }
         CpuInterface.State = State;
     })(CpuInterface || (CpuInterface = {}));
+    //# sourceMappingURL=CpuInterface.js.map
 
     class ResultImpl {
         constructor() {
@@ -48424,6 +48475,7 @@
             return this;
         }
     }
+    //# sourceMappingURL=ResultImpl.js.map
 
     const immutables = Symbol('immutable properties');
     function freezeImmutables(target) {
@@ -48441,6 +48493,7 @@
         }
         target[immutables].push(prop);
     }
+    //# sourceMappingURL=decorators.js.map
 
     class Boot {
         constructor(state) {
@@ -48509,6 +48562,7 @@
         __metadata("design:type", CpuInterface.State)
     ], Boot.prototype, "_state", void 0);
     const boot = (state) => new Boot(state);
+    //# sourceMappingURL=boot.js.map
 
     class Interrupt {
         constructor(state, defaultVector, isBrk) {
@@ -48597,6 +48651,7 @@
     const brk = (state) => new Interrupt(state, 0xfffe, true);
     const irq = (state) => new Interrupt(state, 0xfffe, false);
     const nmi = (state) => new Interrupt(state, 0xfffa, false);
+    //# sourceMappingURL=interrupt.js.map
 
     class Instruction {
         constructor(operation, addressingMode, effectiveAddressingMode = addressingMode) {
@@ -48948,6 +49003,7 @@
             set(0x33, 70, 11);
         })(__init = Instruction.__init || (Instruction.__init = {}));
     })(Instruction || (Instruction = {}));
+    //# sourceMappingURL=Instruction.js.map
 
     class Absolute {
         constructor(state, next = () => null) {
@@ -48994,6 +49050,7 @@
         __metadata("design:type", Function)
     ], Absolute.prototype, "_next", void 0);
     const absolute = (state, next) => new Absolute(state, next);
+    //# sourceMappingURL=absolute.js.map
 
     class AbsoluteIndexed {
         constructor(state, indexExtractor, next = () => null, writeOp = false) {
@@ -49085,6 +49142,7 @@
     ], AbsoluteIndexed, "absoluteY", null);
     const absoluteX = (state, next, writeOp) => AbsoluteIndexed.absoluteX(state, next, writeOp);
     const absoluteY = (state, next, writeOp) => AbsoluteIndexed.absoluteY(state, next, writeOp);
+    //# sourceMappingURL=absoluteIndexed.js.map
 
     class Dereference {
         constructor(state, next = () => null) {
@@ -49117,6 +49175,7 @@
         __metadata("design:type", Function)
     ], Dereference.prototype, "_next", void 0);
     const dereference = (state, next) => new Dereference(state, next);
+    //# sourceMappingURL=dereference.js.map
 
     class Immediate {
         constructor(state, next = () => null) {
@@ -49154,6 +49213,7 @@
         __metadata("design:type", Function)
     ], Immediate.prototype, "_next", void 0);
     const immediate$1 = (state, next) => new Immediate(state, next);
+    //# sourceMappingURL=immediate.js.map
 
     class IndexedIndirectX {
         constructor(state, next = () => null) {
@@ -49217,6 +49277,7 @@
         __metadata("design:type", Function)
     ], IndexedIndirectX.prototype, "_next", void 0);
     const indexedIndirectX = (state, next) => new IndexedIndirectX(state, next);
+    //# sourceMappingURL=indexedIndirectX.js.map
 
     class IndexedIndirectY {
         constructor(state, next = () => null, writeOp) {
@@ -49292,6 +49353,7 @@
         __metadata("design:type", Boolean)
     ], IndexedIndirectY.prototype, "_writeOp", void 0);
     const indirectIndexedY = (state, next, writeOp) => new IndexedIndirectY(state, next, writeOp);
+    //# sourceMappingURL=indirectIndexedY.js.map
 
     class ZeroPage {
         constructor(state, next = () => null) {
@@ -49329,6 +49391,7 @@
         __metadata("design:type", Function)
     ], ZeroPage.prototype, "_next", void 0);
     const zeroPage = (state, next) => new ZeroPage(state, next);
+    //# sourceMappingURL=zeroPage.js.map
 
     class ZeroPageIndexed {
         constructor(state, indexExtractor, next) {
@@ -49386,6 +49449,7 @@
     ], ZeroPageIndexed.prototype, "_indexExtractor", void 0);
     const zeroPageX = (state, next) => ZeroPageIndexed.zeroPageX(state, next);
     const zeroPageY = (state, next) => ZeroPageIndexed.zeroPageY(state, next);
+    //# sourceMappingURL=zeroPageIndexed.js.map
 
     class Branch {
         constructor(state, predicate) {
@@ -49444,6 +49508,7 @@
         __metadata("design:type", Function)
     ], Branch.prototype, "_predicate", void 0);
     const branch = (state, predicate) => new Branch(state, predicate);
+    //# sourceMappingURL=branch.js.map
 
     class Jsr {
         constructor(state) {
@@ -49501,6 +49566,7 @@
         __metadata("design:type", CpuInterface.State)
     ], Jsr.prototype, "_state", void 0);
     const jsr = (state) => new Jsr(state);
+    //# sourceMappingURL=jsr.js.map
 
     class ReadModifyWrite {
         constructor(state, operation) {
@@ -49549,6 +49615,7 @@
         __metadata("design:type", Function)
     ], ReadModifyWrite.prototype, "_operation", void 0);
     const readModifyWrite = (state, operation) => new ReadModifyWrite(state, operation);
+    //# sourceMappingURL=readModifyWrite.js.map
 
     class Rts {
         constructor(state) {
@@ -49609,6 +49676,7 @@
         __metadata("design:type", CpuInterface.State)
     ], Rts.prototype, "_state", void 0);
     const rts = (state) => new Rts(state);
+    //# sourceMappingURL=rts.js.map
 
     class NullaryOneCycle {
         constructor(state, operation) {
@@ -49644,6 +49712,7 @@
         __metadata("design:type", Function)
     ], NullaryOneCycle.prototype, "_operation", void 0);
     const nullaryOneCycle = (state, operation) => new NullaryOneCycle(state, operation);
+    //# sourceMappingURL=nullaryOneCycle.js.map
 
     class Pull {
         constructor(state, operation) {
@@ -49689,6 +49758,7 @@
         __metadata("design:type", Function)
     ], Pull.prototype, "_operation", void 0);
     const pull = (state, operation) => new Pull(state, operation);
+    //# sourceMappingURL=pull.js.map
 
     class Push {
         constructor(state, operation) {
@@ -49729,6 +49799,7 @@
         __metadata("design:type", Function)
     ], Push.prototype, "_operation", void 0);
     const push = (state, operation) => new Push(state, operation);
+    //# sourceMappingURL=push.js.map
 
     class Rti {
         constructor(state) {
@@ -49790,6 +49861,7 @@
         __metadata("design:type", CpuInterface.State)
     ], Rti.prototype, "_state", void 0);
     const rti = (state) => new Rti(state);
+    //# sourceMappingURL=rti.js.map
 
     class Write {
         constructor(state, operation) {
@@ -49817,6 +49889,7 @@
         __metadata("design:type", Function)
     ], Write.prototype, "_operation", void 0);
     const write$1 = (state, operation) => new Write(state, operation);
+    //# sourceMappingURL=write.js.map
 
     function setFlagsNZ(operand, state) {
         state.flags =
@@ -50044,6 +50117,7 @@
         state.flags = (state.flags & ~1) | ((state.a & 0x80) >>> 7);
         return null;
     }
+    //# sourceMappingURL=ops.js.map
 
     class Indirect {
         constructor(state, next = () => null) {
@@ -50113,6 +50187,7 @@
         __metadata("design:type", Function)
     ], Indirect.prototype, "_next", void 0);
     const indirect = (state, next) => new Indirect(state, next);
+    //# sourceMappingURL=indirect.js.map
 
     class Compiler {
         constructor(_state) {
@@ -50358,6 +50433,7 @@
             }
         }
     }
+    //# sourceMappingURL=Compiler.js.map
 
     class StateMachineCpu {
         constructor(_bus, _rng) {
@@ -50503,6 +50579,7 @@
             }
         }
     }
+    //# sourceMappingURL=StateMachineCpu.js.map
 
     function restoreFlagsFromStack(state, bus) {
         state.s = (state.s + 0x01) & 0xff;
@@ -50914,6 +50991,7 @@
         state.flags = (state.flags & ~1) | (old >>> 7);
         opAnd(state, bus, value);
     }
+    //# sourceMappingURL=ops.js.map
 
     function opBoot(state, bus) {
         state.p = bus.readWord(0xfffc);
@@ -51580,6 +51658,7 @@
             }
         }
     }
+    //# sourceMappingURL=BatchedAccessCpu.js.map
 
     class Factory {
         constructor(_type) {
@@ -51604,6 +51683,7 @@
         })(Type = Factory.Type || (Factory.Type = {}));
     })(Factory || (Factory = {}));
     var CpuFactory = Factory;
+    //# sourceMappingURL=Factory.js.map
 
     var Config$1;
     (function (Config) {
@@ -51622,6 +51702,7 @@
         }
         Config.getClockHz = getClockHz;
     })(Config$1 || (Config$1 = {}));
+    //# sourceMappingURL=Config.js.map
 
     class AudioOutputBuffer {
         constructor(_content, _sampleRate) {
@@ -51641,6 +51722,7 @@
             this._content = buffer;
         }
     }
+    //# sourceMappingURL=AudioOutputBuffer.js.map
 
     const encodingsString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', encodings = new Uint8Array(256);
     (function (__init) {
@@ -51687,6 +51769,7 @@
         }
         return decoded;
     }
+    //# sourceMappingURL=base64.js.map
 
     const FREQUENCY_DIVISIORS = decode$1('AQEPAQEBAQEBAQEBAwMDAQ==');
     const POLY0 = new Int8Array([1]);
@@ -51767,6 +51850,7 @@
             return new AudioOutputBuffer(content, sampleRate);
         }
     }
+    //# sourceMappingURL=ToneGenerator.js.map
 
     class WaveformAudioProxy {
         constructor(_index, _rpc) {
@@ -51819,6 +51903,7 @@
             }
         }
     }
+    //# sourceMappingURL=WaveformAudioProxy.js.map
 
     class PCMAudioProxy {
         constructor(_index, _rpc) {
@@ -51892,6 +51977,7 @@
             this.togglePause.dispatch(this._paused);
         }
     }
+    //# sourceMappingURL=PCMAudioProxy.js.map
 
     class AsyncIOProxy {
         constructor(_rpc) {
@@ -51905,6 +51991,7 @@
             this._rpc.signal(SIGNAL_TYPE.messageToAsyncIO, Array.from(message));
         }
     }
+    //# sourceMappingURL=AsyncIOProxy.js.map
 
     const CONTROL_PROXY_UPDATE_INTERVAL = 25;
     class EmulationService {
@@ -52099,6 +52186,7 @@
             }
         }
     }
+    //# sourceMappingURL=EmulationService.js.map
 
     class DriverManager {
         constructor() {
@@ -52176,14 +52264,16 @@
         }
         DriverManager.DriverContext = DriverContext;
     })(DriverManager || (DriverManager = {}));
+    //# sourceMappingURL=DriverManager.js.map
 
+    function precision(capabilities) {
+        return `precision ${capabilities.highpSupport ? 'highp' : 'mediump'} float;`;
+    }
     var vsh;
     (function (vsh) {
         let plain;
         (function (plain) {
-            plain.source = `
-            precision highp float;
-
+            plain.source = (capabilities) => `
             attribute vec2 a_VertexPosition;
             attribute vec2 a_TextureCoordinate;
 
@@ -52200,8 +52290,8 @@
     (function (fsh) {
         let blit;
         (function (blit) {
-            blit.source = `
-            precision highp float;
+            blit.source = (capabilities) => `
+            ${precision(capabilities)}
 
             varying vec2 v_TextureCoordinate;
 
@@ -52214,8 +52304,8 @@
         })(blit = fsh.blit || (fsh.blit = {}));
         let blitWithGamma;
         (function (blitWithGamma) {
-            blitWithGamma.source = `
-            precision highp float;
+            blitWithGamma.source = (capabilities) => `
+            ${precision(capabilities)}
 
             varying vec2 v_TextureCoordinate;
 
@@ -52231,8 +52321,8 @@
         })(blitWithGamma = fsh.blitWithGamma || (fsh.blitWithGamma = {}));
         let phosphor;
         (function (phosphor) {
-            phosphor.source = `
-            precision highp float;
+            phosphor.source = (capabilities) => `
+            ${precision(capabilities)}
 
             varying vec2 v_TextureCoordinate;
 
@@ -52262,8 +52352,8 @@
         })(phosphor = fsh.phosphor || (fsh.phosphor = {}));
         let ntscPass1;
         (function (ntscPass1) {
-            ntscPass1.source = `
-            precision highp float;
+            ntscPass1.source = (capabilities) => `
+            ${precision(capabilities)}
 
             #define PI 3.14159265
 
@@ -52278,12 +52368,6 @@
 
             varying vec2 v_TextureCoordinate;
 
-            mat3 mix_mat = mat3(
-                BRIGHTNESS, u_Fringing, u_Fringing,
-                u_Artifacting, 2.0 * SATURATION, 0.0,
-                u_Artifacting, 0.0, 2.0 * SATURATION
-            );
-
             const mat3 yiq_mat = mat3(
                 0.2989, 0.5870, 0.1140,
                 0.5959, -0.2744, -0.3216,
@@ -52294,7 +52378,38 @@
                 return col * yiq_mat;
             }
 
+            ${capabilities.floatTextures || capabilities.halfFloatTextures
+            ? ''
+            : `
+                vec4 pack(vec3 yiq) {
+                    yiq += 1.2;
+                    yiq /= 3.4;
+
+                    int y_byte = int(yiq.r * 1024.0);
+                    int i_byte = int(yiq.g * 1024.0);
+                    int q_byte = int(yiq.b * 1024.0);
+
+                    int y_high = (y_byte / 4) * 4;
+                    int i_high = (i_byte / 4) * 4;
+                    int q_high = (q_byte / 4) * 4;
+                    int alpha = (q_byte - q_high) * 16 + (i_byte - i_high) * 4 + (y_byte - y_high);
+
+                    return vec4(
+                        float(y_high / 4) / 255.0,
+                        float(i_high / 4) / 255.0,
+                        float(q_high / 4) / 255.0,
+                        float(alpha) / 255.0
+                    );
+                }
+                `}
+
             void main() {
+                mat3 mix_mat = mat3(
+                    BRIGHTNESS, u_Fringing, u_Fringing,
+                    u_Artifacting, 2.0 * SATURATION, 0.0,
+                    u_Artifacting, 0.0, 2.0 * SATURATION
+                );
+
                 vec3 col = texture2D(u_Sampler0, v_TextureCoordinate).rgb;
                 vec3 yiq = rgb2yiq(col);
 
@@ -52307,7 +52422,7 @@
                 yiq *= mix_mat; // Cross-talk.
                 yiq.yz *= vec2(i_mod, q_mod); // Demodulate.
 
-                gl_FragColor = vec4(yiq, 1.0);
+                gl_FragColor = ${capabilities.floatTextures || capabilities.halfFloatTextures ? 'vec4(yiq, 1.0)' : 'pack(yiq)'};
             }
         `;
         })(ntscPass1 = fsh.ntscPass1 || (fsh.ntscPass1 = {}));
@@ -52367,8 +52482,11 @@
                 0.077856564,
                 0.079052396
             ];
-            ntscPass2.source = `
-            precision highp float;
+            function maybeUnpack(capabilities, expr) {
+                return capabilities.floatTextures || capabilities.halfFloatTextures ? `${expr}.rgb` : `unpack(${expr})`;
+            }
+            ntscPass2.source = (capabilities) => `
+            ${precision(capabilities)}
 
             uniform sampler2D u_Sampler0;
             varying vec2 v_TextureCoordinate;
@@ -52383,10 +52501,33 @@
                 return yiq * yiq2rgb_mat;
             }
 
+            ${capabilities.floatTextures || capabilities.halfFloatTextures
+            ? ''
+            : `
+                vec3 unpack(vec4 yiqPacked) {
+                    int y_high = int(yiqPacked.r * 1024.0);
+                    int i_high = int(yiqPacked.g * 1024.0);
+                    int q_high = int(yiqPacked.b * 1024.0);
+                    int alpha = int(yiqPacked.a * 256.0);
+
+                    int y_low = alpha - (alpha / 4) * 4;
+                    int i_low = alpha - y_low - (alpha / 16) * 16;
+                    int q_low = alpha - i_low - y_low;
+
+                    return vec3(
+                        float(y_high + y_low) / 1023.0,
+                        float(i_high + i_low) / 1023.0,
+                        float(q_high + q_low) / 1023.0
+                    ) * 3.4 - 1.2;
+                }
+                `}
+
             vec3 fetch_offset(int offset) {
                 float x = v_TextureCoordinate.x + float(offset) / 960.0;
 
-                return x < 0.0 ? vec3(0) : x > 1.0 ? vec3(0) : texture2D(u_Sampler0, vec2(x, v_TextureCoordinate.y)).rgb;
+                return x < 0.0 ? vec3(0) : x > 1.0
+                    ? vec3(0)
+                    : ${maybeUnpack(capabilities, 'texture2D(u_Sampler0, vec2(x, v_TextureCoordinate.y))')};
             }
 
             void main() {
@@ -52402,7 +52543,7 @@
                 `)
             .join('\n')}
 
-                signal += texture2D(u_Sampler0, v_TextureCoordinate).rgb *
+                signal += ${maybeUnpack(capabilities, 'texture2D(u_Sampler0, v_TextureCoordinate)')} *
                     vec3(${lumaFilter[24]}, ${chromaFilter[24]}, ${chromaFilter[24]});
 
                 vec3 rgb = yiq2rgb(signal);
@@ -52412,8 +52553,8 @@
         })(ntscPass2 = fsh.ntscPass2 || (fsh.ntscPass2 = {}));
         let scanlines;
         (function (scanlines) {
-            scanlines.source = `
-            precision highp float;
+            scanlines.source = (capabilities) => `
+            ${precision(capabilities)}
 
             uniform sampler2D u_Sampler0;
             uniform float u_Level;
@@ -52429,6 +52570,7 @@
         `;
         })(scanlines = fsh.scanlines || (fsh.scanlines = {}));
     })(fsh || (fsh = {}));
+    //# sourceMappingURL=shader.js.map
 
     function compileShader(gl, type, source) {
         const shader = gl.createShader(type);
@@ -52505,10 +52647,12 @@
             this._gl.uniform1f(this.getUniformLocation(uniform), value);
         }
     }
+    //# sourceMappingURL=Program.js.map
 
     class PhosphorProcessor {
-        constructor(_gl) {
+        constructor(_gl, _capabilities) {
             this._gl = _gl;
+            this._capabilities = _capabilities;
             this._width = 0;
             this._height = 0;
             this._texture0 = null;
@@ -52524,7 +52668,7 @@
                 return;
             const gl = this._gl;
             this._framebuffer = gl.createFramebuffer();
-            this._program = Program.compile(gl, vsh.plain.source, fsh.phosphor.source);
+            this._program = Program.compile(gl, vsh.plain.source(this._capabilities), fsh.phosphor.source(this._capabilities));
             this._program.use();
             this._program.uniform1i("u_Sampler_NewImage", 0);
             this._program.uniform1i("u_Sampler_PreviousImage", 1);
@@ -52616,6 +52760,7 @@
             this._program.uniform1f("u_PhosphorLevel", level);
         }
     }
+    //# sourceMappingURL=PhosphorProcessor.js.map
 
     class NtscProcessor {
         constructor(_gl, _capabilities) {
@@ -52637,8 +52782,8 @@
             const gl = this._gl;
             gl.getExtension('WEBGL_color_buffer_float');
             gl.getExtension('OES_texture_float');
-            this._programPass1 = Program.compile(gl, vsh.plain.source, fsh.ntscPass1.source);
-            this._programPass2 = Program.compile(gl, vsh.plain.source, fsh.ntscPass2.source);
+            this._programPass1 = Program.compile(gl, vsh.plain.source(this._capabilities), fsh.ntscPass1.source(this._capabilities));
+            this._programPass2 = Program.compile(gl, vsh.plain.source(this._capabilities), fsh.ntscPass2.source(this._capabilities));
             this._programPass1.use();
             this._programPass1.uniform1i("u_Sampler0", 0);
             this._programPass2.use();
@@ -52742,10 +52887,12 @@
             return gl.UNSIGNED_BYTE;
         }
     }
+    //# sourceMappingURL=NtscProcessor.js.map
 
     class ScanlineProcessor {
-        constructor(_gl) {
+        constructor(_gl, _capabilities) {
             this._gl = _gl;
+            this._capabilities = _capabilities;
             this._width = 0;
             this._height = 0;
             this._texture = null;
@@ -52760,7 +52907,7 @@
                 return;
             const gl = this._gl;
             this._framebuffer = gl.createFramebuffer();
-            this._program = Program.compile(gl, vsh.plain.source, fsh.scanlines.source);
+            this._program = Program.compile(gl, vsh.plain.source(this._capabilities), fsh.scanlines.source(this._capabilities));
             this._program.use();
             this._program.uniform1i("u_Sampler0", 0);
             this._vertexCoordinateBuffer = gl.createBuffer();
@@ -52834,10 +52981,12 @@
             this._program.uniform1f("u_Level", 1 - level);
         }
     }
+    //# sourceMappingURL=ScanlineProcessor.js.map
 
     class IntegerScalingProcessor {
-        constructor(_gl) {
+        constructor(_gl, _capabilities) {
             this._gl = _gl;
+            this._capabilities = _capabilities;
             this._width = 0;
             this._height = 0;
             this._widthFrom = 0;
@@ -52856,7 +53005,7 @@
                 return;
             const gl = this._gl;
             this._framebuffer = gl.createFramebuffer();
-            this._program = Program.compile(gl, vsh.plain.source, fsh.blit.source);
+            this._program = Program.compile(gl, vsh.plain.source(this._capabilities), fsh.blit.source(this._capabilities));
             this._program.use();
             this._program.uniform1i("u_Sampler0", 0);
             this._vertexCoordinateBuffer = gl.createBuffer();
@@ -52942,6 +53091,7 @@
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         }
     }
+    //# sourceMappingURL=IntegerScalingProcessor.js.map
 
     class RingBuffer {
         constructor(_capacity) {
@@ -52992,6 +53142,7 @@
             return this._capacity;
         }
     }
+    //# sourceMappingURL=RingBuffer.js.map
 
     function framebufferSupportTextureType(gl, type) {
         const texture = gl.createTexture();
@@ -53020,12 +53171,26 @@
         }
         return framebufferSupportTextureType(gl, extHalfFLoat.HALF_FLOAT_OES);
     }
-    function detect(gl) {
+    function shaderSupportsPrecision(gl, shaderType, precisionType) {
+        const format = gl.getShaderPrecisionFormat(shaderType, precisionType);
+        return !!format && format.precision > 0;
+    }
+    function detect(gl = null) {
+        if (!gl) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        }
+        if (!gl)
+            return null;
         return {
             floatTextures: detectFloatTextureSupport(gl),
-            halfFloatTextures: detectHalfFloatTextureSupport(gl)
+            halfFloatTextures: detectHalfFloatTextureSupport(gl),
+            highpSupport: shaderSupportsPrecision(gl, gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)
         };
     }
+    //# sourceMappingURL=Capabilities.js.map
 
     const MAX_CONSECUTIVE_UNDERFLOWS = 5;
     class Video {
@@ -53060,24 +53225,22 @@
                 depth: false,
                 antialias: false
             };
-            this._gl = canvas.getContext('webgl', contextOptions);
-            if (!this._gl) {
-                this._gl = canvas.getContext('experimental-webgl', contextOptions);
-            }
+            this._gl =
+                canvas.getContext('webgl', contextOptions) ||
+                    canvas.getContext('experimental-webgl', contextOptions);
             if (!this._gl) {
                 throw new Error('unable to acquire webgl context');
             }
             this._capabilities = detect(this._gl);
-            console.log(this._capabilities);
-            this._phosphorProcessor = new PhosphorProcessor(this._gl);
+            this._phosphorProcessor = new PhosphorProcessor(this._gl, this._capabilities);
             this._ntscProcessor = new NtscProcessor(this._gl, this._capabilities);
-            this._scanlineProcessor = new ScanlineProcessor(this._gl);
-            this._integerScalingProcessor = new IntegerScalingProcessor(this._gl);
+            this._scanlineProcessor = new ScanlineProcessor(this._gl, this._capabilities);
+            this._integerScalingProcessor = new IntegerScalingProcessor(this._gl, this._capabilities);
             this._pendingFrames.evict.addHandler(frame => frame.release());
         }
         init() {
             this._updateCanvasSize();
-            this._mainProgram = Program.compile(this._gl, vsh.plain.source, fsh.blitWithGamma.source);
+            this._mainProgram = Program.compile(this._gl, vsh.plain.source(this._capabilities), fsh.blitWithGamma.source(this._capabilities));
             this._mainProgram.use();
             this._mainProgram.uniform1i("u_Sampler0", 0);
             this._createVertexCoordinateBuffer();
@@ -53297,6 +53460,7 @@
             this._configureProcessors();
         }
     }
+    //# sourceMappingURL=Video.js.map
 
     function mkSwitch(swtch) {
         return {
@@ -53504,6 +53668,7 @@
             }
         ];
     })(KeyboardIO || (KeyboardIO = {}));
+    //# sourceMappingURL=KeyboardIO.js.map
 
     class WaveformChannel {
         constructor(_cache) {
@@ -53578,6 +53743,7 @@
             this._gain.gain.value = this._volume * this._masterVolume;
         }
     }
+    //# sourceMappingURL=WaveformChannel.js.map
 
     class LinearReasmpler {
         constructor() {
@@ -53613,6 +53779,7 @@
             return this._needsData;
         }
     }
+    //# sourceMappingURL=LinearResampler.js.map
 
     class PCMChannel {
         constructor(_hostFragmentSize = 1024) {
@@ -53731,10 +53898,12 @@
             fillBuffer(this._bufferSize);
         }
     }
+    //# sourceMappingURL=PCMChannel.js.map
 
     const isSafari = 'safari' in window;
     const isIOS = !!navigator.platform.match(/iPhone|iPad|iPod/) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    //# sourceMappingURL=browser.js.map
 
     const audioNeedsInteraction = isIOS || isSafari;
     const INTERACTION_EVENTS = ['touchstart', 'click', 'keydown'];
@@ -53885,6 +54054,7 @@
             this._mutex.runExclusive(() => this._context.close());
         }
     }
+    //# sourceMappingURL=WebAudio.js.map
 
     class WebAudioDriver$1 {
         constructor(_fragmentSize) {
@@ -53951,6 +54121,7 @@
             });
         }
     }
+    //# sourceMappingURL=WebAudio.js.map
 
     var screenfull = createCommonjsModule(function (module) {
     /*!
@@ -54240,6 +54411,7 @@
             document.body.classList.add(this._fullscreenClass);
         }
     }
+    //# sourceMappingURL=FullscreenVideo.js.map
 
     class DoubleTapDetector {
         constructor(_maxTapLength = 500, _timeout = 200) {
@@ -54280,6 +54452,7 @@
             return this._dispatch;
         }
     }
+    //# sourceMappingURL=DoubleTapDetector.js.map
 
     class TouchIO {
         constructor(_canvas, _joystickSensitivity = 15, _leftHanded = false) {
@@ -54468,6 +54641,7 @@
             this.y0 = touch.clientY;
         }
     }
+    //# sourceMappingURL=TouchIO.js.map
 
     class MouseAsPaddleDriver {
         constructor() {
@@ -54505,6 +54679,7 @@
             this._x = e.screenX;
         }
     }
+    //# sourceMappingURL=MouseAsPaddle.js.map
 
     class ShadowSwitch {
         constructor() {
@@ -54529,6 +54704,7 @@
             }
         }
     }
+    //# sourceMappingURL=ShadowSwitch.js.map
 
     function button(index, target) {
         return {
@@ -54545,6 +54721,7 @@
             target
         };
     }
+    //# sourceMappingURL=Mapping.js.map
 
     const defaultMapping = [
         button(12, "up"),
@@ -54564,6 +54741,7 @@
         axis(3, "negative", "up"),
         axis(3, "positive", "down")
     ];
+    //# sourceMappingURL=defaultMapping.js.map
 
     const MIN_POLL_INTERVAL = 50;
     function readButton(button) {
@@ -54748,6 +54926,7 @@
             }
         }
     }
+    //# sourceMappingURL=Gamepad.js.map
 
     var Emulation_1;
     const CANVAS_ID = 'stellerator-canvas';
@@ -55116,18 +55295,45 @@
         __metadata("design:paramtypes", [Storage$1])
     ], Emulation);
     var Emulation$1 = Emulation;
+    //# sourceMappingURL=Emulation.js.map
 
     var FileSaver_min = createCommonjsModule(function (module, exports) {
     (function(a,b){b();})(commonjsGlobal,function(){function b(a,b){return "undefined"==typeof b?b={autoBom:!1}:"object"!=typeof b&&(console.warn("Deprecated: Expected third argument to be a object"),b={autoBom:!b}),b.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\uFEFF",a],{type:a.type}):a}function c(b,c,d){var e=new XMLHttpRequest;e.open("GET",b),e.responseType="blob",e.onload=function(){a(e.response,c,d);},e.onerror=function(){console.error("could not download file");},e.send();}function d(a){var b=new XMLHttpRequest;b.open("HEAD",a,!1);try{b.send();}catch(a){}return 200<=b.status&&299>=b.status}function e(a){try{a.dispatchEvent(new MouseEvent("click"));}catch(c){var b=document.createEvent("MouseEvents");b.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),a.dispatchEvent(b);}}var f="object"==typeof window&&window.window===window?window:"object"==typeof self&&self.self===self?self:"object"==typeof commonjsGlobal&&commonjsGlobal.global===commonjsGlobal?commonjsGlobal:void 0,a=f.saveAs||("object"!=typeof window||window!==f?function(){}:"download"in HTMLAnchorElement.prototype?function(b,g,h){var i=f.URL||f.webkitURL,j=document.createElement("a");g=g||b.name||"download",j.download=g,j.rel="noopener","string"==typeof b?(j.href=b,j.origin===location.origin?e(j):d(j.href)?c(b,g,h):e(j,j.target="_blank")):(j.href=i.createObjectURL(b),setTimeout(function(){i.revokeObjectURL(j.href);},4E4),setTimeout(function(){e(j);},0));}:"msSaveOrOpenBlob"in navigator?function(f,g,h){if(g=g||f.name||"download","string"!=typeof f)navigator.msSaveOrOpenBlob(b(f,h),g);else if(d(f))c(f,g,h);else{var i=document.createElement("a");i.href=f,i.target="_blank",setTimeout(function(){e(i);});}}:function(a,b,d,e){if(e=e||open("","_blank"),e&&(e.document.title=e.document.body.innerText="downloading..."),"string"==typeof a)return c(a,b,d);var g="application/octet-stream"===a.type,h=/constructor/i.test(f.HTMLElement)||f.safari,i=/CriOS\/[\d]+/.test(navigator.userAgent);if((i||g&&h)&&"object"==typeof FileReader){var j=new FileReader;j.onloadend=function(){var a=j.result;a=i?a:a.replace(/^data:[^;]*;/,"data:attachment/file;"),e?e.location.href=a:location=a,e=null;},j.readAsDataURL(a);}else{var k=f.URL||f.webkitURL,l=k.createObjectURL(a);e?e.location=l:location.href=l,e=null,setTimeout(function(){k.revokeObjectURL(l);},4E4);}});f.saveAs=a.saveAs=a,(module.exports=a);});
 
-
+    //# sourceMappingURL=FileSaver.min.js.map
     });
+
+    class Throttle {
+        constructor(_interval, _callback) {
+            this._interval = _interval;
+            this._callback = _callback;
+            this._handle = null;
+            this._lastCall = Date.now();
+        }
+        run(data) {
+            this._data = data;
+            if (this._handle !== null)
+                return;
+            const ts = Date.now();
+            if (ts - this._lastCall >= this._interval) {
+                this._lastCall = ts;
+                this._callback(this._data);
+            }
+            else {
+                this._handle = window.setTimeout(() => {
+                    this._handle = null;
+                    this._lastCall = ts;
+                    this._callback(this._data);
+                }, this._interval - ts + this._lastCall);
+            }
+        }
+    }
+    //# sourceMappingURL=Throttle.js.map
 
     let TrackCartridges = class TrackCartridges {
         constructor(_storage, _emulation) {
             this._storage = _storage;
             this._emulation = _emulation;
-            this._onCartridgeUpdated = (cartridge) => __awaiter(this, void 0, void 0, function* () { return this._mutex.runExclusive(() => this._updateCartridge(cartridge)); });
             this._onCartridgeDeleted = (hash) => this._storage.deleteCartridge(hash);
             this._onDeleteAllCartridges = () => this._storage.deleteAllCartridges();
             this._onSaveCartridge = (hash) => __awaiter(this, void 0, void 0, function* () {
@@ -55142,10 +55348,11 @@
                     autoBom: false
                 });
             });
+            this._updateCartridgeThrottle = new Throttle(250, cartridge => this._mutex.runExclusive(() => this._updateCartridge(cartridge)));
             this._mutex = new lib_1$1();
         }
         init(ports) {
-            ports.updateCartridge_.subscribe(this._onCartridgeUpdated);
+            ports.updateCartridge_.subscribe(this._updateCartridgeThrottle.run.bind(this._updateCartridgeThrottle));
             ports.deleteCartridge_.subscribe(this._onCartridgeDeleted);
             ports.deleteAllCartridges_.subscribe(this._onDeleteAllCartridges);
             ports.saveCartridge_.subscribe(this._onSaveCartridge);
@@ -55163,22 +55370,23 @@
         __metadata("design:paramtypes", [Storage$1, Emulation$1])
     ], TrackCartridges);
     var TrackCartridges$1 = TrackCartridges;
+    //# sourceMappingURL=TrackCartridges.js.map
 
     let TrackSettings = class TrackSettings {
         constructor(_storage, _emulation) {
             this._storage = _storage;
             this._emulation = _emulation;
-            this._onSettingsUpdate = (settings) => this._mutex.runExclusive(() => this.updateSettings(settings));
+            this._throttle = new Throttle(250, this._applyUpdate.bind(this));
             this._mutex = new lib_1$1();
         }
         init(ports) {
-            ports.updateSettings_.subscribe(this._onSettingsUpdate);
+            ports.updateSettings_.subscribe(this._throttle.run.bind(this._throttle));
         }
-        updateSettings(settings) {
-            return __awaiter(this, void 0, void 0, function* () {
+        _applyUpdate(settings) {
+            this._mutex.runExclusive(() => __awaiter(this, void 0, void 0, function* () {
                 yield this._storage.saveSettings(settings);
                 yield this._emulation.updateSettings(settings);
-            });
+            }));
         }
     };
     TrackSettings = __decorate([
@@ -55187,11 +55395,27 @@
         __metadata("design:paramtypes", [Storage$1, Emulation$1])
     ], TrackSettings);
     var TrackSettings$1 = TrackSettings;
+    //# sourceMappingURL=TrackSettings.js.map
 
     const VERSION_STORAGE_KEY =  'stellerator-ng-version-dev' ;
     if (navigator.serviceWorker && !true) {
         navigator.serviceWorker.register('./service-worker.js', { scope: './' });
     }
+    const defaultSettings = (badGpu) => ({
+        cpuEmulation: "cycle",
+        volume: 80,
+        audioEmulation: "pcm",
+        gammaCorrection: 1.0,
+        tvEmulation: badGpu ? "none" : "composite",
+        scaling: badGpu ? "bilinear" : "qis",
+        phosphorLevel: 50,
+        scanlineIntensity: 20,
+        touchControls: undefined,
+        leftHanded: false,
+        virtualJoystickSensitivity: 10,
+        uiMode: undefined,
+        uiSize: 100
+    });
     function main() {
         return __awaiter(this, void 0, void 0, function* () {
             initialize();
@@ -55201,6 +55425,9 @@
             }));
             const container = new inversify_2({ autoBindInjectable: true, defaultScope: 'Singleton' });
             const storage = container.get(Storage$1);
+            const capabilities = detect();
+            const badGpu = !(capabilities && (capabilities.floatTextures || capabilities.halfFloatTextures));
+            storage.setDefaults(defaultSettings(badGpu));
             let cartridges;
             let settings;
             try {
@@ -55210,20 +55437,21 @@
                 yield storage.dropDatabase();
                 [cartridges, settings] = yield Promise.all([storage.getAllCartridges(), storage.getSettings()]);
             }
-            const version = version$1.replace(/^(.*)\+.*\.([0-9a-fA-F]+)$/, '$1 build $2');
+            const version = "1.0.0-beta.8-a5da0af-dev";
             const oldVersion = localStorage.getItem(VERSION_STORAGE_KEY);
-            const wasUpdated = oldVersion && oldVersion !== version;
+            const wasUpdated = !!oldVersion && oldVersion !== version;
             localStorage.setItem(VERSION_STORAGE_KEY, version);
             const { ports } = Elm.Stellerator.Main.init({
                 flags: {
                     cartridges,
                     cartridgeTypes,
                     settings,
-                    defaultSettings: DEFAULT_SETTINGS,
+                    defaultSettings: defaultSettings(badGpu),
                     touchSupport: TouchIO.isSupported(),
                     version,
                     wasUpdated,
-                    gamepadCount: GamepadDriver.probeGamepadCount()
+                    gamepadCount: GamepadDriver.probeGamepadCount(),
+                    badGpu
                 }
             });
             container.get(MediaApi$1).init(ports);
@@ -55237,6 +55465,7 @@
         });
     }
     window.addEventListener('load', main);
+    //# sourceMappingURL=index.js.map
 
 }());
 //# sourceMappingURL=app.js.map
