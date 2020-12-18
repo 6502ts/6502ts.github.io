@@ -1,3 +1,16 @@
+# 1.0.2
+
+## VcsRunner
+
+ * Support for running to RTS
+ * Conditional traps
+
+# 1.0.1
+
+## All
+
+ * Move dasm.js to deps
+
 # 1.0.0
 
 ## All
