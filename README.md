@@ -3,5 +3,5 @@
  * [Documentation for stellerator-embedded](https://6502ts.github.io/typedoc/stellerator-embedded/)
 
 If you are looking for source code, documentation or licensing details, head over to the
-[main respoitory](https://github.com/6502ts/6502.ts)
+[main repository](https://github.com/6502ts/6502.ts)
 instead.
