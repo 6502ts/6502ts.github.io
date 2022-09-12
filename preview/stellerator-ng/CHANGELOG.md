@@ -1,8 +1,26 @@
+# 1.1.2
+
+## stellerator-embedded
+
+ * Fix filenames in documentation.
+
+# 1.1.1
+
+## stellerator-embedded
+
+ * Fix crash if `enableKeyboard` is disabled and `resetViaKeyboard` is
+   enabled.
+
 # 1.1.0
 
 ## All
 
  * Rewrite build process with webpack instead of rollup.
+
+## stellerator-embedded
+
+ * Switch stellerator-embedded to svideo by default in order to avoid
+   graphical glitches on iOS with composite.
 
 # 1.0.6
 
