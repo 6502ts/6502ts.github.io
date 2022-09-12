@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Stellerator / embedded demo</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+
+        <style>
+            .text-box {
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+
+            .container {
+                display: flex;
+                flex-direction: row;
+                align-items: stretch;
+                justify-content: center;
+            }
+
+            #speed {
+                text-align: right;
+                padding-top: 0
+            }
+
+            #stellerator-canvas {
+                height: 600px;
+                width: 800px;
+                max-height: calc(100vh - 13rem);
+                max-width: 100vw;
+            }
+
+            #info, #keys {
+                text-align: center;
+            }
+
+            #keys {
+                padding-top: 0;
+            }
+
+            .inline-pre {
+                display: inline-block;
+            }
+        </style>
+    </head>
+    <body>
+            <div class="text-box" id="speed">Emulation running</div>
+            <div class="text-box" id="keys">
+                    wasd / arrows + v/space = left joystick , ijkl + b = right joystick
+                    <br/>
+                    shift-enter = reset, shift-space = select, enter = toggle fullscreen
+                    <br/>
+                    shift-r = hard reset, p = pause
+                    <br/>
+                    <a href="https://github.com/6502ts/6502.ts/blob/master/doc/stellerator.md#touch-controls">
+                        Touch controls
+                    </a>
+            </div>
+            <div class="container">
+                <canvas id="stellerator-canvas"></canvas>
+            </div>
+            <div class="text-box" id="info">
+                <a href="https://alienbill.com/2600/flapping/">Flapping</a> 2005 by Kirk Israel
+                <br/>
+                The Stellerator instance is exposed as <pre class="inline-pre">window.stellerator</pre>.
+                Go to the developer console and play with it!
+                <br/>
+                Check out the <a href="https://6502ts.github.io/typedoc/stellerator-embedded/">API documentation</a> for help.
+            </div>
+        </div>
+
+        <script src="stellerator-embedded.js"></script>
+        <script>
+            // Wrap everything in an async self-executing function so that we can use async/await.
+            (async function() {
+                // Shortcut to avoid typing out the namespace
+                const Stellerator = $6502.Stellerator;
+
+                // We load the ROM file using the fetch API. We could also hardcode the ROM as a base64 encoded string
+                // and pass that to stellerator instead.
+                const response = await fetch("./flapping.bin");
+                const rom = new Uint8Array(await response.arrayBuffer());
+
+                // Create the stellerator instance
+                const stellerator = new $6502.Stellerator(
+                    // The canvas element
+                    document.getElementById('stellerator-canvas'),
+                    // The URL from which the web worker will be loaded
+                    'worker/stellerator.js',
+                    {
+                        // You might want to adjust the following parameters. There are more options,
+                        // check out the documentation:
+                        // https://6502ts.github.io/typedoc/stellerator-embedded/interfaces/stellerator.stellerator-1.config.html
+                        gamma: 1,
+                        scalingMode: Stellerator.ScalingMode.qis,
+                        tvEmulation: Stellerator.TvEmulation.composite,
+                        phosphorLevel: 0.5,
+                        scanlineLevel: 0.2
+                    }
+                );
+
+                // The DOM node that displays emulation speed
+                const speedElement = document.getElementById('speed');
+                // Subscribe to speed updates and update the DOM node accordingly
+                stellerator.frequencyUpdate.addHandler(
+                    speed => speedElement.innerText = `Emulation running at ${(speed / 1000000).toFixed(2)}MHz`
+                );
+
+                // We are using a responsive layout and resize the canvas as the window
+                // size changes -> notify the video driver of the size changes.
+                //
+                // Note that no action needs to be taken in fullscreen mode --- the fullscreen
+                // drivers takes care of window resizes itself.
+                window.addEventListener('resize', () => stellerator.isFullscreen() || stellerator.resize());
+
+                // Run the emulator in NTSC mode.
+                stellerator.run(rom, Stellerator.TvMode.ntsc);
+
+                // Expose the instance for tinkering.
+                window.stellerator = stellerator;
+            })();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,332 @@
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Stellerator Embedded</title><meta name="description" content="Documentation for Stellerator Embedded"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script async src="assets/search.js" id="search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
+<div class="tsd-toolbar-contents container">
+<div class="table-cell" id="tsd-search" data-base=".">
+<div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M15.7824 13.833L12.6666 10.7177C12.5259 10.5771 12.3353 10.499 12.1353 10.499H11.6259C12.4884 9.39596 13.001 8.00859 13.001 6.49937C13.001 2.90909 10.0914 0 6.50048 0C2.90959 0 0 2.90909 0 6.49937C0 10.0896 2.90959 12.9987 6.50048 12.9987C8.00996 12.9987 9.39756 12.4863 10.5008 11.6239V12.1332C10.5008 12.3332 10.5789 12.5238 10.7195 12.6644L13.8354 15.7797C14.1292 16.0734 14.6042 16.0734 14.8948 15.7797L15.7793 14.8954C16.0731 14.6017 16.0731 14.1267 15.7824 13.833ZM6.50048 10.499C4.29094 10.499 2.50018 8.71165 2.50018 6.49937C2.50018 4.29021 4.28781 2.49976 6.50048 2.49976C8.71001 2.49976 10.5008 4.28708 10.5008 6.49937C10.5008 8.70852 8.71314 10.499 6.50048 10.499Z" fill="var(--color-text)"></path></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div>
+<ul class="results">
+<li class="state loading">Preparing search index...</li>
+<li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">Stellerator Embedded</a></div>
+<div class="table-cell" id="tsd-widgets"><a href="#" class="tsd-widget menu no-caption" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="2" fill="var(--color-text)"></rect><rect x="1" y="7" width="14" height="2" fill="var(--color-text)"></rect><rect x="1" y="11" width="14" height="2" fill="var(--color-text)"></rect></svg></a></div></div></header>
+<div class="container container-main">
+<div class="col-8 col-content">
+<div class="tsd-page-title">
+<h2>Stellerator Embedded</h2></div>
+<div class="tsd-panel tsd-typography">
+<a href="#stellerator-embedded" id="stellerator-embedded" style="color: inherit; text-decoration: none;">
+  <h1>Stellerator Embedded</h1>
+</a>
+<p>Stellerator embedded is a library that allows you to embed 6502.ts&#39; VCS emulation
+into other web pages. It offers most of the functionality provided by Stellerator,
+minus some of the more exotic configuration options that are unlikely to be
+useful in this context.</p>
+<p>You can find the comprehensive API documentation (including this document)
+<a href="https://6502ts.github.io/typedoc/stellerator-embedded/">here</a>.</p>
+
+<a href="#example" id="example" style="color: inherit; text-decoration: none;">
+  <h1>Example</h1>
+</a>
+<p>You can find a example of the embedded emulator
+<a href="https://6502ts.github.io/stellerator-embedded">here</a>.
+The source code is available in the 6502.ts repository on GitHub
+<a href="https://github.com/6502ts/6502.ts/blob/master/template/stellerator-embedded.html">here</a>.</p>
+<p>The example exposes the Stellerator instance (see below) as <code>window.stellerator</code>, so
+you can access and explore it in the developer console.</p>
+
+<a href="#overview" id="overview" style="color: inherit; text-decoration: none;">
+  <h1>Overview</h1>
+</a>
+<p>Stellerator consists of two parts: a frontend that renders the emulation output and
+provides interactivity and the actual emulation core that runs on a separate thread as a
+<a href="https://developer.mozilla.org/de/docs/Web/API/Web_Workers_API">web worker</a>. This
+separation improves emulation performance and avoids slowdowns caused by other
+activity on the web page.</p>
+
+<a href="#frontend" id="frontend" style="color: inherit; text-decoration: none;">
+  <h2>Frontend</h2>
+</a>
+<p>The frontend provides a single class called
+<a href="https://6502ts.github.io/typedoc/stellerator-embedded/classes/stellerator.stellerator-2.html"><code>Stellerator</code></a>.
+It is available both as a prebuild bundle that can directly loaded via script tag
+and in the <code>6502.ts</code> package on NPM. The prebuilt script is most suitable
+for including the emulator in a web page, while the NPM package is mainly aimed at
+more sophisticated JavaScript / Typescript applications which have their own build process.</p>
+
+<a href="#backend" id="backend" style="color: inherit; text-decoration: none;">
+  <h2>Backend</h2>
+</a>
+<p>The emulation backend is available as a prebuilt script that is loaded by the frontend at runtime
+and that needs to be hosted on the page / domain that embeds the emulation.</p>
+
+<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
+  <h1>Installation</h1>
+</a>
+
+<a href="#prebuilt-browser-bundle" id="prebuilt-browser-bundle" style="color: inherit; text-decoration: none;">
+  <h2>Prebuilt browser bundle</h2>
+</a>
+<p>Download the <code>stellerator_embedded.zip</code> archive of the latest release from
+<a href="https://github.com/6502ts/6502.ts/releases">GitHub</a>.
+The archive contains two scripts that need to be hosted on your web server alonside
+the page that embeds the emulator.</p>
+<ul>
+<li><code>stellerator_embedded.min.js</code>: The emulation frontend. Load this via a script tag
+in your HTML:</li>
+</ul>
+<pre><code class="language-html"><span class="hl-0">&lt;</span><span class="hl-1">script</span><span class="hl-2"> </span><span class="hl-3">src</span><span class="hl-2">=</span><span class="hl-4">&quot;js/stellerator_embedded.min.js&quot;</span><span class="hl-0">&gt;&lt;/</span><span class="hl-1">script</span><span class="hl-0">&gt;</span>
+</code></pre>
+<p>   The <code>Stellerator</code> class is available on the global <code>$6502</code> object after the script has
+   been loaded.</p>
+<ul>
+<li><code>stellerator_worker.min.js</code>: The web worker. The path to this script must be passed
+to the constructor of the <code>Stellerator</code> instance:</li>
+</ul>
+<pre><code class="language-javascript"><span class="hl-5">const</span><span class="hl-6"> </span><span class="hl-7">stellerator</span><span class="hl-6"> = </span><span class="hl-5">new</span><span class="hl-6"> </span><span class="hl-8">$6502</span><span class="hl-6">.</span><span class="hl-9">Stellerator</span><span class="hl-6">(</span><span class="hl-8">canvasElement</span><span class="hl-6">, </span><span class="hl-10">&#39;js/stellerator_worker.min.js&#39;</span><span class="hl-6">);</span>
+</code></pre>
+<p>In addition to these two scripts, the archive also contains source maps for both. Place
+these on you server and host them alongside the scripts in order to enable source-level
+debugging and traces in the developer console.</p>
+
+<a href="#installation-via-npm" id="installation-via-npm" style="color: inherit; text-decoration: none;">
+  <h2>Installation via NPM</h2>
+</a>
+<p>The emulation core of 6502.ts is available as <code>6502.ts</code> on
+<a href="https://www.npmjs.com">NPM</a>. Install into your project e.g. using npm via</p>
+<pre><code><span class="hl-8">$</span><span class="hl-6"> </span><span class="hl-8">npm</span><span class="hl-6"> </span><span class="hl-8">install</span><span class="hl-6"> 6502.</span><span class="hl-8">ts</span>
+</code></pre>
+<p>After installation, you can import the <code>Stellerator</code> class using an ES6 import</p>
+<pre><code class="language-javascript"><span class="hl-11">import</span><span class="hl-6"> </span><span class="hl-8">Stellerator</span><span class="hl-6"> </span><span class="hl-11">from</span><span class="hl-6"> </span><span class="hl-10">&#39;6502.ts/lib/web/embedded/stellerator/Stellerator&#39;</span><span class="hl-6">;</span>
+</code></pre>
+<p>or via <code>require</code></p>
+<pre><code class="language-javascript"><span class="hl-5">var</span><span class="hl-6"> </span><span class="hl-8">Stellerator</span><span class="hl-6"> = </span><span class="hl-9">require</span><span class="hl-6">(</span><span class="hl-10">&#39;6502.ts/lib/web/embedded/stellerator/Stellerator&#39;</span><span class="hl-6">).</span><span class="hl-8">default</span><span class="hl-6">;</span>
+</code></pre>
+<p>The NPM module comes with
+<a href="https://www.typescriptlang.org">TypeScript</a>
+typings, so you can use it directly in a TypeScript project.</p>
+<p>Note that the NPM module provides only the frontend; you&#39;ll still have to download
+the worker script and host it alongside your application.</p>
+
+<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
+  <h1>Usage</h1>
+</a>
+
+<a href="#basic-usage" id="basic-usage" style="color: inherit; text-decoration: none;">
+  <h2>Basic usage</h2>
+</a>
+<p>In order to use the emulator, you need to include a
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API">canvas element</a>
+in your web
+page (which will display the TIA image) and create an instance of the <code>Stellerator</code>
+class:</p>
+<pre><code class="language-javascript"><span class="hl-5">const</span><span class="hl-6"> </span><span class="hl-7">stellerator</span><span class="hl-6"> = </span><span class="hl-5">new</span><span class="hl-6"> </span><span class="hl-9">Stellerator</span><span class="hl-6">(</span><span class="hl-8">canvasElement</span><span class="hl-6">, </span><span class="hl-10">&#39;js/stellerator_worker.min.js&#39;</span><span class="hl-6">);</span>
+</code></pre>
+<p>The second argument of the constructor is the URL from which the web worker will be loaded.</p>
+<p>Emulation can then be started by invoking the <code>run</code> method</p>
+<pre><code class="language-javascript"><span class="hl-8">stellerator</span><span class="hl-6">.</span><span class="hl-9">run</span><span class="hl-6">(</span><span class="hl-8">romImage</span><span class="hl-6">, </span><span class="hl-8">Stellerator</span><span class="hl-6">.</span><span class="hl-8">TvMode</span><span class="hl-6">.</span><span class="hl-8">ntsc</span><span class="hl-6">);</span>
+</code></pre>
+<p>ROM images can be provided as arrays, typed arrays or as base64 encoded strings. Both the
+constructor and <code>run</code> support an optional argument that allows to adjust many properties
+of the emulator to the requirements of the embedding page, including ROM type, rendering options
+and input emulation. In addition, there are methods on the <code>Stellerator</code> class that
+enable interaction with the emulator at runtime. Please check out the full
+<a href="https://6502ts.github.io/typedoc/stellerator-embedded/classes/stellerator.stellerator-2.html">API documentation</a>
+for details.</p>
+
+<a href="#the-canvas-element" id="the-canvas-element" style="color: inherit; text-decoration: none;">
+  <h2>The canvas element</h2>
+</a>
+<p>The emulators requires a
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API">canvas element</a>
+on the embedding page in order to display the TIA image. The resolution of
+the canvas is managed by stellerator and automatically adjusted for optimal
+display given the on-screen dimensions of the canvas element and the device pixel
+ratio when emulation starts or enters / leaves fullscreen mode. The <code>width</code> and
+<code>height</code> attributes of the canvas element need not be specified and will be overridden
+by stellerator (this does <strong>not</strong> apply to the actual on-screen size that is determined
+by CSS).</p>
+<p>If the canvas changes size while the emulator runs, the video driver should be
+notified using the
+<a href="https://6502ts.github.io/typedoc/stellerator-embedded/classes/stellerator_.stellerator.html#resize">resize</a>
+method on the stellerator instance. This does not apply to window size changes in
+fullscreen mode --- the video driver takes care of those automatically.</p>
+<p>The canvas can be styled regularily using CSS; however, <code>padding</code> and <code>box-model</code>
+as well as borders must be avoided. Please use a wrapper element to achieve
+those effects. In addition, fullscreen mode (see below) changes element styles on
+the canvas --- do not use element styles on the canvas in oder to avoid collisions.</p>
+
+<a href="#emulator-options" id="emulator-options" style="color: inherit; text-decoration: none;">
+  <h2>Emulator options</h2>
+</a>
+<p>There are several options that influence the behavior of Stellerator. These can either
+be specified when the constructor is invoked or changed at runtime by invoking setters
+on the <code>Stellerator</code> instance. The following example code is taken from the example page:</p>
+<pre><code class="language-javascript"><span class="hl-5">const</span><span class="hl-6"> </span><span class="hl-7">stellerator</span><span class="hl-6"> = </span><span class="hl-5">new</span><span class="hl-6"> </span><span class="hl-8">$6502</span><span class="hl-6">.</span><span class="hl-9">Stellerator</span><span class="hl-6">(</span><br/><span class="hl-6">  </span><span class="hl-8">document</span><span class="hl-6">.</span><span class="hl-9">getElementById</span><span class="hl-6">(</span><span class="hl-10">&#39;stellerator-canvas&#39;</span><span class="hl-6">),</span><br/><span class="hl-6">  </span><span class="hl-10">&#39;worker/stellerator.min.js&#39;</span><span class="hl-6">,</span><br/><span class="hl-6">  {</span><br/><span class="hl-6">      </span><span class="hl-8">gamma:</span><span class="hl-6"> </span><span class="hl-12">1</span><span class="hl-6">,</span><br/><span class="hl-6">      </span><span class="hl-8">scalingMode:</span><span class="hl-6"> </span><span class="hl-8">Stellerator</span><span class="hl-6">.</span><span class="hl-8">ScalingMode</span><span class="hl-6">.</span><span class="hl-8">qis</span><span class="hl-6">,</span><br/><span class="hl-6">      </span><span class="hl-8">tvEmulation:</span><span class="hl-6"> </span><span class="hl-8">Stellerator</span><span class="hl-6">.</span><span class="hl-8">TvEmulation</span><span class="hl-6">.</span><span class="hl-8">composite</span><span class="hl-6">,</span><br/><span class="hl-6">      </span><span class="hl-8">phosphorLevel:</span><span class="hl-6"> </span><span class="hl-12">0.5</span><span class="hl-6">,</span><br/><span class="hl-6">      </span><span class="hl-8">scanlineLevel:</span><span class="hl-6"> </span><span class="hl-12">0.2</span><br/><span class="hl-6">  }</span><br/><span class="hl-6">);</span>
+</code></pre>
+
+<a href="#video-output" id="video-output" style="color: inherit; text-decoration: none;">
+  <h2>Video output</h2>
+</a>
+<p>Stellerator has serveral options that influence the video display</p>
+
+<a href="#gamma" id="gamma" style="color: inherit; text-decoration: none;">
+  <h3>Gamma</h3>
+</a>
+<p>This adjusts the gamma correction factor that is applied to the image.</p>
+
+<a href="#scaling-mode" id="scaling-mode" style="color: inherit; text-decoration: none;">
+  <h3>Scaling mode</h3>
+</a>
+<p>This changes the algorithm that is used to scale the emulator image to the canvas size</p>
+<ul>
+<li><strong>QIS (Quasi Integer Scaling) (default)</strong>: Produces a crisp image while avoiding
+Moirée artifacts.</li>
+<li><strong>Bilinear scaling:</strong> Avoids Moirée artifacts, but introduces visible blurring.</li>
+<li><strong>None:</strong> Plain nearest neightbour scaling. A crisp image, but there will be
+Moirée artifacts if the scaling factor is not an integer.</li>
+</ul>
+
+<a href="#tv-emulation" id="tv-emulation" style="color: inherit; text-decoration: none;">
+  <h3>TV Emulation</h3>
+</a>
+<p>Stellerator emulates the effect of modulating / demodulating the video signal for
+the TV. This uses hardware acceleration and runs on the GPU and may cause visual
+artifacts on some GPUs. In particular, <code>composite</code> does not display cleanly on
+some iOS devices due to precision issues.</p>
+<p>If you want to be 100% sure that everyone can use the emulator without artifacts
+you might want to disable TV emulation by setting <code>tvEmulation: Stellerator.TvEmulation.none</code>.</p>
+
+<a href="#phosphor" id="phosphor" style="color: inherit; text-decoration: none;">
+  <h3>Phosphor</h3>
+</a>
+<p>Stellerator emulates the phosphor effect from CRT tubes. The blend facotor can be controlled
+with the <code>phosphotLevel</code> option. Setting this to 0 disables phosphor.</p>
+
+<a href="#scanlines" id="scanlines" style="color: inherit; text-decoration: none;">
+  <h3>Scanlines</h3>
+</a>
+<p>The blend factor of the scanline overlay can be adjusted with <code>scalineLevel</code>.</p>
+
+<a href="#fullscreen-mode" id="fullscreen-mode" style="color: inherit; text-decoration: none;">
+  <h2>Fullscreen mode</h2>
+</a>
+<p>The display can be put in fullscreen mode either programmatically or (unless disabled)
+via the keyboard. Stellerator uses the HTML5 fullscreen API (with the exception of
+iOS devices which do not support HTML5 fullscreen; see &#39;iOS quirks&#39; below).</p>
+<p>Switching to fullscreen mode changes element styles on the canvas. In addition, the class
+<code>stellerator-fullscreen</code> is added to the the body element. You can target this class
+if you want to do additional styling in fullscreen mode.</p>
+
+<a href="#input-and-key-mappings" id="input-and-key-mappings" style="color: inherit; text-decoration: none;">
+  <h2>Input and key mappings</h2>
+</a>
+<p>The following control scheme applies unless configured differently in the options
+(individual parts can be disabled, but custom key mappings are not yet supported):</p>
+<ul>
+<li>wasd / arrow keys and space / v for fire control joystick 1</li>
+<li>ijkl and b for fire controls joystick 2</li>
+<li>shift-enter controls the reset button on the console</li>
+<li>shift-space controls the select button on the console</li>
+<li>enter toggles fullscreen</li>
+<li>shift-r resets the emulator</li>
+<li>p toggles pause</li>
+<li>The horizontal axis of the mouse and d for fire control paddle 1</li>
+<li>Gamepads are supported for joystick 1/2 but rely on browser and OS for the correct
+mapping</li>
+<li>Multitouch controls are available for controlling the left joystick and start / reset /
+fullscreen. Check the
+<a href="https://github.com/6502ts/6502.ts/blob/master/doc/stellerator.md#touch-controls">Stellerator documentation</a>
+for the control scheme.</li>
+</ul>
+<p>The difficulty and color switches can be controlled via the API.</p>
+
+<a href="#limitations" id="limitations" style="color: inherit; text-decoration: none;">
+  <h1>Limitations</h1>
+</a>
+
+<a href="#browser-support" id="browser-support" style="color: inherit; text-decoration: none;">
+  <h2>Browser support</h2>
+</a>
+<p>6502.ts aggressivly leverages many modern browser technologies which are part of
+HTML5 and the ES6 standard. Although the code is still compiled to ES5, it uses
+many data structures and APIs that are part of HTML5 and ES6 and requires the browser to
+support them. You can relax this restriction by loading polyfills like
+<a href="https://github.com/zloirock/core-js">core.js</a>
+to provide the missing features, but don&#39;t expect the result to run smoothly :)</p>
+<p>That said, Stellerator runs flawlessly in any reasonably modern version of Chrome,
+Firefox and Safari. Edge runs the emulator, but currently has trouble running
+at full speed. Safari on iOS works fine on 64bit devices, but there are some
+quirks regarding audio and fullscreen mode (see below). The mileage with other
+browsers may vary.</p>
+
+<a href="#system-requirements-and-speed" id="system-requirements-and-speed" style="color: inherit; text-decoration: none;">
+  <h2>System requirements and speed</h2>
+</a>
+<p>Any reasonably modern (not older than 5-6 years) x86 based system should be able
+to run the emulator at full speed. The mileage with ARM and mobile devices varies.
+The emulator supports connected gamepads (unless disabled in the options) but relies
+on OS and browser to map the gamepad buttons correctly.</p>
+<p>I have not yet found any Android device that can sustain 6502.ts at full speed, but
+recent 64bit iOS devices work fine.</p>
+
+<a href="#safari-quirks" id="safari-quirks" style="color: inherit; text-decoration: none;">
+  <h2>Safari quirks</h2>
+</a>
+<p>Due to policies enforced by Apple, audio will not play unless started from an
+interaction event triggered by the user. Stellerator tries to work around this,
+but there must be at least one click to the page after the <code>Stellerator</code> instance
+has been created before audio starts playing.</p>
+
+<a href="#ios-quirks" id="ios-quirks" style="color: inherit; text-decoration: none;">
+  <h2>iOS quirks</h2>
+</a>
+<p>Stellerator works fine on iOS devices; however there are some quirks.</p>
+<p>Due to policies enforced by Apple, audio will not play unless started from an
+interaction event triggered by the user. Stellerator tries to work around this,
+but there must be at least one touch to the page after the <code>Stellerator</code> instance
+has been created before audio starts playing.</p>
+<p>HTML5 fullscreen is unsupported by Safari on iOS. Instead, Stellerator tries to
+emulate it by fixed positioning of the canvas with a large Z index. This more or less
+works, but the browser toolbar still makes its appearance if the display is
+touched at the wrong points, and manual scrolling is required to get rid of
+it again. Unfortunately, there is not much that can be done about this
+when the page is displayed in the browser app.
+However, the interference from the browser UI can be avoided if the page is loaded
+from the homescreen and the <code>apple-mobile-web-app-capable</code> meta tag is configured.
+Please check out the official Apple
+<a href="https://developer.apple.com/library/content/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html">documentation</a>
+for details.</p>
+
+<a href="#troubleshooting" id="troubleshooting" style="color: inherit; text-decoration: none;">
+  <h1>Troubleshooting</h1>
+</a>
+<p>If the emulator fails to work, please check the debug console for any errors. In
+particular, check the network tab whether the worker script is loaded correctly.
+Also, check whether the
+<a href="https://6502ts.github.io/stellerator-embedded">example</a>
+works.</p>
+<p>If need help or think that you may have found an issue, please file a bug on the
+<a href="https://github.com/6502ts/6502.ts/issues">github tracker</a>.
+Please check the tracker for existing issues that describe your problem
+first.</p>
+</div></div>
+<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+<div class="tsd-navigation settings">
+<details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
+<h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg> Settings</h3></summary>
+<div class="tsd-accordion-details">
+<div class="tsd-filter-visibility">
+<h4 class="uppercase">Member Visibility</h4><form>
+<ul id="tsd-filter-options">
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li>
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li></ul></form></div>
+<div class="tsd-theme-toggle">
+<h4 class="uppercase">Theme</h4><select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div>
+<nav class="tsd-navigation primary">
+<details class="tsd-index-accordion" open><summary class="tsd-accordion-summary">
+<h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg> Modules</h3></summary>
+<div class="tsd-accordion-details">
+<ul>
+<li class="current selected"><a href="modules.html">Stellerator <wbr/>Embedded</a>
+<ul></ul></li></ul></div></details></nav>
+<nav class="tsd-navigation secondary menu-sticky"></nav></div></div>
+<div class="container tsd-generator">
+<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
+<div class="overlay"></div><script src="assets/main.js"></script></body></html>
