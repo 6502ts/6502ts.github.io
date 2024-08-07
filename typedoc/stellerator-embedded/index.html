@@ -7,7 +7,7 @@ useful in this context.</p>
 <a id="md:example" class="tsd-anchor"></a><h1 class="tsd-anchor-link">Example<a href="#md:example" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><p>You can find a example of the embedded emulator
 <a href="https://6502ts.github.io/stellerator-embedded">here</a>.
 The source code is available in the 6502.ts repository on GitHub
-<a href="https://github.com/6502ts/6502.ts/blob/master/template/stellerator-embedded.html">here</a>.</p>
+<a href="https://github.com/6502ts/6502.ts/blob/master/html/stellerator-embedded.html">here</a>.</p>
 <p>The example exposes the Stellerator instance (see below) as <code>window.stellerator</code>, so
 you can access and explore it in the developer console.</p>
 <a id="md:overview" class="tsd-anchor"></a><h1 class="tsd-anchor-link">Overview<a href="#md:overview" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><p>Stellerator consists of two parts: a frontend that renders the emulation output and
@@ -16,31 +16,31 @@ provides interactivity and the actual emulation core that runs on a separate thr
 separation improves emulation performance and avoids slowdowns caused by other
 activity on the web page.</p>
 <a id="md:frontend" class="tsd-anchor"></a><h2 class="tsd-anchor-link">Frontend<a href="#md:frontend" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>The frontend provides a single class called
-<a href="https://6502ts.github.io/typedoc/stellerator-embedded/classes/stellerator.stellerator-2.html"><code>Stellerator</code></a>.
+<a href="https://6502ts.github.io/typedoc/stellerator-embedded/classes/Stellerator-1.html"><code>Stellerator</code></a>.
 It is available both as a prebuild bundle that can directly loaded via script tag
 and in the <code>6502.ts</code> package on NPM. The prebuilt script is most suitable
 for including the emulator in a web page, while the NPM package is mainly aimed at
 more sophisticated JavaScript / Typescript applications which have their own build process.</p>
 <a id="md:backend" class="tsd-anchor"></a><h2 class="tsd-anchor-link">Backend<a href="#md:backend" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>The emulation backend is available as a prebuilt script that is loaded by the frontend at runtime
 and that needs to be hosted on the page / domain that embeds the emulation.</p>
-<a id="md:installation" class="tsd-anchor"></a><h1 class="tsd-anchor-link">Installation<a href="#md:installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><a id="md:prebuilt-browser-bundle" class="tsd-anchor"></a><h2 class="tsd-anchor-link">Prebuilt browser bundle<a href="#md:prebuilt-browser-bundle" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Download the <code>stellerator_embedded.zip</code> archive of the latest release from
+<a id="md:installation" class="tsd-anchor"></a><h1 class="tsd-anchor-link">Installation<a href="#md:installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><a id="md:prebuilt-browser-bundle" class="tsd-anchor"></a><h2 class="tsd-anchor-link">Prebuilt browser bundle<a href="#md:prebuilt-browser-bundle" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Download the <code>stellerator-embedded.zip</code> archive of the latest release from
 <a href="https://github.com/6502ts/6502.ts/releases">GitHub</a>.
 The archive contains two scripts that need to be hosted on your web server alonside
 the page that embeds the emulator.</p>
 <ul>
-<li><code>stellerator_embedded.js</code>: The emulation frontend. Load this via a script tag
+<li><code>stellerator-embedded.js</code>: The emulation frontend. Load this via a script tag
 in your HTML:</li>
 </ul>
-<pre><code class="html"><span class="hl-0">&lt;</span><span class="hl-1">script</span><span class="hl-2"> </span><span class="hl-3">src</span><span class="hl-2">=</span><span class="hl-4">&quot;js/stellerator_embedded.js&quot;</span><span class="hl-0">&gt;&lt;/</span><span class="hl-1">script</span><span class="hl-0">&gt;</span>
+<pre><code class="html"><span class="hl-0">&lt;</span><span class="hl-1">script</span><span class="hl-2"> </span><span class="hl-3">src</span><span class="hl-2">=</span><span class="hl-4">&quot;js/stellerator-embedded.js&quot;</span><span class="hl-0">&gt;&lt;/</span><span class="hl-1">script</span><span class="hl-0">&gt;</span>
 </code><button type="button">Copy</button></pre>
 
 <p>The <code>Stellerator</code> class is available on the global <code>$6502</code> object after the script has
 been loaded.</p>
 <ul>
-<li><code>stellerator_worker.js</code>: The web worker. The path to this script must be passed
+<li><code>stellerator.js</code>: The web worker. The path to this script must be passed
 to the constructor of the <code>Stellerator</code> instance:</li>
 </ul>
-<pre><code class="javascript"><span class="hl-5">const</span><span class="hl-6"> </span><span class="hl-7">stellerator</span><span class="hl-6"> = </span><span class="hl-5">new</span><span class="hl-6"> </span><span class="hl-8">$6502</span><span class="hl-6">.</span><span class="hl-9">Stellerator</span><span class="hl-6">(</span><span class="hl-8">canvasElement</span><span class="hl-6">, </span><span class="hl-10">&#39;js/stellerator_worker.js&#39;</span><span class="hl-6">);</span>
+<pre><code class="javascript"><span class="hl-5">const</span><span class="hl-6"> </span><span class="hl-7">stellerator</span><span class="hl-6"> = </span><span class="hl-5">new</span><span class="hl-6"> </span><span class="hl-8">$6502</span><span class="hl-6">.</span><span class="hl-9">Stellerator</span><span class="hl-6">(</span><span class="hl-8">canvasElement</span><span class="hl-6">, </span><span class="hl-10">&#39;js/stellerator.js&#39;</span><span class="hl-6">);</span>
 </code><button type="button">Copy</button></pre>
 
 <p>In addition to these two scripts, the archive also contains source maps for both. Place
@@ -69,7 +69,7 @@ the worker script and host it alongside your application.</p>
 in your web
 page (which will display the TIA image) and create an instance of the <code>Stellerator</code>
 class:</p>
-<pre><code class="javascript"><span class="hl-5">const</span><span class="hl-6"> </span><span class="hl-7">stellerator</span><span class="hl-6"> = </span><span class="hl-5">new</span><span class="hl-6"> </span><span class="hl-9">Stellerator</span><span class="hl-6">(</span><span class="hl-8">canvasElement</span><span class="hl-6">, </span><span class="hl-10">&#39;js/stellerator_worker.js&#39;</span><span class="hl-6">);</span>
+<pre><code class="javascript"><span class="hl-5">const</span><span class="hl-6"> </span><span class="hl-7">stellerator</span><span class="hl-6"> = </span><span class="hl-5">new</span><span class="hl-6"> </span><span class="hl-9">Stellerator</span><span class="hl-6">(</span><span class="hl-8">canvasElement</span><span class="hl-6">, </span><span class="hl-10">&#39;js/stellerator.js&#39;</span><span class="hl-6">);</span>
 </code><button type="button">Copy</button></pre>
 
 <p>The second argument of the constructor is the URL from which the web worker will be loaded.</p>
@@ -82,7 +82,7 @@ constructor and <code>run</code> support an optional argument that allows to adj
 of the emulator to the requirements of the embedding page, including ROM type, rendering options
 and input emulation. In addition, there are methods on the <code>Stellerator</code> class that
 enable interaction with the emulator at runtime. Please check out the full
-<a href="https://6502ts.github.io/typedoc/stellerator-embedded/classes/stellerator.stellerator-2.html">API documentation</a>
+<a href="https://6502ts.github.io/typedoc/stellerator-embedded/classes/Stellerator-1.html">API documentation</a>
 for details.</p>
 <a id="md:the-canvas-element" class="tsd-anchor"></a><h2 class="tsd-anchor-link">The canvas element<a href="#md:the-canvas-element" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>The emulators requires a
 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API">canvas element</a>
@@ -95,7 +95,7 @@ by stellerator (this does <strong>not</strong> apply to the actual on-screen siz
 by CSS).</p>
 <p>If the canvas changes size while the emulator runs, the video driver should be
 notified using the
-<a href="https://6502ts.github.io/typedoc/stellerator-embedded/classes/stellerator_.stellerator.html#resize">resize</a>
+<a href="https://6502ts.github.io/typedoc/stellerator-embedded/classes/Stellerator-1.html#resize">resize</a>
 method on the stellerator instance. This does not apply to window size changes in
 fullscreen mode --- the video driver takes care of those automatically.</p>
 <p>The canvas can be styled regularily using CSS; however, <code>padding</code> and <code>box-model</code>
