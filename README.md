@@ -6,4 +6,4 @@
 
 If you are looking for source code, documentation or licensing details, head over to the
 [main repository](https://github.com/6502ts/6502.ts)
-instead.
+instead..
